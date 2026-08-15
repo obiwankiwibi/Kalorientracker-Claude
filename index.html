@@ -723,9 +723,19 @@ function startScanner(){
       return;
     }
     Quagga.start();
+    Quagga.start();
     scannerRunning = true;
     document.getElementById('scanStatus').textContent = 'Barcode ins Bild halten …';
-  });
+
+    try{
+      const track = Quagga.CameraAccess.getActiveTrack();
+      if(track && track.getCapabilities){
+        const caps = track.getCapabilities();
+        if(caps.focusMode && caps.focusMode.includes('continuous')){
+          track.applyConstraints({advanced:[{focusMode:'continuous'}]});
+        }
+      }
+    } catch(e){}
 
   Quagga.onDetected(onBarcodeDetected);
 }
