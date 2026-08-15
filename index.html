@@ -103,10 +103,19 @@
     color:var(--text-faint);margin:24px 4px 10px;
   }
   .entries{display:flex;flex-direction:column;gap:8px;}
-  .entry-card{
-    background:var(--bg-elev);border:1px solid var(--line);border-radius:18px;
-    padding:13px 14px;display:flex;align-items:center;gap:12px;
-  }
+  .entry-card{background:var(--bg-elev);border:1px solid var(--line);border-radius:18px;overflow:hidden;}
+  .entry-main{padding:13px 14px;display:flex;align-items:center;gap:12px;cursor:default;}
+  .entry-main.clickable{cursor:pointer;}
+  .entry-caret{font-size:11px;color:var(--text-faint);transition:transform .2s;margin-left:2px;}
+  .entry-caret.open{transform:rotate(180deg);}
+  .entry-detail{display:none;padding:0 14px 14px;border-top:1px solid var(--line);}
+  .nutri-badge-row{font-size:11.5px;color:var(--text-faint);margin:10px 0 8px;display:flex;align-items:center;gap:6px;}
+  .nutriscore{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;font-size:11px;font-weight:800;color:#0A1A14;}
+  .ns-a{background:#1FB584;} .ns-b{background:#8FD14F;} .ns-c{background:#FFC15E;} .ns-d{background:#FF9A56;} .ns-e{background:#FF6B5C;}
+  .nutri-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;}
+  .nutri-item{display:flex;justify-content:space-between;font-size:12.5px;}
+  .nutri-label{color:var(--text-soft);}
+  .nutri-val{font-weight:700;font-variant-numeric:tabular-nums;}
   .entry-dot{
     width:8px;height:8px;border-radius:50%;background:var(--mint);flex:none;
   }
@@ -521,16 +530,21 @@ function renderDay(){
   } else {
     day.entries.forEach(e=>{
       total += e.kcal;
+      const hasNutrients = !!e.nutrients;
       const row = document.createElement('div');
       row.className='entry-card';
       row.innerHTML = `
-        <span class="entry-dot"></span>
-        <span class="entry-info">
-          <span class="entry-name">${escapeHtml(e.name)}</span>
-          <span class="entry-meta">${e.meta?escapeHtml(e.meta):''}</span>
-        </span>
-        <span class="entry-kcal">${Math.round(e.kcal)}</span>
-        <button class="entry-del" onclick="deleteEntry('${key}','${e.id}')">✕</button>
+        <div class="entry-main${hasNutrients?' clickable':''}"${hasNutrients?` onclick="toggleEntry('${e.id}')"`:''}>
+          <span class="entry-dot"></span>
+          <span class="entry-info">
+            <span class="entry-name">${escapeHtml(e.name)}</span>
+            <span class="entry-meta">${e.meta?escapeHtml(e.meta):''}</span>
+          </span>
+          <span class="entry-kcal">${Math.round(e.kcal)}</span>
+          ${hasNutrients?`<span class="entry-caret" id="caret-${e.id}">▾</span>`:''}
+          <button class="entry-del" onclick="event.stopPropagation();deleteEntry('${key}','${e.id}')">✕</button>
+        </div>
+        ${hasNutrients?`<div class="entry-detail" id="detail-${e.id}">${renderNutrientPanel(e)}</div>`:''}
       `;
       entriesEl.appendChild(row);
     });
@@ -662,12 +676,38 @@ function deleteEntry(key, id){
   render();
 }
 
-function addEntry(name, kcal, meta){
+function addEntry(name, kcal, meta, nutrients){
   const key = fmtKey(currentDate);
   const day = getDay(key);
-  day.entries.push({id: Date.now()+'-'+Math.random().toString(36).slice(2,7), name, kcal, meta: meta||'', time: new Date().toISOString()});
+  day.entries.push({id: Date.now()+'-'+Math.random().toString(36).slice(2,7), name, kcal, meta: meta||'', nutrients: nutrients||null, time: new Date().toISOString()});
   setDay(key, day);
   render();
+}
+
+function renderNutrientPanel(e){
+  const n = e.nutrients || {};
+  const fmt = v => (v===null || v===undefined || isNaN(v)) ? '–' : Math.round(v*10)/10 + ' g';
+  const rows = [
+    ['Eiweiß', n.protein],
+    ['Kohlenhydrate', n.carbs],
+    ['davon Zucker', n.sugars],
+    ['Fett', n.fat],
+    ['davon gesättigt', n.saturatedFat],
+    ['Ballaststoffe', n.fiber],
+    ['Salz', n.salt],
+  ];
+  const badge = n.nutriscore ? `<div class="nutri-badge-row"><span class="nutriscore ns-${n.nutriscore.toLowerCase()}">${n.nutriscore}</span>Nutri-Score</div>` : '';
+  const grid = `<div class="nutri-grid">${rows.map(([label,val])=>`<div class="nutri-item"><span class="nutri-label">${label}</span><span class="nutri-val">${fmt(val)}</span></div>`).join('')}</div>`;
+  return badge + grid;
+}
+
+function toggleEntry(id){
+  const detail = document.getElementById('detail-'+id);
+  const caret = document.getElementById('caret-'+id);
+  if(!detail) return;
+  const isOpen = detail.style.display === 'block';
+  detail.style.display = isOpen ? 'none' : 'block';
+  if(caret) caret.classList.toggle('open', !isOpen);
 }
 
 /* ---------- Modals ---------- */
@@ -783,7 +823,19 @@ async function lookupProduct(code){
       lastCode = null;
       return;
     }
-    lastScannedProduct = { name: p.product_name || 'Unbekanntes Produkt', kcal100: kcal100 };
+    const nm = p.nutriments || {};
+    lastScannedProduct = {
+      name: p.product_name || 'Unbekanntes Produkt',
+      kcal100: kcal100,
+      protein100: nm.proteins_100g,
+      carbs100: nm.carbohydrates_100g,
+      sugars100: nm.sugars_100g,
+      fat100: nm.fat_100g,
+      saturatedFat100: nm['saturated-fat_100g'],
+      fiber100: nm.fiber_100g,
+      salt100: nm.salt_100g,
+      nutriscore: p.nutriscore_grade ? p.nutriscore_grade.toUpperCase() : null,
+    };
     document.getElementById('pName').textContent = lastScannedProduct.name;
     document.getElementById('pKcal').textContent = Math.round(kcal100) + ' kcal / 100 g';
     document.getElementById('pGrams').value = 100;
@@ -797,11 +849,25 @@ async function lookupProduct(code){
   }
 }
 
+function scaleNum(v, grams){
+  return (v===null || v===undefined || isNaN(v)) ? null : v * (grams/100);
+}
+
 function submitScan(){
   if(!lastScannedProduct) return;
   const grams = parseFloat(document.getElementById('pGrams').value) || 100;
   const kcal = lastScannedProduct.kcal100 * (grams/100);
-  addEntry(lastScannedProduct.name, kcal, grams+'g');
+  const nutrients = {
+    protein: scaleNum(lastScannedProduct.protein100, grams),
+    carbs: scaleNum(lastScannedProduct.carbs100, grams),
+    sugars: scaleNum(lastScannedProduct.sugars100, grams),
+    fat: scaleNum(lastScannedProduct.fat100, grams),
+    saturatedFat: scaleNum(lastScannedProduct.saturatedFat100, grams),
+    fiber: scaleNum(lastScannedProduct.fiber100, grams),
+    salt: scaleNum(lastScannedProduct.salt100, grams),
+    nutriscore: lastScannedProduct.nutriscore || null,
+  };
+  addEntry(lastScannedProduct.name, kcal, grams+'g', nutrients);
   lastScannedProduct = null;
   lastCode = null;
   closeModal('scanBg');
