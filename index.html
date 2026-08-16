@@ -198,6 +198,42 @@
       text-align: center;
       padding: 20px;
     }
+
+    /* ── Spritpreis ── */
+    .fuel-primary {
+      width: 100%; max-width: 400px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 14px 18px; margin-top: 14px;
+      text-decoration: none; color: var(--text); display: block; transition: transform 0.12s;
+    }
+    .fuel-primary:active { transform: scale(0.97); }
+    .fuel-primary-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .fuel-primary-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+    .fuel-fav-badge { font-size: 10px; background: rgba(61,189,181,0.15); color: var(--teal); padding: 2px 8px; border-radius: 99px; font-weight: 700; }
+    .fuel-primary-body { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .fuel-primary-info { flex: 1; min-width: 0; }
+    .fuel-primary-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fuel-primary-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .fuel-primary-right { text-align: right; flex-shrink: 0; }
+    .fuel-primary-price { font-size: 28px; font-weight: 700; color: var(--teal); font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+    .fuel-primary-unit { font-size: 11px; color: var(--muted); }
+    /* Favoriten-Galerie */
+    .fav-gallery-section { width: 100%; max-width: 400px; }
+    .fav-gallery { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .fav-gallery::-webkit-scrollbar { display: none; }
+    .fav-chip {
+      flex-shrink: 0; width: 130px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 13px;
+      padding: 12px 11px; display: flex; flex-direction: column; gap: 2px;
+      text-decoration: none; color: var(--text);
+    }
+    .fav-chip.is-open { border-color: rgba(61,189,181,0.35); }
+    .fav-chip-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fav-chip-price { font-size: 19px; font-weight: 700; color: var(--teal); font-variant-numeric: tabular-nums; margin: 3px 0 2px; }
+    .fav-chip-dist { font-size: 10px; color: var(--muted); }
+    .fav-chip-status { font-size: 10px; font-weight: 600; }
+    .fav-chip-status.open { color: var(--teal); }
+    .fav-chip-status.closed { color: var(--salmon); }
   </style>
 </head>
 <body>
@@ -223,6 +259,28 @@
         <div class="weather-detail" id="wMinMaxBox">↓<span id="wMin">–</span>° ↑<span id="wMax">–</span>°</div>
       </div>
     </div>
+  </div>
+
+  <!-- ══ SPRITPREIS ══ -->
+  <a class="fuel-primary" href="tankstellen_finder.html">
+    <div class="fuel-primary-top">
+      <span class="fuel-primary-label">⛽ Super 95 · Empfehlung</span>
+      <span class="fuel-fav-badge" id="fuelFavBadge" style="display:none">★ Favorit</span>
+    </div>
+    <div class="fuel-primary-body">
+      <div class="fuel-primary-info">
+        <div class="fuel-primary-name" id="fuelName">Wird geladen…</div>
+        <div class="fuel-primary-meta" id="fuelMeta"></div>
+      </div>
+      <div class="fuel-primary-right">
+        <div class="fuel-primary-price" id="fuelPrice">–</div>
+        <div class="fuel-primary-unit">€ / Liter</div>
+      </div>
+    </div>
+  </a>
+  <div class="fav-gallery-section" id="favGallerySection" style="display:none">
+    <div class="section-label" style="padding-top:14px;padding-bottom:8px">Favoriten</div>
+    <div class="fav-gallery" id="favGallery"></div>
   </div>
 
   <!-- ══ APPS ══ -->
@@ -351,7 +409,104 @@ async function loadWeather(lat, lon) {
   }
 }
 
-// ── Standort ermitteln ──
+// ── Spritpreis ──
+const TK_CACHE     = 'tk_quick_e5';
+const TK_HOUR      = 3600000;
+const FAV_DELTA    = 0.03; // Favorit bis 3 ct/L teurer bevorzugen
+const escH = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function renderFuelWidget(cheapest, stations, favorites, ts) {
+  // Favoriten in den Ergebnissen finden, nach Preis sortiert
+  const favIds = Object.keys(favorites);
+  const favStations = favIds
+    .map(id => stations.find(s => s.id === id))
+    .filter(s => s && typeof s.e5 === 'number' && s.e5 > 0.5)
+    .sort((a, b) => a.e5 - b.e5);
+
+  // Empfehlung: günstigster Favorit wenn ≤ 3 ct teurer als Billigste
+  let rec = cheapest, isFav = false;
+  if (favStations.length && favStations[0].e5 <= cheapest.e5 + FAV_DELTA) {
+    rec = favStations[0]; isFav = true;
+  }
+
+  // Primäre Karte
+  document.getElementById('fuelPrice').textContent =
+    rec.e5.toLocaleString('de-DE', {minimumFractionDigits:3, maximumFractionDigits:3});
+  document.getElementById('fuelName').textContent = rec.name;
+  const dist = rec.dist ? Number(rec.dist).toLocaleString('de-DE',{maximumFractionDigits:1})+' km' : '';
+  const open = rec.isOpen ? '· Geöffnet' : '· Geschlossen';
+  const upd  = 'Stand '+new Date(ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('fuelMeta').textContent = [dist, open, upd].filter(Boolean).join(' ');
+  document.getElementById('fuelFavBadge').style.display = isFav ? '' : 'none';
+
+  // Favoriten-Galerie
+  const sec = document.getElementById('favGallerySection');
+  if (favStations.length) {
+    sec.style.display = '';
+    document.getElementById('favGallery').innerHTML = favStations.map(s =>
+      `<div class="fav-chip${s.isOpen?' is-open':''}">
+        <div class="fav-chip-name" title="${escH(s.name)}">${escH(s.name)}</div>
+        <div class="fav-chip-price">${s.e5.toLocaleString('de-DE',{minimumFractionDigits:3,maximumFractionDigits:3})}</div>
+        <div class="fav-chip-dist">${s.dist?Number(s.dist).toLocaleString('de-DE',{maximumFractionDigits:1})+' km':''}</div>
+        <div class="fav-chip-status ${s.isOpen?'open':'closed'}">${s.isOpen?'Geöffnet':'Geschlossen'}</div>
+      </div>`
+    ).join('');
+  } else {
+    sec.style.display = 'none';
+  }
+}
+
+async function loadFuelPrice() {
+  const tkState   = JSON.parse(localStorage.getItem('tankstellen_finder_v2') || '{}');
+  const favorites = tkState.favorites || {};
+
+  if (!tkState.apiKey) {
+    document.getElementById('fuelName').textContent = 'API-Key in der Tankstellen-App hinterlegen';
+    document.getElementById('fuelMeta').textContent = 'Tippen zum Einrichten';
+    return;
+  }
+
+  // Cache sofort anzeigen
+  const cached = JSON.parse(localStorage.getItem(TK_CACHE) || 'null');
+  if (cached && (Date.now() - cached.ts) < TK_HOUR) {
+    renderFuelWidget(cached.cheapest, cached.stations, favorites, cached.ts);
+    return;
+  }
+
+  try {
+    // Koordinaten für Hilchenbach-Dahlbruch (einmalig geocoden, dann cachen)
+    let coords = JSON.parse(localStorage.getItem('tk_default_coords') || 'null');
+    if (!coords) {
+      const gr = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=de&q=57271+Hilchenbach-Dahlbruch', {headers:{'Accept-Language':'de'}});
+      const gd = await gr.json();
+      coords = gd.length ? {lat:+gd[0].lat, lng:+gd[0].lon} : {lat:50.982, lng:8.102};
+      localStorage.setItem('tk_default_coords', JSON.stringify(coords));
+    }
+
+    const p = new URLSearchParams({lat:coords.lat, lng:coords.lng, rad:10, type:'e5', sort:'price', apikey:tkState.apiKey});
+    const r = await fetch('https://creativecommons.tankerkoenig.de/json/list.php?'+p);
+    const data = await r.json();
+    if (!data.ok || !data.stations?.length) throw new Error();
+
+    const stations = data.stations.filter(s => typeof s.e5==='number' && s.e5>0.5);
+    if (!stations.length) throw new Error();
+
+    const result = {ts: Date.now(), cheapest: stations[0], stations};
+    localStorage.setItem(TK_CACHE, JSON.stringify(result));
+    renderFuelWidget(result.cheapest, result.stations, favorites, result.ts);
+  } catch {
+    document.getElementById('fuelName').textContent = 'Preis nicht verfügbar';
+    document.getElementById('fuelMeta').textContent = '';
+  }
+}
+
+// Beim Laden sofort Cache anzeigen, dann frisch laden
+const _c = JSON.parse(localStorage.getItem(TK_CACHE)||'null');
+if (_c) { const tk=JSON.parse(localStorage.getItem('tankstellen_finder_v2')||'{}'); renderFuelWidget(_c.cheapest,_c.stations,tk.favorites||{},_c.ts); }
+loadFuelPrice();
+setInterval(loadFuelPrice, TK_HOUR);
+
+// ── Standort (nur Wetter) ──
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(
     pos => loadWeather(pos.coords.latitude, pos.coords.longitude),
