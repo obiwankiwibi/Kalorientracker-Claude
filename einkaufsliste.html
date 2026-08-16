@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Einkaufsliste</title>
 
+  <script>(function(){var t=localStorage.getItem('einkaufsliste_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
   <!-- Firebase SDK (nur geladen wenn konfiguriert) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -13,17 +14,33 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #1e2030;
-      --surface:  #272a3d;
-      --card:     #31344a;
-      --teal:     #3dbdb5;
-      --teal-dim: #2d9990;
-      --salmon:   #e8635a;
-      --text:     #eef0f8;
-      --muted:    #7880a0;
-      --border:   #3a3d55;
-      --green:    #4caf88;
-      --red:      #e05555;
+      --bg:       #F4EEE2;
+      --surface:  #FFFFFF;
+      --card:     #EDE7D8;
+      --teal:     #2A8C54;
+      --teal-dim: #1C6639;
+      --salmon:   #C84B32;
+      --text:     #1C1108;
+      --muted:    #6B4E38;
+      --border:   rgba(100,65,25,0.15);
+      --green:    #2A8C54;
+      --red:      #C84B32;
+      --shadow:   0 4px 18px rgba(80,45,10,0.12);
+    }
+
+    html[data-theme="dark"] {
+      --bg:       #111827;
+      --surface:  #1F2937;
+      --card:     #374151;
+      --teal:     #34D399;
+      --teal-dim: #059669;
+      --salmon:   #F87171;
+      --text:     #F9FAFB;
+      --muted:    #9CA3AF;
+      --border:   rgba(255,255,255,0.09);
+      --green:    #4ADE80;
+      --red:      #F87171;
+      --shadow:   0 4px 18px rgba(0,0,0,0.35);
     }
 
     html, body {
@@ -37,7 +54,7 @@
       max-width: 430px;
       margin: 0 auto;
       min-height: 100vh;
-      padding-bottom: 70px;
+      padding-bottom: 140px;
       -webkit-tap-highlight-color: transparent;
       overscroll-behavior: none;
     }
@@ -131,13 +148,39 @@
     }
     .icon-btn:active { opacity: 0.7; }
 
-    /* ── Search bar ── */
+    /* ── Search bar (floating bottom) ── */
     .search-wrap {
       padding: 10px 12px;
+      position: fixed;
+      bottom: 86px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      z-index: 199;
+      background: transparent;
+    }
+
+    /* ── Price bar ── */
+    #priceBar {
       position: sticky;
       top: 55px;
-      z-index: 99;
-      background: var(--bg);
+      z-index: 98;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+      gap: 8px;
+    }
+    #priceTotal {
+      font-weight: 700;
+      color: var(--teal);
+      font-size: 14px;
+      white-space: nowrap;
     }
 
     .search-inner {
@@ -148,6 +191,7 @@
       border-radius: 22px;
       padding: 9px 14px;
       border: 1px solid var(--border);
+      box-shadow: var(--shadow, 0 4px 20px rgba(0,0,0,0.2));
     }
 
     .search-inner input {
@@ -231,6 +275,7 @@
 
     .tile-emoji { font-size: 26px; line-height: 1; }
     .tile-name  { font-size: 11.5px; font-weight: 500; text-align: center; line-height: 1.25; word-break: break-word; }
+    .tile-price { font-size: 10px; font-weight: 600; opacity: 0.72; margin-top: 1px; }
     .tile-amount { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 700; opacity: 0.9; }
 
     /* Active items — salmon */
@@ -638,6 +683,7 @@
 <header class="header">
   <div class="header-back" onclick="switchList()">‹ Listen</div>
   <div class="header-title" id="listTitle">Zuhause</div>
+  <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Design wechseln">🌙</button>
   <button class="icon-btn" onclick="shareList()" title="Teilen">⎘</button>
   <button class="icon-btn" onclick="clearDone()" title="Erledigte löschen">✓</button>
 </header>
@@ -660,6 +706,15 @@
   <div id="scanStatus">Kamera wird gestartet…</div>
   <button class="scan-close" onclick="stopScan()">✕</button>
   <button class="scan-torch" id="scanTorch" onclick="toggleScanTorch()">🔦</button>
+</div>
+
+<!-- ══ PRICE BAR ══ -->
+<div id="priceBar">
+  <div style="display:flex;align-items:center;gap:6px">
+    <span>🛒</span>
+    <span id="priceCount"></span>
+  </div>
+  <span id="priceTotal">0,00 €</span>
 </div>
 
 <!-- ══ ACTIVE LIST ══ -->
@@ -833,79 +888,114 @@ const FIREBASE_CONFIG = {
 //  ARTIKEL-DATEN
 // ═══════════════════════════════════════════════
 const SUGGESTIONS = [
-  { name:'Zucchini',      emoji:'🥒', cat:'Gemüse' },
-  { name:'Möhren',        emoji:'🥕', cat:'Gemüse' },
-  { name:'Paprika',       emoji:'🫑', cat:'Gemüse' },
-  { name:'Gurke',         emoji:'🥒', cat:'Gemüse' },
-  { name:'Tomaten',       emoji:'🍅', cat:'Gemüse' },
-  { name:'Zwiebeln',      emoji:'🧅', cat:'Gemüse' },
-  { name:'Knoblauch',     emoji:'🧄', cat:'Gemüse' },
-  { name:'Spinat',        emoji:'🥬', cat:'Gemüse' },
-  { name:'Brokkoli',      emoji:'🥦', cat:'Gemüse' },
-  { name:'Salat',         emoji:'🥗', cat:'Gemüse' },
-  { name:'Kartoffeln',    emoji:'🥔', cat:'Gemüse' },
-  { name:'Mais',          emoji:'🌽', cat:'Gemüse' },
-  { name:'Pilze',         emoji:'🍄', cat:'Gemüse' },
-  { name:'Aubergine',     emoji:'🍆', cat:'Gemüse' },
-  { name:'Kohl',          emoji:'🥬', cat:'Gemüse' },
-  { name:'Lauch',         emoji:'🌿', cat:'Gemüse' },
-  { name:'Sellerie',      emoji:'🥬', cat:'Gemüse' },
-  { name:'Äpfel',         emoji:'🍎', cat:'Obst' },
-  { name:'Bananen',       emoji:'🍌', cat:'Obst' },
-  { name:'Zitrone',       emoji:'🍋', cat:'Obst' },
-  { name:'Erdbeeren',     emoji:'🍓', cat:'Obst' },
-  { name:'Trauben',       emoji:'🍇', cat:'Obst' },
-  { name:'Orangen',       emoji:'🍊', cat:'Obst' },
-  { name:'Avocado',       emoji:'🥑', cat:'Obst' },
-  { name:'Wassermelone',  emoji:'🍉', cat:'Obst' },
-  { name:'Himbeeren',     emoji:'🫐', cat:'Obst' },
-  { name:'Mango',         emoji:'🥭', cat:'Obst' },
-  { name:'Kiwi',          emoji:'🥝', cat:'Obst' },
-  { name:'Milch',         emoji:'🥛', cat:'Milch' },
-  { name:'Joghurt',       emoji:'🍮', cat:'Milch' },
-  { name:'Käse',          emoji:'🧀', cat:'Milch' },
-  { name:'Butter',        emoji:'🧈', cat:'Milch' },
-  { name:'Sahne',         emoji:'🥛', cat:'Milch' },
-  { name:'Quark',         emoji:'🍦', cat:'Milch' },
-  { name:'Frischkäse',    emoji:'🧀', cat:'Milch' },
-  { name:'Hafermilch',    emoji:'🥛', cat:'Milch' },
-  { name:'Toast',         emoji:'🍞', cat:'Brot' },
-  { name:'Brot',          emoji:'🥖', cat:'Brot' },
-  { name:'Brötchen',      emoji:'🥐', cat:'Brot' },
-  { name:'Croissant',     emoji:'🥐', cat:'Brot' },
-  { name:'Wasser',        emoji:'💧', cat:'Getränke' },
-  { name:'Saft',          emoji:'🧃', cat:'Getränke' },
-  { name:'Kaffee',        emoji:'☕', cat:'Getränke' },
-  { name:'Tee',           emoji:'🍵', cat:'Getränke' },
-  { name:'Bier',          emoji:'🍺', cat:'Getränke' },
-  { name:'Wein',          emoji:'🍷', cat:'Getränke' },
-  { name:'Cola',          emoji:'🥤', cat:'Getränke' },
-  { name:'Eier',          emoji:'🥚', cat:'Grundnahrung' },
-  { name:'Nudeln',        emoji:'🍝', cat:'Grundnahrung' },
-  { name:'Reis',          emoji:'🍚', cat:'Grundnahrung' },
-  { name:'Mehl',          emoji:'🌾', cat:'Grundnahrung' },
-  { name:'Zucker',        emoji:'🍬', cat:'Grundnahrung' },
-  { name:'Öl',            emoji:'🫙', cat:'Grundnahrung' },
-  { name:'Salz',          emoji:'🧂', cat:'Grundnahrung' },
-  { name:'Pfeffer',       emoji:'🫙', cat:'Grundnahrung' },
-  { name:'Hähnchen',      emoji:'🍗', cat:'Fleisch' },
-  { name:'Hackfleisch',   emoji:'🥩', cat:'Fleisch' },
-  { name:'Lachs',         emoji:'🐟', cat:'Fleisch' },
-  { name:'Würstchen',     emoji:'🌭', cat:'Fleisch' },
-  { name:'Thunfisch',     emoji:'🐠', cat:'Fleisch' },
-  { name:'Schinken',      emoji:'🥩', cat:'Fleisch' },
-  { name:'Toilettenpapier', emoji:'🧻', cat:'Haushalt' },
-  { name:'Spülmittel',    emoji:'🧴', cat:'Haushalt' },
-  { name:'Waschmittel',   emoji:'🧺', cat:'Haushalt' },
-  { name:'Müllbeutel',    emoji:'🗑️', cat:'Haushalt' },
-  { name:'Shampoo',       emoji:'🧴', cat:'Haushalt' },
-  { name:'Zahnpasta',     emoji:'🪥', cat:'Haushalt' },
-  { name:'Seife',         emoji:'🧼', cat:'Haushalt' },
-  { name:'Taschentücher', emoji:'🤧', cat:'Haushalt' },
+  // Gemüse
+  { name:'Zucchini',      emoji:'🥒', cat:'Gemüse',       price: 0.79 },
+  { name:'Möhren',        emoji:'🥕', cat:'Gemüse',       price: 0.89 },
+  { name:'Paprika',       emoji:'🫑', cat:'Gemüse',       price: 1.29 },
+  { name:'Gurke',         emoji:'🥒', cat:'Gemüse',       price: 0.69 },
+  { name:'Tomaten',       emoji:'🍅', cat:'Gemüse',       price: 1.49 },
+  { name:'Zwiebeln',      emoji:'🧅', cat:'Gemüse',       price: 0.89 },
+  { name:'Knoblauch',     emoji:'🧄', cat:'Gemüse',       price: 0.59 },
+  { name:'Spinat',        emoji:'🥬', cat:'Gemüse',       price: 1.29 },
+  { name:'Brokkoli',      emoji:'🥦', cat:'Gemüse',       price: 0.99 },
+  { name:'Salat',         emoji:'🥗', cat:'Gemüse',       price: 0.89 },
+  { name:'Kartoffeln',    emoji:'🥔', cat:'Gemüse',       price: 1.99 },
+  { name:'Mais',          emoji:'🌽', cat:'Gemüse',       price: 0.89 },
+  { name:'Pilze',         emoji:'🍄', cat:'Gemüse',       price: 1.49 },
+  { name:'Aubergine',     emoji:'🍆', cat:'Gemüse',       price: 0.99 },
+  { name:'Kohl',          emoji:'🥬', cat:'Gemüse',       price: 0.99 },
+  { name:'Lauch',         emoji:'🌿', cat:'Gemüse',       price: 0.89 },
+  { name:'Sellerie',      emoji:'🥬', cat:'Gemüse',       price: 0.99 },
+  // Obst
+  { name:'Äpfel',         emoji:'🍎', cat:'Obst',         price: 1.99 },
+  { name:'Bananen',       emoji:'🍌', cat:'Obst',         price: 1.49 },
+  { name:'Zitrone',       emoji:'🍋', cat:'Obst',         price: 0.39 },
+  { name:'Erdbeeren',     emoji:'🍓', cat:'Obst',         price: 2.99 },
+  { name:'Trauben',       emoji:'🍇', cat:'Obst',         price: 2.49 },
+  { name:'Orangen',       emoji:'🍊', cat:'Obst',         price: 1.99 },
+  { name:'Avocado',       emoji:'🥑', cat:'Obst',         price: 0.99 },
+  { name:'Wassermelone',  emoji:'🍉', cat:'Obst',         price: 3.99 },
+  { name:'Himbeeren',     emoji:'🫐', cat:'Obst',         price: 1.99 },
+  { name:'Mango',         emoji:'🥭', cat:'Obst',         price: 1.29 },
+  { name:'Kiwi',          emoji:'🥝', cat:'Obst',         price: 0.49 },
+  // Milch & Käse
+  { name:'Milch',         emoji:'🥛', cat:'Milch',        price: 1.09 },
+  { name:'Joghurt',       emoji:'🍮', cat:'Milch',        price: 0.79 },
+  { name:'Käse',          emoji:'🧀', cat:'Milch',        price: 1.99 },
+  { name:'Butter',        emoji:'🧈', cat:'Milch',        price: 1.89 },
+  { name:'Sahne',         emoji:'🥛', cat:'Milch',        price: 0.89 },
+  { name:'Quark',         emoji:'🍦', cat:'Milch',        price: 0.99 },
+  { name:'Frischkäse',    emoji:'🧀', cat:'Milch',        price: 1.29 },
+  { name:'Hafermilch',    emoji:'🥛', cat:'Milch',        price: 1.49 },
+  // Brot & Backwaren
+  { name:'Toast',         emoji:'🍞', cat:'Brot',         price: 1.19 },
+  { name:'Brot',          emoji:'🥖', cat:'Brot',         price: 1.99 },
+  { name:'Brötchen',      emoji:'🥐', cat:'Brot',         price: 1.29 },
+  { name:'Croissant',     emoji:'🥐', cat:'Brot',         price: 1.49 },
+  // Getränke
+  { name:'Wasser',        emoji:'💧', cat:'Getränke',     price: 0.29 },
+  { name:'Saft',          emoji:'🧃', cat:'Getränke',     price: 1.29 },
+  { name:'Kaffee',        emoji:'☕', cat:'Getränke',     price: 4.99 },
+  { name:'Tee',           emoji:'🍵', cat:'Getränke',     price: 1.49 },
+  { name:'Bier',          emoji:'🍺', cat:'Getränke',     price: 4.99 },
+  { name:'Wein',          emoji:'🍷', cat:'Getränke',     price: 4.99 },
+  { name:'Cola',          emoji:'🥤', cat:'Getränke',     price: 1.69 },
+  // Grundnahrung
+  { name:'Eier',          emoji:'🥚', cat:'Grundnahrung', price: 2.19 },
+  { name:'Nudeln',        emoji:'🍝', cat:'Grundnahrung', price: 1.09 },
+  { name:'Reis',          emoji:'🍚', cat:'Grundnahrung', price: 1.49 },
+  { name:'Mehl',          emoji:'🌾', cat:'Grundnahrung', price: 0.89 },
+  { name:'Zucker',        emoji:'🍬', cat:'Grundnahrung', price: 0.99 },
+  { name:'Öl',            emoji:'🫙', cat:'Grundnahrung', price: 2.49 },
+  { name:'Salz',          emoji:'🧂', cat:'Grundnahrung', price: 0.39 },
+  { name:'Pfeffer',       emoji:'🫙', cat:'Grundnahrung', price: 1.49 },
+  // Fleisch & Fisch
+  { name:'Hähnchen',      emoji:'🍗', cat:'Fleisch',      price: 4.99 },
+  { name:'Hackfleisch',   emoji:'🥩', cat:'Fleisch',      price: 3.49 },
+  { name:'Lachs',         emoji:'🐟', cat:'Fleisch',      price: 4.99 },
+  { name:'Würstchen',     emoji:'🌭', cat:'Fleisch',      price: 2.49 },
+  { name:'Thunfisch',     emoji:'🐠', cat:'Fleisch',      price: 1.49 },
+  { name:'Schinken',      emoji:'🥩', cat:'Fleisch',      price: 1.99 },
+  // Haushalt
+  { name:'Toilettenpapier', emoji:'🧻', cat:'Haushalt',   price: 2.99 },
+  { name:'Spülmittel',    emoji:'🧴', cat:'Haushalt',     price: 1.19 },
+  { name:'Waschmittel',   emoji:'🧺', cat:'Haushalt',     price: 5.99 },
+  { name:'Müllbeutel',    emoji:'🗑️', cat:'Haushalt',    price: 1.99 },
+  { name:'Shampoo',       emoji:'🧴', cat:'Haushalt',     price: 2.49 },
+  { name:'Zahnpasta',     emoji:'🪥', cat:'Haushalt',     price: 1.49 },
+  { name:'Seife',         emoji:'🧼', cat:'Haushalt',     price: 0.99 },
+  { name:'Taschentücher', emoji:'🤧', cat:'Haushalt',     price: 1.29 },
 ];
 
 const AMOUNTS = ['1','2','3','4','5','6','300g','500g','750g','1kg','2kg','1L','1,5L','2L'];
 const CATS = ['Alle', ...new Set(SUGGESTIONS.map(s => s.cat))];
+
+// Preis-Lookup
+const PRICE_MAP = {};
+SUGGESTIONS.forEach(s => { PRICE_MAP[s.name.toLowerCase()] = s.price; });
+function getItemPrice(name) { return PRICE_MAP[name.toLowerCase()] ?? null; }
+function fmtPrice(p) { return p.toFixed(2).replace('.', ',') + ' €'; }
+
+function calcTotal() {
+  let total = 0, hasPrices = false;
+  const allItems = Object.values(items);
+  allItems.forEach(it => {
+    const p = getItemPrice(it.name);
+    if (p != null) { total += p; hasPrices = true; }
+  });
+
+  const bar = document.getElementById('priceBar');
+  if (!bar) return;
+
+  if (allItems.length === 0) {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'flex';
+  const n = allItems.length;
+  document.getElementById('priceCount').textContent = n + (n === 1 ? ' Artikel' : ' Artikel');
+  document.getElementById('priceTotal').textContent = hasPrices ? ('~' + fmtPrice(total)) : '–';
+}
 
 // ═══════════════════════════════════════════════
 //  RESTAURANTS — hier beliebig ergänzen/entfernen
@@ -1096,22 +1186,27 @@ function renderAll() {
   b.textContent = cnt;
   b.classList.toggle('show', cnt > 0);
 
+  calcTotal();
   renderSuggestions();
 }
 
 function tile(type, it) {
+  const p = getItemPrice(it.name);
+  const priceHtml = p != null ? `<div class="tile-price">${fmtPrice(p)}</div>` : '';
   if (type === 'active') {
     return `<div class="tile active"
       ontouchstart="pressStart('${it.id}')" ontouchend="pressEnd('${it.id}')" ontouchcancel="pressCancel()"
       onmousedown="pressStart('${it.id}')" onmouseup="pressEnd('${it.id}')" onmouseleave="pressCancel()">
       <div class="tile-emoji">${it.emoji || '🛒'}</div>
       <div class="tile-name">${esc(it.name)}</div>
+      ${priceHtml}
       ${it.amount ? `<div class="tile-amount">${esc(it.amount)}</div>` : ''}
     </div>`;
   }
   return `<div class="tile done" onclick="uncheck('${it.id}')">
     <div class="tile-emoji">${it.emoji || '🛒'}</div>
     <div class="tile-name">${esc(it.name)}</div>
+    ${priceHtml}
   </div>`;
 }
 
@@ -1156,10 +1251,13 @@ function renderSuggestions() {
     sg.innerHTML = list.map(s => {
       const inList = inListNames.has(s.name.toLowerCase());
       const isScanned = s.cat === 'Gescannt';
+      const p = getItemPrice(s.name);
+      const priceHtml = p != null ? `<div class="tile-price">${fmtPrice(p)}</div>` : '';
       return `<div class="tile sug ${isScanned ? 'scanned' : ''} ${inList ? 'in-list' : ''}"
         onclick="tapSuggestion('${esc(s.name)}','${s.emoji}')">
         <div class="tile-emoji">${s.emoji}</div>
         <div class="tile-name">${esc(s.name)}</div>
+        ${priceHtml}
       </div>`;
     }).join('');
   }
@@ -1433,6 +1531,12 @@ function showTab(tab) {
   document.querySelector('.search-wrap').style.display   = isListe ? '' : 'none';
   document.querySelector('.divider').style.display       = isListe ? '' : 'none';
   document.getElementById('catRow').style.display        = isListe ? '' : 'none';
+  if (!isListe) {
+    const pb = document.getElementById('priceBar');
+    if (pb) pb.style.display = 'none';
+  } else {
+    calcTotal();
+  }
 
   // Andere Views
   document.getElementById('offersView').style.display      = isAngebote    ? 'block' : 'none';
@@ -1750,8 +1854,25 @@ function esc(s) {
 }
 
 // ═══════════════════════════════════════════════
+//  THEME
+// ═══════════════════════════════════════════════
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('einkaufsliste_theme', next);
+  document.getElementById('themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
+}
+
+function initTheme() {
+  const t = localStorage.getItem('einkaufsliste_theme') || 'light';
+  document.getElementById('themeToggle').textContent = t === 'dark' ? '☀️' : '🌙';
+}
+
+// ═══════════════════════════════════════════════
 //  START
 // ═══════════════════════════════════════════════
+initTheme();
 initApp();
 </script>
 </body>
