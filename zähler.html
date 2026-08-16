@@ -123,10 +123,17 @@
     .bonus-del:hover { background: var(--neg-bg); color: var(--neg); }
     .add-bonus-btn { margin-top: .5rem; background: none; border: 1px dashed var(--line); color: var(--muted); border-radius: 7px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; width: 100%; transition: border-color .12s, color .12s; font-family: inherit; }
     .add-bonus-btn:hover { border-color: var(--brand); color: var(--brand); }
-    /* Meter rows */
-    .meter-row { display: flex; align-items: center; gap: .5rem; margin-top: .375rem; }
-    .meter-row-label { font-size: 12px; color: var(--muted); white-space: nowrap; min-width: 80px; }
-    .act-chip { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 2px 6px; border-radius: 99px; background: var(--brand-bg); color: var(--brand); display: inline-block; margin-left: 4px; }
+    /* Meter rows in settings */
+    .meter-list { margin-top: .5rem; display: flex; flex-direction: column; gap: .375rem; }
+    .meter-row { display: flex; align-items: center; gap: .375rem; }
+    .meter-aktiv-btn { flex-shrink: 0; background: var(--card2); border: 1px solid var(--line); border-radius: 7px; padding: 5px 9px; font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer; white-space: nowrap; transition: all .12s; font-family: inherit; }
+    .meter-aktiv-btn.active { background: var(--brand-bg); border-color: var(--brand); color: var(--brand); cursor: default; }
+    .meter-del-btn { flex-shrink: 0; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 5px 6px; border-radius: 5px; transition: background .12s, color .12s; line-height: 1; }
+    .meter-del-btn:hover { background: var(--neg-bg); color: var(--neg); }
+    .add-meter-btn { margin-top: .5rem; background: none; border: 1px dashed var(--line); color: var(--muted); border-radius: 7px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; width: 100%; transition: border-color .12s, color .12s; font-family: inherit; }
+    .add-meter-btn:hover { border-color: var(--brand); color: var(--brand); }
+    /* Modal meter select */
+    .finput-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7A90' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; cursor: pointer; }
 
     /* ── Stats ── */
     .stats-grid  { display: grid; grid-template-columns: repeat(4,1fr); gap: .875rem; margin-bottom: .875rem; }
@@ -384,10 +391,9 @@ Object.keys(TABS).forEach(k=>ensureTabFormat(k));
 migrateSettings();
 
 let tab          = Object.keys(TABS).find(k=>TABS[k].enabled)||'strom';
-let cfgOpen      = false;
-let editingId    = null;
-let newMeterMode = false;
-let chartMid     = '__active__'; // '__active__' | 'all' | specific meter id
+let cfgOpen   = false;
+let editingId = null;
+let chartMid  = '__active__'; // '__active__' | 'all' | specific meter id
 
 // ── Meter helpers ──────────────────────────────────────────────────────────
 
@@ -400,6 +406,9 @@ function meterLabel(key,mid) {
 }
 function activeMeter(key) {
   const ms=getMeters(key); if(!ms.length) return null;
+  // Explicit activeMid takes priority
+  if(db[key].activeMid) { const m=getMeter(key,db[key].activeMid); if(m) return m; }
+  // Fall back to meter of most recent reading
   const rs=sortedReadings(key); if(!rs.length) return ms[ms.length-1];
   return getMeter(key,rs[rs.length-1].meterId)||ms[ms.length-1];
 }
@@ -619,6 +628,29 @@ function render(){
   document.querySelectorAll('[data-mk]').forEach(el=>el.addEventListener('change',()=>{
     const m=getMeter(el.dataset.mk,el.dataset.mi); if(m){m.number=el.value.trim();saveDb();cfgOpen=true;render();}
   }));
+  document.querySelectorAll('[data-set-active]').forEach(btn=>btn.addEventListener('click',()=>{
+    const [k,mid]=btn.dataset.setActive.split(':');
+    db[k].activeMid=mid; saveDb(); cfgOpen=true; render();
+  }));
+  document.querySelectorAll('[data-del-meter]').forEach(btn=>btn.addEventListener('click',()=>{
+    const [k,mid]=btn.dataset.delMeter.split(':');
+    const hasReadings=db[k].readings.some(r=>r.meterId===mid);
+    if(hasReadings&&!confirm('Dieser Zähler hat Ablesungen. Trotzdem löschen?\n(Ablesungen bleiben erhalten, sind aber ohne Zähler.)')) return;
+    db[k].meters=db[k].meters.filter(m=>m.id!==mid);
+    if(db[k].activeMid===mid) delete db[k].activeMid;
+    saveDb(); cfgOpen=true; render();
+  }));
+  document.querySelectorAll('[data-add-meter]').forEach(btn=>btn.addEventListener('click',()=>{
+    const k=btn.dataset.addMeter;
+    const nm={id:genId(),number:''};
+    db[k].meters.push(nm); db[k].activeMid=nm.id;
+    saveDb(); cfgOpen=true; render();
+    // Focus the new meter's number input after render
+    setTimeout(()=>{
+      const inputs=document.querySelectorAll('[data-mk="'+k+'"]');
+      if(inputs.length) inputs[inputs.length-1].focus();
+    },50);
+  }));
   document.querySelectorAll('.edit-btn').forEach(btn=>btn.addEventListener('click',()=>openModal(btn.dataset.id)));
   document.querySelectorAll('.del-btn').forEach(btn=>btn.addEventListener('click',()=>{
     if(!confirm('Ablesung löschen?')) return;
@@ -650,13 +682,19 @@ function buildSettingsPanel(cfg,ts,meters){
       <button class="bonus-del del-bonus" data-bid="${b.id}">✕</button>
     </div>`).join('');
 
-  const meterSection=meters.length?`<div class="settings-section">
+  const meterSection=`<div class="settings-section">
     <span class="section-eye">Zähler</span>
-    ${meters.map((m,i)=>`<div class="meter-row">
-      <span class="meter-row-label">Zähler ${i+1}${m.id===activeMid?'<span class="act-chip">Aktiv</span>':''}</span>
-      <input class="sfield-input" style="flex:1;font-family:var(--mono)" placeholder="Zählernummer" value="${esc(m.number||'')}" data-mk="${tab}" data-mi="${m.id}">
-    </div>`).join('')}
-  </div>`:''
+    <div class="meter-list">${meters.map((m,i)=>`
+      <div class="meter-row">
+        <button class="meter-aktiv-btn${m.id===activeMid?' active':''}" data-set-active="${tab}:${m.id}" ${m.id===activeMid?'disabled':''}>
+          ${m.id===activeMid?'✓ Aktiv':'Aktiv setzen'}
+        </button>
+        <input class="sfield-input" style="flex:1;font-family:var(--mono)" placeholder="Zählernummer (z.B. AE1234567)" value="${esc(m.number||'')}" data-mk="${tab}" data-mi="${m.id}">
+        <button class="meter-del-btn" data-del-meter="${tab}:${m.id}" title="Zähler entfernen">✕</button>
+      </div>`).join('')}
+    </div>
+    <button class="add-meter-btn" data-add-meter="${tab}">+ Zähler hinzufügen</button>
+  </div>`
 
   return `<div class="settings-card">
     <div class="settings-hdr"><span class="settings-title">Einstellungen — ${cfg.icon} ${cfg.label}</span></div>
@@ -798,37 +836,31 @@ function drawChart(key){
 
 function buildMeterSection(){
   const section=document.getElementById('fMeterSection');
-  const ms=getMeters(tab), active=activeMeter(tab);
+  const ms=getMeters(tab);
+  if(!ms.length){
+    // No meters configured yet — show info nudge
+    section.innerHTML=`<div class="fgroup"><div style="background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:12px;color:var(--muted)">Zähler in den Einstellungen anlegen (⚙️), dann hier auswählen.</div></div>`;
+    return;
+  }
   if(editingId){
+    // Edit: show which meter this reading belongs to (read-only)
     const entry=db[tab].readings.find(r=>r.id===editingId);
     const ml=entry?meterLabel(tab,entry.meterId):'—';
     section.innerHTML=`<div class="fgroup"><span class="flabel">Zähler</span><div class="meter-indicator"><div class="mi-left"><span class="mi-label">Zähler (nicht änderbar)</span><span class="mi-value">${esc(ml)}</span></div></div></div>`;
     return;
   }
-  if(!ms.length){
-    section.innerHTML=`<div class="fgroup"><label class="flabel" for="fMeterNumber">Zählernummer (optional)</label><input class="finput mono" id="fMeterNumber" placeholder="z.B. AE1234567"></div>`;
-    return;
-  }
-  section.innerHTML=`<div class="fgroup"><span class="flabel">Zähler</span>
-    <div class="meter-indicator">
-      <div class="mi-left"><span class="mi-label">Aktueller Zähler</span><span class="mi-value" id="activeMeterDisp">${esc(active?meterLabel(tab,active.id):'—')}</span></div>
-      <button class="meter-sw-btn" id="meterSwBtn">Zählerwechsel</button>
-    </div>
-    <div class="new-meter-wrap" id="newMeterWrap" style="display:none">
-      <label class="flabel" for="fMeterNumber" style="margin-top:.25rem">Neue Zählernummer</label>
-      <input class="finput mono" id="fMeterNumber" placeholder="z.B. AE9876543">
-    </div></div>`;
-  document.getElementById('meterSwBtn').addEventListener('click',()=>{
-    newMeterMode=!newMeterMode;
-    document.getElementById('newMeterWrap').style.display=newMeterMode?'block':'none';
-    document.getElementById('meterSwBtn').textContent=newMeterMode?'← Zurück':'Zählerwechsel';
-    document.getElementById('activeMeterDisp').style.opacity=newMeterMode?'.4':'1';
-    if(newMeterMode) setTimeout(()=>document.getElementById('fMeterNumber')?.focus(),50);
-  });
+  // Add mode: select dropdown, active meter pre-selected
+  const activeMid=activeMeter(tab)?.id||ms[0].id;
+  section.innerHTML=`<div class="fgroup">
+    <label class="flabel" for="fMeter">Zähler</label>
+    <select class="finput finput-select" id="fMeter">
+      ${ms.map((m,i)=>`<option value="${m.id}"${m.id===activeMid?' selected':''}>${esc(m.number||'Zähler '+(i+1))}${m.id===activeMid?' (aktiv)':''}</option>`).join('')}
+    </select>
+  </div>`;
 }
 
 function openModal(id){
-  editingId=id||null; newMeterMode=false;
+  editingId=id||null;
   const cfg=TABS[tab];
   if(editingId){
     const e=db[tab].readings.find(r=>r.id===editingId); if(!e) return;
@@ -850,7 +882,7 @@ function openModal(id){
   setTimeout(()=>document.getElementById('fValue').focus(),80);
 }
 
-function closeModal(){ document.getElementById('overlay').classList.remove('open'); editingId=null; newMeterMode=false; }
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); editingId=null; }
 
 document.getElementById('modalSave').addEventListener('click',()=>{
   const date=document.getElementById('fDate').value;
@@ -866,17 +898,13 @@ document.getElementById('modalSave').addEventListener('click',()=>{
     const errs=validateReading(date,value,editingId,entry.meterId);
     if(errs.length){applyErr(errs);return;}
     entry.date=date; entry.value=value; entry.note=note;
-  } else if(newMeterMode){
-    const num=document.getElementById('fMeterNumber')?.value.trim()||'';
-    const nm={id:genId(),number:num};
-    db[tab].meters.push(nm);
-    db[tab].readings.push({id:genId(),date,value,note,meterId:nm.id});
   } else {
-    let tm=activeMeter(tab);
-    if(!tm){ const num=document.getElementById('fMeterNumber')?.value.trim()||''; tm={id:genId(),number:num}; db[tab].meters.push(tm); }
-    const errs=validateReading(date,value,null,tm.id);
+    const meterSel=document.getElementById('fMeter');
+    if(!meterSel){ return; } // no meters configured
+    const targetMid=meterSel.value;
+    const errs=validateReading(date,value,null,targetMid);
     if(errs.length){applyErr(errs);return;}
-    db[tab].readings.push({id:genId(),date,value,note,meterId:tm.id});
+    db[tab].readings.push({id:genId(),date,value,note,meterId:targetMid});
   }
   saveDb(); closeModal(); render();
 });

@@ -2243,6 +2243,22 @@ function importFromJson() {
   }
 }
 
+async function autoLoadOffersJson() {
+  // Lädt offers.json aus dem selben Verzeichnis (GitHub Pages Deployment)
+  try {
+    const res = await fetch('offers.json', { cache: 'no-cache' });
+    if (!res.ok) return; // Datei nicht vorhanden — kein Fehler
+    const data = await res.json();
+    const offers = data.offers || [];
+    if (!offers.length) return;
+    const { added, updated } = mergeOffers(offers);
+    if (added + updated > 0) {
+      renderOffers();
+      console.log(`offers.json: ${added} neu, ${updated} aktualisiert`);
+    }
+  } catch (_) {}
+}
+
 function loadDemoOffers() {
   const { added, updated } = mergeOffers(DEMO_OFFERS.map(o => ({ ...o, favorit: o.favorit ?? false })));
   closeImportSheet();
@@ -2402,6 +2418,7 @@ function initTheme() {
 initTheme();
 loadOffers();
 initApp();
+autoLoadOffersJson();
 </script>
 </body>
 </html>

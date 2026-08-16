@@ -235,6 +235,24 @@
     .fav-chip-status.open { color: var(--teal); }
     .fav-chip-brand { width: 22px; height: 22px; border-radius: 6px; font-size: 9px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 4px; flex-shrink: 0; }
     .fav-chip-status.closed { color: var(--salmon); }
+
+    /* ── Backup ── */
+    .backup-row { width: 100%; max-width: 400px; margin-top: 0; }
+    .backup-btn {
+      width: 100%;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 14px 18px; color: var(--text);
+      display: flex; align-items: center; gap: 12px;
+      cursor: pointer; font-family: inherit; text-align: left;
+      transition: transform 0.12s, border-color 0.15s;
+    }
+    .backup-btn:active { transform: scale(0.97); }
+    .backup-btn.success { border-color: rgba(61,189,181,0.5); }
+    .backup-icon { font-size: 24px; flex-shrink: 0; }
+    .backup-text { flex: 1; }
+    .backup-title { display: block; font-size: 15px; font-weight: 700; }
+    .backup-sub   { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .backup-arrow { font-size: 18px; color: var(--teal); flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -313,6 +331,19 @@
       <div class="card-name">Tankstellen</div>
       <div class="card-desc">Günstige Preise in der Nähe finden</div>
     </a>
+  </div>
+
+  <!-- ══ BACKUP ══ -->
+  <div class="section-label" style="padding-left:0">Datensicherung</div>
+  <div class="backup-row">
+    <button class="backup-btn" id="backupBtn" onclick="doBackup()">
+      <span class="backup-icon">💾</span>
+      <span class="backup-text">
+        <span class="backup-title">Backup erstellen</span>
+        <span class="backup-sub" id="backupSub">Alle App-Daten sichern</span>
+      </span>
+      <span class="backup-arrow">↓</span>
+    </button>
   </div>
 
 <script>
@@ -526,6 +557,57 @@ async function loadFuelPrice() {
 
 loadFuelPrice();
 setInterval(loadFuelPrice, TK_HOUR);
+
+// ── Backup ──
+const BACKUP_STATIC_KEYS = [
+  'zaehler',
+  'kalorientracker_v1','kalorientracker_goal','kalorientracker_watergoal',
+  'kalorientracker_history','kalorientracker_favorites',
+  'haushaltskosten_v1',
+  'tankstellen_finder_v2',
+  'recentLists','restaurants','scannedSuggestions','einkauf_offers'
+];
+
+function updateBackupSub() {
+  const ts = localStorage.getItem('haushalt_backup_ts');
+  const sub = document.getElementById('backupSub');
+  if (ts) {
+    const d = new Date(parseInt(ts));
+    sub.textContent = 'Zuletzt: ' + d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}) + ', ' + d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}) + ' Uhr';
+  } else {
+    sub.textContent = 'Alle App-Daten sichern';
+  }
+}
+
+function doBackup() {
+  const payload = {};
+  BACKUP_STATIC_KEYS.forEach(k => {
+    const v = localStorage.getItem(k);
+    if (v != null) { try { payload[k] = JSON.parse(v); } catch { payload[k] = v; } }
+  });
+  // Dynamische list_* Keys der Einkaufsliste
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('list_') && payload[k] === undefined) {
+      const v = localStorage.getItem(k);
+      if (v != null) { try { payload[k] = JSON.parse(v); } catch { payload[k] = v; } }
+    }
+  }
+  payload._backup = { created: new Date().toISOString(), app: 'Haushalt Dashboard' };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'haushalt-backup.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  localStorage.setItem('haushalt_backup_ts', String(Date.now()));
+  updateBackupSub();
+  const btn = document.getElementById('backupBtn');
+  btn.classList.add('success');
+  setTimeout(() => btn.classList.remove('success'), 1800);
+}
+
+updateBackupSub();
 
 // ── Standort (nur Wetter) ──
 if (navigator.geolocation) {
