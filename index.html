@@ -233,6 +233,7 @@
     .fav-chip-dist { font-size: 10px; color: var(--muted); }
     .fav-chip-status { font-size: 10px; font-weight: 600; }
     .fav-chip-status.open { color: var(--teal); }
+    .fav-chip-brand { width: 22px; height: 22px; border-radius: 6px; font-size: 9px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 4px; flex-shrink: 0; }
     .fav-chip-status.closed { color: var(--salmon); }
   </style>
 </head>
@@ -415,6 +416,9 @@ const TK_HOUR      = 3600000;
 const FAV_DELTA    = 0.03; // Favorit bis 3 ct/L teurer bevorzugen
 const escH = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+const _BC={'ARAL':{bg:'#0066B2',fg:'#fff'},'Shell':{bg:'#FFD500',fg:'#D01919'},'BP':{bg:'#007A33',fg:'#fff'},'JET':{bg:'#E2001A',fg:'#fff'},'Esso':{bg:'#EE2436',fg:'#fff'},'ESSO':{bg:'#EE2436',fg:'#fff'},'TotalEnergies':{bg:'#E95B0C',fg:'#fff'},'TOTAL':{bg:'#E95B0C',fg:'#fff'},'OMV':{bg:'#E6380B',fg:'#fff'},'Star':{bg:'#2a2a2a',fg:'#F5C400'},'STAR':{bg:'#2a2a2a',fg:'#F5C400'},'AVIA':{bg:'#E30613',fg:'#fff'},'Westfalen':{bg:'#003399',fg:'#fff'},'HEM':{bg:'#FF6600',fg:'#fff'},'Q1':{bg:'#005CA9',fg:'#fff'},'Raiffeisen':{bg:'#005CA9',fg:'#fff'},'Agip':{bg:'#EB0028',fg:'#fff'}};
+function brandChip(brand){const b=brand||'?';const cfg=_BC[b]||{bg:'#888',fg:'#fff'};const t=b.replace(/\s+/g,'').replace(/[^A-Za-z0-9]/g,'').slice(0,2).toUpperCase()||'??';return `<span class="fav-chip-brand" style="background:${cfg.bg};color:${cfg.fg}">${t}</span>`;}
+
 function renderFuelWidget(cheapest, stations, favorites, ts) {
   // Favoriten in den Ergebnissen finden, nach Preis sortiert
   const favIds = Object.keys(favorites);
@@ -445,6 +449,7 @@ function renderFuelWidget(cheapest, stations, favorites, ts) {
     sec.style.display = '';
     document.getElementById('favGallery').innerHTML = favStations.map(s =>
       `<div class="fav-chip${s.isOpen?' is-open':''}">
+        ${brandChip(s.brand)}
         <div class="fav-chip-name" title="${escH(s.name)}">${escH(s.name)}</div>
         <div class="fav-chip-price">${s.e5.toLocaleString('de-DE',{minimumFractionDigits:3,maximumFractionDigits:3})}</div>
         <div class="fav-chip-dist">${s.dist?Number(s.dist).toLocaleString('de-DE',{maximumFractionDigits:1})+' km':''}</div>
