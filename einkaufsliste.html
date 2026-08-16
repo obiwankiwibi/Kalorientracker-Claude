@@ -1002,13 +1002,13 @@ function initApp() {
       renderAll();
     });
 
-    restRef = db.ref('restaurants');
+    restRef = db.ref('lists/' + listId + '/restaurants');
     restRef.on('value', snap => {
       customRestaurants = snap.val() || {};
       if (activeTab === 'restaurants') renderRestaurants();
     });
 
-    scannedRef = db.ref('scannedSuggestions');
+    scannedRef = db.ref('lists/' + listId + '/scannedSuggestions');
     scannedRef.on('value', snap => {
       scannedSuggestions = snap.val() || {};
       renderSuggestions();
