@@ -467,24 +467,22 @@ async function loadFuelPrice() {
 
   if (!tkState.apiKey) {
     document.getElementById('fuelName').textContent = 'API-Key in der Tankstellen-App hinterlegen';
-    document.getElementById('fuelMeta').textContent = 'Tippen zum Einrichten';
+    document.getElementById('fuelMeta').textContent = '';
     return;
   }
 
-  // Cache immer sofort zeigen (auch wenn veraltet — besser als nichts)
+  // Cache sofort anzeigen — immer, auch wenn veraltet
   const cached = JSON.parse(localStorage.getItem(TK_CACHE) || 'null');
   if (cached) renderFuelWidget(cached.cheapest, cached.stations, favorites, cached.ts);
 
-  // Frisch genug? Nicht nochmal holen.
+  // Cache noch frisch? Kein Refresh nötig.
   if (cached && (Date.now() - cached.ts) < TK_HOUR) return;
 
-  // Rate-Limit: tankstellen_finder und index teilen denselben API-Key
+  // Rate-Limit: tankstellen_finder und index teilen denselben API-Key (1 req/min)
   const sinceLastReq = Date.now() - (tkState.lastRequest || 0);
   if (sinceLastReq < 62000) {
-    if (!cached) {
-      document.getElementById('fuelName').textContent = 'Wird geladen…';
-      document.getElementById('fuelMeta').textContent = `Bitte ${Math.ceil((62000-sinceLastReq)/1000)} s warten`;
-    }
+    // Automatisch nochmal versuchen wenn Rate-Limit abgelaufen
+    setTimeout(loadFuelPrice, 62000 - sinceLastReq + 2000);
     return;
   }
 
@@ -500,12 +498,18 @@ async function loadFuelPrice() {
     const p = new URLSearchParams({lat:coords.lat, lng:coords.lng, rad:10, type:'e5', sort:'price', apikey:tkState.apiKey});
     const r = await fetch('https://creativecommons.tankerkoenig.de/json/list.php?'+p);
     const data = await r.json();
-    if (!data.ok || !data.stations?.length) throw new Error(data.message || 'API-Fehler');
+
+    if (!data.ok) {
+      // Rate-Limit von Tankerkönig-Seite → automatisch nochmal versuchen
+      setTimeout(loadFuelPrice, 65000);
+      return;
+    }
+    if (!data.stations?.length) throw new Error('Keine Stationen');
 
     const stations = data.stations.filter(s => typeof s.e5==='number' && s.e5>0.5);
-    if (!stations.length) throw new Error('Keine Preise im Umkreis');
+    if (!stations.length) throw new Error('Keine Super-95-Preise');
 
-    // lastRequest in tkState aktualisieren damit tankstellen_finder das Rate-Limit sieht
+    // lastRequest schreiben damit tankstellen_finder das Rate-Limit mitbekommt
     tkState.lastRequest = Date.now();
     localStorage.setItem('tankstellen_finder_v2', JSON.stringify(tkState));
 
@@ -517,7 +521,6 @@ async function loadFuelPrice() {
       document.getElementById('fuelName').textContent = 'Preis nicht verfügbar';
       document.getElementById('fuelMeta').textContent = String(err.message || '');
     }
-    // Stale Cache bleibt angezeigt — kein Überschreiben mit Fehler
   }
 }
 
