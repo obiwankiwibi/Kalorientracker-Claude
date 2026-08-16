@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Einkaufsliste</title>
+
+  <!-- Firebase SDK (nur geladen wenn konfiguriert) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #1e2030;
+      --surface:  #272a3d;
+      --card:     #31344a;
+      --teal:     #3dbdb5;
+      --teal-dim: #2d9990;
+      --salmon:   #e8635a;
+      --text:     #eef0f8;
+      --muted:    #7880a0;
+      --border:   #3a3d55;
+      --green:    #4caf88;
+      --red:      #e05555;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding-bottom: 70px;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+
+    /* ── Connection bar ── */
+    #connBar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 5px 12px;
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .dot.off { background: var(--red); }
+
+    /* ── Setup banner ── */
+    #setupBanner {
+      display: none;
+      background: #2d2510;
+      border: 1px solid #6b5a20;
+      border-radius: 12px;
+      margin: 12px;
+      padding: 14px;
+      font-size: 13px;
+      color: #e0c870;
+      line-height: 1.6;
+    }
+    #setupBanner h3 { margin-bottom: 6px; font-size: 14px; }
+    #setupBanner code {
+      background: #1a1507;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      display: block;
+      margin: 6px 0;
+      word-break: break-all;
+    }
+
+    /* ── Header ── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-back {
+      color: var(--muted);
+      font-size: 15px;
+      cursor: pointer;
+      padding: 4px 2px;
+      white-space: nowrap;
+    }
+
+    .header-title {
+      flex: 1;
+      text-align: center;
+      font-size: 17px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .icon-btn {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .icon-btn:active { opacity: 0.7; }
+
+    /* ── Search bar ── */
+    .search-wrap {
+      padding: 10px 12px;
+      position: sticky;
+      top: 55px;
+      z-index: 99;
+      background: var(--bg);
+    }
+
+    .search-inner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border-radius: 22px;
+      padding: 9px 14px;
+      border: 1px solid var(--border);
+    }
+
+    .search-inner input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+    }
+    .search-inner input::placeholder { color: var(--muted); }
+
+    .add-fab {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--teal);
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 22px;
+      line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-weight: 300;
+    }
+    .add-fab:active { background: var(--teal-dim); }
+
+    /* ── Sections ── */
+    .section { padding: 10px 12px; }
+
+    .sec-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 4px 0 10px;
+      user-select: none;
+    }
+
+    .sec-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sec-arrow { font-size: 10px; transition: transform 0.2s; }
+    .collapsed .sec-arrow { transform: rotate(-90deg); }
+
+    /* ── Tile grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+    }
+
+    .tile {
+      border-radius: 14px;
+      padding: 12px 8px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      position: relative;
+      min-height: 88px;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: transform 0.1s, opacity 0.15s;
+      animation: pop 0.15s ease-out;
+    }
+    .tile:active { transform: scale(0.93); }
+
+    @keyframes pop {
+      from { transform: scale(0.82); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    .tile-emoji { font-size: 26px; line-height: 1; }
+    .tile-name  { font-size: 11.5px; font-weight: 500; text-align: center; line-height: 1.25; word-break: break-word; }
+    .tile-amount { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 700; opacity: 0.9; }
+
+    /* Active items — salmon */
+    .tile.active {
+      background: var(--salmon);
+      color: #fff;
+    }
+
+    /* Checked items — teal, dimmed */
+    .tile.done {
+      background: var(--teal);
+      color: #fff;
+      opacity: 0.55;
+    }
+    .tile.done .tile-emoji::after {
+      content: ' ✓';
+      font-size: 13px;
+    }
+
+    /* Suggestions — teal */
+    .tile.sug {
+      background: var(--teal);
+      color: #fff;
+    }
+    .tile.sug.in-list { opacity: 0.35; }
+
+    /* Empty state */
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 20px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--border); margin: 4px 12px; }
+
+    /* ── Category chips ── */
+    .cat-row {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      padding: 0 12px 10px;
+      scrollbar-width: none;
+    }
+    .cat-row::-webkit-scrollbar { display: none; }
+
+    .chip {
+      flex-shrink: 0;
+      padding: 5px 13px;
+      border-radius: 18px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 12.5px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .chip.on { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+    /* ── Bottom picker sheet ── */
+    .sheet-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 300;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .sheet-overlay.open { display: flex; }
+
+    .sheet {
+      background: var(--surface);
+      width: 100%;
+      max-width: 430px;
+      border-radius: 22px 22px 0 0;
+      padding: 20px 14px 36px;
+      border-top: 1px solid var(--border);
+    }
+
+    .sheet-handle {
+      width: 40px; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+
+    .sheet-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .amount-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .amt-chip {
+      padding: 8px 16px;
+      background: var(--card);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      border: 2px solid transparent;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .amt-chip.on { border-color: var(--teal); background: rgba(61,189,181,0.12); }
+
+    .sheet-input {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+    .sheet-input:focus { border-color: var(--teal); }
+
+    .sheet-btns { display: flex; gap: 9px; }
+
+    .sh-btn {
+      flex: 1;
+      padding: 13px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+    .sh-btn:active { opacity: 0.8; }
+    .sh-btn.primary { background: var(--teal); color: #fff; }
+    .sh-btn.danger   { background: #4a2020; color: #ff7070; flex: 0 0 auto; padding: 13px 16px; }
+    .sh-btn.secondary { background: var(--card); color: var(--text); }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0 18px;
+      z-index: 200;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 4px 14px;
+      position: relative;
+    }
+    .nav-item.on { color: var(--teal); }
+    .nav-icon { font-size: 20px; }
+
+    .badge {
+      position: absolute;
+      top: 0; right: 6px;
+      background: var(--salmon);
+      color: #fff;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 5px;
+      min-width: 17px;
+      text-align: center;
+      display: none;
+    }
+    .badge.show { display: block; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 400;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ══ CONNECTION BAR ══ -->
+<div id="connBar">
+  <div class="dot off" id="dot"></div>
+  <span id="connText">Verbinde…</span>
+</div>
+
+<!-- ══ SETUP BANNER (shown when Firebase not configured) ══ -->
+<div id="setupBanner">
+  <h3>⚙️ Firebase noch nicht eingerichtet</h3>
+  Öffne die HTML-Datei im Texteditor und ersetze <code>YOUR_API_KEY</code> usw. mit deinen echten Firebase-Zugangsdaten.
+  (→ Anleitung unten in der Datei im Kommentar)
+  <br><br>
+  <strong>Jetzt läuft die App im Offline-Modus</strong> (nur auf diesem Gerät, kein Sync).
+</div>
+
+<!-- ══ HEADER ══ -->
+<header class="header">
+  <div class="header-back" onclick="switchList()">‹ Listen</div>
+  <div class="header-title" id="listTitle">Zuhause</div>
+  <button class="icon-btn" onclick="shareList()" title="Teilen">⎘</button>
+  <button class="icon-btn" onclick="clearDone()" title="Erledigte löschen">✓</button>
+</header>
+
+<!-- ══ SEARCH ══ -->
+<div class="search-wrap">
+  <div class="search-inner">
+    <span style="color:var(--muted);font-size:15px">🔍</span>
+    <input id="searchInput" placeholder="Suchen oder hinzufügen…"
+           oninput="onSearch()" onkeydown="onSearchKey(event)">
+    <button class="add-fab" onclick="addCustom()" title="Hinzufügen">+</button>
+  </div>
+</div>
+
+<!-- ══ ACTIVE LIST ══ -->
+<div class="section">
+  <div class="grid" id="activeGrid"></div>
+</div>
+
+<!-- ══ DONE ITEMS ══ -->
+<div class="section" id="doneSection" style="display:none">
+  <div class="sec-header" onclick="toggleDone()">
+    <div class="sec-title" id="doneTitle">
+      <span class="sec-arrow" id="doneArrow">▼</span> Erledigt (0)
+    </div>
+  </div>
+  <div class="grid" id="doneGrid" style="display:none"></div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══ CATEGORY CHIPS ══ -->
+<div class="cat-row" id="catRow"></div>
+
+<!-- ══ SUGGESTIONS ══ -->
+<div class="section">
+  <div class="grid" id="sugGrid"></div>
+</div>
+
+<!-- ══ PICKER SHEET ══ -->
+<div class="sheet-overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      <span id="sheetEmoji"></span>
+      <span id="sheetTitle"></span>
+    </div>
+    <div class="amount-chips" id="amtChips"></div>
+    <input class="sheet-input" id="sheetInput" placeholder="Eigene Menge oder Notiz…" oninput="onSheetInput(this.value)">
+    <div class="sheet-btns">
+      <button class="sh-btn danger" id="removeBtn" onclick="removePicked()">🗑</button>
+      <button class="sh-btn secondary" onclick="closeSheet()">Abbrechen</button>
+      <button class="sh-btn primary" onclick="confirmPicker()">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BOTTOM NAV ══ -->
+<nav class="bottom-nav">
+  <div class="nav-item on">
+    <div class="nav-icon">≡</div>
+    <div>Liste</div>
+  </div>
+  <div class="nav-item" onclick="shareList()">
+    <div class="nav-icon">⎘</div>
+    <div>Teilen</div>
+    <div class="badge" id="badge">0</div>
+  </div>
+  <div class="nav-item" onclick="clearDone()">
+    <div class="nav-icon">🗑</div>
+    <div>Erledigt</div>
+  </div>
+  <div class="nav-item" onclick="switchList()">
+    <div class="nav-icon">📋</div>
+    <div>Listen</div>
+  </div>
+</nav>
+
+<!-- ══ TOAST ══ -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  FIREBASE KONFIGURATION
+//  Ersetze die Platzhalter mit deinen echten Werten.
+//  Firebase Console: https://console.firebase.google.com
+//  Projekt erstellen → Realtime Database aktivieren
+//  → Projekteinstellungen → Deine Apps → Web-App hinzufügen
+// ═══════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL:       "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};
+
+// Firebase Database Rules (einmalig in der Firebase Console setzen):
+/*
+{
+  "rules": {
+    "lists": {
+      "$listId": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}
+*/
+
+// ═══════════════════════════════════════════════
+//  ARTIKEL-DATEN
+// ═══════════════════════════════════════════════
+const SUGGESTIONS = [
+  { name:'Zucchini',      emoji:'🥒', cat:'Gemüse' },
+  { name:'Möhren',        emoji:'🥕', cat:'Gemüse' },
+  { name:'Paprika',       emoji:'🫑', cat:'Gemüse' },
+  { name:'Gurke',         emoji:'🥒', cat:'Gemüse' },
+  { name:'Tomaten',       emoji:'🍅', cat:'Gemüse' },
+  { name:'Zwiebeln',      emoji:'🧅', cat:'Gemüse' },
+  { name:'Knoblauch',     emoji:'🧄', cat:'Gemüse' },
+  { name:'Spinat',        emoji:'🥬', cat:'Gemüse' },
+  { name:'Brokkoli',      emoji:'🥦', cat:'Gemüse' },
+  { name:'Salat',         emoji:'🥗', cat:'Gemüse' },
+  { name:'Kartoffeln',    emoji:'🥔', cat:'Gemüse' },
+  { name:'Mais',          emoji:'🌽', cat:'Gemüse' },
+  { name:'Pilze',         emoji:'🍄', cat:'Gemüse' },
+  { name:'Aubergine',     emoji:'🍆', cat:'Gemüse' },
+  { name:'Kohl',          emoji:'🥬', cat:'Gemüse' },
+  { name:'Lauch',         emoji:'🌿', cat:'Gemüse' },
+  { name:'Sellerie',      emoji:'🥬', cat:'Gemüse' },
+  { name:'Äpfel',         emoji:'🍎', cat:'Obst' },
+  { name:'Bananen',       emoji:'🍌', cat:'Obst' },
+  { name:'Zitrone',       emoji:'🍋', cat:'Obst' },
+  { name:'Erdbeeren',     emoji:'🍓', cat:'Obst' },
+  { name:'Trauben',       emoji:'🍇', cat:'Obst' },
+  { name:'Orangen',       emoji:'🍊', cat:'Obst' },
+  { name:'Avocado',       emoji:'🥑', cat:'Obst' },
+  { name:'Wassermelone',  emoji:'🍉', cat:'Obst' },
+  { name:'Himbeeren',     emoji:'🫐', cat:'Obst' },
+  { name:'Mango',         emoji:'🥭', cat:'Obst' },
+  { name:'Kiwi',          emoji:'🥝', cat:'Obst' },
+  { name:'Milch',         emoji:'🥛', cat:'Milch' },
+  { name:'Joghurt',       emoji:'🍮', cat:'Milch' },
+  { name:'Käse',          emoji:'🧀', cat:'Milch' },
+  { name:'Butter',        emoji:'🧈', cat:'Milch' },
+  { name:'Sahne',         emoji:'🥛', cat:'Milch' },
+  { name:'Quark',         emoji:'🍦', cat:'Milch' },
+  { name:'Frischkäse',    emoji:'🧀', cat:'Milch' },
+  { name:'Hafermilch',    emoji:'🥛', cat:'Milch' },
+  { name:'Toast',         emoji:'🍞', cat:'Brot' },
+  { name:'Brot',          emoji:'🥖', cat:'Brot' },
+  { name:'Brötchen',      emoji:'🥐', cat:'Brot' },
+  { name:'Croissant',     emoji:'🥐', cat:'Brot' },
+  { name:'Wasser',        emoji:'💧', cat:'Getränke' },
+  { name:'Saft',          emoji:'🧃', cat:'Getränke' },
+  { name:'Kaffee',        emoji:'☕', cat:'Getränke' },
+  { name:'Tee',           emoji:'🍵', cat:'Getränke' },
+  { name:'Bier',          emoji:'🍺', cat:'Getränke' },
+  { name:'Wein',          emoji:'🍷', cat:'Getränke' },
+  { name:'Cola',          emoji:'🥤', cat:'Getränke' },
+  { name:'Eier',          emoji:'🥚', cat:'Grundnahrung' },
+  { name:'Nudeln',        emoji:'🍝', cat:'Grundnahrung' },
+  { name:'Reis',          emoji:'🍚', cat:'Grundnahrung' },
+  { name:'Mehl',          emoji:'🌾', cat:'Grundnahrung' },
+  { name:'Zucker',        emoji:'🍬', cat:'Grundnahrung' },
+  { name:'Öl',            emoji:'🫙', cat:'Grundnahrung' },
+  { name:'Salz',          emoji:'🧂', cat:'Grundnahrung' },
+  { name:'Pfeffer',       emoji:'🫙', cat:'Grundnahrung' },
+  { name:'Hähnchen',      emoji:'🍗', cat:'Fleisch' },
+  { name:'Hackfleisch',   emoji:'🥩', cat:'Fleisch' },
+  { name:'Lachs',         emoji:'🐟', cat:'Fleisch' },
+  { name:'Würstchen',     emoji:'🌭', cat:'Fleisch' },
+  { name:'Thunfisch',     emoji:'🐠', cat:'Fleisch' },
+  { name:'Schinken',      emoji:'🥩', cat:'Fleisch' },
+  { name:'Toilettenpapier', emoji:'🧻', cat:'Haushalt' },
+  { name:'Spülmittel',    emoji:'🧴', cat:'Haushalt' },
+  { name:'Waschmittel',   emoji:'🧺', cat:'Haushalt' },
+  { name:'Müllbeutel',    emoji:'🗑️', cat:'Haushalt' },
+  { name:'Shampoo',       emoji:'🧴', cat:'Haushalt' },
+  { name:'Zahnpasta',     emoji:'🪥', cat:'Haushalt' },
+  { name:'Seife',         emoji:'🧼', cat:'Haushalt' },
+  { name:'Taschentücher', emoji:'🤧', cat:'Haushalt' },
+];
+
+const AMOUNTS = ['1','2','3','4','5','6','300g','500g','750g','1kg','2kg','1L','1,5L','2L'];
+const CATS = ['Alle', ...new Set(SUGGESTIONS.map(s => s.cat))];
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let items   = {};      // { id: { name, emoji, amount, checked } }
+let listRef = null;    // Firebase ref
+let offlineMode = false;
+
+let picker = { id: null, name: '', emoji: '', amount: '', isNew: true };
+let activeCat   = 'Alle';
+let doneOpen    = false;
+
+// List ID aus URL
+const params = new URLSearchParams(location.search);
+const listId = (params.get('list') || 'zuhause').toLowerCase();
+document.getElementById('listTitle').textContent =
+  listId.charAt(0).toUpperCase() + listId.slice(1);
+document.title = '🛒 ' + listId.charAt(0).toUpperCase() + listId.slice(1);
+
+// ═══════════════════════════════════════════════
+//  FIREBASE / STORAGE
+// ═══════════════════════════════════════════════
+function initApp() {
+  if (FIREBASE_CONFIG.apiKey === 'YOUR_API_KEY') {
+    startOffline();
+    return;
+  }
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.database();
+
+    db.ref('.info/connected').on('value', snap => {
+      setOnline(snap.val() === true);
+    });
+
+    listRef = db.ref('lists/' + listId + '/items');
+    listRef.on('value', snap => {
+      items = snap.val() || {};
+      renderAll();
+    });
+  } catch(e) {
+    console.error('Firebase init failed:', e);
+    startOffline();
+  }
+}
+
+function startOffline() {
+  offlineMode = true;
+  document.getElementById('setupBanner').style.display = 'block';
+  setOnline(false, true);
+  try { items = JSON.parse(localStorage.getItem('list_' + listId) || '{}'); } catch { items = {}; }
+  renderAll();
+}
+
+function setOnline(on, isOfflineMode = false) {
+  const dot  = document.getElementById('dot');
+  const text = document.getElementById('connText');
+  if (isOfflineMode) {
+    dot.className = 'dot off';
+    text.textContent = 'Offline-Modus – kein Firebase';
+  } else if (on) {
+    dot.className = 'dot';
+    text.textContent = 'Synchronisiert · ' + listId;
+  } else {
+    dot.className = 'dot off';
+    text.textContent = 'Verbindung getrennt';
+  }
+}
+
+function persist(id, data) {
+  if (listRef) {
+    if (data === null) listRef.child(id).remove();
+    else listRef.child(id).set(data);
+    // Firebase listener updates `items` automatically
+  } else {
+    if (data === null) delete items[id];
+    else items[id] = data;
+    localStorage.setItem('list_' + listId, JSON.stringify(items));
+    renderAll();
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════
+function renderAll() {
+  const active = [], done = [];
+  Object.entries(items).forEach(([id, it]) => {
+    (it.checked ? done : active).push({ id, ...it });
+  });
+  active.sort((a,b) => (a.addedAt||0) - (b.addedAt||0));
+  done.sort((a,b)   => (a.checkedAt||0) - (b.checkedAt||0));
+
+  // Active grid
+  const ag = document.getElementById('activeGrid');
+  if (active.length === 0) {
+    ag.innerHTML = '<div class="empty">Keine Artikel in der Liste.<br>Tippe unten auf einen Vorschlag!</div>';
+  } else {
+    ag.innerHTML = active.map(it => tile('active', it)).join('');
+  }
+
+  // Done grid
+  const ds = document.getElementById('doneSection');
+  const dg = document.getElementById('doneGrid');
+  const dt = document.getElementById('doneTitle');
+  if (done.length > 0) {
+    ds.style.display = '';
+    dt.innerHTML = `<span class="sec-arrow" id="doneArrow">${doneOpen?'▼':'▶'}</span> Erledigt (${done.length})`;
+    dg.style.display = doneOpen ? 'grid' : 'none';
+    dg.innerHTML = done.map(it => tile('done', it)).join('');
+  } else {
+    ds.style.display = 'none';
+  }
+
+  // Badge
+  const b = document.getElementById('badge');
+  const cnt = active.length;
+  b.textContent = cnt;
+  b.classList.toggle('show', cnt > 0);
+
+  renderSuggestions();
+}
+
+function tile(type, it) {
+  const onclick = type === 'active'
+    ? `openPicker('${it.id}')`
+    : `uncheck('${it.id}')`;
+  return `<div class="tile ${type}" onclick="${onclick}">
+    <div class="tile-emoji">${it.emoji || '🛒'}</div>
+    <div class="tile-name">${esc(it.name)}</div>
+    ${it.amount ? `<div class="tile-amount">${esc(it.amount)}</div>` : ''}
+  </div>`;
+}
+
+function renderSuggestions() {
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const inListNames = new Set(Object.values(items).map(i => i.name.toLowerCase()));
+
+  let list = SUGGESTIONS;
+  if (activeCat !== 'Alle') list = list.filter(s => s.cat === activeCat);
+  if (search)               list = list.filter(s => s.name.toLowerCase().includes(search));
+
+  const sg = document.getElementById('sugGrid');
+  if (list.length === 0) {
+    sg.innerHTML = `<div class="empty">Kein Vorschlag gefunden.<br>Drücke <strong>+</strong> um "${esc(document.getElementById('searchInput').value.trim())}" hinzuzufügen.</div>`;
+  } else {
+    sg.innerHTML = list.map(s => {
+      const inList = inListNames.has(s.name.toLowerCase());
+      return `<div class="tile sug ${inList ? 'in-list' : ''}" onclick="tapSuggestion('${esc(s.name)}','${s.emoji}')">
+        <div class="tile-emoji">${s.emoji}</div>
+        <div class="tile-name">${esc(s.name)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  renderCats();
+}
+
+function renderCats() {
+  const cr = document.getElementById('catRow');
+  cr.innerHTML = CATS.map(c =>
+    `<button class="chip ${c === activeCat ? 'on' : ''}" onclick="setCat('${c}')">${c}</button>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════
+//  INTERACTIONS
+// ═══════════════════════════════════════════════
+function tapSuggestion(name, emoji) {
+  const existing = Object.entries(items).find(([,v]) => v.name.toLowerCase() === name.toLowerCase());
+  if (existing) {
+    // Already in list → open picker to edit / remove
+    openPicker(existing[0]);
+    return;
+  }
+  // Add immediately with no amount
+  const id = 'i_' + Date.now();
+  persist(id, { name, emoji, amount: '', checked: false, addedAt: Date.now() });
+  toast(`${emoji} ${name} hinzugefügt`);
+}
+
+function openPicker(id) {
+  const it = items[id];
+  if (!it) return;
+  picker = { id, name: it.name, emoji: it.emoji || '🛒', amount: it.amount || '', isNew: false };
+
+  document.getElementById('sheetEmoji').textContent = picker.emoji;
+  document.getElementById('sheetTitle').textContent = picker.name;
+  document.getElementById('sheetInput').value = picker.amount;
+  document.getElementById('removeBtn').style.display = '';
+
+  buildAmtChips(picker.amount);
+  document.getElementById('overlay').classList.add('open');
+}
+
+function openNewPicker(name, emoji) {
+  picker = { id: null, name, emoji: emoji || '🛒', amount: '', isNew: true };
+  document.getElementById('sheetEmoji').textContent = picker.emoji;
+  document.getElementById('sheetTitle').textContent = picker.name;
+  document.getElementById('sheetInput').value = '';
+  document.getElementById('removeBtn').style.display = 'none';
+  buildAmtChips('');
+  document.getElementById('overlay').classList.add('open');
+}
+
+function buildAmtChips(selected) {
+  const ac = document.getElementById('amtChips');
+  ac.innerHTML = AMOUNTS.map(a =>
+    `<div class="amt-chip ${a === selected ? 'on' : ''}" data-amt="${a}" onclick="pickAmt('${a}')">${a}</div>`
+  ).join('');
+}
+
+function pickAmt(a) {
+  if (picker.amount === a) {
+    picker.amount = '';
+    document.getElementById('sheetInput').value = '';
+  } else {
+    picker.amount = a;
+    document.getElementById('sheetInput').value = a;
+  }
+  document.querySelectorAll('.amt-chip').forEach(c =>
+    c.classList.toggle('on', c.dataset.amt === picker.amount)
+  );
+}
+
+function onSheetInput(val) {
+  picker.amount = val;
+  document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('on'));
+}
+
+function confirmPicker() {
+  if (picker.isNew) {
+    const id = 'i_' + Date.now();
+    persist(id, { name: picker.name, emoji: picker.emoji, amount: picker.amount, checked: false, addedAt: Date.now() });
+  } else {
+    const it = items[picker.id];
+    if (it) persist(picker.id, { ...it, amount: picker.amount });
+  }
+  closeSheet();
+}
+
+function removePicked() {
+  if (picker.id) persist(picker.id, null);
+  closeSheet();
+}
+
+function closeSheet() {
+  document.getElementById('overlay').classList.remove('open');
+  picker = { id: null, name: '', emoji: '', amount: '', isNew: true };
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeSheet();
+}
+
+function toggleItem(id) {
+  const it = items[id];
+  if (!it) return;
+  persist(id, { ...it, checked: !it.checked, checkedAt: Date.now() });
+}
+
+function uncheck(id) {
+  const it = items[id];
+  if (!it) return;
+  persist(id, { ...it, checked: false, checkedAt: null });
+}
+
+function toggleDone() {
+  doneOpen = !doneOpen;
+  const dg = document.getElementById('doneGrid');
+  const arrow = document.getElementById('doneArrow');
+  dg.style.display = doneOpen ? 'grid' : 'none';
+  if (arrow) arrow.textContent = doneOpen ? '▼' : '▶';
+}
+
+function clearDone() {
+  const cnt = Object.values(items).filter(i => i.checked).length;
+  if (cnt === 0) { toast('Keine erledigten Artikel'); return; }
+  if (!confirm(`${cnt} erledigte Artikel entfernen?`)) return;
+  Object.entries(items).forEach(([id, it]) => { if (it.checked) persist(id, null); });
+}
+
+function addCustom() {
+  const inp = document.getElementById('searchInput');
+  const name = inp.value.trim();
+  if (!name) return;
+  const sug = SUGGESTIONS.find(s => s.name.toLowerCase() === name.toLowerCase());
+  openNewPicker(sug ? sug.name : name, sug ? sug.emoji : '🛒');
+  inp.value = '';
+  renderSuggestions();
+}
+
+function onSearch() { renderSuggestions(); }
+
+function onSearchKey(e) {
+  if (e.key === 'Enter') addCustom();
+}
+
+function setCat(cat) {
+  activeCat = cat;
+  renderSuggestions();
+}
+
+// ═══════════════════════════════════════════════
+//  SHARE / SWITCH LIST
+// ═══════════════════════════════════════════════
+function shareList() {
+  const url = location.origin + location.pathname + '?list=' + encodeURIComponent(listId);
+  if (navigator.share) {
+    navigator.share({ title: 'Einkaufsliste: ' + listId, url });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => toast('Link kopiert!'));
+  } else {
+    prompt('Teile diesen Link:', url);
+  }
+}
+
+function switchList() {
+  const name = prompt('Listenname eingeben (z.B. "wochenmarkt"):');
+  if (!name) return;
+  location.href = location.pathname + '?list=' + encodeURIComponent(name.toLowerCase().trim());
+}
+
+// ═══════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ═══════════════════════════════════════════════
+//  START
+// ═══════════════════════════════════════════════
+initApp();
+</script>
+</body>
+</html>
