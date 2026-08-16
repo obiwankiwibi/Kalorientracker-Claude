@@ -27,6 +27,16 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 .fav-section{margin-top:22px}.fav-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:10px}.fav-card{padding:14px}.fav-name{font-weight:750}.fav-price-big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;margin:5px 0 2px}.fav-chart{height:75px;margin-top:10px}.fav-actions{display:flex;gap:8px;align-items:center;margin-top:8px}.fav-remove{font-size:11px;border:0;background:none;color:var(--muted);cursor:pointer;padding:0}
 .overlay{position:fixed;inset:0;background:rgba(9,15,18,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}.overlay.open{display:flex}.modal{width:min(460px,100%);background:var(--card);border:1px solid var(--line);border-radius:15px;padding:22px}.modal h2{margin:0 0 8px;font-size:20px}.notice{font-size:12px;color:var(--muted);background:var(--bg);padding:10px;border-radius:9px;margin:0 0 16px}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.ghost{border:1px solid var(--line);background:none;color:var(--ink);border-radius:9px;padding:9px 14px;cursor:pointer}
 .attribution{text-align:center;font-size:11px;color:var(--muted);padding:22px 0 4px;border-top:1px solid var(--line);margin-top:28px}.attribution a{color:var(--brand);text-decoration:none}
+.station-left{display:flex;gap:10px;align-items:flex-start}
+.brand-badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;font-size:11px;font-weight:900;letter-spacing:-.5px;flex-shrink:0;margin-top:2px}
+.hours-btn{cursor:pointer;border:0;font:10px/1.6 inherit;padding:2px 8px;border-radius:99px;letter-spacing:inherit}
+.hours-btn.open{background:var(--soft);color:var(--brand)}
+.hours-btn.closed{background:var(--bg);color:var(--warn)}
+.hours-panel{margin-top:8px;font-size:12px;line-height:1.9}
+.hours-row{display:flex;justify-content:space-between;gap:14px}
+.hours-row-day{color:var(--muted)}
+.hours-note{font-size:11px;color:var(--muted);margin-top:2px}
+.hours-load{color:var(--muted);font-size:12px;font-style:italic}
 @media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.grid .place{grid-column:1/-1}.layout{grid-template-columns:1fr}.chart-card{position:static}.topstats{grid-template-columns:1fr 1fr}}
 @media(max-width:430px){.grid{grid-template-columns:1fr}.grid .place{grid-column:auto}.station{grid-template-columns:1fr}.price{text-align:left}.subactions{flex-wrap:wrap}.status{width:100%;margin-left:0}}
 </style>
@@ -130,7 +140,7 @@ function recordFavPrices(){
 function toggleFav(id){
  const s=state.stations.find(s=>s.id===id);if(!s)return;
  if(state.favorites[id]){delete state.favorites[id];delete state.favPrices[id]}
- else{state.favorites[id]={name:s.name,address:`${s.street||''} ${s.houseNumber||''}`.trim()+`, ${s.postCode} ${s.place}`};if(!state.favPrices[id])state.favPrices[id]=[]}
+ else{state.favorites[id]={name:s.name,brand:s.brand||'',address:`${s.street||''} ${s.houseNumber||''}`.trim()+`, ${s.postCode} ${s.place}`};if(!state.favPrices[id])state.favPrices[id]=[]}
  persist();render();
 }
 
@@ -148,7 +158,7 @@ function render(){
  const saving=(avg-min)*50;$('savings').textContent=saving>0?saving.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €':'—';
  $('stations').innerHTML=list.map(s=>{
   const isFav=!!state.favorites[s.id];
-  return `<article class="card station"><div><div class="name">${esc(s.name)}</div><div class="address">${esc(s.street)} ${esc(s.houseNumber)}, ${esc(s.postCode)} ${esc(s.place)}</div><div class="badges"><span class="badge ${s.isOpen?'open':'closed'}">${s.isOpen?'Geöffnet':'Geschlossen'}</span><span class="badge">${Number(s.dist).toLocaleString('de-DE',{maximumFractionDigits:1})} km</span></div></div><div><div class="price">${euro(s[state.fuel])}<small>pro Liter</small></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.lat+','+s.lng)}">Route öffnen</a><button class="star${isFav?' active':''}" data-favid="${esc(s.id)}" title="${isFav?'Nicht mehr beobachten':'Beobachten'}">★</button></div></article>`;
+  return `<article class="card station"><div class="station-left">${brandBadge(s.brand)}<div style="flex:1;min-width:0"><div class="name">${esc(s.name)}</div><div class="address">${esc(s.street)} ${esc(s.houseNumber)}, ${esc(s.postCode)} ${esc(s.place)}</div><div class="badges"><button class="badge hours-btn ${s.isOpen?'open':'closed'}" data-sid="${esc(s.id)}">${s.isOpen?'Geöffnet ▾':'Geschlossen ▾'}</button><span class="badge">${Number(s.dist).toLocaleString('de-DE',{maximumFractionDigits:1})} km</span></div><div class="hours-panel" id="hp_${s.id}" style="display:none"></div></div></div><div><div class="price">${euro(s[state.fuel])}<small>pro Liter</small></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.lat+','+s.lng)}">Route öffnen</a><button class="star${isFav?' active':''}" data-favid="${esc(s.id)}" title="${isFav?'Nicht mehr beobachten':'Beobachten'}">★</button></div></article>`;
  }).join('');
  drawChart();renderFavs();
 }
@@ -201,6 +211,40 @@ function drawMiniChart(c,data){
  x.textAlign='right';x.fillText(new Date(data.at(-1).t).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}),w-pad.r,h-1);
 }
 
+const BRAND_C={'ARAL':{bg:'#0066B2',fg:'#fff'},'Shell':{bg:'#FFD500',fg:'#D01919'},'BP':{bg:'#007A33',fg:'#fff'},'JET':{bg:'#E2001A',fg:'#fff'},'Esso':{bg:'#EE2436',fg:'#fff'},'ESSO':{bg:'#EE2436',fg:'#fff'},'TotalEnergies':{bg:'#E95B0C',fg:'#fff'},'TOTAL':{bg:'#E95B0C',fg:'#fff'},'OMV':{bg:'#E6380B',fg:'#fff'},'Star':{bg:'#2a2a2a',fg:'#F5C400'},'STAR':{bg:'#2a2a2a',fg:'#F5C400'},'AVIA':{bg:'#E30613',fg:'#fff'},'Westfalen':{bg:'#003399',fg:'#fff'},'HEM':{bg:'#FF6600',fg:'#fff'},'Q1':{bg:'#005CA9',fg:'#fff'},'Raiffeisen':{bg:'#005CA9',fg:'#fff'},'Agip':{bg:'#EB0028',fg:'#fff'}};
+function brandBadge(brand){
+ const b=brand||'?';
+ const cfg=BRAND_C[b]||{bg:'var(--line)',fg:'var(--muted)'};
+ const t=b.replace(/\s+/g,'').replace(/[^A-Za-z0-9]/g,'').slice(0,2).toUpperCase()||'??';
+ return `<span class="brand-badge" style="background:${cfg.bg};color:${cfg.fg}">${t}</span>`;
+}
+
+async function fetchOpeningHours(id,panel){
+ const key='tk_h_'+id;
+ const cached=localStorage.getItem(key);
+ if(cached){panel.innerHTML=cached;return}
+ const elapsed=Date.now()-state.lastRequest;
+ if(elapsed<62000){panel.innerHTML=`<span class="hours-load">Bitte noch ${Math.ceil((62000-elapsed)/1000)} s warten…</span>`;return}
+ panel.innerHTML='<span class="hours-load">Wird geladen…</span>';
+ try{
+  const r=await fetch(`https://creativecommons.tankerkoenig.de/json/detail.php?id=${encodeURIComponent(id)}&apikey=${encodeURIComponent(state.apiKey)}`);
+  const data=await r.json();
+  state.lastRequest=Date.now();persist();startCooldown();
+  if(!data.ok||!data.station)throw new Error();
+  const html=renderHours(data.station);
+  localStorage.setItem(key,html);panel.innerHTML=html;
+ }catch(e){panel.innerHTML='<span class="hours-load">Nicht verfügbar</span>'}
+}
+
+function renderHours(st){
+ if(st.wholeDay)return '<div class="hours-row"><span class="hours-row-day">Täglich</span><span>24 Stunden</span></div>';
+ const times=Array.isArray(st.openingTimes)?st.openingTimes:[];
+ if(!times.length)return '<span class="hours-load">Keine Angaben hinterlegt</span>';
+ let h=times.map(t=>`<div class="hours-row"><span class="hours-row-day">${esc(t.text||'')}</span><span>${(t.start||'').slice(0,5)} – ${(t.end||'').slice(0,5)}</span></div>`).join('');
+ if(st.overrides&&st.overrides.length)h+='<div class="hours-note">Abweichende Öffnungszeiten möglich</div>';
+ return h;
+}
+
 function openSettings(){$('apiKey').value=state.apiKey;$('overlay').classList.add('open');setTimeout(()=>$('apiKey').focus(),50)}
 $('settingsBtn').onclick=openSettings;$('cancelSettings').onclick=()=>$('overlay').classList.remove('open');
 $('saveSettings').onclick=()=>{state.apiKey=$('apiKey').value.trim();persist();$('overlay').classList.remove('open');setStatus(state.apiKey?'Bereit zur Suche':'API-Key fehlt')};
@@ -208,7 +252,19 @@ $('overlay').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList
 $('searchBtn').onclick=search;$('place').oninput=()=>{state.coords=null};$('sorting').onchange=render;
 document.querySelectorAll('.fuel').forEach(b=>b.onclick=()=>{state.fuel=b.dataset.fuel;persist();render()});
 $('clearHistory').onclick=()=>{if(confirm('Gespeicherte Preisentwicklung löschen?')){state.history={e10:[],e5:[],diesel:[]};persist();drawChart()}};
-$('stations').addEventListener('click',e=>{const btn=e.target.closest('[data-favid]');if(btn&&btn.classList.contains('star'))toggleFav(btn.dataset.favid)});
+$('stations').addEventListener('click',async e=>{
+ const star=e.target.closest('.star[data-favid]');
+ if(star){toggleFav(star.dataset.favid);return}
+ const hbtn=e.target.closest('.hours-btn[data-sid]');
+ if(hbtn){
+  const id=hbtn.dataset.sid;
+  const panel=document.getElementById('hp_'+id);
+  if(!panel)return;
+  const showing=panel.style.display!=='none'&&panel.innerHTML!=='';
+  panel.style.display=showing?'none':'';
+  if(!showing&&!panel.dataset.loaded){panel.dataset.loaded='1';await fetchOpeningHours(id,panel)}
+ }
+});
 $('favGrid').addEventListener('click',e=>{const btn=e.target.closest('.fav-remove');if(btn)toggleFav(btn.dataset.favid)});
 const themes=['system','light','dark'];
 function applyTheme(){state.theme==='system'?document.documentElement.removeAttribute('data-theme'):document.documentElement.setAttribute('data-theme',state.theme);requestAnimationFrame(drawChart)}
