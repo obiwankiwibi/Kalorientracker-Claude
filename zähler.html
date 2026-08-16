@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zähler</title>
+  <style>
+    :root {
+      --paper:    #F4F6FA;
+      --surface:  #FFFFFF;
+      --surface2: #EEF1F7;
+      --border:   #DDE2EC;
+      --ink:      #151E2B;
+      --ink2:     #6B7A90;
+      --amber:    #C47F17;
+      --amber-bg: #FDF5E0;
+      --azure:    #0272C0;
+      --azure-bg: #E5F1FB;
+      --pos:      #0F7A4C;
+      --pos-bg:   #DCFAED;
+      --neg:      #B8351E;
+      --neg-bg:   #FDE8E5;
+      --warn:     #92400E;
+      --warn-bg:  rgba(217,119,6,0.1);
+      --warn-bdr: rgba(217,119,6,0.35);
+      --accent:   var(--amber);
+      --acc-bg:   var(--amber-bg);
+      --radius:   10px;
+      --mono: 'Courier New', 'Menlo', 'Monaco', monospace;
+      --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --paper:    #0C1117; --surface:  #14202E; --surface2: #1C2B3A;
+        --border:   #263548; --ink:      #DDE4EF; --ink2:     #7A90A8;
+        --amber-bg: rgba(196,127,23,0.14); --azure-bg: rgba(2,114,192,0.14);
+        --pos: #2ADB8A; --pos-bg: rgba(42,219,138,0.14);
+        --neg: #F07060; --neg-bg: rgba(240,112,96,0.14);
+        --warn: #FCD34D; --warn-bg: rgba(252,211,77,0.08); --warn-bdr: rgba(252,211,77,0.25);
+      }
+    }
+    :root[data-theme="dark"] {
+      --paper:    #0C1117; --surface:  #14202E; --surface2: #1C2B3A;
+      --border:   #263548; --ink:      #DDE4EF; --ink2:     #7A90A8;
+      --amber-bg: rgba(196,127,23,0.14); --azure-bg: rgba(2,114,192,0.14);
+      --pos: #2ADB8A; --pos-bg: rgba(42,219,138,0.14);
+      --neg: #F07060; --neg-bg: rgba(240,112,96,0.14);
+      --warn: #FCD34D; --warn-bg: rgba(252,211,77,0.08); --warn-bdr: rgba(252,211,77,0.25);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--sans); background: var(--paper); color: var(--ink);
+      min-height: 100vh; font-size: 14px; line-height: 1.5;
+      transition: background .2s, color .2s;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      height: 52px; padding: 0 1.25rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .wordmark {
+      font-family: var(--mono); font-size: 12px; font-weight: bold;
+      letter-spacing: .12em; text-transform: uppercase; color: var(--ink);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .wm-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; transition: background .2s; }
+    .hctrl { display: flex; gap: 5px; align-items: center; }
+    .hbtn {
+      width: 32px; height: 32px; background: none; border: 1px solid var(--border);
+      border-radius: 7px; cursor: pointer; color: var(--ink2); font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .12s, color .12s; position: relative;
+    }
+    .hbtn:hover { background: var(--surface2); color: var(--ink); }
+    .hbtn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .backup-dot {
+      position: absolute; top: -3px; right: -3px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--warn); border: 2px solid var(--surface); display: none;
+    }
+    .backup-dot.show { display: block; }
+
+    /* ── Tabs ── */
+    .tab-bar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; padding: 0 1.25rem; overflow-x: auto; scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab {
+      display: flex; align-items: center; gap: 6px; padding: 0 2px; height: 42px;
+      margin-right: 6px; flex-shrink: 0; background: none; border: none;
+      border-bottom: 2px solid transparent; cursor: pointer;
+      font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--ink2);
+      transition: color .15s, border-color .15s; position: relative; bottom: -1px;
+    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab:not(.active):not(.tab-soon):hover { color: var(--ink); }
+    .tab-soon { opacity: .4; cursor: default; }
+    .tab-pill {
+      font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+      background: var(--surface2); color: var(--ink2); border-radius: 99px; padding: 1px 5px;
+    }
+
+    /* ── Content ── */
+    .content { max-width: 960px; margin: 0 auto; padding: 1.25rem; }
+
+    /* ── Backup banner ── */
+    .backup-banner {
+      background: var(--warn-bg); border: 1px solid var(--warn-bdr);
+      border-radius: var(--radius); padding: .625rem 1rem; margin-bottom: 1.125rem;
+      display: flex; align-items: center; gap: .625rem; font-size: 12px; color: var(--warn);
+    }
+    .backup-banner svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+    .backup-banner button {
+      margin-left: auto; background: none; border: none; cursor: pointer;
+      color: var(--warn); font-weight: 600; font-size: 12px; text-decoration: underline; padding: 0;
+    }
+
+    /* ── Settings ── */
+    .settings-bar {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: .875rem 1.125rem;
+      margin-bottom: 1.125rem; display: none;
+    }
+    .settings-bar.open { display: block; }
+    .settings-eyebrow {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .09em; color: var(--ink2); margin-bottom: .625rem;
+    }
+    .settings-fields { display: flex; gap: .875rem; flex-wrap: wrap; }
+    .sfield { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 150px; }
+    .sfield-label { font-size: 11px; color: var(--ink2); font-weight: 500; }
+    .sfield-input {
+      background: var(--paper); border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 10px; font-family: var(--mono); font-size: 13px; color: var(--ink);
+      width: 100%; transition: border-color .12s;
+    }
+    .sfield-input:focus { outline: none; border-color: var(--accent); }
+    .settings-section-head {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em;
+      color: var(--ink2); margin: .875rem 0 .5rem; padding-top: .875rem;
+      border-top: 1px solid var(--border);
+    }
+    .settings-export-info { margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--border); font-size: 11px; color: var(--ink2); }
+    .settings-export-warn { color: var(--warn); font-weight: 600; }
+
+    /* ── Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1rem; }
+    .stats-grid-2 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1.125rem; }
+    @media (max-width: 700px) {
+      .stats-grid  { grid-template-columns: 1fr 1fr; }
+      .stats-grid-2{ grid-template-columns: 1fr 1fr 1fr; }
+    }
+    @media (max-width: 420px) { .stats-grid-2 { grid-template-columns: 1fr 1fr; } }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: .875rem 1.125rem; }
+    .stat-card-dim { background: var(--surface2); border-color: transparent; }
+    .stat-eye { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--ink2); margin-bottom: 5px; }
+    .stat-val { font-family: var(--mono); font-size: 24px; font-weight: bold; color: var(--ink); line-height: 1; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+    .stat-val-sm { font-size: 18px; }
+    .stat-unit { font-family: var(--mono); font-size: 11px; color: var(--ink2); margin-left: 2px; }
+    .stat-sub { font-size: 11px; color: var(--ink2); margin-top: 4px; }
+    .trend { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; border-radius: 99px; padding: 2px 7px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .trend-up   { background: var(--neg-bg); color: var(--neg); }
+    .trend-down { background: var(--pos-bg); color: var(--pos); }
+    .trend-neu  { background: var(--surface2); color: var(--ink2); }
+
+    /* ── Chart ── */
+    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.125rem; margin-bottom: 1.125rem; }
+    .chart-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--ink2); margin-bottom: .875rem; }
+    #chartCanvas { width: 100%; display: block; }
+
+    /* ── Table ── */
+    .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 5rem; }
+    .table-hdr-bar { padding: .75rem 1.125rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .table-hdr-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--ink2); }
+    .count-badge { font-size: 11px; font-weight: 700; background: var(--surface2); color: var(--ink2); border-radius: 99px; padding: 1px 8px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { padding: 7px 14px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--ink2); background: var(--surface2); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .th-r { text-align: right; }
+    tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--ink); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:not(.neg-row):not(.meter-divider-row):hover td { background: var(--surface2); }
+    .neg-row td { background: var(--warn-bg) !important; }
+    .td-r { text-align: right; font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .td-date-main  { font-size: 13px; }
+    .td-meter-sub  { font-size: 10px; color: var(--ink2); font-family: var(--mono); letter-spacing: .04em; margin-top: 1px; }
+    .td-note { font-size: 12px; color: var(--ink2); font-style: italic; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .first-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; background: var(--surface2); color: var(--ink2); border-radius: 4px; padding: 2px 6px; }
+    .warn-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-bdr); border-radius: 4px; padding: 2px 5px; display: inline-block; margin-left: 5px; }
+
+    /* Meter change divider row */
+    .meter-divider-row td { background: var(--surface2) !important; padding: 6px 14px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .meter-divider-inner {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--ink2);
+    }
+    .meter-divider-inner::before, .meter-divider-inner::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .meter-nr-badge {
+      font-family: var(--mono); font-size: 10px; font-weight: 700;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--ink2); border-radius: 4px; padding: 1px 6px; white-space: nowrap;
+    }
+
+    .td-actions { text-align: right; white-space: nowrap; display: flex; gap: 2px; justify-content: flex-end; align-items: center; }
+    .row-btn { background: none; border: none; cursor: pointer; color: var(--ink2); font-size: 13px; padding: 5px 7px; border-radius: 5px; transition: background .12s, color .12s; line-height: 1; min-width: 30px; min-height: 30px; display: flex; align-items: center; justify-content: center; }
+    .edit-btn:hover { background: var(--surface2); color: var(--ink); }
+    .del-btn:hover  { background: var(--neg-bg); color: var(--neg); }
+    @media (max-width: 580px) { .row-btn { padding: 7px 9px; min-width: 38px; min-height: 38px; } }
+
+    /* ── Empty ── */
+    .empty { padding: 3rem 1.5rem; text-align: center; }
+    .empty-icon { font-size: 2rem; margin-bottom: .625rem; opacity: .35; }
+    .empty-head { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .empty-sub  { font-size: 13px; color: var(--ink2); }
+
+    /* ── FAB ── */
+    #fab {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--accent); color: #fff; border: none;
+      cursor: pointer; font-size: 24px; line-height: 1;
+      box-shadow: 0 4px 16px rgba(0,0,0,.22);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .15s, box-shadow .15s, background .2s; z-index: 80;
+    }
+    #fab:hover { transform: scale(1.07); box-shadow: 0 6px 24px rgba(0,0,0,.3); }
+
+    /* ── Modal ── */
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(10,18,28,.56); z-index: 100; align-items: flex-end; justify-content: center; }
+    .overlay.open { display: flex; }
+    @media (min-width: 520px) { .overlay { align-items: center; padding: 1rem; } }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-bottom: none; border-radius: var(--radius) var(--radius) 0 0; width: 100%; max-width: 420px; overflow: hidden; }
+    @media (min-width: 520px) { .modal { border-radius: var(--radius); border-bottom: 1px solid var(--border); } }
+    .modal-drag { width: 36px; height: 4px; background: var(--border); border-radius: 99px; margin: 10px auto 0; }
+    @media (min-width: 520px) { .modal-drag { display: none; } }
+    .modal-hdr { padding: 1rem 1.125rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .modal-title { font-size: 14px; font-weight: 600; }
+    .modal-x { background: none; border: none; cursor: pointer; color: var(--ink2); font-size: 16px; padding: 2px 5px; border-radius: 5px; line-height: 1; }
+    .modal-x:hover { color: var(--ink); background: var(--surface2); }
+    .modal-body { padding: 1.125rem; display: flex; flex-direction: column; gap: .875rem; }
+    .fgroup { display: flex; flex-direction: column; gap: 4px; }
+    .flabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--ink2); }
+    .finput { background: var(--paper); border: 1px solid var(--border); border-radius: 7px; padding: 8px 11px; font-size: 14px; color: var(--ink); font-family: var(--sans); width: 100%; transition: border-color .12s; }
+    .finput.mono { font-family: var(--mono); }
+    .finput:focus { outline: none; border-color: var(--accent); }
+    .finput.err   { border-color: var(--neg) !important; }
+    .ferr { font-size: 11px; color: var(--neg); min-height: 14px; display: block; line-height: 1.3; }
+
+    /* Meter indicator in modal */
+    .meter-indicator {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 7px; padding: 7px 11px; gap: 8px;
+    }
+    .meter-indicator-left { display: flex; flex-direction: column; gap: 1px; }
+    .meter-indicator-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--ink2); }
+    .meter-indicator-value { font-family: var(--mono); font-size: 13px; color: var(--ink); letter-spacing: .04em; }
+    .meter-switch-btn { background: none; border: none; cursor: pointer; font-size: 11px; font-weight: 600; color: var(--accent); padding: 2px 0; text-decoration: underline; white-space: nowrap; font-family: var(--sans); }
+    .new-meter-section { display: flex; flex-direction: column; gap: 4px; }
+
+    .modal-ftr { padding: .875rem 1.125rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 7px; }
+    .btn { padding: 7px 16px; border-radius: 7px; font-size: 13px; font-weight: 500; border: none; cursor: pointer; font-family: var(--sans); transition: all .12s; }
+    .btn-ghost { background: none; border: 1px solid var(--border); color: var(--ink2); }
+    .btn-ghost:hover { background: var(--surface2); color: var(--ink); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.1); }
+
+    /* ── Responsive ── */
+    @media (max-width: 580px) {
+      .hide-sm  { display: none !important; }
+      .content  { padding: .875rem; }
+      .stat-val { font-size: 20px; }
+      .stat-val-sm { font-size: 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="wordmark">
+    <span class="wm-dot" id="accentDot"></span>
+    ZÄHLER
+  </div>
+  <div class="hctrl">
+    <button class="hbtn" id="settingsBtn" title="Einstellungen">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    <button class="hbtn" id="exportBtn" title="Daten exportieren">
+      <span class="backup-dot" id="backupDot"></span>
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    </button>
+    <button class="hbtn" id="importBtn" title="Daten importieren">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
+    <button class="hbtn" id="themeBtn" title="Design umschalten">
+      <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <input type="file" id="importFile" accept=".json" style="display:none">
+  </div>
+</header>
+
+<nav class="tab-bar" id="tabBar"></nav>
+<div class="content" id="content"></div>
+<button id="fab">+</button>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-hdr">
+      <span class="modal-title" id="modalTitle">Ablesung hinzufügen</span>
+      <button class="modal-x" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Meter section — populated by openModal() -->
+      <div id="fMeterSection"></div>
+
+      <div class="fgroup">
+        <label class="flabel" for="fDate">Datum</label>
+        <input class="finput" type="date" id="fDate">
+        <span class="ferr" id="fDateErr"></span>
+      </div>
+      <div class="fgroup">
+        <label class="flabel" for="fValue" id="fValueLabel">Zählerstand</label>
+        <input class="finput mono" type="number" id="fValue" step="0.01" min="0" placeholder="z.B. 12345.67">
+        <span class="ferr" id="fValueErr"></span>
+      </div>
+      <div class="fgroup">
+        <label class="flabel" for="fNote">Notiz (optional)</label>
+        <input class="finput" type="text" id="fNote" placeholder="z.B. nach Urlaub abgelesen">
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-ghost" id="modalCancel">Abbrechen</button>
+      <button class="btn btn-primary" id="modalSave">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ─────────────────────────────────────────────────────────────────
+// Neuen Zählertyp: enabled:true setzen, priceKey in DEFAULT_SETTINGS ergänzen.
+
+const TABS = {
+  strom:    { label:'Strom',    icon:'⚡', unit:'kWh', color:'#C47F17', priceKey:'strompreis',   priceUnit:'€/kWh', enabled:true  },
+  wasser:   { label:'Wasser',   icon:'💧', unit:'m³',  color:'#0272C0', priceKey:'wasserpreis',  priceUnit:'€/m³',  enabled:true  },
+  gas:      { label:'Gas',      icon:'🔥', unit:'m³',  color:'#EA580C', priceKey:'gaspreis',     priceUnit:'€/m³',  enabled:false },
+  heizoel:  { label:'Heizöl',   icon:'🛢️', unit:'L',   color:'#92400E', priceKey:'heizoelpreis', priceUnit:'€/L',   enabled:false },
+  internet: { label:'Internet', icon:'🌐', unit:'GB',  color:'#7C3AED', priceKey:'internetpreis',priceUnit:'€/GB',  enabled:false },
+  pv:       { label:'PV',       icon:'☀️', unit:'kWh', color:'#0E7490', priceKey:'pvpreis',      priceUnit:'€/kWh', enabled:false },
+};
+
+const DEFAULT_SETTINGS = {
+  strompreis:0.30, wasserpreis:2.00, gaspreis:0.12,
+  heizoelpreis:1.10, internetpreis:0, pvpreis:0.08,
+  lastExport:null
+};
+
+// ── Data shape ─────────────────────────────────────────────────────────────
+// db[key] = { meters:[{id,number}], readings:[{id,date,value,note,meterId}] }
+
+function makeDefaultDb() {
+  const d = { settings:{...DEFAULT_SETTINGS} };
+  Object.keys(TABS).forEach(k => { d[k] = { meters:[], readings:[] }; });
+  return d;
+}
+
+// Migrate legacy array format to new shape
+function ensureTabFormat(key) {
+  const raw = db[key];
+  if (!raw) { db[key] = { meters:[], readings:[] }; return; }
+  if (Array.isArray(raw)) {
+    if (raw.length === 0) { db[key] = { meters:[], readings:[] }; return; }
+    const mid = genId();
+    db[key] = {
+      meters: [{ id:mid, number:'' }],
+      readings: raw.map(r => ({ ...r, meterId:mid }))
+    };
+  } else {
+    if (!db[key].meters)   db[key].meters   = [];
+    if (!db[key].readings) db[key].readings = [];
+  }
+}
+
+// ── State ──────────────────────────────────────────────────────────────────
+
+const genId = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+let db          = loadDb();
+let tab         = Object.keys(TABS).find(k=>TABS[k].enabled) || 'strom';
+let cfgOpen     = false;
+let editingId   = null;      // reading id being edited (null = add mode)
+let newMeterMode = false;    // modal is in Zählerwechsel mode
+
+function loadDb() {
+  try {
+    const s = JSON.parse(localStorage.getItem('zaehler')||'null');
+    if (s) {
+      const def = makeDefaultDb();
+      const merged = { ...def, ...s, settings:{...def.settings,...(s.settings||{})} };
+      // Ensure all tab keys exist
+      Object.keys(TABS).forEach(k => { if (!merged[k]) merged[k] = { meters:[], readings:[] }; });
+      return merged;
+    }
+  } catch(_) {}
+  return makeDefaultDb();
+}
+
+// Run migration for all tabs on load
+Object.keys(TABS).forEach(k => ensureTabFormat(k));
+
+function saveDb() { localStorage.setItem('zaehler', JSON.stringify(db)); }
+
+// ── Meter helpers ──────────────────────────────────────────────────────────
+
+function getMeters(key) { return db[key].meters || []; }
+
+function getMeter(key, mid) { return getMeters(key).find(m=>m.id===mid)||null; }
+
+// Label shown in UI: use number if set, else "Zähler N"
+function meterLabel(key, mid) {
+  const m = getMeter(key, mid);
+  if (!m) return '?';
+  if (m.number) return m.number;
+  const idx = getMeters(key).findIndex(x=>x.id===mid);
+  return `Zähler ${idx+1}`;
+}
+
+// The active meter is the one with the most recent reading; fallback: last in list
+function activeMeter(key) {
+  const meters = getMeters(key);
+  if (meters.length === 0) return null;
+  if (meters.length === 1) return meters[0];
+  const readings = sortedReadings(key);
+  if (readings.length === 0) return meters[meters.length-1];
+  const lastMid = readings[readings.length-1].meterId;
+  return getMeter(key, lastMid) || meters[meters.length-1];
+}
+
+// ── Reading helpers ────────────────────────────────────────────────────────
+
+function sortedReadings(key) {
+  return [...(db[key].readings||[])].sort((a,b)=>a.date<b.date?-1:1);
+}
+
+// Readings for a single meter, sorted
+function meterReadings(key, mid) {
+  return sortedReadings(key).filter(r=>r.meterId===mid);
+}
+
+// Delta between consecutive readings — null if different meter (boundary)
+function addDeltas(readings) {
+  return readings.map((r,i) => ({
+    ...r,
+    delta: i===0 || readings[i-1].meterId!==r.meterId ? null : r.value - readings[i-1].value
+  }));
+}
+
+function monthBars(key) {
+  const wd = addDeltas(sortedReadings(key));
+  const map = {};
+  wd.forEach(r => {
+    if (r.delta==null) return;
+    const k = r.date.slice(0,7);
+    map[k] = (map[k]||0) + r.delta;
+  });
+  const out = []; const now = new Date();
+  for (let i=11; i>=0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const lbl = d.toLocaleDateString('de-DE',{month:'short'})+' \''+String(d.getFullYear()).slice(2);
+    out.push({k,lbl,v:map[k]||0});
+  }
+  return out;
+}
+
+function calcStats(key) {
+  const readings = sortedReadings(key);
+  const bars     = monthBars(key);
+  const wd       = addDeltas(readings);
+  const price    = db.settings[TABS[key].priceKey]||0;
+
+  // Time-weighted daily rate: total consumption (all meters, excluding boundary jumps) / elapsed days
+  const totalConsumption = wd.filter(r=>r.delta!=null).reduce((a,r)=>a+r.delta, 0);
+  let rate = null;
+  if (readings.length >= 2) {
+    const days = (new Date(readings[readings.length-1].date+'T00:00:00') - new Date(readings[0].date+'T00:00:00')) / 86400000;
+    if (days > 0) rate = totalConsumption / days;
+  }
+
+  const thisMonth = bars[bars.length-1].v;
+  const lastMonth = bars[bars.length-2].v;
+  const latest    = readings[readings.length-1]||null;
+
+  // Days tracked (first to last across all meters)
+  const daySpan = readings.length >= 2
+    ? Math.round((new Date(readings[readings.length-1].date+'T00:00:00') - new Date(readings[0].date+'T00:00:00')) / 86400000)
+    : 0;
+
+  return {
+    latest, latestMeter: latest ? getMeter(key, latest.meterId) : null,
+    thisMonth, lastMonth,
+    monthAvg:  rate!=null ? rate*30.44 : null,
+    dayAvg:    rate,
+    yearFcast: rate!=null ? rate*365.25 : null,
+    trend:     lastMonth>0 ? (thisMonth-lastMonth)/lastMonth*100 : null,
+    cost:      thisMonth*price,
+    yearCost:  rate!=null ? rate*365.25*price : null,
+    price, daySpan,
+  };
+}
+
+// ── Validation (per-meter) ─────────────────────────────────────────────────
+
+function validateReading(date, value, excludeId, targetMeterId) {
+  const mr = meterReadings(tab, targetMeterId).filter(r=>!excludeId||r.id!==excludeId);
+  const errors = [];
+
+  if (!excludeId) {
+    // Add: must come after last reading of THIS meter
+    const last = mr[mr.length-1];
+    if (last) {
+      if (date < last.date)
+        errors.push({field:'date', msg:`Muss nach ${fDate(last.date)} liegen (letzter Stand dieses Zählers).`});
+      else if (date === last.date)
+        errors.push({field:'date', msg:`Für dieses Datum existiert bereits eine Ablesung dieses Zählers.`});
+      else if (value < last.value)
+        errors.push({field:'value', msg:`Muss ≥ ${fNum(last.value,2)} ${TABS[tab].unit} sein (letzter Stand).`});
+    }
+  } else {
+    // Edit: validate against neighbors within same meter
+    const befores = mr.filter(r=>r.date<date);
+    const afters  = mr.filter(r=>r.date>date);
+    const before  = befores.length ? befores[befores.length-1] : null;
+    const after   = afters.length  ? afters[0]                 : null;
+    if (mr.some(r=>r.date===date))
+      errors.push({field:'date', msg:`Für dieses Datum existiert bereits eine Ablesung dieses Zählers.`});
+    if (before && value < before.value)
+      errors.push({field:'value', msg:`Muss ≥ ${fNum(before.value,2)} ${TABS[tab].unit} sein.`});
+    if (after && value > after.value)
+      errors.push({field:'value', msg:`Muss ≤ ${fNum(after.value,2)} ${TABS[tab].unit} sein.`});
+  }
+  return errors;
+}
+
+// ── Formatting ─────────────────────────────────────────────────────────────
+
+const fDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString('de-DE') : '—';
+const fNum  = (n,d=2) => n==null?'—':n.toLocaleString('de-DE',{minimumFractionDigits:0,maximumFractionDigits:d});
+const fEUR  = n => n==null?'—':n.toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+const esc   = s => s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function backupAge() {
+  const le = db.settings.lastExport;
+  if (!le) return null;
+  return Math.floor((Date.now()-new Date(le).getTime())/86400000);
+}
+
+// ── Tab bar ────────────────────────────────────────────────────────────────
+
+function buildTabBar() {
+  const bar = document.getElementById('tabBar');
+  bar.innerHTML = Object.entries(TABS).map(([key,cfg]) =>
+    cfg.enabled
+      ? `<button class="tab${key===tab?' active':''}" data-tab="${key}">${cfg.icon} ${cfg.label}</button>`
+      : `<button class="tab tab-soon" title="Kommt bald">${cfg.icon} ${cfg.label} <span class="tab-pill">bald</span></button>`
+  ).join('');
+  bar.querySelectorAll('.tab[data-tab]').forEach(btn =>
+    btn.addEventListener('click', ()=>{ tab=btn.dataset.tab; render(); }));
+}
+
+// ── Accent ─────────────────────────────────────────────────────────────────
+
+function setAccent(key) {
+  const {color} = TABS[key];
+  document.documentElement.style.setProperty('--accent', color);
+  const h=color.slice(1);
+  document.documentElement.style.setProperty('--acc-bg',
+    `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},0.12)`);
+  document.getElementById('accentDot').style.background = color;
+  document.getElementById('fab').style.background = color;
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+
+function render() {
+  setAccent(tab);
+  buildTabBar();
+
+  const cfg  = TABS[tab];
+  const s    = calcStats(tab);
+  const readings = sortedReadings(tab);
+  const wd   = addDeltas(readings).reverse(); // newest first
+
+  // Trend pill
+  let trendHtml = '';
+  if (s.trend!==null) {
+    const up = s.trend>0;
+    trendHtml = `<span class="trend ${up?'trend-up':'trend-down'}">${up?'↑':'↓'} ${Math.abs(s.trend).toFixed(1)} %</span>`;
+  } else if (readings.length>1) {
+    trendHtml = `<span class="trend trend-neu">Kein Vormonat</span>`;
+  }
+
+  // Backup banner
+  const age = backupAge();
+  const backupBannerHtml = (age===null||age>90) ? `
+    <div class="backup-banner">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      ${age===null ? 'Noch kein Backup erstellt.' : `Letztes Backup vor ${age} Tagen.`}
+      <button id="bannerExportBtn">Jetzt exportieren</button>
+    </div>` : '';
+
+  // Settings: price fields + meter number fields
+  const enabledTabs = Object.entries(TABS).filter(([,c])=>c.enabled);
+  const priceFields = enabledTabs.map(([,c])=>`
+    <div class="sfield">
+      <span class="sfield-label">${c.label}preis (${c.priceUnit})</span>
+      <input class="sfield-input" type="number" step="0.001" min="0" value="${db.settings[c.priceKey]||0}" data-setting="${c.priceKey}">
+    </div>`).join('');
+
+  const meterFields = enabledTabs.map(([k,c])=>{
+    const meters = getMeters(k);
+    if (!meters.length) return '';
+    const active = activeMeter(k);
+    return `<div class="settings-section-head">${c.icon} ${c.label} — Zähler</div>
+      <div class="settings-fields">` +
+      meters.map((m,i)=>`
+        <div class="sfield">
+          <span class="sfield-label">Zähler ${i+1}${m.id===active?.id?' (aktuell)':' (inaktiv)'}</span>
+          <input class="sfield-input mono" placeholder="Zählernummer" value="${esc(m.number||'')}" data-meter-key="${k}" data-meter-id="${m.id}">
+        </div>`).join('') +
+      `</div>`;
+  }).join('');
+
+  const exportInfo = age===null
+    ? '<span class="settings-export-warn">Noch kein Backup erstellt.</span>'
+    : age>90
+      ? `<span class="settings-export-warn">Backup empfohlen — letzter Export vor ${age} Tagen.</span>`
+      : `Letzter Export: vor ${age} Tag${age===1?'':'en'}.`;
+
+  // Table rows with meter-change dividers
+  let rows = '';
+  if (wd.length === 0) {
+    rows = `<tr><td colspan="6"><div class="empty">
+      <div class="empty-icon">${cfg.icon}</div>
+      <div class="empty-head">Noch keine Ablesungen</div>
+      <div class="empty-sub">+ drücken und ersten Zählerstand eintragen.</div>
+    </div></td></tr>`;
+  } else {
+    const price = db.settings[cfg.priceKey]||0;
+    wd.forEach((row, i) => {
+      const isNeg   = row.delta!==null && row.delta<0;
+      const cStr    = row.delta!=null ? fEUR(row.delta*price) : '—';
+      const mLabel  = meterLabel(tab, row.meterId);
+      const meters  = getMeters(tab);
+
+      // Meter-change divider: insert when this row and next row belong to different meters
+      // In reversed (newest-first) list, "next" = wd[i+1] = the older reading
+      const nextRow = wd[i+1];
+      if (nextRow && nextRow.meterId !== row.meterId) {
+        const oldLabel = meterLabel(tab, nextRow.meterId);
+        rows += `<tr class="meter-divider-row"><td colspan="6">
+          <div class="meter-divider-inner">
+            Zählerwechsel
+            <span class="meter-nr-badge">⇡ ${mLabel}</span>
+            <span class="meter-nr-badge">⇣ ${oldLabel}</span>
+          </div>
+        </td></tr>`;
+      }
+
+      let conCell;
+      if (row.delta === null) {
+        const isFirst = meterReadings(tab, row.meterId)[0]?.id === row.id;
+        conCell = isFirst
+          ? `<span class="first-badge">${meters.length>1?'Erstablesung neuer Zähler':'Erstablesung'}</span>`
+          : `<span class="first-badge">Erstablesung</span>`;
+      } else {
+        const warnBadge = isNeg ? `<span class="warn-badge">⚠ Wert prüfen</span>` : '';
+        conCell = `<span style="font-family:var(--mono);font-variant-numeric:tabular-nums${isNeg?';color:var(--warn)':''}">${fNum(row.delta,2)} ${cfg.unit}</span>${warnBadge}`;
+      }
+
+      rows += `<tr${isNeg?' class="neg-row"':''}>
+        <td>
+          <div class="td-date-main">${fDate(row.date)}</div>
+          ${meters.length>1?`<div class="td-meter-sub">${esc(mLabel)}</div>`:''}
+        </td>
+        <td class="td-r">${fNum(row.value,2)} ${cfg.unit}</td>
+        <td class="td-r">${conCell}</td>
+        <td class="td-r hide-sm">${row.delta!=null&&!isNeg?cStr:'—'}</td>
+        <td class="td-note hide-sm">${row.note?esc(row.note):''}</td>
+        <td><div class="td-actions">
+          <button class="row-btn edit-btn" data-id="${row.id}" title="Bearbeiten">✏</button>
+          <button class="row-btn del-btn"  data-id="${row.id}" title="Löschen">✕</button>
+        </div></td>
+      </tr>`;
+    });
+  }
+
+  // Secondary stats
+  const projHtml = `
+    <div class="stats-grid-2">
+      <div class="stat-card stat-card-dim">
+        <div class="stat-eye">Ø pro Tag</div>
+        <div class="stat-val stat-val-sm">${fNum(s.dayAvg,2)}<span class="stat-unit">${cfg.unit}</span></div>
+        <div class="stat-sub">Tagesdurchschnitt</div>
+      </div>
+      <div class="stat-card stat-card-dim">
+        <div class="stat-eye">Prognose Jahr</div>
+        <div class="stat-val stat-val-sm">${fNum(s.yearFcast,0)}<span class="stat-unit">${cfg.unit}</span></div>
+        <div class="stat-sub">Hochrechnung</div>
+      </div>
+      <div class="stat-card stat-card-dim">
+        <div class="stat-eye">Prognose Kosten/Jahr</div>
+        <div class="stat-val stat-val-sm" style="font-size:18px">${fEUR(s.yearCost)}</div>
+        <div class="stat-sub">bei ${s.price.toLocaleString('de-DE')} ${cfg.priceUnit}</div>
+      </div>
+    </div>`;
+
+  const latestSub = s.latest
+    ? `${fDate(s.latest.date)}${getMeters(tab).length>1&&s.latestMeter?' · '+esc(meterLabel(tab,s.latest.meterId)):''}`
+    : 'Noch keine Ablesung';
+
+  document.getElementById('content').innerHTML = `
+    ${backupBannerHtml}
+
+    <div class="settings-bar ${cfgOpen?'open':''}" id="settingsBar">
+      <div class="settings-eyebrow">Einstellungen</div>
+      <div class="settings-fields">${priceFields}</div>
+      ${meterFields}
+      <div class="settings-export-info">${exportInfo}</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-eye">Letzter Stand</div>
+        <div class="stat-val">${s.latest?fNum(s.latest.value,1):'—'}<span class="stat-unit">${cfg.unit}</span></div>
+        <div class="stat-sub">${latestSub}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-eye">Dieser Monat</div>
+        <div class="stat-val">${fNum(s.thisMonth,1)}<span class="stat-unit">${cfg.unit}</span></div>
+        ${trendHtml}
+      </div>
+      <div class="stat-card">
+        <div class="stat-eye">Kosten Monat</div>
+        <div class="stat-val" style="font-size:22px">${fEUR(s.cost)}</div>
+        <div class="stat-sub">bei ${s.price.toLocaleString('de-DE')} ${cfg.priceUnit}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-eye">Ø Monat (zeitgewichtet)</div>
+        <div class="stat-val">${fNum(s.monthAvg,1)}<span class="stat-unit">${cfg.unit}</span></div>
+        <div class="stat-sub">${s.daySpan>0?`über ${s.daySpan} Tage`:'Mindestens 2 Ablesungen nötig'}</div>
+      </div>
+    </div>
+
+    ${projHtml}
+
+    <div class="chart-card">
+      <div class="chart-eyebrow">Monatsverbrauch — letzte 12 Monate</div>
+      <canvas id="chartCanvas" height="150"></canvas>
+    </div>
+
+    <div class="table-card">
+      <div class="table-hdr-bar">
+        <span class="table-hdr-title">Ablesungen</span>
+        <span class="count-badge">${readings.length}</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Datum</th>
+            <th class="th-r">Zählerstand</th>
+            <th class="th-r">Verbrauch</th>
+            <th class="th-r hide-sm">Kosten</th>
+            <th class="hide-sm">Notiz</th>
+            <th></th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  // Bind: banner export button
+  document.getElementById('bannerExportBtn')?.addEventListener('click', doExport);
+
+  // Bind: settings price inputs
+  document.querySelectorAll('[data-setting]').forEach(el =>
+    el.addEventListener('change', ()=>{
+      db.settings[el.dataset.setting]=parseFloat(el.value)||0;
+      saveDb(); cfgOpen=true; render();
+    }));
+
+  // Bind: meter number inputs
+  document.querySelectorAll('[data-meter-key]').forEach(el =>
+    el.addEventListener('change', ()=>{
+      const m = getMeter(el.dataset.meterKey, el.dataset.meterId);
+      if (m) { m.number = el.value.trim(); saveDb(); render(); cfgOpen=true; }
+    }));
+
+  // Bind: edit / delete buttons
+  document.querySelectorAll('.edit-btn').forEach(btn =>
+    btn.addEventListener('click', ()=> openModal(btn.dataset.id)));
+  document.querySelectorAll('.del-btn').forEach(btn =>
+    btn.addEventListener('click', ()=>{
+      if (!confirm('Ablesung löschen?')) return;
+      db[tab].readings = db[tab].readings.filter(r=>r.id!==btn.dataset.id);
+      saveDb(); render();
+    }));
+
+  // Backup dot
+  document.getElementById('backupDot').classList.toggle('show', age===null||age>90);
+
+  requestAnimationFrame(drawChart);
+}
+
+// ── Chart ──────────────────────────────────────────────────────────────────
+
+function isDark() {
+  const t = document.documentElement.getAttribute('data-theme');
+  if (t==='dark') return true; if (t==='light') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function drawChart() {
+  const canvas = document.getElementById('chartCanvas');
+  if (!canvas) return;
+  const bars = monthBars(tab);
+  const cfg  = TABS[tab];
+  const dark = isDark();
+  const grid = dark?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)';
+  const txt  = dark?'#7A90A8':'#6B7A90';
+  const barDim = dark?'rgba(255,255,255,.09)':'rgba(0,0,0,.08)';
+  const dpr=window.devicePixelRatio||1, W=canvas.offsetWidth, H=150;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  const P={t:10,r:8,b:30,l:42};
+  const cW=W-P.l-P.r, cH=H-P.t-P.b;
+  const visVals=bars.map(b=>Math.max(0,b.v));
+  const mx=Math.max(...visVals,1);
+  const step=cW/bars.length, bW=step*.58;
+  ctx.clearRect(0,0,W,H);
+  for (let i=0;i<=4;i++) {
+    const y=P.t+cH-(i/4)*cH;
+    ctx.beginPath(); ctx.setLineDash([3,5]); ctx.strokeStyle=grid; ctx.lineWidth=1;
+    ctx.moveTo(P.l,y); ctx.lineTo(W-P.r,y); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=txt; ctx.font=`10px 'Courier New',monospace`; ctx.textAlign='right';
+    ctx.fillText(fNum(mx*i/4,0),P.l-5,y+3.5);
+  }
+  const nowKey=new Date().toISOString().slice(0,7);
+  bars.forEach((b,i)=>{
+    const x=P.l+i*step+(step-bW)/2, bH=visVals[i]>0?(visVals[i]/mx)*cH:0, y=P.t+cH-bH, cur=b.k===nowKey;
+    if (bH>0) {
+      if (cur) { const g=ctx.createLinearGradient(x,y,x,y+bH); g.addColorStop(0,cfg.color); g.addColorStop(1,cfg.color+'77'); ctx.fillStyle=g; }
+      else ctx.fillStyle=barDim;
+      const r=Math.min(4,bH/2);
+      ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+bW-r,y); ctx.arcTo(x+bW,y,x+bW,y+r,r);
+      ctx.lineTo(x+bW,y+bH); ctx.lineTo(x,y+bH); ctx.arcTo(x,y,x+r,y,r); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle=cur?cfg.color:txt;
+    ctx.font=cur?`bold 9px system-ui,sans-serif`:`9px system-ui,sans-serif`;
+    ctx.textAlign='center'; ctx.fillText(b.lbl,x+bW/2,H-4);
+  });
+}
+
+// ── Modal ──────────────────────────────────────────────────────────────────
+
+function clearModalErrors() {
+  ['fDate','fValue'].forEach(id=>document.getElementById(id).classList.remove('err'));
+  ['fDateErr','fValueErr'].forEach(id=>{document.getElementById(id).textContent='';});
+}
+
+function buildMeterSection() {
+  const section = document.getElementById('fMeterSection');
+  const cfg     = TABS[tab];
+  const meters  = getMeters(tab);
+  const active  = activeMeter(tab);
+
+  if (editingId) {
+    // Edit: show which meter this reading belongs to (read-only)
+    const reading = db[tab].readings.find(r=>r.id===editingId);
+    const ml = reading ? meterLabel(tab, reading.meterId) : '—';
+    section.innerHTML = `
+      <div class="fgroup">
+        <span class="flabel">Zähler</span>
+        <div class="meter-indicator">
+          <div class="meter-indicator-left">
+            <span class="meter-indicator-label">Zähler (nicht änderbar)</span>
+            <span class="meter-indicator-value">${esc(ml)}</span>
+          </div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (meters.length === 0) {
+    // Very first reading: offer optional meter number
+    section.innerHTML = `
+      <div class="fgroup">
+        <label class="flabel" for="fMeterNumber">Zählernummer (optional)</label>
+        <input class="finput mono" id="fMeterNumber" placeholder="z.B. AE1234567">
+      </div>`;
+    return;
+  }
+
+  // Normal add: show active meter + Zählerwechsel toggle
+  const activeLabel = active ? meterLabel(tab, active.id) : '—';
+  section.innerHTML = `
+    <div class="fgroup">
+      <span class="flabel">Zähler</span>
+      <div class="meter-indicator">
+        <div class="meter-indicator-left">
+          <span class="meter-indicator-label">Aktueller Zähler</span>
+          <span class="meter-indicator-value" id="activeMeterDisplay">${esc(activeLabel)}</span>
+        </div>
+        <button class="meter-switch-btn" id="meterSwitchBtn">Zählerwechsel</button>
+      </div>
+      <div class="new-meter-section" id="newMeterSection" style="display:none">
+        <label class="flabel" for="fMeterNumber" style="margin-top:.25rem">Neue Zählernummer</label>
+        <input class="finput mono" id="fMeterNumber" placeholder="z.B. AE9876543">
+      </div>
+    </div>`;
+
+  document.getElementById('meterSwitchBtn').addEventListener('click', ()=>{
+    newMeterMode = !newMeterMode;
+    document.getElementById('newMeterSection').style.display = newMeterMode ? 'block' : 'none';
+    document.getElementById('meterSwitchBtn').textContent = newMeterMode ? '← Zurück' : 'Zählerwechsel';
+    document.getElementById('activeMeterDisplay').style.opacity = newMeterMode ? '.4' : '1';
+    if (newMeterMode) setTimeout(()=>document.getElementById('fMeterNumber')?.focus(), 50);
+  });
+}
+
+function openModal(id) {
+  editingId    = id || null;
+  newMeterMode = false;
+
+  const cfg = TABS[tab];
+  if (editingId) {
+    const entry = db[tab].readings.find(r=>r.id===editingId);
+    if (!entry) return;
+    document.getElementById('fDate').value  = entry.date;
+    document.getElementById('fValue').value = entry.value;
+    document.getElementById('fNote').value  = entry.note||'';
+    document.getElementById('modalTitle').textContent = `${cfg.icon} ${cfg.label}-Ablesung bearbeiten`;
+  } else {
+    document.getElementById('fDate').value  = new Date().toISOString().slice(0,10);
+    document.getElementById('fValue').value = '';
+    document.getElementById('fNote').value  = '';
+    document.getElementById('modalTitle').textContent = `${cfg.icon} ${cfg.label}-Ablesung`;
+  }
+
+  document.getElementById('fValueLabel').textContent = `Zählerstand (${cfg.unit})`;
+  clearModalErrors();
+  buildMeterSection();
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('fValue').focus(), 80);
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  editingId = null; newMeterMode = false;
+}
+
+// ── Export ─────────────────────────────────────────────────────────────────
+
+function doExport() {
+  db.settings.lastExport = new Date().toISOString();
+  saveDb();
+  const blob = new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'),{href:url,download:`zaehler-${new Date().toISOString().slice(0,10)}.json`});
+  a.click(); URL.revokeObjectURL(url); render();
+}
+
+// ── Events ─────────────────────────────────────────────────────────────────
+
+document.getElementById('fab').addEventListener('click', ()=>openModal(null));
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalCancel').addEventListener('click', closeModal);
+document.getElementById('overlay').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+document.getElementById('modalSave').addEventListener('click', ()=>{
+  const date  = document.getElementById('fDate').value;
+  const value = parseFloat(document.getElementById('fValue').value);
+  const note  = document.getElementById('fNote').value.trim();
+  clearModalErrors();
+
+  if (!date) {
+    document.getElementById('fDate').classList.add('err');
+    document.getElementById('fDateErr').textContent = 'Bitte ein Datum angeben.';
+    return;
+  }
+  if (isNaN(value)) {
+    document.getElementById('fValue').classList.add('err');
+    document.getElementById('fValueErr').textContent = 'Bitte einen gültigen Zählerstand eingeben.';
+    return;
+  }
+
+  if (editingId) {
+    // Edit existing reading
+    const entry = db[tab].readings.find(r=>r.id===editingId);
+    if (!entry) return;
+    const errors = validateReading(date, value, editingId, entry.meterId);
+    if (errors.length) { applyFieldErrors(errors); return; }
+    entry.date = date; entry.value = value; entry.note = note;
+  } else if (newMeterMode) {
+    // Create new meter + first reading
+    const newNumber = document.getElementById('fMeterNumber')?.value.trim()||'';
+    const newMeter  = { id:genId(), number:newNumber };
+    db[tab].meters.push(newMeter);
+    db[tab].readings.push({ id:genId(), date, value, note, meterId:newMeter.id });
+  } else {
+    // Add to active meter (or create first meter)
+    let targetMeter = activeMeter(tab);
+    if (!targetMeter) {
+      const newNumber = document.getElementById('fMeterNumber')?.value.trim()||'';
+      targetMeter = { id:genId(), number:newNumber };
+      db[tab].meters.push(targetMeter);
+    }
+    const errors = validateReading(date, value, null, targetMeter.id);
+    if (errors.length) { applyFieldErrors(errors); return; }
+    db[tab].readings.push({ id:genId(), date, value, note, meterId:targetMeter.id });
+  }
+
+  saveDb(); closeModal(); render();
+});
+
+function applyFieldErrors(errors) {
+  errors.forEach(e=>{
+    document.getElementById(e.field==='date'?'fDate':'fValue').classList.add('err');
+    document.getElementById(e.field==='date'?'fDateErr':'fValueErr').textContent = e.msg;
+  });
+}
+
+document.getElementById('settingsBtn').addEventListener('click', ()=>{
+  cfgOpen=!cfgOpen;
+  document.getElementById('settingsBar')?.classList.toggle('open',cfgOpen);
+});
+
+document.getElementById('themeBtn').addEventListener('click', ()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  const next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('zaehler-theme',next);
+  requestAnimationFrame(drawChart);
+});
+
+document.getElementById('exportBtn').addEventListener('click', doExport);
+document.getElementById('importBtn').addEventListener('click', ()=>document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try {
+      const imp=JSON.parse(ev.target.result);
+      if(!confirm('Daten importieren? Bestehende Daten werden überschrieben.')) return;
+      const def=makeDefaultDb();
+      db={...def,...imp,settings:{...def.settings,...(imp.settings||{})}};
+      Object.keys(TABS).forEach(k=>ensureTabFormat(k));
+      saveDb(); render();
+    } catch(_){ alert('Ungültige Datei.'); }
+  };
+  reader.readAsText(file); e.target.value='';
+});
+
+window.addEventListener('resize',()=>requestAnimationFrame(drawChart));
+
+// Swipe tabs on mobile
+let swX=0,swY=0;
+document.addEventListener('touchstart',e=>{swX=e.touches[0].clientX;swY=e.touches[0].clientY;},{passive:true});
+document.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-swX, dy=e.changedTouches[0].clientY-swY;
+  if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.5) return;
+  const keys=Object.keys(TABS).filter(k=>TABS[k].enabled), idx=keys.indexOf(tab);
+  if(dx<0&&idx<keys.length-1){tab=keys[idx+1];render();}
+  if(dx>0&&idx>0){tab=keys[idx-1];render();}
+},{passive:true});
+
+// ── Init ───────────────────────────────────────────────────────────────────
+
+const savedTheme=localStorage.getItem('zaehler-theme');
+if(savedTheme) document.documentElement.setAttribute('data-theme',savedTheme);
+
+render();
+</script>
+</body>
+</html>
