@@ -43,6 +43,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
   <div class="card stat"><div class="eyebrow">Ersparnis / 50 L</div><div class="big" id="savings">—</div><div class="hint">günstigste vs. Durchschnitt</div></div>
 </div>
 <div class="layout"><main><div class="section-head"><div class="section-title">Tankstellen</div><span class="count" id="count">0</span></div><div class="stations" id="stations"><div class="card empty"><strong>Bereit für die erste Suche</strong>API-Key hinterlegen und Tankstellen in der Umgebung abrufen.</div></div></main><aside><div class="card chart-card"><div class="section-head"><div class="section-title">Lokale Preisentwicklung</div><button class="text-btn" id="clearHistory">Löschen</button></div><div class="hint">Der Durchschnitt wird bei jeder Suche lokal gespeichert.</div><div class="chart-wrap"><canvas id="chart"></canvas></div><div class="legend"><span><i class="dot"></i><span id="legendFuel">Super 95 (E5)</span></span></div></div></aside></div>
+<div id="debugPanel" style="display:none;margin-top:18px;background:var(--card);border:1px solid var(--warn);border-radius:var(--radius);padding:14px;font-size:12px;font-family:monospace;overflow-x:auto"><strong style="color:var(--warn)">🔍 DEBUG</strong><pre id="debugOut" style="margin:8px 0 0;white-space:pre-wrap;color:var(--ink)"></pre></div>
 <div class="fav-section" id="favSection" style="display:none">
   <div class="section-head"><div class="section-title">Beobachtete Tankstellen</div><span class="count" id="favCount">0</span></div>
   <div class="fav-grid" id="favGrid"></div>
@@ -51,6 +52,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 </div>
 <div class="overlay" id="overlay"><div class="modal"><h2>API-Einstellungen</h2><p class="notice">Der Key wird nur lokal in diesem Browser gespeichert und nie in den Code geschrieben. <strong>API-Keys dürfen laut Nutzungsbedingungen nicht auf GitHub oder in Foren veröffentlicht werden.</strong> → <a href="https://creativecommons.tankerkoenig.de/?page=info" target="_blank" rel="noopener" style="color:var(--brand)">API-Dokumentation &amp; Registrierung</a></p><div class="field"><label>Tankerkönig API-Key</label><input id="apiKey" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div><div class="actions"><button class="ghost" id="cancelSettings">Abbrechen</button><button class="primary" id="saveSettings">Speichern</button></div></div></div>
 <script>
+const DEBUG=new URLSearchParams(location.search).has('debug');
 const STORE='tankstellen_finder_v2';
 // Key für den Zugriff auf die freie Tankerkönig-Spritpreis-API
 // Für eigenen Key bitte hier https://creativecommons.tankerkoenig.de registrieren.
@@ -159,6 +161,17 @@ function render(){
   return `<article class="card station"><div><div class="name">${esc(s.name)}</div><div class="address">${esc(s.street)} ${esc(s.houseNumber)}, ${esc(s.postCode)} ${esc(s.place)}</div><div class="badges"><span class="badge ${s.isOpen?'open':'closed'}">${s.isOpen?'Geöffnet':'Geschlossen'}</span><span class="badge">${Number(s.dist).toLocaleString('de-DE',{maximumFractionDigits:1})} km</span></div></div><div><div class="price">${euro(s[state.fuel])}<small>pro Liter</small></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.lat+','+s.lng)}">Route öffnen</a><button class="star${isFav?' active':''}" data-favid="${esc(s.id)}" title="${isFav?'Nicht mehr beobachten':'Beobachten'}">★</button></div></article>`;
  }).join('');
  drawChart();renderFavs();
+ if(DEBUG){
+  const raw=list.map(s=>({name:s.name,e5:s.e5,e10:s.e10,diesel:s.diesel,used:s[state.fuel]}));
+  $('debugPanel').style.display='';
+  $('debugOut').textContent=
+   'fuel: '+state.fuel+'\n'+
+   'stations total: '+state.stations.length+'\n'+
+   'stations valid: '+list.length+'\n'+
+   'vals: ['+vals.map(v=>v.toFixed(3)).join(', ')+']\n'+
+   'min: '+min.toFixed(3)+'  avg: '+avg.toFixed(3)+'  max: '+max.toFixed(3)+'\n\n'+
+   raw.map(s=>`${s.name}\n  e5=${s.e5}  e10=${s.e10}  diesel=${s.diesel}  → used=${s.used}`).join('\n');
+ }
 }
 
 function renderFavs(){
