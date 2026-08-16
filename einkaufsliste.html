@@ -780,9 +780,16 @@
       background: var(--teal);
       color: #fff; border: none; border-radius: 10px;
       font-size: 12px; font-weight: 700; cursor: pointer;
-      transition: opacity 0.15s;
+      transition: background 0.2s, opacity 0.15s;
     }
     .offer-add-btn:active { opacity: 0.75; }
+    .offer-add-btn.in-list {
+      background: var(--card);
+      color: var(--teal);
+      border: 1.5px solid var(--teal);
+      cursor: default;
+      opacity: 0.85;
+    }
 
     /* Offer badge on shopping list tile */
     .tile-offer-badge {
@@ -975,10 +982,6 @@
     </label>
   </div>
 
-  <div id="offersImportNote" class="offers-import-note" style="display:none">
-    ℹ️ <strong>Marktguru-Import:</strong> Eine öffentliche API ist nicht verfügbar.
-    Nutze <strong>⊕</strong> um Angebote als JSON zu importieren oder Demo-Daten zu laden.
-  </div>
 
   <div class="offers-grid" id="offersGrid"></div>
 
@@ -991,17 +994,28 @@
 <div class="sheet-overlay" id="importOverlay" onclick="importOverlayClick(event)">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">⊕ Angebote importieren</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6">
-      JSON einfügen (Format: <code style="font-size:11px;background:var(--card);padding:1px 5px;border-radius:4px">{"offers":[...]}</code>) oder Demo-Daten laden.
-    </p>
+    <div class="sheet-title">⊕ Angebote</div>
+
+    <p style="font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Marktguru Live</p>
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      <input id="mgPlzInput" class="sheet-input" placeholder="PLZ (z.B. 57271)"
+        style="margin:0;flex:1;font-size:15px"
+        maxlength="5" pattern="\d{5}" inputmode="numeric"
+        onchange="setMgPlz(this.value)">
+      <button class="sh-btn primary" style="white-space:nowrap;margin:0"
+        onclick="setMgPlz(document.getElementById('mgPlzInput').value);closeImportSheet();fetchMarktguruLive()">
+        Jetzt laden
+      </button>
+    </div>
+
+    <p style="font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">JSON-Import (manuell)</p>
     <textarea id="importJson" class="sheet-input"
-      style="height:110px;resize:none;font-size:12px;font-family:monospace"
-      placeholder='{"offers":[{"id":"1","name":"Butter","haendler":"Lidl","preis":2.19,"gueltigVon":"2026-08-17","gueltigBis":"2026-08-22","kategorie":"Milchprodukte","quelle":"Manuell"}]}'></textarea>
-    <div class="sheet-btns" style="margin-top:10px;flex-wrap:wrap;gap:8px">
+      style="height:90px;resize:none;font-size:12px;font-family:monospace;margin-bottom:10px"
+      placeholder='{"offers":[{"id":"1","name":"Butter","haendler":"Lidl","preis":2.19,"gueltigVon":"2026-08-17","gueltigBis":"2026-08-22","kategorie":"Milchprodukte"}]}'></textarea>
+    <div class="sheet-btns" style="flex-wrap:wrap;gap:8px">
       <button class="sh-btn secondary" onclick="closeImportSheet()">Abbrechen</button>
       <button class="sh-btn secondary" onclick="loadDemoOffers()">Demo-Daten</button>
-      <button class="sh-btn primary" onclick="importFromJson()">Importieren</button>
+      <button class="sh-btn primary" onclick="importFromJson()">JSON importieren</button>
     </div>
   </div>
 </div>
@@ -2267,13 +2281,90 @@ function loadDemoOffers() {
 }
 
 function refreshOffers() {
-  cleanupExpiredOffers();
-  renderOffers();
-  toast('Abgelaufene Angebote entfernt');
+  fetchMarktguruLive();
+}
+
+// ── Marktguru Live-Import ──
+const MG_API_KEY = '8Kk+pmbf7TgJ9nVj2cXeA7P5zBGv8iuutVVMRfOfvNE=';
+const MG_CDN     = 'https://cdn.marktguru.de';
+
+function getMgPlz() {
+  return localStorage.getItem('einkauf_mg_plz') || '57271';
+}
+function setMgPlz(v) {
+  if (v && /^\d{5}$/.test(v.trim())) localStorage.setItem('einkauf_mg_plz', v.trim());
+}
+
+function mgTransform(raw) {
+  const adv      = (raw.advertisers   || [])[0] || {};
+  const validity = (raw.validityDates || [])[0] || {};
+  const cat      = (raw.categories    || [])[0] || {};
+  const unit     = raw.unit?.shortName || 'Stk';
+  const hasImg   = (raw.images?.count || 0) > 0;
+  const ref      = raw.referencePrice;
+  const grundpreis = ref ? (ref.toFixed(2).replace('.', ',') + ' €/' + unit) : '';
+  return {
+    id:           'mg_' + raw.id,
+    name:         raw.product?.name || raw.description || 'Unbekannt',
+    beschreibung: raw.description || '',
+    haendler:     adv.name || '',
+    preis:        raw.price ?? null,
+    grundpreis,
+    einheit:      unit,
+    marke:        raw.brand?.name || '',
+    kategorie:    (cat.name || ''),
+    gueltigVon:   (validity.from || '').split('T')[0] || null,
+    gueltigBis:   (validity.to   || '').split('T')[0] || null,
+    bild:         hasImg ? `${MG_CDN}/offers/${raw.id}/0.jpg` : null,
+    favorit:      false,
+    quelle:       'Marktguru',
+    importDatum:  new Date().toISOString(),
+  };
+}
+
+async function fetchMarktguruLive() {
+  const plz = getMgPlz();
+  const btn = document.querySelector('.offers-action-btn[title="Aktualisieren"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  toast(`Lade Angebote für PLZ ${plz}…`);
+
+  try {
+    const PAGE = 100, MAX_PAGES = 5;
+    let offset = 0, total = null, all = [];
+
+    for (let p = 0; p < MAX_PAGES; p++) {
+      const url = `https://api.marktguru.de/api/v1/offers?as=web&limit=${PAGE}&offset=${offset}&zipCode=${plz}`;
+      const res = await fetch(url, {
+        headers: { 'X-apikey': MG_API_KEY, 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (total === null) total = data.totalResults || 0;
+      const results = data.results || [];
+      if (!results.length) break;
+      all.push(...results);
+      offset += results.length;
+      if (offset >= total) break;
+    }
+
+    // Abgelaufene Demo-Daten entfernen bevor wir mergen
+    allOffers = allOffers.filter(o => o.quelle !== 'Demo');
+
+    const transformed = all.map(mgTransform);
+    const { added, updated } = mergeOffers(transformed);
+    renderOffers();
+    toast(`✓ ${added} neu, ${updated} aktualisiert · ${all.length} von ${total} geladen`);
+  } catch(e) {
+    toast('❌ Fehler: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '↻'; }
+  }
 }
 
 function openImportSheet() {
   document.getElementById('importJson').value = '';
+  document.getElementById('mgPlzInput').value = getMgPlz();
   document.getElementById('importOverlay').classList.add('open');
 }
 function closeImportSheet() { document.getElementById('importOverlay').classList.remove('open'); }
@@ -2309,7 +2400,7 @@ function renderOffers() {
   if (!grid) return;
 
   if (filtered.length === 0) {
-    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:24px">Keine Angebote gefunden.<br><small>Lade Demo-Daten über ⊕</small></div>';
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:24px">Keine Angebote gefunden.<br><small>Tippe ↻ um echte Angebote zu laden</small></div>';
   } else {
     grid.innerHTML = filtered.map(buildOfferCard).join('');
   }
@@ -2348,7 +2439,10 @@ function buildOfferCard(offer) {
       </div>
       ${validTxt ? `<div class="offer-valid ${urgentCls}">${validTxt}</div>` : ''}
     </div>
-    <button class="offer-add-btn" onclick="addOfferToList('${esc(offer.id)}')">+ Einkaufsliste</button>
+    ${isOfferInList(offer.name)
+      ? `<button class="offer-add-btn in-list" disabled>✓ In der Liste</button>`
+      : `<button class="offer-add-btn" onclick="addOfferToList('${esc(offer.id)}')">+ Einkaufsliste</button>`
+    }
   </div>`;
 }
 
@@ -2377,11 +2471,14 @@ function toggleOfferFav(id) {
   renderOffers();
 }
 
+function isOfferInList(name) {
+  return !!Object.values(items).find(it => it.name.toLowerCase() === name.toLowerCase());
+}
+
 function addOfferToList(id) {
   const offer = allOffers.find(x => x.id === id);
   if (!offer) return;
-  const already = Object.values(items).find(it => it.name.toLowerCase() === offer.name.toLowerCase());
-  if (already) { toast(`${offer.name} bereits in der Liste`); return; }
+  if (isOfferInList(offer.name)) { toast(`${offer.name} bereits in der Liste`); return; }
   persist('i_' + Date.now(), {
     name: offer.name,
     emoji: '🏷️',
@@ -2393,7 +2490,7 @@ function addOfferToList(id) {
     isOffer: true,
   });
   toast(`🏷️ ${offer.name} von ${offer.haendler} hinzugefügt`);
-  showTab('liste');
+  renderOffers();
 }
 
 // ═══════════════════════════════════════════════
