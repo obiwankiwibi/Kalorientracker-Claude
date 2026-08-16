@@ -155,8 +155,8 @@
       bottom: 86px;
       left: 50%;
       transform: translateX(-50%);
-      width: 100%;
-      max-width: 430px;
+      width: calc(100% - 48px);
+      max-width: 380px;
       z-index: 199;
       background: transparent;
     }
@@ -889,99 +889,127 @@ const FIREBASE_CONFIG = {
 // ═══════════════════════════════════════════════
 const SUGGESTIONS = [
   // Gemüse
-  { name:'Zucchini',      emoji:'🥒', cat:'Gemüse',       price: 0.79 },
-  { name:'Möhren',        emoji:'🥕', cat:'Gemüse',       price: 0.89 },
-  { name:'Paprika',       emoji:'🫑', cat:'Gemüse',       price: 1.29 },
-  { name:'Gurke',         emoji:'🥒', cat:'Gemüse',       price: 0.69 },
-  { name:'Tomaten',       emoji:'🍅', cat:'Gemüse',       price: 1.49 },
-  { name:'Zwiebeln',      emoji:'🧅', cat:'Gemüse',       price: 0.89 },
-  { name:'Knoblauch',     emoji:'🧄', cat:'Gemüse',       price: 0.59 },
-  { name:'Spinat',        emoji:'🥬', cat:'Gemüse',       price: 1.29 },
-  { name:'Brokkoli',      emoji:'🥦', cat:'Gemüse',       price: 0.99 },
-  { name:'Salat',         emoji:'🥗', cat:'Gemüse',       price: 0.89 },
-  { name:'Kartoffeln',    emoji:'🥔', cat:'Gemüse',       price: 1.99 },
-  { name:'Mais',          emoji:'🌽', cat:'Gemüse',       price: 0.89 },
-  { name:'Pilze',         emoji:'🍄', cat:'Gemüse',       price: 1.49 },
-  { name:'Aubergine',     emoji:'🍆', cat:'Gemüse',       price: 0.99 },
-  { name:'Kohl',          emoji:'🥬', cat:'Gemüse',       price: 0.99 },
-  { name:'Lauch',         emoji:'🌿', cat:'Gemüse',       price: 0.89 },
-  { name:'Sellerie',      emoji:'🥬', cat:'Gemüse',       price: 0.99 },
+  { name:'Zucchini',      emoji:'🥒', cat:'Gemüse',       price: 0.79, unit:'Stück'   },
+  { name:'Möhren',        emoji:'🥕', cat:'Gemüse',       price: 0.89, unit:'500g'    },
+  { name:'Paprika',       emoji:'🫑', cat:'Gemüse',       price: 1.29, unit:'Stück'   },
+  { name:'Gurke',         emoji:'🥒', cat:'Gemüse',       price: 0.69, unit:'Stück'   },
+  { name:'Tomaten',       emoji:'🍅', cat:'Gemüse',       price: 1.49, unit:'500g'    },
+  { name:'Zwiebeln',      emoji:'🧅', cat:'Gemüse',       price: 0.89, unit:'1kg'     },
+  { name:'Knoblauch',     emoji:'🧄', cat:'Gemüse',       price: 0.59, unit:'Stück'   },
+  { name:'Spinat',        emoji:'🥬', cat:'Gemüse',       price: 1.29, unit:'300g'    },
+  { name:'Brokkoli',      emoji:'🥦', cat:'Gemüse',       price: 0.99, unit:'Stück'   },
+  { name:'Salat',         emoji:'🥗', cat:'Gemüse',       price: 0.89, unit:'Stück'   },
+  { name:'Kartoffeln',    emoji:'🥔', cat:'Gemüse',       price: 1.99, unit:'1kg'     },
+  { name:'Mais',          emoji:'🌽', cat:'Gemüse',       price: 0.89, unit:'Stück'   },
+  { name:'Pilze',         emoji:'🍄', cat:'Gemüse',       price: 1.49, unit:'250g'    },
+  { name:'Aubergine',     emoji:'🍆', cat:'Gemüse',       price: 0.99, unit:'Stück'   },
+  { name:'Kohl',          emoji:'🥬', cat:'Gemüse',       price: 0.99, unit:'Stück'   },
+  { name:'Lauch',         emoji:'🌿', cat:'Gemüse',       price: 0.89, unit:'Stück'   },
+  { name:'Sellerie',      emoji:'🥬', cat:'Gemüse',       price: 0.99, unit:'Stück'   },
   // Obst
-  { name:'Äpfel',         emoji:'🍎', cat:'Obst',         price: 1.99 },
-  { name:'Bananen',       emoji:'🍌', cat:'Obst',         price: 1.49 },
-  { name:'Zitrone',       emoji:'🍋', cat:'Obst',         price: 0.39 },
-  { name:'Erdbeeren',     emoji:'🍓', cat:'Obst',         price: 2.99 },
-  { name:'Trauben',       emoji:'🍇', cat:'Obst',         price: 2.49 },
-  { name:'Orangen',       emoji:'🍊', cat:'Obst',         price: 1.99 },
-  { name:'Avocado',       emoji:'🥑', cat:'Obst',         price: 0.99 },
-  { name:'Wassermelone',  emoji:'🍉', cat:'Obst',         price: 3.99 },
-  { name:'Himbeeren',     emoji:'🫐', cat:'Obst',         price: 1.99 },
-  { name:'Mango',         emoji:'🥭', cat:'Obst',         price: 1.29 },
-  { name:'Kiwi',          emoji:'🥝', cat:'Obst',         price: 0.49 },
+  { name:'Äpfel',         emoji:'🍎', cat:'Obst',         price: 1.99, unit:'1kg'     },
+  { name:'Bananen',       emoji:'🍌', cat:'Obst',         price: 1.49, unit:'1kg'     },
+  { name:'Zitrone',       emoji:'🍋', cat:'Obst',         price: 0.39, unit:'Stück'   },
+  { name:'Erdbeeren',     emoji:'🍓', cat:'Obst',         price: 2.99, unit:'500g'    },
+  { name:'Trauben',       emoji:'🍇', cat:'Obst',         price: 2.49, unit:'500g'    },
+  { name:'Orangen',       emoji:'🍊', cat:'Obst',         price: 1.99, unit:'1kg'     },
+  { name:'Avocado',       emoji:'🥑', cat:'Obst',         price: 0.99, unit:'Stück'   },
+  { name:'Wassermelone',  emoji:'🍉', cat:'Obst',         price: 3.99, unit:'Stück'   },
+  { name:'Himbeeren',     emoji:'🫐', cat:'Obst',         price: 1.99, unit:'150g'    },
+  { name:'Mango',         emoji:'🥭', cat:'Obst',         price: 1.29, unit:'Stück'   },
+  { name:'Kiwi',          emoji:'🥝', cat:'Obst',         price: 0.49, unit:'Stück'   },
   // Milch & Käse
-  { name:'Milch',         emoji:'🥛', cat:'Milch',        price: 1.09 },
-  { name:'Joghurt',       emoji:'🍮', cat:'Milch',        price: 0.79 },
-  { name:'Käse',          emoji:'🧀', cat:'Milch',        price: 1.99 },
-  { name:'Butter',        emoji:'🧈', cat:'Milch',        price: 1.89 },
-  { name:'Sahne',         emoji:'🥛', cat:'Milch',        price: 0.89 },
-  { name:'Quark',         emoji:'🍦', cat:'Milch',        price: 0.99 },
-  { name:'Frischkäse',    emoji:'🧀', cat:'Milch',        price: 1.29 },
-  { name:'Hafermilch',    emoji:'🥛', cat:'Milch',        price: 1.49 },
+  { name:'Milch',         emoji:'🥛', cat:'Milch',        price: 1.09, unit:'1L'      },
+  { name:'Joghurt',       emoji:'🍮', cat:'Milch',        price: 0.79, unit:'500g'    },
+  { name:'Käse',          emoji:'🧀', cat:'Milch',        price: 1.99, unit:'200g'    },
+  { name:'Butter',        emoji:'🧈', cat:'Milch',        price: 1.89, unit:'250g'    },
+  { name:'Sahne',         emoji:'🥛', cat:'Milch',        price: 0.89, unit:'Packung' },
+  { name:'Quark',         emoji:'🍦', cat:'Milch',        price: 0.99, unit:'500g'    },
+  { name:'Frischkäse',    emoji:'🧀', cat:'Milch',        price: 1.29, unit:'200g'    },
+  { name:'Hafermilch',    emoji:'🥛', cat:'Milch',        price: 1.49, unit:'1L'      },
   // Brot & Backwaren
-  { name:'Toast',         emoji:'🍞', cat:'Brot',         price: 1.19 },
-  { name:'Brot',          emoji:'🥖', cat:'Brot',         price: 1.99 },
-  { name:'Brötchen',      emoji:'🥐', cat:'Brot',         price: 1.29 },
-  { name:'Croissant',     emoji:'🥐', cat:'Brot',         price: 1.49 },
+  { name:'Toast',         emoji:'🍞', cat:'Brot',         price: 1.19, unit:'Packung' },
+  { name:'Brot',          emoji:'🥖', cat:'Brot',         price: 1.99, unit:'Stück'   },
+  { name:'Brötchen',      emoji:'🥐', cat:'Brot',         price: 1.29, unit:'6 Stück' },
+  { name:'Croissant',     emoji:'🥐', cat:'Brot',         price: 1.49, unit:'Stück'   },
   // Getränke
-  { name:'Wasser',        emoji:'💧', cat:'Getränke',     price: 0.29 },
-  { name:'Saft',          emoji:'🧃', cat:'Getränke',     price: 1.29 },
-  { name:'Kaffee',        emoji:'☕', cat:'Getränke',     price: 4.99 },
-  { name:'Tee',           emoji:'🍵', cat:'Getränke',     price: 1.49 },
-  { name:'Bier',          emoji:'🍺', cat:'Getränke',     price: 4.99 },
-  { name:'Wein',          emoji:'🍷', cat:'Getränke',     price: 4.99 },
-  { name:'Cola',          emoji:'🥤', cat:'Getränke',     price: 1.69 },
+  { name:'Wasser',        emoji:'💧', cat:'Getränke',     price: 0.29, unit:'1,5L'    },
+  { name:'Saft',          emoji:'🧃', cat:'Getränke',     price: 1.29, unit:'1L'      },
+  { name:'Kaffee',        emoji:'☕', cat:'Getränke',     price: 4.99, unit:'500g'    },
+  { name:'Tee',           emoji:'🍵', cat:'Getränke',     price: 1.49, unit:'Packung' },
+  { name:'Bier',          emoji:'🍺', cat:'Getränke',     price: 4.99, unit:'6er Pack'},
+  { name:'Wein',          emoji:'🍷', cat:'Getränke',     price: 4.99, unit:'Flasche' },
+  { name:'Cola',          emoji:'🥤', cat:'Getränke',     price: 1.69, unit:'2L'      },
   // Grundnahrung
-  { name:'Eier',          emoji:'🥚', cat:'Grundnahrung', price: 2.19 },
-  { name:'Nudeln',        emoji:'🍝', cat:'Grundnahrung', price: 1.09 },
-  { name:'Reis',          emoji:'🍚', cat:'Grundnahrung', price: 1.49 },
-  { name:'Mehl',          emoji:'🌾', cat:'Grundnahrung', price: 0.89 },
-  { name:'Zucker',        emoji:'🍬', cat:'Grundnahrung', price: 0.99 },
-  { name:'Öl',            emoji:'🫙', cat:'Grundnahrung', price: 2.49 },
-  { name:'Salz',          emoji:'🧂', cat:'Grundnahrung', price: 0.39 },
-  { name:'Pfeffer',       emoji:'🫙', cat:'Grundnahrung', price: 1.49 },
+  { name:'Eier',          emoji:'🥚', cat:'Grundnahrung', price: 2.19, unit:'10 St.'  },
+  { name:'Nudeln',        emoji:'🍝', cat:'Grundnahrung', price: 1.09, unit:'500g'    },
+  { name:'Reis',          emoji:'🍚', cat:'Grundnahrung', price: 1.49, unit:'1kg'     },
+  { name:'Mehl',          emoji:'🌾', cat:'Grundnahrung', price: 0.89, unit:'1kg'     },
+  { name:'Zucker',        emoji:'🍬', cat:'Grundnahrung', price: 0.99, unit:'1kg'     },
+  { name:'Öl',            emoji:'🫙', cat:'Grundnahrung', price: 2.49, unit:'1L'      },
+  { name:'Salz',          emoji:'🧂', cat:'Grundnahrung', price: 0.39, unit:'1kg'     },
+  { name:'Pfeffer',       emoji:'🫙', cat:'Grundnahrung', price: 1.49, unit:'Packung' },
   // Fleisch & Fisch
-  { name:'Hähnchen',      emoji:'🍗', cat:'Fleisch',      price: 4.99 },
-  { name:'Hackfleisch',   emoji:'🥩', cat:'Fleisch',      price: 3.49 },
-  { name:'Lachs',         emoji:'🐟', cat:'Fleisch',      price: 4.99 },
-  { name:'Würstchen',     emoji:'🌭', cat:'Fleisch',      price: 2.49 },
-  { name:'Thunfisch',     emoji:'🐠', cat:'Fleisch',      price: 1.49 },
-  { name:'Schinken',      emoji:'🥩', cat:'Fleisch',      price: 1.99 },
+  { name:'Hähnchen',      emoji:'🍗', cat:'Fleisch',      price: 4.99, unit:'1kg'     },
+  { name:'Hackfleisch',   emoji:'🥩', cat:'Fleisch',      price: 3.49, unit:'500g'    },
+  { name:'Lachs',         emoji:'🐟', cat:'Fleisch',      price: 4.99, unit:'300g'    },
+  { name:'Würstchen',     emoji:'🌭', cat:'Fleisch',      price: 2.49, unit:'Packung' },
+  { name:'Thunfisch',     emoji:'🐠', cat:'Fleisch',      price: 1.49, unit:'Dose'    },
+  { name:'Schinken',      emoji:'🥩', cat:'Fleisch',      price: 1.99, unit:'150g'    },
   // Haushalt
-  { name:'Toilettenpapier', emoji:'🧻', cat:'Haushalt',   price: 2.99 },
-  { name:'Spülmittel',    emoji:'🧴', cat:'Haushalt',     price: 1.19 },
-  { name:'Waschmittel',   emoji:'🧺', cat:'Haushalt',     price: 5.99 },
-  { name:'Müllbeutel',    emoji:'🗑️', cat:'Haushalt',    price: 1.99 },
-  { name:'Shampoo',       emoji:'🧴', cat:'Haushalt',     price: 2.49 },
-  { name:'Zahnpasta',     emoji:'🪥', cat:'Haushalt',     price: 1.49 },
-  { name:'Seife',         emoji:'🧼', cat:'Haushalt',     price: 0.99 },
-  { name:'Taschentücher', emoji:'🤧', cat:'Haushalt',     price: 1.29 },
+  { name:'Toilettenpapier', emoji:'🧻', cat:'Haushalt',   price: 2.99, unit:'8 Rollen'},
+  { name:'Spülmittel',    emoji:'🧴', cat:'Haushalt',     price: 1.19, unit:'Flasche' },
+  { name:'Waschmittel',   emoji:'🧺', cat:'Haushalt',     price: 5.99, unit:'Packung' },
+  { name:'Müllbeutel',    emoji:'🗑️', cat:'Haushalt',    price: 1.99, unit:'Packung' },
+  { name:'Shampoo',       emoji:'🧴', cat:'Haushalt',     price: 2.49, unit:'Flasche' },
+  { name:'Zahnpasta',     emoji:'🪥', cat:'Haushalt',     price: 1.49, unit:'Packung' },
+  { name:'Seife',         emoji:'🧼', cat:'Haushalt',     price: 0.99, unit:'Stück'   },
+  { name:'Taschentücher', emoji:'🤧', cat:'Haushalt',     price: 1.29, unit:'Packung' },
 ];
 
 const AMOUNTS = ['1','2','3','4','5','6','300g','500g','750g','1kg','2kg','1L','1,5L','2L'];
 const CATS = ['Alle', ...new Set(SUGGESTIONS.map(s => s.cat))];
 
 // Preis-Lookup
-const PRICE_MAP = {};
-SUGGESTIONS.forEach(s => { PRICE_MAP[s.name.toLowerCase()] = s.price; });
-function getItemPrice(name) { return PRICE_MAP[name.toLowerCase()] ?? null; }
-function fmtPrice(p) { return p.toFixed(2).replace('.', ',') + ' €'; }
+const SUG_MAP = {};
+SUGGESTIONS.forEach(s => { SUG_MAP[s.name.toLowerCase()] = s; });
+function getSug(name)      { return SUG_MAP[name.toLowerCase()] ?? null; }
+function getItemPrice(name){ return getSug(name)?.price ?? null; }
+function fmtPrice(p)       { return p.toFixed(2).replace('.', ',') + ' €'; }
+
+// Mengen-Multiplikator berechnen
+function parseGrams(s) {
+  if (!s) return null;
+  const m = s.trim().match(/^([\d,]+)\s*(g|kg)$/i);
+  if (!m) return null;
+  const v = parseFloat(m[1].replace(',', '.'));
+  return m[2].toLowerCase() === 'kg' ? v * 1000 : v;
+}
+function parseLiters(s) {
+  if (!s) return null;
+  const m = s.trim().match(/^([\d,]+)\s*[Ll]$/);
+  if (!m) return null;
+  return parseFloat(m[1].replace(',', '.'));
+}
+function calcMultiplier(amount, unit) {
+  if (!amount || amount === '' || amount === '1') return 1;
+  if (/^\d+$/.test(amount.trim())) return parseInt(amount, 10);
+  const aG = parseGrams(amount), uG = parseGrams(unit);
+  if (aG !== null && uG !== null) return aG / uG;
+  const aL = parseLiters(amount), uL = parseLiters(unit);
+  if (aL !== null && uL !== null) return aL / uL;
+  return 1;
+}
 
 function calcTotal() {
   let total = 0, hasPrices = false;
   const allItems = Object.values(items);
   allItems.forEach(it => {
-    const p = getItemPrice(it.name);
-    if (p != null) { total += p; hasPrices = true; }
+    const sug = getSug(it.name);
+    if (sug?.price != null) {
+      total += sug.price * calcMultiplier(it.amount, sug.unit);
+      hasPrices = true;
+    }
   });
 
   const bar = document.getElementById('priceBar');
@@ -993,7 +1021,7 @@ function calcTotal() {
   }
   bar.style.display = 'flex';
   const n = allItems.length;
-  document.getElementById('priceCount').textContent = n + (n === 1 ? ' Artikel' : ' Artikel');
+  document.getElementById('priceCount').textContent = n + ' Artikel';
   document.getElementById('priceTotal').textContent = hasPrices ? ('~' + fmtPrice(total)) : '–';
 }
 
@@ -1191,8 +1219,16 @@ function renderAll() {
 }
 
 function tile(type, it) {
-  const p = getItemPrice(it.name);
-  const priceHtml = p != null ? `<div class="tile-price">${fmtPrice(p)}</div>` : '';
+  const sug = getSug(it.name);
+  let priceHtml = '';
+  if (sug?.price != null) {
+    const mult = calcMultiplier(it.amount, sug.unit);
+    const effective = sug.price * mult;
+    const label = mult > 1
+      ? `${fmtPrice(effective)}`
+      : `${fmtPrice(sug.price)}/${sug.unit}`;
+    priceHtml = `<div class="tile-price">${label}</div>`;
+  }
   if (type === 'active') {
     return `<div class="tile active"
       ontouchstart="pressStart('${it.id}')" ontouchend="pressEnd('${it.id}')" ontouchcancel="pressCancel()"
@@ -1251,8 +1287,9 @@ function renderSuggestions() {
     sg.innerHTML = list.map(s => {
       const inList = inListNames.has(s.name.toLowerCase());
       const isScanned = s.cat === 'Gescannt';
-      const p = getItemPrice(s.name);
-      const priceHtml = p != null ? `<div class="tile-price">${fmtPrice(p)}</div>` : '';
+      const p = s.price ?? getItemPrice(s.name);
+      const unit = s.unit || '';
+      const priceHtml = p != null ? `<div class="tile-price">${fmtPrice(p)}${unit ? '/' + unit : ''}</div>` : '';
       return `<div class="tile sug ${isScanned ? 'scanned' : ''} ${inList ? 'in-list' : ''}"
         onclick="tapSuggestion('${esc(s.name)}','${s.emoji}')">
         <div class="tile-emoji">${s.emoji}</div>
