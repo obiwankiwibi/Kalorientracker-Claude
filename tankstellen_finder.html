@@ -34,7 +34,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 <body>
 <div class="app">
 <header><div class="logo">Tankstellen-Finder<small>Aktuelle Preise in deiner Umgebung</small></div><div><button class="icon" id="themeBtn" title="Design wechseln">◐</button> <button class="icon" id="settingsBtn" title="API-Einstellungen">⚙</button></div></header>
-<section class="search-card"><div class="grid"><div class="field place"><label>Ort oder Postleitzahl</label><input id="place" value="Hilchenbach" placeholder="z. B. Hilchenbach"></div><div class="field"><label>Umkreis</label><select id="radius"><option value="3">3 km</option><option value="5" selected>5 km</option><option value="10">10 km</option><option value="15">15 km</option><option value="25">25 km</option></select></div><div class="field"><label>Sortierung</label><select id="sorting"><option value="price">Preis</option><option value="dist">Entfernung</option></select></div><button class="primary" id="searchBtn">Tankstellen suchen</button></div><div class="subactions"><button class="text-btn" id="locationBtn">⌖ Aktuellen Standort verwenden</button><span class="status" id="status">API-Key in den Einstellungen hinterlegen</span></div></section>
+<section class="search-card"><div class="grid"><div class="field place"><label>Ort oder Postleitzahl</label><input id="place" value="Hilchenbach" placeholder="z. B. Hilchenbach"></div><div class="field"><label>Umkreis</label><select id="radius"><option value="3">3 km</option><option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="25">25 km</option></select></div><div class="field"><label>Sortierung</label><select id="sorting"><option value="price">Preis</option><option value="dist">Entfernung</option></select></div><button class="primary" id="searchBtn">Tankstellen suchen</button></div><div class="subactions"><span class="status" id="status">API-Key in den Einstellungen hinterlegen</span></div></section>
 <div class="fuel-tabs"><button class="fuel" data-fuel="e10">Super E10</button><button class="fuel active" data-fuel="e5">Super 95 (E5)</button><button class="fuel" data-fuel="diesel">Diesel</button></div>
 <div class="topstats">
   <div class="card stat"><div class="eyebrow">Günstigster Preis</div><div class="big" id="minPrice">—</div><div class="hint" id="minName">Noch keine Suche</div></div>
@@ -43,7 +43,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
   <div class="card stat"><div class="eyebrow">Ersparnis / 50 L</div><div class="big" id="savings">—</div><div class="hint">günstigste vs. Durchschnitt</div></div>
 </div>
 <div class="layout"><main><div class="section-head"><div class="section-title">Tankstellen</div><span class="count" id="count">0</span></div><div class="stations" id="stations"><div class="card empty"><strong>Bereit für die erste Suche</strong>API-Key hinterlegen und Tankstellen in der Umgebung abrufen.</div></div></main><aside><div class="card chart-card"><div class="section-head"><div class="section-title">Lokale Preisentwicklung</div><button class="text-btn" id="clearHistory">Löschen</button></div><div class="hint">Der Durchschnitt wird bei jeder Suche lokal gespeichert.</div><div class="chart-wrap"><canvas id="chart"></canvas></div><div class="legend"><span><i class="dot"></i><span id="legendFuel">Super 95 (E5)</span></span></div></div></aside></div>
-<div id="debugPanel" style="display:none;margin-top:18px;background:var(--card);border:1px solid var(--warn);border-radius:var(--radius);padding:14px;font-size:12px;font-family:monospace;overflow-x:auto"><strong style="color:var(--warn)">🔍 DEBUG</strong><pre id="debugOut" style="margin:8px 0 0;white-space:pre-wrap;color:var(--ink)"></pre></div>
 <div class="fav-section" id="favSection" style="display:none">
   <div class="section-head"><div class="section-title">Beobachtete Tankstellen</div><span class="count" id="favCount">0</span></div>
   <div class="fav-grid" id="favGrid"></div>
@@ -52,12 +51,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 </div>
 <div class="overlay" id="overlay"><div class="modal"><h2>API-Einstellungen</h2><p class="notice">Der Key wird nur lokal in diesem Browser gespeichert und nie in den Code geschrieben. <strong>API-Keys dürfen laut Nutzungsbedingungen nicht auf GitHub oder in Foren veröffentlicht werden.</strong> → <a href="https://creativecommons.tankerkoenig.de/?page=info" target="_blank" rel="noopener" style="color:var(--brand)">API-Dokumentation &amp; Registrierung</a></p><div class="field"><label>Tankerkönig API-Key</label><input id="apiKey" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div><div class="actions"><button class="ghost" id="cancelSettings">Abbrechen</button><button class="primary" id="saveSettings">Speichern</button></div></div></div>
 <script>
-const DEBUG=new URLSearchParams(location.search).has('debug');
 const STORE='tankstellen_finder_v2';
 // Key für den Zugriff auf die freie Tankerkönig-Spritpreis-API
 // Für eigenen Key bitte hier https://creativecommons.tankerkoenig.de registrieren.
 // Der Key wird nur lokal im Browser gespeichert und darf nicht im Code veröffentlicht werden.
-const state=Object.assign({apiKey:'',fuel:'e5',theme:'system',history:{e10:[],e5:[],diesel:[]},stations:[],place:'Hilchenbach',coords:null,lastRequest:0,favorites:{},favPrices:{}},JSON.parse(localStorage.getItem(STORE)||'{}'));
+const TK_HOUR=3600000;
+const state=Object.assign({apiKey:'',fuel:'e5',theme:'system',history:{e10:[],e5:[],diesel:[]},stations:[],place:'57271 Hilchenbach-Dahlbruch',coords:null,lastRequest:0,favorites:{},favPrices:{}},JSON.parse(localStorage.getItem(STORE)||'{}'));
 const $=id=>document.getElementById(id), euro=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:3,maximumFractionDigits:3})+' €';
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){localStorage.setItem(STORE,JSON.stringify(state))}
@@ -104,19 +103,10 @@ async function search(){
 }
 
 function validStations(){
- const result=state.stations.filter(s=>{
+ return state.stations.filter(s=>{
   const p=s[state.fuel];
   return typeof p==='number'&&isFinite(p)&&p>0.5;
  });
- console.log('[TK] fuel:',state.fuel,'total stations:',state.stations.length,'valid:',result.length);
- if(result.length){
-  const prices=result.map(s=>s[state.fuel]);
-  console.log('[TK] prices:',prices);
-  console.log('[TK] min:',Math.min(...prices),'avg:',prices.reduce((a,b)=>a+b,0)/prices.length,'max:',Math.max(...prices));
- }else if(state.stations.length){
-  console.warn('[TK] Alle Preise ungültig. Erste 3 Stationen:',state.stations.slice(0,3).map(s=>({name:s.name,e5:s.e5,e10:s.e10,diesel:s.diesel})));
- }
- return result;
 }
 
 function recordHistory(){
@@ -161,17 +151,6 @@ function render(){
   return `<article class="card station"><div><div class="name">${esc(s.name)}</div><div class="address">${esc(s.street)} ${esc(s.houseNumber)}, ${esc(s.postCode)} ${esc(s.place)}</div><div class="badges"><span class="badge ${s.isOpen?'open':'closed'}">${s.isOpen?'Geöffnet':'Geschlossen'}</span><span class="badge">${Number(s.dist).toLocaleString('de-DE',{maximumFractionDigits:1})} km</span></div></div><div><div class="price">${euro(s[state.fuel])}<small>pro Liter</small></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.lat+','+s.lng)}">Route öffnen</a><button class="star${isFav?' active':''}" data-favid="${esc(s.id)}" title="${isFav?'Nicht mehr beobachten':'Beobachten'}">★</button></div></article>`;
  }).join('');
  drawChart();renderFavs();
- if(DEBUG){
-  const raw=list.map(s=>({name:s.name,e5:s.e5,e10:s.e10,diesel:s.diesel,used:s[state.fuel]}));
-  $('debugPanel').style.display='';
-  $('debugOut').textContent=
-   'fuel: '+state.fuel+'\n'+
-   'stations total: '+state.stations.length+'\n'+
-   'stations valid: '+list.length+'\n'+
-   'vals: ['+vals.map(v=>v.toFixed(3)).join(', ')+']\n'+
-   'min: '+min.toFixed(3)+'  avg: '+avg.toFixed(3)+'  max: '+max.toFixed(3)+'\n\n'+
-   raw.map(s=>`${s.name}\n  e5=${s.e5}  e10=${s.e10}  diesel=${s.diesel}  → used=${s.used}`).join('\n');
- }
 }
 
 function renderFavs(){
@@ -228,14 +207,16 @@ $('saveSettings').onclick=()=>{state.apiKey=$('apiKey').value.trim();persist();$
 $('overlay').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')};
 $('searchBtn').onclick=search;$('place').oninput=()=>{state.coords=null};$('sorting').onchange=render;
 document.querySelectorAll('.fuel').forEach(b=>b.onclick=()=>{state.fuel=b.dataset.fuel;persist();render()});
-$('locationBtn').onclick=()=>{if(!navigator.geolocation){setStatus('Standortfunktion nicht verfügbar');return}setStatus('Standort wird ermittelt …');navigator.geolocation.getCurrentPosition(p=>{state.coords={lat:p.coords.latitude,lng:p.coords.longitude,label:'Aktueller Standort'};state.place='Aktueller Standort';$('place').value=state.place;persist();search()},()=>setStatus('Standortzugriff wurde nicht erlaubt'))};
 $('clearHistory').onclick=()=>{if(confirm('Gespeicherte Preisentwicklung löschen?')){state.history={e10:[],e5:[],diesel:[]};persist();drawChart()}};
 $('stations').addEventListener('click',e=>{const btn=e.target.closest('[data-favid]');if(btn&&btn.classList.contains('star'))toggleFav(btn.dataset.favid)});
 $('favGrid').addEventListener('click',e=>{const btn=e.target.closest('.fav-remove');if(btn)toggleFav(btn.dataset.favid)});
 const themes=['system','light','dark'];
 function applyTheme(){state.theme==='system'?document.documentElement.removeAttribute('data-theme'):document.documentElement.setAttribute('data-theme',state.theme);requestAnimationFrame(drawChart)}
 $('themeBtn').onclick=()=>{state.theme=themes[(themes.indexOf(state.theme)+1)%3];applyTheme();persist()};
-window.onresize=()=>requestAnimationFrame(drawChart);applyTheme();$('place').value=state.place||'Hilchenbach';setStatus(state.apiKey?'Bereit zur Suche':'API-Key in den Einstellungen hinterlegen');render();
+window.onresize=()=>requestAnimationFrame(drawChart);applyTheme();$('place').value=state.place;setStatus(state.apiKey?'Bereit zur Suche':'API-Key in den Einstellungen hinterlegen');render();
+// Stündliche Auto-Abfrage; sofortige Abfrage falls Daten fehlen oder veraltet
+if(state.apiKey&&(!state.stations.length||Date.now()-state.lastRequest>TK_HOUR))search();
+setInterval(search,TK_HOUR);
 </script>
 </body>
 </html>
