@@ -86,8 +86,9 @@ async function search(){
   if(!coords||state.place!==$('place').value.trim()){coords=await geocode($('place').value.trim());state.coords=coords;state.place=$('place').value.trim()}
   // Zufällige Verzögerung (2–8 s) gem. Tankerkönig-Nutzungsbedingungen, um Lastspitzen zu vermeiden
   const jitter=2000+Math.random()*6000;setStatus(`Verbinde … (${Math.round(jitter/1000)} s)`);await new Promise(r=>setTimeout(r,jitter));
-  const p=new URLSearchParams({apikey:state.apiKey,lat:coords.lat,lng:coords.lng,rad:$('radius').value});
-  const r=await fetch('https://creativecommons.tankerkoenig.de/api/v4/stations/search?'+p);const data=await r.json();
+  // Korrekter Endpunkt gem. Doku: /json/list.php — type=all liefert alle Kraftstoffpreise in einem Aufruf
+  const p=new URLSearchParams({lat:coords.lat,lng:coords.lng,rad:$('radius').value,type:'all',sort:'dist',apikey:state.apiKey});
+  const r=await fetch('https://creativecommons.tankerkoenig.de/json/list.php?'+p);const data=await r.json();
   if(!r.ok||data.ok===false)throw Error(data.message||'Tankstellen konnten nicht geladen werden');
   state.stations=data.stations||[];state.lastRequest=Date.now();recordHistory();recordFavPrices();persist();render();
   setStatus(`Aktualisiert ${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})} · ${coords.label||state.place}`);startCooldown();
