@@ -660,6 +660,146 @@
     /* scrollbar */
     ::-webkit-scrollbar { width: 3px; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── Angebote ── */
+    .offers-view { padding: 0 0 12px; }
+
+    .offers-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 14px 8px;
+    }
+    .offers-topbar-left { display: flex; align-items: baseline; gap: 8px; }
+    .offers-topbar h2 { font-size: 17px; font-weight: 700; }
+    #offersCount { font-size: 12px; color: var(--muted); }
+    .offers-topbar-actions { display: flex; gap: 6px; }
+    .offers-action-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .offers-search-wrap { padding: 0 12px 6px; }
+    .offers-search-inner {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 8px 14px;
+    }
+    .offers-search-inner input {
+      flex: 1; background: none; border: none;
+      color: var(--text); font-size: 14px; outline: none;
+    }
+    .offers-search-inner input::placeholder { color: var(--muted); }
+
+    .offers-fav-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 14px 10px;
+    }
+    .offers-fav-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--muted); cursor: pointer; user-select: none;
+    }
+    .offers-fav-label input { accent-color: var(--teal); width: 15px; height: 15px; }
+
+    .offers-import-note {
+      margin: 0 14px 10px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── Offer card grid ── */
+    .offers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 0 12px 12px;
+    }
+
+    .offer-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      transition: transform 0.1s;
+    }
+    .offer-card:active { transform: scale(0.97); }
+
+    .offer-card-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 8px 4px;
+    }
+    .offer-retailer-badge {
+      font-size: 9px; font-weight: 800; letter-spacing: 0.4px;
+      color: #fff; padding: 3px 7px; border-radius: 6px;
+      text-transform: uppercase;
+    }
+    .offer-fav-btn {
+      background: none; border: none; font-size: 18px; cursor: pointer;
+      padding: 0 2px; color: var(--muted); line-height: 1;
+      transition: color 0.15s, transform 0.15s;
+    }
+    .offer-fav-btn.on { color: #f5a623; transform: scale(1.15); }
+
+    .offer-img-wrap {
+      width: 100%; aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--card); overflow: hidden;
+      max-height: 100px;
+    }
+    .offer-img { width: 100%; height: 100%; object-fit: cover; }
+    .offer-img-fallback {
+      font-size: 40px; display: flex;
+      align-items: center; justify-content: center;
+      width: 100%; height: 100px;
+    }
+
+    .offer-info { padding: 8px 9px 6px; flex: 1; }
+    .offer-name {
+      font-size: 12px; font-weight: 600; line-height: 1.3;
+      margin-bottom: 3px; word-break: break-word;
+    }
+    .offer-cat { font-size: 10px; color: var(--muted); margin-bottom: 5px; }
+    .offer-price { display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap; }
+    .offer-price-val { font-size: 17px; font-weight: 800; color: var(--teal); }
+    .offer-grundpreis { font-size: 9.5px; color: var(--muted); }
+    .offer-valid { font-size: 10px; color: var(--muted); margin-top: 4px; }
+    .offer-valid.urgent { color: var(--salmon); font-weight: 700; }
+
+    .offer-add-btn {
+      margin: 0 8px 9px;
+      padding: 8px 0;
+      background: var(--teal);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .offer-add-btn:active { opacity: 0.75; }
+
+    /* Offer badge on shopping list tile */
+    .tile-offer-badge {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.3px;
+      padding: 1px 5px; border-radius: 4px;
+      background: rgba(255,255,255,0.2); margin-top: 1px;
+    }
+
+    /* ── Offers store section ── */
+    .offers-divider {
+      height: 1px; background: var(--border); margin: 8px 12px;
+    }
+    .offers-section-label {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.7px;
+      padding: 4px 14px 10px;
+    }
   </style>
 </head>
 <body>
@@ -683,6 +823,7 @@
 <header class="header">
   <div class="header-back" onclick="switchList()">‹ Listen</div>
   <div class="header-title" id="listTitle">Zuhause</div>
+  <a href="index.html" class="icon-btn" style="text-decoration:none;font-size:17px" title="Startseite">⌂</a>
   <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Design wechseln">🌙</button>
   <button class="icon-btn" onclick="shareList()" title="Teilen">⎘</button>
   <button class="icon-btn" onclick="clearDone()" title="Erledigte löschen">✓</button>
@@ -805,11 +946,64 @@
 </div>
 
 <!-- ══ ANGEBOTE VIEW ══ -->
-<div id="offersView" style="display:none; padding: 16px 12px;">
-  <h2 style="font-size:17px; font-weight:700; margin-bottom:4px;">Angebote</h2>
-  <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Tippe auf einen Markt um die aktuellen Angebote zu sehen.</p>
-  <div id="storeGrid"></div>
+<div id="offersView" class="offers-view" style="display:none">
 
+  <div class="offers-topbar">
+    <div class="offers-topbar-left">
+      <h2>Angebote</h2>
+      <span id="offersCount"></span>
+    </div>
+    <div class="offers-topbar-actions">
+      <button class="offers-action-btn" onclick="refreshOffers()" title="Aktualisieren">↻</button>
+      <button class="offers-action-btn" onclick="openImportSheet()" title="Importieren">⊕</button>
+    </div>
+  </div>
+
+  <div class="offers-search-wrap">
+    <div class="offers-search-inner">
+      <span style="color:var(--muted)">🔍</span>
+      <input id="offersSearch" placeholder="Produkt, Händler oder Kategorie…" oninput="renderOffers()">
+    </div>
+  </div>
+
+  <div class="cat-row" id="offersHaendlerRow"></div>
+
+  <div class="offers-fav-row">
+    <label class="offers-fav-label">
+      <input type="checkbox" id="favOnlyToggle" onchange="renderOffers()">
+      Nur Favoriten
+    </label>
+  </div>
+
+  <div id="offersImportNote" class="offers-import-note" style="display:none">
+    ℹ️ <strong>Marktguru-Import:</strong> Eine öffentliche API ist nicht verfügbar.
+    Nutze <strong>⊕</strong> um Angebote als JSON zu importieren oder Demo-Daten zu laden.
+  </div>
+
+  <div class="offers-grid" id="offersGrid"></div>
+
+  <div class="offers-divider"></div>
+  <div class="offers-section-label">Markt-Websites</div>
+  <div style="padding:0 12px 16px"><div id="storeGrid" class="store-grid"></div></div>
+</div>
+
+<!-- ══ IMPORT SHEET ══ -->
+<div class="sheet-overlay" id="importOverlay" onclick="importOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">⊕ Angebote importieren</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6">
+      JSON einfügen (Format: <code style="font-size:11px;background:var(--card);padding:1px 5px;border-radius:4px">{"offers":[...]}</code>) oder Demo-Daten laden.
+    </p>
+    <textarea id="importJson" class="sheet-input"
+      style="height:110px;resize:none;font-size:12px;font-family:monospace"
+      placeholder='{"offers":[{"id":"1","name":"Butter","haendler":"Lidl","preis":2.19,"gueltigVon":"2026-08-17","gueltigBis":"2026-08-22","kategorie":"Milchprodukte","quelle":"Manuell"}]}'></textarea>
+    <div class="sheet-btns" style="margin-top:10px;flex-wrap:wrap;gap:8px">
+      <button class="sh-btn secondary" onclick="closeImportSheet()">Abbrechen</button>
+      <button class="sh-btn secondary" onclick="loadDemoOffers()">Demo-Daten</button>
+      <button class="sh-btn primary" onclick="importFromJson()">Importieren</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══ LISTEN SHEET ══ -->
@@ -1226,7 +1420,10 @@ function renderAll() {
 function tile(type, it) {
   const sug = getSug(it.name);
   let priceHtml = '';
-  if (sug?.price != null) {
+  if (it.isOffer && it.offerPrice != null) {
+    const col = HAENDLER_COLORS[it.offerHaendler] || '#fff';
+    priceHtml = `<div class="tile-offer-badge">${esc(it.offerHaendler || '')} ${Number(it.offerPrice).toFixed(2).replace('.',',')} €</div>`;
+  } else if (sug?.price != null) {
     const mult = calcMultiplier(it.amount, sug.unit);
     const effective = sug.price * mult;
     const label = mult > 1
@@ -1589,7 +1786,7 @@ function showTab(tab) {
   document.getElementById('navAngebote').classList.toggle('on',    isAngebote);
   document.getElementById('navRestaurants').classList.toggle('on', isRestaurants);
 
-  if (isAngebote)    renderStores();
+  if (isAngebote)    { renderStores(); renderOffers(); }
   if (isRestaurants) renderRestaurants();
 }
 
@@ -1963,6 +2160,227 @@ function esc(s) {
 }
 
 // ═══════════════════════════════════════════════
+//  ANGEBOTE
+// ═══════════════════════════════════════════════
+const HAENDLER_COLORS = {
+  'Lidl':'#0050aa','REWE':'#cc0000','ALDI':'#004b8d','ALDI Nord':'#004b8d',
+  'ALDI Süd':'#004b8d','Kaufland':'#e2001a','Penny':'#cc0000','Netto':'#e28000',
+  'Edeka':'#c8a400','Norma':'#003f8a','Rossmann':'#e2001a','dm':'#005ca9',
+};
+let allOffers = [];
+let activeHaendler = 'Alle';
+
+// ── Demo-Datensatz (realistische Beispiele Aug 2026) ──
+const DEMO_OFFERS = [
+  { id:'d1',  name:'Kerrygold Butter',          haendler:'Lidl',    preis:2.19, grundpreis:'8,76 €/kg',  gueltigVon:'2026-08-17',gueltigBis:'2026-08-22',kategorie:'Milchprodukte', bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d2',  name:'REWE Bio Vollmilch 1L',      haendler:'REWE',    preis:1.29, grundpreis:'1,29 €/L',   gueltigVon:'2026-08-17',gueltigBis:'2026-08-23',kategorie:'Milchprodukte', bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d3',  name:'Hähnchenbrust 600g',          haendler:'Netto',   preis:3.99, grundpreis:'6,65 €/kg',  gueltigVon:'2026-08-18',gueltigBis:'2026-08-23',kategorie:'Fleisch',       bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d4',  name:'Barilla Pasta 500g',           haendler:'ALDI',    preis:0.79, grundpreis:'1,58 €/kg',  gueltigVon:'2026-08-17',gueltigBis:'2026-08-22',kategorie:'Grundnahrung',  bild:null,favorit:true, importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d5',  name:'Coca-Cola 2L',                 haendler:'Penny',   preis:1.49, grundpreis:'0,75 €/L',   gueltigVon:'2026-08-18',gueltigBis:'2026-08-23',kategorie:'Getränke',      bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d6',  name:'Landkrone Äpfel 1kg',          haendler:'REWE',    preis:1.79, grundpreis:'1,79 €/kg',  gueltigVon:'2026-08-17',gueltigBis:'2026-08-23',kategorie:'Obst & Gemüse', bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d7',  name:'Thunfisch im Eigensaft 185g',  haendler:'ALDI',    preis:0.69, grundpreis:'3,73 €/kg',  gueltigVon:'2026-08-17',gueltigBis:'2026-08-22',kategorie:'Fisch',         bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d8',  name:'Dallmayr Prodomo 500g',         haendler:'Kaufland',preis:6.99, grundpreis:'13,98 €/kg', gueltigVon:'2026-08-17',gueltigBis:'2026-08-22',kategorie:'Getränke',      bild:null,favorit:true, importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d9',  name:'Heinz Ketchup 800ml',           haendler:'REWE',    preis:2.99, grundpreis:'3,74 €/L',   gueltigVon:'2026-08-17',gueltigBis:'2026-08-23',kategorie:'Saucen',        bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d10', name:'Persil Colorwaschmittel 1,5kg', haendler:'Lidl',    preis:4.99, grundpreis:'3,33 €/kg',  gueltigVon:'2026-08-17',gueltigBis:'2026-08-22',kategorie:'Haushalt',      bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d11', name:'Edeka Joghurt 500g',             haendler:'Edeka',   preis:0.69, grundpreis:'1,38 €/kg',  gueltigVon:'2026-08-18',gueltigBis:'2026-08-24',kategorie:'Milchprodukte', bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d12', name:'Hackfleisch gemischt 500g',      haendler:'Kaufland',preis:2.99, grundpreis:'5,98 €/kg',  gueltigVon:'2026-08-17',gueltigBis:'2026-08-19',kategorie:'Fleisch',       bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+];
+
+// ── Storage ──
+function loadOffers() {
+  try {
+    const raw = localStorage.getItem('einkauf_offers');
+    if (raw) { const d = JSON.parse(raw); allOffers = d.offers || []; }
+  } catch(e) { allOffers = []; }
+  cleanupExpiredOffers();
+}
+
+function saveOffers() {
+  localStorage.setItem('einkauf_offers', JSON.stringify({
+    lastUpdate: new Date().toISOString(),
+    offers: allOffers
+  }));
+}
+
+function cleanupExpiredOffers() {
+  const today = todayStr();
+  const before = allOffers.length;
+  allOffers = allOffers.filter(o => !o.gueltigBis || o.gueltigBis >= today);
+  if (allOffers.length < before) saveOffers();
+}
+
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+// ── Import ──
+function mergeOffers(newOffers) {
+  let added = 0, updated = 0;
+  newOffers.forEach(o => {
+    if (!o.id) o.id = 'imp_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    if (!o.importDatum) o.importDatum = new Date().toISOString();
+    if (o.favorit === undefined) o.favorit = false;
+    const idx = allOffers.findIndex(ex => ex.id === o.id);
+    if (idx >= 0) { allOffers[idx] = { ...allOffers[idx], ...o }; updated++; }
+    else { allOffers.push(o); added++; }
+  });
+  cleanupExpiredOffers();
+  saveOffers();
+  return { added, updated };
+}
+
+function importFromJson() {
+  const raw = document.getElementById('importJson').value.trim();
+  if (!raw) { toast('Kein JSON eingegeben'); return; }
+  try {
+    const parsed = JSON.parse(raw);
+    const offers = Array.isArray(parsed) ? parsed : (parsed.offers || []);
+    if (!offers.length) { toast('Keine Angebote im JSON gefunden'); return; }
+    const { added, updated } = mergeOffers(offers);
+    closeImportSheet();
+    renderOffers();
+    toast(`✓ ${added} neu, ${updated} aktualisiert`);
+  } catch(e) {
+    toast('❌ Ungültiges JSON-Format');
+  }
+}
+
+function loadDemoOffers() {
+  const { added, updated } = mergeOffers(DEMO_OFFERS.map(o => ({ ...o, favorit: o.favorit ?? false })));
+  closeImportSheet();
+  renderOffers();
+  toast(`Demo-Daten geladen: ${added} neu, ${updated} aktualisiert`);
+}
+
+function refreshOffers() {
+  cleanupExpiredOffers();
+  renderOffers();
+  toast('Abgelaufene Angebote entfernt');
+}
+
+function openImportSheet() {
+  document.getElementById('importJson').value = '';
+  document.getElementById('importOverlay').classList.add('open');
+}
+function closeImportSheet() { document.getElementById('importOverlay').classList.remove('open'); }
+function importOverlayClick(e) { if (e.target === document.getElementById('importOverlay')) closeImportSheet(); }
+
+// ── Render ──
+function renderOffers() {
+  const search     = (document.getElementById('offersSearch')?.value || '').toLowerCase().trim();
+  const favOnly    = document.getElementById('favOnlyToggle')?.checked || false;
+
+  let filtered = [...allOffers];
+  if (activeHaendler !== 'Alle') filtered = filtered.filter(o => o.haendler === activeHaendler);
+  if (favOnly)  filtered = filtered.filter(o => o.favorit);
+  if (search)   filtered = filtered.filter(o =>
+    o.name.toLowerCase().includes(search) ||
+    o.haendler.toLowerCase().includes(search) ||
+    (o.kategorie || '').toLowerCase().includes(search)
+  );
+
+  filtered.sort((a, b) => {
+    if (a.favorit !== b.favorit) return a.favorit ? -1 : 1;
+    if (a.gueltigBis && b.gueltigBis) return a.gueltigBis.localeCompare(b.gueltigBis);
+    return a.name.localeCompare(b.name);
+  });
+
+  const cnt = document.getElementById('offersCount');
+  if (cnt) cnt.textContent = filtered.length ? `${filtered.length} Angebote` : '';
+
+  const note = document.getElementById('offersImportNote');
+  if (note) note.style.display = allOffers.length === 0 ? '' : 'none';
+
+  const grid = document.getElementById('offersGrid');
+  if (!grid) return;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:24px">Keine Angebote gefunden.<br><small>Lade Demo-Daten über ⊕</small></div>';
+  } else {
+    grid.innerHTML = filtered.map(buildOfferCard).join('');
+  }
+
+  renderHaendlerChips();
+  if (activeHaendler !== 'Alle') renderStores();
+}
+
+function buildOfferCard(offer) {
+  const today     = todayStr();
+  const msLeft    = new Date(offer.gueltigBis || '9999-12-31') - new Date(today);
+  const daysLeft  = Math.ceil(msLeft / 86400000);
+  const urgentCls = daysLeft <= 2 ? 'urgent' : '';
+  const validTxt  = !offer.gueltigBis ? '' :
+    daysLeft <= 0 ? 'Heute letzter Tag!' :
+    daysLeft === 1 ? 'Morgen letzter Tag' :
+    `Noch ${daysLeft} Tage · bis ${fmtDate(offer.gueltigBis)}`;
+
+  const col = HAENDLER_COLORS[offer.haendler] || '#666';
+  const imgHtml = offer.bild
+    ? `<img src="${esc(offer.bild)}" alt="" class="offer-img" onerror="this.parentElement.innerHTML='<div class=offer-img-fallback>🛒</div>'">`
+    : `<div class="offer-img-fallback">🛒</div>`;
+
+  return `<div class="offer-card">
+    <div class="offer-card-top">
+      <span class="offer-retailer-badge" style="background:${col}">${esc(offer.haendler)}</span>
+      <button class="offer-fav-btn ${offer.favorit ? 'on' : ''}" onclick="toggleOfferFav('${esc(offer.id)}')">${offer.favorit ? '★' : '☆'}</button>
+    </div>
+    <div class="offer-img-wrap">${imgHtml}</div>
+    <div class="offer-info">
+      <div class="offer-name">${esc(offer.name)}</div>
+      ${offer.kategorie ? `<div class="offer-cat">${esc(offer.kategorie)}</div>` : ''}
+      <div class="offer-price">
+        <span class="offer-price-val">${Number(offer.preis).toFixed(2).replace('.',',')} €</span>
+        ${offer.grundpreis ? `<span class="offer-grundpreis">${esc(offer.grundpreis)}</span>` : ''}
+      </div>
+      ${validTxt ? `<div class="offer-valid ${urgentCls}">${validTxt}</div>` : ''}
+    </div>
+    <button class="offer-add-btn" onclick="addOfferToList('${esc(offer.id)}')">+ Einkaufsliste</button>
+  </div>`;
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}.${m}.`;
+}
+
+function renderHaendlerChips() {
+  const haendlers = ['Alle', ...new Set(allOffers.map(o => o.haendler).sort())];
+  const row = document.getElementById('offersHaendlerRow');
+  if (!row) return;
+  row.innerHTML = haendlers.map(h =>
+    `<button class="chip ${h === activeHaendler ? 'on' : ''}" onclick="setOfferHaendler('${esc(h)}')">${esc(h)}</button>`
+  ).join('');
+}
+
+function setOfferHaendler(h) { activeHaendler = h; renderOffers(); }
+
+function toggleOfferFav(id) {
+  const o = allOffers.find(x => x.id === id);
+  if (!o) return;
+  o.favorit = !o.favorit;
+  saveOffers();
+  renderOffers();
+}
+
+function addOfferToList(id) {
+  const offer = allOffers.find(x => x.id === id);
+  if (!offer) return;
+  const already = Object.values(items).find(it => it.name.toLowerCase() === offer.name.toLowerCase());
+  if (already) { toast(`${offer.name} bereits in der Liste`); return; }
+  persist('i_' + Date.now(), {
+    name: offer.name,
+    emoji: '🏷️',
+    amount: '',
+    checked: false,
+    addedAt: Date.now(),
+    offerPrice: offer.preis,
+    offerHaendler: offer.haendler,
+    isOffer: true,
+  });
+  toast(`🏷️ ${offer.name} von ${offer.haendler} hinzugefügt`);
+  showTab('liste');
+}
+
+// ═══════════════════════════════════════════════
 //  THEME
 // ═══════════════════════════════════════════════
 function toggleTheme() {
@@ -1982,6 +2400,7 @@ function initTheme() {
 //  START
 // ═══════════════════════════════════════════════
 initTheme();
+loadOffers();
 initApp();
 </script>
 </body>
