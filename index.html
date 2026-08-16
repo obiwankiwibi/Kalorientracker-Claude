@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meine Apps</title>
+  <title>Dashboard</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -15,7 +15,6 @@
       --muted:   #7880a0;
       --teal:    #3dbdb5;
       --salmon:  #e8635a;
-      --amber:   #f5a623;
     }
 
     body {
@@ -26,89 +25,346 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 48px 20px;
+      padding: 0 0 40px;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    h1 {
-      font-size: 22px;
+    /* ── Weather Card ── */
+    .weather-card {
+      width: 100%;
+      max-width: 430px;
+      padding: 36px 24px 28px;
+      background: linear-gradient(145deg, #FF8C00, #FFB347);
+      position: relative;
+      overflow: hidden;
+      transition: background 0.8s ease;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .weather-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.15);
+    }
+
+    .weather-bg-emoji {
+      position: absolute;
+      top: -10px; right: -10px;
+      font-size: 130px;
+      opacity: 0.18;
+      line-height: 1;
+      pointer-events: none;
+      filter: blur(2px);
+    }
+
+    .weather-content { position: relative; z-index: 1; }
+
+    .weather-location {
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.85;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .weather-clock {
+      font-size: 13px;
+      opacity: 0.75;
+      margin-bottom: 12px;
+    }
+
+    .weather-main {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .weather-emoji { font-size: 52px; line-height: 1; }
+
+    .weather-temp-wrap { display: flex; flex-direction: column; }
+
+    .weather-temp {
+      font-size: 56px;
       font-weight: 700;
-      margin-bottom: 8px;
-      letter-spacing: -0.3px;
+      line-height: 1;
+      color: #fff;
+      letter-spacing: -2px;
     }
 
-    .sub {
-      color: var(--muted);
+    .weather-feels {
+      font-size: 12px;
+      opacity: 0.8;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    .weather-desc {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .weather-details {
+      display: flex;
+      gap: 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.85);
+      flex-wrap: wrap;
+    }
+
+    .weather-detail {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.18);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .weather-minmax {
+      margin-top: 8px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.75);
+    }
+
+    .weather-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 14px;
-      margin-bottom: 40px;
+      color: rgba(255,255,255,0.8);
+      z-index: 2;
+    }
+
+    /* ── App grid ── */
+    .section-label {
+      width: 100%;
+      max-width: 400px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 20px 4px 10px;
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 16px;
+      gap: 14px;
       width: 100%;
       max-width: 400px;
+      padding: 0 0px;
     }
 
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 28px 20px;
+      padding: 24px 16px;
       text-decoration: none;
       color: var(--text);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      transition: transform 0.15s, border-color 0.15s;
-      cursor: pointer;
+      gap: 10px;
+      transition: transform 0.12s, border-color 0.15s;
     }
+    .card:active { transform: scale(0.95); }
+    .card.teal   { border-color: rgba(61,189,181,0.35); }
+    .card.coral  { border-color: rgba(232,99,90,0.35);  }
+    .card.purple { border-color: rgba(160,100,220,0.38); }
+    .card.green  { border-color: rgba(80,190,120,0.38); }
+    .card.amber  { border-color: rgba(240,170,50,0.38); }
 
-    .card:active { transform: scale(0.96); }
+    .card-icon { font-size: 38px; line-height: 1; }
+    .card-name { font-size: 14px; font-weight: 600; text-align: center; }
+    .card-desc { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.5; }
 
-    .card:hover { border-color: var(--teal); }
-
-    .card-icon {
-      font-size: 42px;
-      line-height: 1;
-    }
-
-    .card-name {
-      font-size: 15px;
-      font-weight: 600;
+    /* ── Error state ── */
+    .weather-error {
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
       text-align: center;
+      padding: 20px;
     }
-
-    .card-desc {
-      font-size: 12px;
-      color: var(--muted);
-      text-align: center;
-      line-height: 1.5;
-    }
-
-    .card.teal  { border-color: rgba(61,189,181,0.3); }
-    .card.coral { border-color: rgba(232,99,90,0.3);  }
   </style>
 </head>
 <body>
 
-  <h1>Meine Apps</h1>
-  <p class="sub">Wähle eine App</p>
+  <!-- ══ WETTER ══ -->
+  <div class="weather-card" id="weatherCard">
+    <div class="weather-bg-emoji" id="weatherBgEmoji">☀️</div>
+    <div class="weather-loading" id="weatherLoading">📍 Standort wird ermittelt…</div>
+    <div class="weather-content" id="weatherContent" style="display:none">
+      <div class="weather-location">📍 <span id="wLocation">–</span></div>
+      <div class="weather-clock" id="wClock"></div>
+      <div class="weather-main">
+        <div class="weather-emoji" id="wEmoji">☀️</div>
+        <div class="weather-temp-wrap">
+          <div class="weather-temp"><span id="wTemp">–</span>°</div>
+          <div class="weather-feels">Gefühlt <span id="wFeels">–</span>°</div>
+        </div>
+      </div>
+      <div class="weather-desc" id="wDesc">–</div>
+      <div class="weather-details">
+        <div class="weather-detail">💨 <span id="wWind">–</span> km/h</div>
+        <div class="weather-detail">💧 <span id="wHumid">–</span>%</div>
+        <div class="weather-detail" id="wMinMaxBox">↓<span id="wMin">–</span>° ↑<span id="wMax">–</span>°</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ APPS ══ -->
+  <div class="section-label" style="padding-left:0">Apps</div>
 
   <div class="grid">
     <a class="card teal" href="einkaufsliste.html">
       <div class="card-icon">🛒</div>
       <div class="card-name">Einkaufsliste</div>
-      <div class="card-desc">Gemeinsam einkaufen, in Echtzeit synchronisiert</div>
+      <div class="card-desc">Gemeinsam, in Echtzeit synchronisiert</div>
     </a>
-
     <a class="card coral" href="kalorien.html">
       <div class="card-icon">🥗</div>
       <div class="card-name">Kalorientracker</div>
-      <div class="card-desc">Mahlzeiten & Nährstoffe im Blick behalten</div>
+      <div class="card-desc">Mahlzeiten & Nährstoffe im Blick</div>
+    </a>
+    <a class="card purple" href="zähler.html">
+      <div class="card-icon">🔢</div>
+      <div class="card-name">Zähler</div>
+      <div class="card-desc">Einfacher Klick-Zähler</div>
+    </a>
+    <a class="card green" href="haushaltskosten_tracker.html">
+      <div class="card-icon">🏠</div>
+      <div class="card-name">Haushalt</div>
+      <div class="card-desc">Ausgaben & Kosten im Überblick</div>
+    </a>
+    <a class="card amber" href="tankstellen_finder.html">
+      <div class="card-icon">⛽</div>
+      <div class="card-name">Tankstellen</div>
+      <div class="card-desc">Günstige Preise in der Nähe finden</div>
     </a>
   </div>
+
+<script>
+// ── Uhr ──
+function updateClock() {
+  const now = new Date();
+  const t = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  const d = now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
+  document.getElementById('wClock').textContent = `${d}, ${t}`;
+}
+updateClock();
+setInterval(updateClock, 30000);
+
+// ── WMO Wettercodes ──
+const WEATHER = {
+  0:  { label:'Klarer Himmel',           emoji:'☀️',  nightEmoji:'🌙', grad:['#FF8C00','#FFB347'] },
+  1:  { label:'Überwiegend klar',         emoji:'🌤️', nightEmoji:'🌙', grad:['#FF8C00','#FFAA00'] },
+  2:  { label:'Teilweise bewölkt',        emoji:'⛅',  nightEmoji:'☁️', grad:['#6b8cba','#a0b8d8'] },
+  3:  { label:'Bedeckt',                  emoji:'☁️',  nightEmoji:'☁️', grad:['#5a6b80','#7a8fa0'] },
+  45: { label:'Neblig',                   emoji:'🌫️', nightEmoji:'🌫️',grad:['#6e7e8e','#9eaebe'] },
+  48: { label:'Neblig (Reif)',            emoji:'🌫️', nightEmoji:'🌫️',grad:['#6e7e8e','#9eaebe'] },
+  51: { label:'Leichter Nieselregen',     emoji:'🌦️', nightEmoji:'🌧️',grad:['#3a6186','#537aaa'] },
+  53: { label:'Nieselregen',              emoji:'🌦️', nightEmoji:'🌧️',grad:['#3a6186','#537aaa'] },
+  55: { label:'Starker Nieselregen',      emoji:'🌧️', nightEmoji:'🌧️',grad:['#2c4a6e','#4a6a8e'] },
+  61: { label:'Leichter Regen',           emoji:'🌧️', nightEmoji:'🌧️',grad:['#2c4a6e','#4a6a8e'] },
+  63: { label:'Regen',                    emoji:'🌧️', nightEmoji:'🌧️',grad:['#2c4a6e','#4a6a8e'] },
+  65: { label:'Starker Regen',            emoji:'🌧️', nightEmoji:'🌧️',grad:['#1a3a5e','#3a5a7e'] },
+  71: { label:'Leichter Schneefall',      emoji:'🌨️', nightEmoji:'🌨️',grad:['#7090b8','#a0b8d8'] },
+  73: { label:'Schneefall',               emoji:'❄️',  nightEmoji:'❄️', grad:['#5878a0','#8ab0d0'] },
+  75: { label:'Starker Schneefall',       emoji:'❄️',  nightEmoji:'❄️', grad:['#4060880','#6890b8'] },
+  80: { label:'Regenschauer',             emoji:'🌦️', nightEmoji:'🌧️',grad:['#3a6186','#537aaa'] },
+  81: { label:'Regenschauer',             emoji:'🌧️', nightEmoji:'🌧️',grad:['#2c4a6e','#4a6a8e'] },
+  82: { label:'Starke Schauer',           emoji:'🌧️', nightEmoji:'🌧️',grad:['#1a3a5e','#3a5a7e'] },
+  85: { label:'Schneeschauer',            emoji:'🌨️', nightEmoji:'🌨️',grad:['#7090b8','#a0b8d8'] },
+  86: { label:'Starke Schneeschauer',     emoji:'❄️',  nightEmoji:'❄️', grad:['#5878a0','#8ab0d0'] },
+  95: { label:'Gewitter',                 emoji:'⛈️', nightEmoji:'⛈️',grad:['#373b44','#4a5568'] },
+  96: { label:'Gewitter mit Hagel',       emoji:'⛈️', nightEmoji:'⛈️',grad:['#2d3142','#404558'] },
+  99: { label:'Schweres Gewitter',        emoji:'⛈️', nightEmoji:'⛈️',grad:['#2d3142','#404558'] },
+};
+
+function getWeatherInfo(code) {
+  // Exakter Match oder nächst niedrigerer Code
+  if (WEATHER[code]) return WEATHER[code];
+  const keys = Object.keys(WEATHER).map(Number).sort((a,b)=>b-a);
+  for (const k of keys) { if (k <= code) return WEATHER[k]; }
+  return { label:'–', emoji:'🌡️', nightEmoji:'🌡️', grad:['#444','#666'] };
+}
+
+// ── Wetter laden ──
+async function loadWeather(lat, lon) {
+  try {
+    const [forecastRes, geoRes] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min&wind_speed_unit=kmh&timezone=auto&forecast_days=1`),
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=de`)
+    ]);
+
+    const forecast = await forecastRes.json();
+    const geo      = await geoRes.json();
+
+    const c    = forecast.current;
+    const d    = forecast.daily;
+    const code = c.weather_code;
+    const hour = new Date().getHours();
+    const isNight = hour < 6 || hour >= 21;
+
+    const info  = getWeatherInfo(code);
+    const emoji = isNight ? info.nightEmoji : info.emoji;
+    const grad  = isNight ? ['#0d1b2a','#1b2838'] : info.grad;
+
+    // Location
+    const loc = geo.address?.city || geo.address?.town || geo.address?.village || geo.address?.county || 'Unbekannt';
+
+    // UI befüllen
+    document.getElementById('wLocation').textContent = loc;
+    document.getElementById('wEmoji').textContent    = emoji;
+    document.getElementById('wTemp').textContent     = Math.round(c.temperature_2m);
+    document.getElementById('wFeels').textContent    = Math.round(c.apparent_temperature);
+    document.getElementById('wDesc').textContent     = info.label;
+    document.getElementById('wWind').textContent     = Math.round(c.wind_speed_10m);
+    document.getElementById('wHumid').textContent    = c.relative_humidity_2m;
+    document.getElementById('wMin').textContent      = Math.round(d.temperature_2m_min[0]);
+    document.getElementById('wMax').textContent      = Math.round(d.temperature_2m_max[0]);
+    document.getElementById('weatherBgEmoji').textContent = emoji;
+
+    // Gradient setzen
+    document.getElementById('weatherCard').style.background =
+      `linear-gradient(145deg, ${grad[0]}, ${grad[1]})`;
+
+    document.getElementById('weatherLoading').style.display = 'none';
+    document.getElementById('weatherContent').style.display = '';
+
+  } catch(e) {
+    document.getElementById('weatherLoading').innerHTML =
+      '<div class="weather-error">⚠️ Wetter konnte nicht geladen werden</div>';
+  }
+}
+
+// ── Standort ermitteln ──
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(
+    pos => loadWeather(pos.coords.latitude, pos.coords.longitude),
+    ()  => {
+      document.getElementById('weatherLoading').innerHTML =
+        '<div class="weather-error">📍 Standortzugriff verweigert<br><small>Bitte in den Browser-Einstellungen erlauben</small></div>';
+    },
+    { timeout: 8000 }
+  );
+} else {
+  document.getElementById('weatherLoading').textContent = 'Standort nicht verfügbar';
+}
+</script>
 
 </body>
 </html>
