@@ -92,10 +92,30 @@ async function search(){
   if(!r.ok||data.ok===false)throw Error(data.message||'Tankstellen konnten nicht geladen werden');
   state.stations=data.stations||[];state.lastRequest=Date.now();recordHistory();recordFavPrices();persist();render();
   setStatus(`Aktualisiert ${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})} · ${coords.label||state.place}`);startCooldown();
- }catch(e){setStatus(e.message);$('stations').innerHTML=`<div class="card empty"><strong>Abruf fehlgeschlagen</strong>${esc(e.message)}. API-Key und Verbindung prüfen.</div>`;$('searchBtn').disabled=false}
+ }catch(e){
+  const cors=e instanceof TypeError&&e.message==='Failed to fetch';
+  const msg=cors?'CORS-Fehler: Datei muss über HTTP geöffnet werden (z. B. GitHub Pages), nicht als lokale Datei.':e.message;
+  setStatus(msg);
+  $('stations').innerHTML=`<div class="card empty"><strong>Abruf fehlgeschlagen</strong>${esc(msg)}${cors?'<br><br><a href="https://pages.github.com" target="_blank" rel="noopener" style="color:var(--brand)">→ GitHub Pages einrichten</a>':''}</div>`;
+  $('searchBtn').disabled=false;
+ }
 }
 
-function validStations(){return state.stations.filter(s=>typeof s[state.fuel]==='number'&&s[state.fuel]>0)}
+function validStations(){
+ const result=state.stations.filter(s=>{
+  const p=s[state.fuel];
+  return typeof p==='number'&&isFinite(p)&&p>0.5;
+ });
+ console.log('[TK] fuel:',state.fuel,'total stations:',state.stations.length,'valid:',result.length);
+ if(result.length){
+  const prices=result.map(s=>s[state.fuel]);
+  console.log('[TK] prices:',prices);
+  console.log('[TK] min:',Math.min(...prices),'avg:',prices.reduce((a,b)=>a+b,0)/prices.length,'max:',Math.max(...prices));
+ }else if(state.stations.length){
+  console.warn('[TK] Alle Preise ungültig. Erste 3 Stationen:',state.stations.slice(0,3).map(s=>({name:s.name,e5:s.e5,e10:s.e10,diesel:s.diesel})));
+ }
+ return result;
+}
 
 function recordHistory(){
  const vals=validStations().map(s=>s[state.fuel]);if(!vals.length)return;
