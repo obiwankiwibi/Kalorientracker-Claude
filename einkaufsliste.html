@@ -973,7 +973,12 @@ const CATS = ['Alle', ...new Set(SUGGESTIONS.map(s => s.cat))];
 // Preis-Lookup
 const SUG_MAP = {};
 SUGGESTIONS.forEach(s => { SUG_MAP[s.name.toLowerCase()] = s; });
-function getSug(name)      { return SUG_MAP[name.toLowerCase()] ?? null; }
+function getSug(name) {
+  const key = name.toLowerCase();
+  return SUG_MAP[key]
+    ?? Object.values(scannedSuggestions).find(s => s.name?.toLowerCase() === key)
+    ?? null;
+}
 function getItemPrice(name){ return getSug(name)?.price ?? null; }
 function fmtPrice(p)       { return p.toFixed(2).replace('.', ',') + ' €'; }
 
@@ -1770,16 +1775,18 @@ async function lookupAndAdd(code) {
     const name  = (p.product_name_de || p.product_name || '').trim() || 'Unbekanntes Produkt';
     const emoji = emojiFromCategories(p.categories_tags || [], p.product_name || '');
 
+    // Preis ermitteln (Open Prices API → Kategorie-Schätzung)
+    document.getElementById('scanStatus').textContent = 'Preis wird gesucht…';
+    const { price, unit } = await fetchScannedPrice(code, p.categories_tags || []);
+
     stopScan();
 
-    // Zur Einkaufsliste hinzufügen
     const id = 'i_' + Date.now();
     persist(id, { name, emoji, amount: '', checked: false, addedAt: Date.now() });
+    persistScanned(name, emoji, price, unit);
 
-    // Als Vorschlag speichern (damit künftig als Kachel verfügbar)
-    persistScanned(name, emoji);
-
-    toast(`${emoji} ${name} hinzugefügt`);
+    const priceHint = price ? ` · ~${fmtPrice(price)}/${unit}` : '';
+    toast(`${emoji} ${name} hinzugefügt${priceHint}`);
 
   } catch(e) {
     document.getElementById('scanStatus').textContent = 'Fehler – bitte erneut versuchen.';
@@ -1787,14 +1794,79 @@ async function lookupAndAdd(code) {
   }
 }
 
-function persistScanned(name, emoji) {
-  // Nicht doppelt speichern
+async function fetchScannedPrice(code, cats) {
+  // 1. Open Prices API (crowdsourced, Deutschland)
+  try {
+    const res = await fetch(
+      `https://prices.openfoodfacts.org/api/v1/prices?product_code=${code}&country=DE&page_size=20`,
+      { signal: AbortSignal.timeout(3000) }
+    );
+    const data = await res.json();
+    const prices = (data.items || [])
+      .map(i => i.price)
+      .filter(v => v > 0 && v < 100);
+    if (prices.length > 0) {
+      prices.sort((a, b) => a - b);
+      const median = prices[Math.floor(prices.length / 2)];
+      return { price: Math.round(median * 100) / 100, unit: 'Packung' };
+    }
+  } catch(e) {}
+
+  // 2. Kategorie-Schätzung
+  return estimatePriceFromCategories(cats);
+}
+
+function estimatePriceFromCategories(cats) {
+  const h = cats.join(' ').toLowerCase();
+  const rules = [
+    [['mineral-water','waters'],            0.29, '1,5L'   ],
+    [['carbonated','cola','soft-drink'],    1.69, '2L'     ],
+    [['fruit-juice','juices','nectar'],     1.29, '1L'     ],
+    [['beers','lager','pilsner'],           0.89, 'Flasche'],
+    [['wines'],                             4.99, 'Flasche'],
+    [['coffees','ground-coffee'],           4.99, '500g'   ],
+    [['teas'],                              1.49, 'Packung'],
+    [['plant-milks','oat-milk'],            1.49, '1L'     ],
+    [['milks'],                             1.09, '1L'     ],
+    [['cheeses'],                           1.99, '200g'   ],
+    [['yogurts','yoghurts'],               0.79, '500g'   ],
+    [['butters'],                           1.89, '250g'   ],
+    [['creams'],                            0.89, 'Packung'],
+    [['breads','toasts'],                   1.49, 'Packung'],
+    [['pastries','biscuits','cookies'],     1.49, 'Packung'],
+    [['cereals','mueslis'],                 2.99, 'Packung'],
+    [['chocolates'],                        1.29, 'Packung'],
+    [['chips','crisps','snacks'],           1.49, 'Packung'],
+    [['sweets','candies'],                  1.29, 'Packung'],
+    [['pastas','noodles'],                  1.09, '500g'   ],
+    [['rices'],                             1.49, '1kg'    ],
+    [['soups'],                             1.49, 'Dose'   ],
+    [['sauces','ketchups','mustards'],      1.49, 'Flasche'],
+    [['oils'],                              2.49, '1L'     ],
+    [['jams','honeys','spreads'],           2.49, 'Glas'   ],
+    [['chicken','poultry'],                 4.99, '1kg'    ],
+    [['beef','pork','meats'],               3.99, '500g'   ],
+    [['fishes','fish','salmon','tuna'],     2.49, 'Packung'],
+    [['frozen'],                            2.99, 'Packung'],
+    [['ice-cream'],                         2.99, 'Packung'],
+    [['shampoos','hair'],                   2.49, 'Flasche'],
+    [['soaps','body-wash'],                 1.49, 'Stück'  ],
+    [['toothpaste','dental'],               1.49, 'Packung'],
+    [['detergent','cleaning'],              3.99, 'Flasche'],
+  ];
+  for (const [keywords, price, unit] of rules) {
+    if (keywords.some(k => h.includes(k))) return { price, unit };
+  }
+  return { price: null, unit: 'Packung' };
+}
+
+function persistScanned(name, emoji, price = null, unit = 'Packung') {
   const already = [...SUGGESTIONS, ...Object.values(scannedSuggestions)]
     .some(s => s.name.toLowerCase() === name.toLowerCase());
   if (already) return;
 
   const id   = 'sc_' + Date.now();
-  const data = { name, emoji, cat: 'Gescannt' };
+  const data = { name, emoji, cat: 'Gescannt', ...(price != null ? { price, unit } : {}) };
 
   if (scannedRef) {
     scannedRef.child(id).set(data);
