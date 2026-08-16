@@ -255,7 +255,7 @@
       background: var(--teal);
       color: #fff;
     }
-    .tile.sug.in-list { opacity: 0.35; }
+    .tile.sug.in-list { opacity: 0.45; filter: grayscale(30%); }
 
     /* Empty state */
     .empty {
@@ -447,6 +447,171 @@
       transform: translateX(-50%) translateY(0);
     }
 
+    /* ── Store cards ── */
+    .store-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .store-card {
+      border-radius: 18px;
+      padding: 22px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      color: #fff;
+      transition: transform 0.12s, opacity 0.12s;
+      position: relative;
+      overflow: hidden;
+    }
+    .store-card:active { transform: scale(0.95); opacity: 0.85; }
+
+    .store-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.08);
+      border-radius: inherit;
+    }
+
+    .store-emoji { font-size: 32px; }
+    .store-name  { font-size: 15px; font-weight: 700; }
+    .store-label { font-size: 11px; opacity: 0.8; }
+
+    /* ── Restaurant cards ── */
+    .rest-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .rest-card {
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      color: #fff;
+      transition: transform 0.12s, opacity 0.12s;
+      position: relative;
+      overflow: hidden;
+    }
+    .rest-card:active { transform: scale(0.97); opacity: 0.85; }
+
+    .rest-emoji { font-size: 30px; flex-shrink: 0; }
+
+    .rest-info { flex: 1; min-width: 0; }
+    .rest-name  { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .rest-hours { font-size: 11px; opacity: 0.8; line-height: 1.4; }
+
+    .rest-arrow { font-size: 18px; opacity: 0.7; flex-shrink: 0; }
+
+    /* ── Scan button ── */
+    .scan-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .scan-btn:active { background: var(--card); }
+
+    /* ── Scanner overlay ── */
+    #scanOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 600;
+      flex-direction: column;
+    }
+    #scanOverlay.open { display: flex; }
+
+    #scanVideo {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    .scan-reticle {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -60%);
+      width: 260px; height: 160px;
+      border: 2px solid #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
+      pointer-events: none;
+    }
+    .scan-reticle::before, .scan-reticle::after {
+      content: '';
+      position: absolute;
+      width: 24px; height: 24px;
+      border-color: var(--teal);
+      border-style: solid;
+    }
+    .scan-reticle::before {
+      top: -2px; left: -2px;
+      border-width: 3px 0 0 3px;
+      border-radius: 10px 0 0 0;
+    }
+    .scan-reticle::after {
+      bottom: -2px; right: -2px;
+      border-width: 0 3px 3px 0;
+      border-radius: 0 0 10px 0;
+    }
+
+    #scanStatus {
+      position: absolute;
+      bottom: 140px; left: 0; right: 0;
+      text-align: center;
+      color: #fff;
+      font-size: 14px;
+      padding: 10px 20px;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(4px);
+    }
+
+    .scan-close {
+      position: absolute;
+      top: 20px; right: 16px;
+      background: rgba(0,0,0,0.5);
+      border: none; color: #fff;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .scan-torch {
+      position: absolute;
+      bottom: 60px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: 14px;
+      cursor: pointer;
+      display: none;
+    }
+    .scan-torch.visible { display: block; }
+    .scan-torch.on { background: rgba(255,220,0,0.3); border-color: #ffd700; }
+
+    /* ── Gescannte Vorschläge ── */
+    .tile.sug.scanned { background: linear-gradient(135deg, #5a3d8a, #3d2060); }
+
     /* scrollbar */
     ::-webkit-scrollbar { width: 3px; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -483,12 +648,22 @@
     <span style="color:var(--muted);font-size:15px">🔍</span>
     <input id="searchInput" placeholder="Suchen oder hinzufügen…"
            oninput="onSearch()" onkeydown="onSearchKey(event)">
+    <button class="scan-btn" onclick="openScanner()" title="Barcode scannen">📷</button>
     <button class="add-fab" onclick="addCustom()" title="Hinzufügen">+</button>
   </div>
 </div>
 
+<!-- ══ SCANNER OVERLAY ══ -->
+<div id="scanOverlay">
+  <video id="scanVideo" playsinline muted></video>
+  <div class="scan-reticle"></div>
+  <div id="scanStatus">Kamera wird gestartet…</div>
+  <button class="scan-close" onclick="stopScan()">✕</button>
+  <button class="scan-torch" id="scanTorch" onclick="toggleScanTorch()">🔦</button>
+</div>
+
 <!-- ══ ACTIVE LIST ══ -->
-<div class="section">
+<div class="section" id="activeSection">
   <div class="grid" id="activeGrid"></div>
 </div>
 
@@ -508,7 +683,7 @@
 <div class="cat-row" id="catRow"></div>
 
 <!-- ══ SUGGESTIONS ══ -->
-<div class="section">
+<div class="section" id="sugSection">
   <div class="grid" id="sugGrid"></div>
 </div>
 
@@ -530,20 +705,88 @@
   </div>
 </div>
 
+<!-- ══ RESTAURANTS VIEW ══ -->
+<div id="restaurantsView" style="display:none; padding: 16px 12px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+    <h2 style="font-size:17px; font-weight:700;">Restaurants</h2>
+    <button onclick="openRestForm()" style="
+      background:var(--teal); border:none; color:#fff;
+      width:34px; height:34px; border-radius:50%;
+      font-size:22px; cursor:pointer; display:flex;
+      align-items:center; justify-content:center;">+</button>
+  </div>
+  <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Lang drücken zum Löschen.</p>
+
+  <button onclick="findNearby()" style="
+    width:100%; padding:14px; margin-bottom:20px;
+    background: linear-gradient(135deg, #1a73e8, #0d47a1);
+    color:#fff; border:none; border-radius:16px;
+    font-size:15px; font-weight:600; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;">
+    📍 Restaurants in der Nähe
+  </button>
+
+  <div id="restaurantGrid"></div>
+</div>
+
+<!-- ══ RESTAURANT FORM SHEET ══ -->
+<div class="sheet-overlay" id="restOverlay" onclick="restOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🍽️ Restaurant hinzufügen</div>
+
+    <div style="display:flex; gap:8px; margin-bottom:10px;">
+      <input class="sheet-input" id="restEmoji" placeholder="Emoji 🍕" style="width:72px; flex:none; text-align:center; font-size:20px;">
+      <input class="sheet-input" id="restName" placeholder="Name *" style="flex:1; margin-bottom:0;">
+    </div>
+    <input class="sheet-input" id="restHours" placeholder="Öffnungszeiten (z.B. Mo–Sa 11–22 Uhr)">
+    <input class="sheet-input" id="restUrl"   placeholder="Website oder Google Maps Link (optional)">
+
+    <div style="display:flex; gap:8px; margin-top:4px;">
+      <button class="sh-btn secondary" onclick="closeRestForm()">Abbrechen</button>
+      <button class="sh-btn primary"   onclick="saveRestaurant()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ANGEBOTE VIEW ══ -->
+<div id="offersView" style="display:none; padding: 16px 12px;">
+  <h2 style="font-size:17px; font-weight:700; margin-bottom:4px;">Angebote</h2>
+  <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Tippe auf einen Markt um die aktuellen Angebote zu sehen.</p>
+  <div id="storeGrid"></div>
+
+</div>
+
+<!-- ══ LISTEN SHEET ══ -->
+<div class="sheet-overlay" id="listSheetOverlay" onclick="listSheetOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📋 Listen</div>
+    <div id="listSheetSaved" style="margin-bottom:12px;"></div>
+    <div style="display:flex; gap:8px;">
+      <input class="sheet-input" id="newListInput" placeholder="Neue Liste…"
+             style="margin-bottom:0; flex:1;"
+             onkeydown="if(event.key==='Enter') createNewList()">
+      <button class="sh-btn primary" onclick="createNewList()"
+              style="flex:none; padding:11px 16px;">+</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ BOTTOM NAV ══ -->
 <nav class="bottom-nav">
-  <div class="nav-item on">
+  <div class="nav-item on" id="navListe" onclick="showTab('liste')">
     <div class="nav-icon">≡</div>
     <div>Liste</div>
-  </div>
-  <div class="nav-item" onclick="shareList()">
-    <div class="nav-icon">⎘</div>
-    <div>Teilen</div>
     <div class="badge" id="badge">0</div>
   </div>
-  <div class="nav-item" onclick="clearDone()">
-    <div class="nav-icon">🗑</div>
-    <div>Erledigt</div>
+  <div class="nav-item" id="navAngebote" onclick="showTab('angebote')">
+    <div class="nav-icon">🏷️</div>
+    <div>Angebote</div>
+  </div>
+  <div class="nav-item" id="navRestaurants" onclick="showTab('restaurants')">
+    <div class="nav-icon">🍽️</div>
+    <div>Restaurants</div>
   </div>
   <div class="nav-item" onclick="switchList()">
     <div class="nav-icon">📋</div>
@@ -665,11 +908,65 @@ const AMOUNTS = ['1','2','3','4','5','6','300g','500g','750g','1kg','2kg','1L','
 const CATS = ['Alle', ...new Set(SUGGESTIONS.map(s => s.cat))];
 
 // ═══════════════════════════════════════════════
+//  RESTAURANTS — hier beliebig ergänzen/entfernen
+//  url: Speisekarte / Website / Google Maps Link
+//  hours: Öffnungszeiten als kurzer Text
+// ═══════════════════════════════════════════════
+const RESTAURANTS = [
+  {
+    name:  "McDonald's Ferndorf",
+    emoji: '🍔',
+    bg:    '#da291c',
+    hours: 'Mo–Do & So 8–24 Uhr · Fr–Sa 8–2 Uhr',
+    url:   'https://www.mcdonalds.com/de/de-de/restaurant-suche.html/l/kreuztal/zitzenbachstrasse-2/1109&cid=listing_1109',
+  },
+  {
+    name:  'Firat Pizza',
+    emoji: '🍕',
+    bg:    '#b54a00',
+    hours: 'Mo–Do 11–22:45 · Fr–Sa 11–23:45 · So 12–22:45',
+    phone: '02732 763055',
+    url:   'https://www.google.com/maps/search/Firat+Pizza+Siegener+Str+11+Kreuztal',
+  },
+  {
+    name:  'Rojroni Döner',
+    emoji: '🌯',
+    bg:    '#5a7a00',
+    hours: 'Mo–Sa 11:30–22 Uhr · So 12–21 Uhr',
+    phone: '02732 7651233',
+    url:   'https://www.google.com/maps/search/Rojroni+D%C3%B6ner+Siegener+Str+275+Kreuztal',
+  },
+];
+
+// ═══════════════════════════════════════════════
+//  SUPERMÄRKTE — hier beliebig ergänzen/entfernen
+// ═══════════════════════════════════════════════
+const STORES = [
+  { name: 'REWE',           emoji: '🛒', bg: '#cc0000', url: 'https://www.rewe.de/angebote/nationale-angebote/' },
+  { name: 'Lidl',           emoji: '🏪', bg: '#0050aa', url: 'https://www.lidl.de/angebote' },
+  { name: 'ALDI Nord',      emoji: '🏬', bg: '#004b8d', url: 'https://www.aldi-nord.de/angebote.html' },
+  { name: 'IKEA',           emoji: '🪑', bg: '#0058a3', url: 'https://www.ikea.com/de/de/offers/' },
+  { name: 'XXXLutz',        emoji: '🛋️', bg: '#c8002d', url: 'https://www.xxxlutz.de/angebote' },
+  { name: 'Blumenkremer',   emoji: '🌸', bg: '#c0006a', url: 'https://kremer-naturtalente.de/themen' },
+  { name: 'Blumen Risse',     emoji: '🌺', bg: '#a0003a', url: 'https://www.blumen-risse.de/' },
+  { name: 'Thomas Philipps', emoji: '🏷️', bg: '#e65c00', url: 'https://www.thomas-philipps.de/angebote' },
+];
+
+// ═══════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════
 let items   = {};      // { id: { name, emoji, amount, checked } }
 let listRef = null;    // Firebase ref
 let offlineMode = false;
+
+let customRestaurants = {};    // { id: { name, emoji, bg, hours, url } }
+let restRef = null;            // Firebase ref für Restaurants
+
+let scannedSuggestions = {};   // { id: { name, emoji, cat:'Gescannt' } }
+let scannedRef = null;         // Firebase ref für gescannte Vorschläge
+
+let scanStream2 = null, scanTrack2 = null;
+let scannerRunning2 = false, scanLoopId2 = null, scanTorchOn = false;
 
 let picker = { id: null, name: '', emoji: '', amount: '', isNew: true };
 let activeCat   = 'Alle';
@@ -701,7 +998,20 @@ function initApp() {
     listRef = db.ref('lists/' + listId + '/items');
     listRef.on('value', snap => {
       items = snap.val() || {};
+      autoClearOldDone(items);
       renderAll();
+    });
+
+    restRef = db.ref('restaurants');
+    restRef.on('value', snap => {
+      customRestaurants = snap.val() || {};
+      if (activeTab === 'restaurants') renderRestaurants();
+    });
+
+    scannedRef = db.ref('scannedSuggestions');
+    scannedRef.on('value', snap => {
+      scannedSuggestions = snap.val() || {};
+      renderSuggestions();
     });
   } catch(e) {
     console.error('Firebase init failed:', e);
@@ -714,6 +1024,9 @@ function startOffline() {
   document.getElementById('setupBanner').style.display = 'block';
   setOnline(false, true);
   try { items = JSON.parse(localStorage.getItem('list_' + listId) || '{}'); } catch { items = {}; }
+  try { customRestaurants  = JSON.parse(localStorage.getItem('restaurants')        || '{}'); } catch { customRestaurants = {}; }
+  try { scannedSuggestions = JSON.parse(localStorage.getItem('scannedSuggestions') || '{}'); } catch { scannedSuggestions = {}; }
+  autoClearOldDone(items);
   renderAll();
 }
 
@@ -787,21 +1100,52 @@ function renderAll() {
 }
 
 function tile(type, it) {
-  const onclick = type === 'active'
-    ? `openPicker('${it.id}')`
-    : `uncheck('${it.id}')`;
-  return `<div class="tile ${type}" onclick="${onclick}">
+  if (type === 'active') {
+    return `<div class="tile active"
+      ontouchstart="pressStart('${it.id}')" ontouchend="pressEnd('${it.id}')" ontouchcancel="pressCancel()"
+      onmousedown="pressStart('${it.id}')" onmouseup="pressEnd('${it.id}')" onmouseleave="pressCancel()">
+      <div class="tile-emoji">${it.emoji || '🛒'}</div>
+      <div class="tile-name">${esc(it.name)}</div>
+      ${it.amount ? `<div class="tile-amount">${esc(it.amount)}</div>` : ''}
+    </div>`;
+  }
+  return `<div class="tile done" onclick="uncheck('${it.id}')">
     <div class="tile-emoji">${it.emoji || '🛒'}</div>
     <div class="tile-name">${esc(it.name)}</div>
-    ${it.amount ? `<div class="tile-amount">${esc(it.amount)}</div>` : ''}
   </div>`;
+}
+
+// ── Long-press Erkennung ──
+let _pt = null, _pid = null, _fired = false;
+
+function pressStart(id) {
+  _pid = id; _fired = false;
+  _pt = setTimeout(() => {
+    _fired = true;
+    openPicker(id);
+  }, 500);
+}
+
+function pressEnd(id) {
+  clearTimeout(_pt);
+  if (!_fired && _pid === id) toggleItem(id);
+  _pid = null;
+}
+
+function pressCancel() {
+  clearTimeout(_pt);
+  _pid = null; _fired = false;
 }
 
 function renderSuggestions() {
   const search = document.getElementById('searchInput').value.toLowerCase().trim();
   const inListNames = new Set(Object.values(items).map(i => i.name.toLowerCase()));
 
-  let list = SUGGESTIONS;
+  // Gescannte Vorschläge zusammenführen
+  const scanned = Object.values(scannedSuggestions).map(s => ({ ...s, cat: 'Gescannt' }));
+  const allSuggestions = [...SUGGESTIONS, ...scanned];
+
+  let list = allSuggestions;
   if (activeCat !== 'Alle') list = list.filter(s => s.cat === activeCat);
   if (search)               list = list.filter(s => s.name.toLowerCase().includes(search));
 
@@ -811,7 +1155,9 @@ function renderSuggestions() {
   } else {
     sg.innerHTML = list.map(s => {
       const inList = inListNames.has(s.name.toLowerCase());
-      return `<div class="tile sug ${inList ? 'in-list' : ''}" onclick="tapSuggestion('${esc(s.name)}','${s.emoji}')">
+      const isScanned = s.cat === 'Gescannt';
+      return `<div class="tile sug ${isScanned ? 'scanned' : ''} ${inList ? 'in-list' : ''}"
+        onclick="tapSuggestion('${esc(s.name)}','${s.emoji}')">
         <div class="tile-emoji">${s.emoji}</div>
         <div class="tile-name">${esc(s.name)}</div>
       </div>`;
@@ -823,7 +1169,9 @@ function renderSuggestions() {
 
 function renderCats() {
   const cr = document.getElementById('catRow');
-  cr.innerHTML = CATS.map(c =>
+  const hasScanned = Object.keys(scannedSuggestions).length > 0;
+  const cats = ['Alle', ...new Set(SUGGESTIONS.map(s => s.cat)), ...(hasScanned ? ['Gescannt'] : [])];
+  cr.innerHTML = cats.map(c =>
     `<button class="chip ${c === activeCat ? 'on' : ''}" onclick="setCat('${c}')">${c}</button>`
   ).join('');
 }
@@ -834,11 +1182,12 @@ function renderCats() {
 function tapSuggestion(name, emoji) {
   const existing = Object.entries(items).find(([,v]) => v.name.toLowerCase() === name.toLowerCase());
   if (existing) {
-    // Already in list → open picker to edit / remove
-    openPicker(existing[0]);
+    // Bereits in der Liste → entfernen (Toggle)
+    persist(existing[0], null);
+    toast(`${name} entfernt`);
     return;
   }
-  // Add immediately with no amount
+  // Noch nicht drin → hinzufügen
   const id = 'i_' + Date.now();
   persist(id, { name, emoji, amount: '', checked: false, addedAt: Date.now() });
   toast(`${emoji} ${name} hinzugefügt`);
@@ -980,10 +1329,405 @@ function shareList() {
   }
 }
 
+// ═══════════════════════════════════════════════
+//  LISTEN-SHEET
+// ═══════════════════════════════════════════════
+const DEFAULT_LISTS = [
+  { name: 'Zuhause',     emoji: '🏠' },
+  { name: 'Wochenmarkt', emoji: '🛒' },
+  { name: 'Drogerie',    emoji: '🧴' },
+  { name: 'Baumarkt',    emoji: '🔨' },
+  { name: 'Urlaub',      emoji: '🏖️' },
+  { name: 'Party',       emoji: '🎉' },
+];
+
 function switchList() {
-  const name = prompt('Listenname eingeben (z.B. "wochenmarkt"):');
-  if (!name) return;
+  renderListSheet();
+  document.getElementById('listSheetOverlay').classList.add('open');
+}
+
+function closeListSheet() {
+  document.getElementById('listSheetOverlay').classList.remove('open');
+}
+
+function listSheetOverlayClick(e) {
+  if (e.target === document.getElementById('listSheetOverlay')) closeListSheet();
+}
+
+function renderListSheet() {
+  // Recent lists from localStorage
+  let recent = [];
+  try { recent = JSON.parse(localStorage.getItem('recentLists') || '[]'); } catch {}
+
+  const saved = document.getElementById('listSheetSaved');
+  const allLists = [...DEFAULT_LISTS];
+
+  // Add recent custom lists not already in defaults
+  recent.forEach(name => {
+    if (!allLists.find(l => l.name.toLowerCase() === name.toLowerCase())) {
+      allLists.push({ name, emoji: '📋' });
+    }
+  });
+
+  saved.innerHTML = allLists.map(l => `
+    <div onclick="goToList('${esc(l.name)}')" style="
+      display:flex; align-items:center; gap:12px;
+      padding:13px 14px; border-radius:14px;
+      background:${l.name.toLowerCase() === listId ? 'var(--teal)' : 'var(--card)'};
+      cursor:pointer; margin-bottom:8px;
+      border: 1px solid ${l.name.toLowerCase() === listId ? 'var(--teal)' : 'var(--border)'};
+      transition: background 0.15s;">
+      <span style="font-size:22px">${l.emoji}</span>
+      <span style="font-size:15px; font-weight:${l.name.toLowerCase() === listId ? '700' : '500'}">${esc(l.name)}</span>
+      ${l.name.toLowerCase() === listId ? '<span style="margin-left:auto;font-size:12px;opacity:0.8">Aktiv</span>' : ''}
+    </div>
+  `).join('');
+}
+
+function goToList(name) {
+  // Save to recent
+  let recent = [];
+  try { recent = JSON.parse(localStorage.getItem('recentLists') || '[]'); } catch {}
+  recent = [name, ...recent.filter(r => r.toLowerCase() !== name.toLowerCase())].slice(0, 10);
+  localStorage.setItem('recentLists', JSON.stringify(recent));
+
   location.href = location.pathname + '?list=' + encodeURIComponent(name.toLowerCase().trim());
+}
+
+function createNewList() {
+  const input = document.getElementById('newListInput');
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  goToList(name);
+}
+
+// ═══════════════════════════════════════════════
+//  AUTO-CLEAR ERLEDIGT (nach 8 Stunden)
+// ═══════════════════════════════════════════════
+function autoClearOldDone(currentItems) {
+  const cutoff = Date.now() - (8 * 60 * 60 * 1000); // 8 Stunden
+  Object.entries(currentItems).forEach(([id, it]) => {
+    if (it.checked && it.checkedAt && it.checkedAt < cutoff) {
+      persist(id, null);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════
+let activeTab = 'liste';
+
+function showTab(tab) {
+  activeTab = tab;
+  const isListe      = tab === 'liste';
+  const isAngebote   = tab === 'angebote';
+  const isRestaurants = tab === 'restaurants';
+
+  // Liste-Elemente
+  ['connBar','activeSection','doneSection','sugSection'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isListe ? '' : 'none';
+  });
+  document.getElementById('setupBanner').style.display  = isListe && offlineMode ? 'block' : 'none';
+  document.querySelector('.search-wrap').style.display   = isListe ? '' : 'none';
+  document.querySelector('.divider').style.display       = isListe ? '' : 'none';
+  document.getElementById('catRow').style.display        = isListe ? '' : 'none';
+
+  // Andere Views
+  document.getElementById('offersView').style.display      = isAngebote    ? 'block' : 'none';
+  document.getElementById('restaurantsView').style.display = isRestaurants ? 'block' : 'none';
+
+  // Nav
+  document.getElementById('navListe').classList.toggle('on',       isListe);
+  document.getElementById('navAngebote').classList.toggle('on',    isAngebote);
+  document.getElementById('navRestaurants').classList.toggle('on', isRestaurants);
+
+  if (isAngebote)    renderStores();
+  if (isRestaurants) renderRestaurants();
+}
+
+function renderStores() {
+  const grid = document.getElementById('storeGrid');
+  grid.className = 'store-grid';
+  grid.innerHTML = STORES.map(s => `
+    <a class="store-card" href="${s.url}" target="_blank" rel="noopener"
+       style="background: linear-gradient(135deg, ${s.bg}dd, ${s.bg}99);">
+      <div class="store-emoji">${s.emoji}</div>
+      <div class="store-name">${s.name}</div>
+      <div class="store-label">Angebote ansehen →</div>
+    </a>
+  `).join('');
+
+}
+
+// ═══════════════════════════════════════════════
+//  RESTAURANTS — Hinzufügen / Löschen
+// ═══════════════════════════════════════════════
+const REST_COLORS = ['#b54a00','#5a7a00','#006a6a','#6a006a','#00456a','#6a3000','#1a5e20','#880e4f'];
+
+function persistRest(id, data) {
+  if (restRef) {
+    if (data === null) restRef.child(id).remove();
+    else restRef.child(id).set(data);
+  } else {
+    if (data === null) delete customRestaurants[id];
+    else customRestaurants[id] = data;
+    localStorage.setItem('restaurants', JSON.stringify(customRestaurants));
+    if (activeTab === 'restaurants') renderRestaurants();
+  }
+}
+
+function openRestForm() {
+  document.getElementById('restName').value  = '';
+  document.getElementById('restEmoji').value = '';
+  document.getElementById('restHours').value = '';
+  document.getElementById('restUrl').value   = '';
+  document.getElementById('restOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('restName').focus(), 100);
+}
+
+function closeRestForm() {
+  document.getElementById('restOverlay').classList.remove('open');
+}
+
+function restOverlayClick(e) {
+  if (e.target === document.getElementById('restOverlay')) closeRestForm();
+}
+
+function saveRestaurant() {
+  const name  = document.getElementById('restName').value.trim();
+  if (!name) { document.getElementById('restName').focus(); return; }
+  const emoji = document.getElementById('restEmoji').value.trim() || '🍽️';
+  const hours = document.getElementById('restHours').value.trim() || 'Öffnungszeiten unbekannt';
+  const url   = document.getElementById('restUrl').value.trim() ||
+                'https://www.google.com/maps/search/' + encodeURIComponent(name);
+  const bg    = REST_COLORS[Object.keys(customRestaurants).length % REST_COLORS.length];
+
+  const id = 'r_' + Date.now();
+  persistRest(id, { name, emoji, bg, hours, url, addedAt: Date.now() });
+  closeRestForm();
+  toast(`${emoji} ${name} hinzugefügt`);
+}
+
+// Long-press zum Löschen
+let _rpt = null, _rpid = null, _rpfired = false;
+function restPressStart(id) {
+  _rpid = id; _rpfired = false;
+  _rpt = setTimeout(() => {
+    _rpfired = true;
+    if (confirm('Restaurant entfernen?')) persistRest(id, null);
+  }, 600);
+}
+function restPressEnd(id) {
+  clearTimeout(_rpt);
+  if (!_rpfired && _rpid === id) {
+    // Kurzer Tap → Link öffnen (handled by <a>)
+  }
+  _rpid = null;
+}
+function restPressCancel() { clearTimeout(_rpt); _rpid = null; _rpfired = false; }
+
+// ═══════════════════════════════════════════════
+//  BARCODE SCANNER
+// ═══════════════════════════════════════════════
+async function openScanner() {
+  document.getElementById('scanOverlay').classList.add('open');
+  document.getElementById('scanStatus').textContent = 'Kamera wird gestartet…';
+  document.getElementById('scanTorch').classList.remove('visible','on');
+
+  if (!('BarcodeDetector' in window)) {
+    document.getElementById('scanStatus').textContent =
+      'Barcode-Scan wird auf diesem Gerät nicht unterstützt.\nBitte Artikelname manuell eingeben.';
+    return;
+  }
+
+  try {
+    scanStream2 = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+    });
+  } catch(e) {
+    document.getElementById('scanStatus').textContent = 'Kein Kamerazugriff – Berechtigung erlauben.';
+    return;
+  }
+
+  scanTrack2 = scanStream2.getVideoTracks()[0];
+
+  try {
+    const cap = scanTrack2.getCapabilities?.() || {};
+    if ((cap.focusMode||[]).includes('continuous'))
+      await scanTrack2.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+    if (cap.torch)
+      document.getElementById('scanTorch').classList.add('visible');
+  } catch(e) {}
+
+  const video = document.getElementById('scanVideo');
+  video.srcObject = scanStream2;
+  await video.play().catch(() => {});
+
+  let detector;
+  try { detector = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e'] }); }
+  catch(e) { return; }
+
+  scannerRunning2 = true;
+  document.getElementById('scanStatus').textContent = 'Barcode ins Bild halten…';
+
+  const loop = async () => {
+    if (!scannerRunning2) return;
+    try {
+      const cvs = document.createElement('canvas');
+      cvs.width = video.videoWidth || 640;
+      cvs.height = video.videoHeight || 480;
+      cvs.getContext('2d').drawImage(video, 0, 0, cvs.width, cvs.height);
+      const codes = await detector.detect(cvs);
+      if (codes.length) {
+        scannerRunning2 = false;
+        document.getElementById('scanStatus').textContent = 'Produkt wird gesucht…';
+        await lookupAndAdd(codes[0].rawValue);
+        return;
+      }
+    } catch(e) {}
+    scanLoopId2 = setTimeout(loop, 200);
+  };
+  loop();
+}
+
+function stopScan() {
+  scannerRunning2 = false;
+  if (scanLoopId2) { clearTimeout(scanLoopId2); scanLoopId2 = null; }
+  if (scanTrack2 && scanTorchOn) {
+    try { scanTrack2.applyConstraints({ advanced: [{ torch: false }] }); } catch(e) {}
+  }
+  if (scanStream2) { scanStream2.getTracks().forEach(t => t.stop()); scanStream2 = null; }
+  scanTrack2 = null; scanTorchOn = false;
+  const video = document.getElementById('scanVideo');
+  video.srcObject = null;
+  document.getElementById('scanOverlay').classList.remove('open');
+}
+
+async function toggleScanTorch() {
+  if (!scanTrack2) return;
+  scanTorchOn = !scanTorchOn;
+  try {
+    await scanTrack2.applyConstraints({ advanced: [{ torch: scanTorchOn }] });
+    document.getElementById('scanTorch').classList.toggle('on', scanTorchOn);
+  } catch(e) { scanTorchOn = false; }
+}
+
+async function lookupAndAdd(code) {
+  try {
+    const res  = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json`);
+    const data = await res.json();
+
+    if (data.status !== 1) {
+      document.getElementById('scanStatus').textContent = 'Produkt nicht gefunden.';
+      setTimeout(stopScan, 2200);
+      return;
+    }
+
+    const p     = data.product;
+    const name  = (p.product_name_de || p.product_name || '').trim() || 'Unbekanntes Produkt';
+    const emoji = emojiFromCategories(p.categories_tags || [], p.product_name || '');
+
+    stopScan();
+
+    // Zur Einkaufsliste hinzufügen
+    const id = 'i_' + Date.now();
+    persist(id, { name, emoji, amount: '', checked: false, addedAt: Date.now() });
+
+    // Als Vorschlag speichern (damit künftig als Kachel verfügbar)
+    persistScanned(name, emoji);
+
+    toast(`${emoji} ${name} hinzugefügt`);
+
+  } catch(e) {
+    document.getElementById('scanStatus').textContent = 'Fehler – bitte erneut versuchen.';
+    setTimeout(stopScan, 2200);
+  }
+}
+
+function persistScanned(name, emoji) {
+  // Nicht doppelt speichern
+  const already = [...SUGGESTIONS, ...Object.values(scannedSuggestions)]
+    .some(s => s.name.toLowerCase() === name.toLowerCase());
+  if (already) return;
+
+  const id   = 'sc_' + Date.now();
+  const data = { name, emoji, cat: 'Gescannt' };
+
+  if (scannedRef) {
+    scannedRef.child(id).set(data);
+  } else {
+    scannedSuggestions[id] = data;
+    localStorage.setItem('scannedSuggestions', JSON.stringify(scannedSuggestions));
+    renderSuggestions();
+  }
+}
+
+function emojiFromCategories(cats, productName) {
+  const haystack = (cats.join(' ') + ' ' + productName).toLowerCase();
+  const map = [
+    ['water','💧'],['cola','🥤'],['juice','🧃'],['beer','🍺'],['wine','🍷'],
+    ['coffee','☕'],['tea','🍵'],['beverage','🥤'],['drink','🥤'],['milk','🥛'],
+    ['cheese','🧀'],['yogurt','🍮'],['butter','🧈'],['cream','🥛'],['dairy','🧀'],
+    ['chicken','🍗'],['beef','🥩'],['pork','🥩'],['meat','🥩'],['fish','🐟'],['seafood','🐟'],
+    ['bread','🍞'],['pasta','🍝'],['noodle','🍝'],['rice','🍚'],['cereal','🌾'],
+    ['apple','🍎'],['banana','🍌'],['orange','🍊'],['berry','🍓'],['fruit','🍎'],
+    ['vegetable','🥦'],['tomato','🍅'],['carrot','🥕'],['salad','🥗'],
+    ['egg','🥚'],['oil','🫙'],['sauce','🫙'],['soup','🍲'],
+    ['chocolate','🍫'],['sweet','🍬'],['candy','🍬'],['cookie','🍪'],['snack','🍪'],
+    ['frozen','🧊'],['ice cream','🍦'],
+    ['shampoo','🧴'],['soap','🧼'],['detergent','🧺'],['toilet','🧻'],
+  ];
+  for (const [kw, em] of map) {
+    if (haystack.includes(kw)) return em;
+  }
+  return '📦';
+}
+
+function findNearby() {
+  if (!navigator.geolocation) {
+    window.open('https://www.google.com/maps/search/Restaurants+in+der+Nähe', '_blank');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      window.open(`https://www.google.com/maps/search/Restaurants/@${lat},${lng},15z`, '_blank');
+    },
+    () => {
+      window.open('https://www.google.com/maps/search/Restaurants+in+der+Nähe', '_blank');
+    }
+  );
+}
+
+function renderRestaurants() {
+  const all = [
+    ...RESTAURANTS.map(r => ({ ...r, _fixed: true })),
+    ...Object.entries(customRestaurants).map(([id, r]) => ({ ...r, _id: id }))
+  ];
+
+  const rg = document.getElementById('restaurantGrid');
+  rg.className = 'rest-grid';
+  rg.innerHTML = all.map(r => {
+    const lp = r._fixed ? '' :
+      `ontouchstart="restPressStart('${r._id}')" ontouchend="restPressEnd('${r._id}')" ontouchcancel="restPressCancel()"
+       onmousedown="restPressStart('${r._id}')" onmouseup="restPressEnd('${r._id}')" onmouseleave="restPressCancel()"`;
+    return `<a class="rest-card" href="${r.url}" target="_blank" rel="noopener" ${lp}
+       style="background: linear-gradient(135deg, ${r.bg}ee, ${r.bg}99);">
+      <div class="rest-emoji">${r.emoji}</div>
+      <div class="rest-info">
+        <div class="rest-name">${esc(r.name)}</div>
+        <div class="rest-hours">🕐 ${esc(r.hours)}</div>
+        ${r.phone ? `<div class="rest-hours">📞 ${esc(r.phone)}</div>` : ''}
+      </div>
+      <div class="rest-arrow">›</div>
+    </a>`;
+  }).join('');
+
+  if (all.length === 0) {
+    rg.innerHTML = '<div class="empty" style="grid-column:1/-1">Noch keine Restaurants.<br>Tippe auf <strong>+</strong> um eines hinzuzufügen.</div>';
+  }
 }
 
 // ═══════════════════════════════════════════════
