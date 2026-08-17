@@ -37,6 +37,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 .hours-row-day{color:var(--muted)}
 .hours-note{font-size:11px;color:var(--muted);margin-top:2px}
 .hours-load{color:var(--muted);font-size:12px;font-style:italic}
+.filter-bar{padding-top:12px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filter-input{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:7px 11px;font:inherit;flex:1;min-width:120px}
+.filter-chip{border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:99px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap;font-family:inherit}
+.filter-chip.active{background:var(--soft);border-color:var(--brand);color:var(--brand)}
 @media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.grid .place{grid-column:1/-1}.layout{grid-template-columns:1fr}.chart-card{position:static}.topstats{grid-template-columns:1fr 1fr}}
 @media(max-width:430px){.grid{grid-template-columns:1fr}.grid .place{grid-column:auto}.station{grid-template-columns:1fr}.price{text-align:left}.subactions{flex-wrap:wrap}.status{width:100%;margin-left:0}}
 </style>
@@ -44,7 +48,14 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 <body>
 <div class="app">
 <header><div style="display:flex;align-items:center;gap:10px"><a href="index.html" class="icon" style="text-decoration:none;font-size:17px" title="Startseite">⌂</a><div class="logo">Tankstellen-Finder<small>Aktuelle Preise in deiner Umgebung</small></div></div><div><button class="icon" id="themeBtn" title="Design wechseln">◐</button> <button class="icon" id="settingsBtn" title="API-Einstellungen">⚙</button></div></header>
-<section class="search-card"><div class="grid"><div class="field place"><label>Ort oder Postleitzahl</label><input id="place" value="Hilchenbach" placeholder="z. B. Hilchenbach"></div><div class="field"><label>Umkreis</label><select id="radius"><option value="3">3 km</option><option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="25">25 km</option></select></div><div class="field"><label>Sortierung</label><select id="sorting"><option value="price">Preis</option><option value="dist">Entfernung</option></select></div><button class="primary" id="searchBtn">Tankstellen suchen</button></div><div class="subactions"><span class="status" id="status">API-Key in den Einstellungen hinterlegen</span></div></section>
+<section class="search-card"><div class="grid"><div class="field place"><label>Ort oder Postleitzahl</label><div style="display:flex;gap:6px"><input id="place" value="Hilchenbach" placeholder="z. B. Hilchenbach" style="flex:1"><button id="gpsBtn" class="icon" title="Aktuellen Standort ermitteln" style="flex-shrink:0;font-size:15px">📍</button></div></div><div class="field"><label>Umkreis</label><select id="radius"><option value="3">3 km</option><option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="25">25 km</option></select></div><div class="field"><label>Sortierung</label><select id="sorting"><option value="price">Preis</option><option value="dist">Entfernung</option></select></div><button class="primary" id="searchBtn">Tankstellen suchen</button></div><div class="subactions"><span class="status" id="status">API-Key in den Einstellungen hinterlegen</span></div>
+<div class="filter-bar" id="filterBar" style="display:none">
+  <input id="nameSearch" class="filter-input" placeholder="Name suchen…">
+  <select id="brandFilter" class="filter-input" style="flex:none;width:auto"><option value="">Alle Marken</option></select>
+  <button id="favsOnlyBtn" class="filter-chip">★ Nur Favoriten</button>
+  <button id="sortDirBtn" class="filter-chip">↑ Aufsteigend</button>
+</div>
+</section>
 <div class="fuel-tabs"><button class="fuel" data-fuel="e10">Super E10</button><button class="fuel active" data-fuel="e5">Super 95 (E5)</button><button class="fuel" data-fuel="diesel">Diesel</button></div>
 <div class="topstats">
   <div class="card stat"><div class="eyebrow">Günstigster Preis</div><div class="big" id="minPrice">—</div><div class="hint" id="minName">Noch keine Suche</div></div>
@@ -144,10 +155,26 @@ function toggleFav(id){
  persist();render();
 }
 
+let filterName='',filterBrand='',favsOnly=false,sortDir='asc';
+
+function updateBrandFilter(){
+ const sel=$('brandFilter');const cur=sel.value;
+ const brands=[...new Set(validStations().map(s=>s.brand||'').filter(Boolean))].sort();
+ sel.innerHTML='<option value="">Alle Marken</option>'+brands.map(b=>`<option value="${esc(b)}"${b===cur?' selected':''}>${esc(b)}</option>`).join('');
+}
+
 function render(){
  document.querySelectorAll('.fuel').forEach(b=>b.classList.toggle('active',b.dataset.fuel===state.fuel));
  $('legendFuel').textContent=fuelLabel(state.fuel);
- let list=validStations();list.sort($('sorting').value==='dist'?(a,b)=>a.dist-b.dist:(a,b)=>a[state.fuel]-b[state.fuel]);$('count').textContent=list.length;
+ let list=validStations();
+ const sortKey=$('sorting').value==='dist'?'dist':state.fuel;
+ list.sort((a,b)=>sortDir==='asc'?a[sortKey]-b[sortKey]:b[sortKey]-a[sortKey]);
+ if(filterName)list=list.filter(s=>(s.name||'').toLowerCase().includes(filterName)||(s.brand||'').toLowerCase().includes(filterName));
+ if(filterBrand)list=list.filter(s=>(s.brand||'')===filterBrand);
+ if(favsOnly)list=list.filter(s=>!!state.favorites[s.id]);
+ updateBrandFilter();
+ if(state.stations.length)$('filterBar').style.display='';
+ $('count').textContent=list.length;
  if(!list.length){
   $('stations').innerHTML='<div class="card empty"><strong>Keine Preise gefunden</strong>Für den gewählten Kraftstoff und Umkreis sind keine Preise verfügbar.</div>';
   $('minPrice').textContent=$('avgPrice').textContent=$('spread').textContent=$('savings').textContent='—';$('minName').textContent='Keine Daten';drawChart();renderFavs();return;
@@ -250,6 +277,26 @@ $('settingsBtn').onclick=openSettings;$('cancelSettings').onclick=()=>$('overlay
 $('saveSettings').onclick=()=>{state.apiKey=$('apiKey').value.trim();persist();$('overlay').classList.remove('open');setStatus(state.apiKey?'Bereit zur Suche':'API-Key fehlt')};
 $('overlay').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')};
 $('searchBtn').onclick=search;$('place').oninput=()=>{state.coords=null};$('sorting').onchange=render;
+$('nameSearch').oninput=()=>{filterName=$('nameSearch').value.toLowerCase().trim();render()};
+$('brandFilter').onchange=()=>{filterBrand=$('brandFilter').value;render()};
+$('favsOnlyBtn').onclick=()=>{favsOnly=!favsOnly;$('favsOnlyBtn').classList.toggle('active',favsOnly);render()};
+$('sortDirBtn').onclick=()=>{sortDir=sortDir==='asc'?'desc':'asc';$('sortDirBtn').textContent=sortDir==='asc'?'↑ Aufsteigend':'↓ Absteigend';render()};
+$('gpsBtn').onclick=()=>{
+ if(!navigator.geolocation){alert('Geolocation nicht verfügbar');return}
+ const btn=$('gpsBtn');btn.textContent='⏳';btn.disabled=true;
+ navigator.geolocation.getCurrentPosition(async pos=>{
+  try{
+   const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=de`);
+   const geo=await r.json();
+   const city=geo.address?.city||geo.address?.town||geo.address?.village||geo.address?.postcode||'';
+   const place=city||`${pos.coords.latitude.toFixed(4)},${pos.coords.longitude.toFixed(4)}`;
+   $('place').value=place;
+   state.coords={lat:pos.coords.latitude,lng:pos.coords.longitude,label:geo.display_name};
+   state.place=place;persist();
+  }catch(e){alert('Ortsbestimmung fehlgeschlagen')}
+  btn.textContent='📍';btn.disabled=false;
+ },()=>{alert('Standortzugriff verweigert');btn.textContent='📍';btn.disabled=false;},{timeout:8000});
+};
 document.querySelectorAll('.fuel').forEach(b=>b.onclick=()=>{state.fuel=b.dataset.fuel;persist();render()});
 $('clearHistory').onclick=()=>{if(confirm('Gespeicherte Preisentwicklung löschen?')){state.history={e10:[],e5:[],diesel:[]};persist();drawChart()}};
 $('stations').addEventListener('click',async e=>{

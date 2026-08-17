@@ -25,128 +25,130 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 0 0 40px;
+      padding: 20px 16px 40px;
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* ── Weather Card ── */
-    .weather-card {
+    /* ── Widget row ── */
+    .widget-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
       width: 100%;
-      max-width: 430px;
-      padding: 36px 24px 28px;
+      max-width: 400px;
+    }
+
+    /* ── Weather widget ── */
+    .weather-card {
+      border-radius: 20px;
+      padding: 14px;
       background: linear-gradient(145deg, #FF8C00, #FFB347);
       position: relative;
       overflow: hidden;
       transition: background 0.8s ease;
-      min-height: 220px;
+      min-height: 160px;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
     }
-
     .weather-card::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: rgba(0,0,0,0.15);
+      background: rgba(0,0,0,0.12);
     }
-
     .weather-bg-emoji {
       position: absolute;
-      top: -10px; right: -10px;
-      font-size: 130px;
-      opacity: 0.18;
+      top: -4px; right: -4px;
+      font-size: 72px;
+      opacity: 0.15;
       line-height: 1;
       pointer-events: none;
-      filter: blur(2px);
     }
-
     .weather-content { position: relative; z-index: 1; }
-
-    .weather-location {
-      font-size: 13px;
-      font-weight: 500;
-      opacity: 0.85;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .weather-clock {
-      font-size: 13px;
-      opacity: 0.75;
-      margin-bottom: 12px;
-    }
-
-    .weather-main {
-      display: flex;
-      align-items: flex-end;
-      gap: 12px;
-      margin-bottom: 6px;
-    }
-
-    .weather-emoji { font-size: 52px; line-height: 1; }
-
-    .weather-temp-wrap { display: flex; flex-direction: column; }
-
-    .weather-temp {
-      font-size: 56px;
-      font-weight: 700;
-      line-height: 1;
-      color: #fff;
-      letter-spacing: -2px;
-    }
-
-    .weather-feels {
-      font-size: 12px;
-      opacity: 0.8;
-      color: #fff;
-      margin-top: 2px;
-    }
-
-    .weather-desc {
-      font-size: 16px;
-      font-weight: 600;
-      color: #fff;
-      margin-bottom: 10px;
-    }
-
-    .weather-details {
-      display: flex;
-      gap: 14px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.85);
-      flex-wrap: wrap;
-    }
-
-    .weather-detail {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: rgba(255,255,255,0.18);
-      padding: 4px 10px;
-      border-radius: 20px;
-    }
-
-    .weather-minmax {
-      margin-top: 8px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.75);
-    }
-
+    .weather-main    { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+    .weather-emoji   { font-size: 30px; line-height: 1; }
+    .weather-temp    { font-size: 38px; font-weight: 700; line-height: 1; color: #fff; letter-spacing: -1px; }
+    .weather-desc    { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px; }
+    .weather-location{ font-size: 10px; color: rgba(255,255,255,0.7); }
+    .weather-minmax  { font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 2px; }
     .weather-loading {
       position: absolute;
       inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
-      color: rgba(255,255,255,0.8);
+      font-size: 12px;
+      color: rgba(255,255,255,0.75);
       z-index: 2;
     }
+    .weather-error { font-size: 11px; color: rgba(255,255,255,0.7); text-align: center; padding: 8px; }
 
-    /* ── App grid ── */
+    /* ── Fuel widget ── */
+    .fuel-widget {
+      border-radius: 20px;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 160px;
+      position: relative;
+      overflow: hidden;
+    }
+    .fuel-widget-bg {
+      position: absolute;
+      top: 2px; right: 2px;
+      font-size: 64px;
+      opacity: 0.06;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .fuel-widget-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; position: relative; }
+    .fuel-price-big  { font-size: 34px; font-weight: 700; color: var(--teal); line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; position: relative; }
+    .fuel-unit-sm    { font-size: 10px; color: var(--muted); margin-bottom: 4px; position: relative; }
+    .fuel-name-sm    { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+    .fuel-meta-sm    { font-size: 10px; color: var(--muted); margin-top: 1px; position: relative; }
+    .fuel-updated-sm { font-size: 9px; color: var(--muted); margin-top: 3px; position: relative; opacity: 0.7; }
+    .fuel-fav-badge  {
+      position: absolute;
+      top: 10px; right: 10px;
+      font-size: 9px;
+      background: rgba(61,189,181,0.15);
+      color: var(--teal);
+      padding: 2px 7px;
+      border-radius: 99px;
+      font-weight: 700;
+    }
+    .fuel-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 8px;
+      position: relative;
+    }
+    .fuel-refresh-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 15px;
+      cursor: pointer;
+      padding: 2px 4px;
+      line-height: 1;
+      border-radius: 6px;
+    }
+    .fuel-refresh-btn:hover { color: var(--teal); }
+    .fuel-refresh-btn:disabled { opacity: 0.4; cursor: default; }
+    .fuel-open-link {
+      font-size: 11px;
+      color: var(--teal);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* ── Section label ── */
     .section-label {
       width: 100%;
       max-width: 400px;
@@ -158,15 +160,14 @@
       padding: 20px 4px 10px;
     }
 
+    /* ── App grid ── */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 14px;
       width: 100%;
       max-width: 400px;
-      padding: 0 0px;
     }
-
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -186,58 +187,12 @@
     .card.purple { border-color: rgba(160,100,220,0.38); }
     .card.green  { border-color: rgba(80,190,120,0.38); }
     .card.amber  { border-color: rgba(240,170,50,0.38); }
-
     .card-icon { font-size: 38px; line-height: 1; }
     .card-name { font-size: 14px; font-weight: 600; text-align: center; }
     .card-desc { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.5; }
 
-    /* ── Error state ── */
-    .weather-error {
-      font-size: 13px;
-      color: rgba(255,255,255,0.7);
-      text-align: center;
-      padding: 20px;
-    }
-
-    /* ── Spritpreis ── */
-    .fuel-primary {
-      width: 100%; max-width: 400px;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-      padding: 14px 18px; margin-top: 14px;
-      text-decoration: none; color: var(--text); display: block; transition: transform 0.12s;
-    }
-    .fuel-primary:active { transform: scale(0.97); }
-    .fuel-primary-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .fuel-primary-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
-    .fuel-fav-badge { font-size: 10px; background: rgba(61,189,181,0.15); color: var(--teal); padding: 2px 8px; border-radius: 99px; font-weight: 700; }
-    .fuel-primary-body { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .fuel-primary-info { flex: 1; min-width: 0; }
-    .fuel-primary-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .fuel-primary-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .fuel-primary-right { text-align: right; flex-shrink: 0; }
-    .fuel-primary-price { font-size: 28px; font-weight: 700; color: var(--teal); font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
-    .fuel-primary-unit { font-size: 11px; color: var(--muted); }
-    /* Favoriten-Galerie */
-    .fav-gallery-section { width: 100%; max-width: 400px; }
-    .fav-gallery { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-    .fav-gallery::-webkit-scrollbar { display: none; }
-    .fav-chip {
-      flex-shrink: 0; width: 130px;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 13px;
-      padding: 12px 11px; display: flex; flex-direction: column; gap: 2px;
-      text-decoration: none; color: var(--text);
-    }
-    .fav-chip.is-open { border-color: rgba(61,189,181,0.35); }
-    .fav-chip-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .fav-chip-price { font-size: 19px; font-weight: 700; color: var(--teal); font-variant-numeric: tabular-nums; margin: 3px 0 2px; }
-    .fav-chip-dist { font-size: 10px; color: var(--muted); }
-    .fav-chip-status { font-size: 10px; font-weight: 600; }
-    .fav-chip-status.open { color: var(--teal); }
-    .fav-chip-brand { width: 22px; height: 22px; border-radius: 6px; font-size: 9px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 4px; flex-shrink: 0; }
-    .fav-chip-status.closed { color: var(--salmon); }
-
     /* ── Backup ── */
-    .backup-row { width: 100%; max-width: 400px; margin-top: 0; }
+    .backup-row { width: 100%; max-width: 400px; }
     .backup-btn {
       width: 100%;
       background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
@@ -248,8 +203,8 @@
     }
     .backup-btn:active { transform: scale(0.97); }
     .backup-btn.success { border-color: rgba(61,189,181,0.5); }
-    .backup-icon { font-size: 24px; flex-shrink: 0; }
-    .backup-text { flex: 1; }
+    .backup-icon  { font-size: 24px; flex-shrink: 0; }
+    .backup-text  { flex: 1; }
     .backup-title { display: block; font-size: 15px; font-weight: 700; }
     .backup-sub   { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
     .backup-arrow { font-size: 18px; color: var(--teal); flex-shrink: 0; }
@@ -257,49 +212,46 @@
 </head>
 <body>
 
-  <!-- ══ WETTER ══ -->
-  <div class="weather-card" id="weatherCard">
-    <div class="weather-bg-emoji" id="weatherBgEmoji">☀️</div>
-    <div class="weather-loading" id="weatherLoading">📍 Standort wird ermittelt…</div>
-    <div class="weather-content" id="weatherContent" style="display:none">
-      <div class="weather-location">📍 <span id="wLocation">–</span></div>
-      <div class="weather-clock" id="wClock"></div>
-      <div class="weather-main">
-        <div class="weather-emoji" id="wEmoji">☀️</div>
-        <div class="weather-temp-wrap">
-          <div class="weather-temp"><span id="wTemp">–</span>°</div>
-          <div class="weather-feels">Gefühlt <span id="wFeels">–</span>°</div>
-        </div>
-      </div>
-      <div class="weather-desc" id="wDesc">–</div>
-      <div class="weather-details">
-        <div class="weather-detail">💨 <span id="wWind">–</span> km/h</div>
-        <div class="weather-detail">💧 <span id="wHumid">–</span>%</div>
-        <div class="weather-detail" id="wMinMaxBox">↓<span id="wMin">–</span>° ↑<span id="wMax">–</span>°</div>
-      </div>
-    </div>
-  </div>
+  <!-- ══ WIDGET ROW: Wetter + Sprit ══ -->
+  <div class="widget-row">
 
-  <!-- ══ SPRITPREIS ══ -->
-  <a class="fuel-primary" href="tankstellen_finder.html">
-    <div class="fuel-primary-top">
-      <span class="fuel-primary-label">⛽ Super 95 · Empfehlung</span>
-      <span class="fuel-fav-badge" id="fuelFavBadge" style="display:none">★ Favorit</span>
-    </div>
-    <div class="fuel-primary-body">
-      <div class="fuel-primary-info">
-        <div class="fuel-primary-name" id="fuelName">Wird geladen…</div>
-        <div class="fuel-primary-meta" id="fuelMeta"></div>
+    <!-- Wetter -->
+    <div class="weather-card" id="weatherCard">
+      <div class="weather-bg-emoji" id="weatherBgEmoji">☀️</div>
+      <div class="weather-loading" id="weatherLoading">📍 Lädt…</div>
+      <div class="weather-content" id="weatherContent" style="display:none">
+        <div class="weather-main">
+          <span class="weather-emoji" id="wEmoji">☀️</span>
+          <span class="weather-temp"><span id="wTemp">–</span>°</span>
+        </div>
+        <div class="weather-desc" id="wDesc">–</div>
+        <div class="weather-location">📍 <span id="wLocation">–</span></div>
+        <div class="weather-minmax">↓<span id="wMin">–</span>° ↑<span id="wMax">–</span>°</div>
+        <!-- hidden spans for JS compat -->
+        <span id="wClock"    style="display:none"></span>
+        <span id="wFeels"    style="display:none"></span>
+        <span id="wWind"     style="display:none"></span>
+        <span id="wHumid"    style="display:none"></span>
+        <span id="wMinMaxBox" style="display:none"></span>
       </div>
-      <div class="fuel-primary-right">
-        <div class="fuel-primary-price" id="fuelPrice">–</div>
-        <div class="fuel-primary-unit">€ / Liter</div>
+    </div>
+
+    <!-- Spritpreis -->
+    <div class="fuel-widget">
+      <div class="fuel-widget-bg">⛽</div>
+      <div class="fuel-widget-label">Super 95</div>
+      <div class="fuel-price-big" id="fuelPrice">–</div>
+      <div class="fuel-unit-sm">€ / Liter</div>
+      <div class="fuel-name-sm" id="fuelName">Wird geladen…</div>
+      <div class="fuel-meta-sm" id="fuelMeta"></div>
+      <div class="fuel-updated-sm" id="fuelUpdated"></div>
+      <div class="fuel-fav-badge" id="fuelFavBadge" style="display:none">★ Favorit</div>
+      <div class="fuel-actions">
+        <button class="fuel-refresh-btn" id="fuelRefreshBtn" onclick="loadFuelPrice(true)" title="Aktualisieren">↻</button>
+        <a href="tankstellen_finder.html" class="fuel-open-link">Alle →</a>
       </div>
     </div>
-  </a>
-  <div class="fav-gallery-section" id="favGallerySection" style="display:none">
-    <div class="section-label" style="padding-top:14px;padding-bottom:8px">Favoriten</div>
-    <div class="fav-gallery" id="favGallery"></div>
+
   </div>
 
   <!-- ══ APPS ══ -->
@@ -331,6 +283,11 @@
       <div class="card-name">Tankstellen</div>
       <div class="card-desc">Günstige Preise in der Nähe finden</div>
     </a>
+    <a class="card" href="todo.html" style="border-color:rgba(74,158,255,0.38)">
+      <div class="card-icon">✅</div>
+      <div class="card-name">To-Do</div>
+      <div class="card-desc">Aufgaben, live synchronisiert</div>
+    </a>
   </div>
 
   <!-- ══ BACKUP ══ -->
@@ -347,12 +304,10 @@
   </div>
 
 <script>
-// ── Uhr ──
+// ── Uhr (compat only) ──
 function updateClock() {
-  const now = new Date();
-  const t = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-  const d = now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
-  document.getElementById('wClock').textContent = `${d}, ${t}`;
+  const el = document.getElementById('wClock');
+  if (el) el.textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 }
 updateClock();
 setInterval(updateClock, 30000);
@@ -373,7 +328,7 @@ const WEATHER = {
   65: { label:'Starker Regen',            emoji:'🌧️', nightEmoji:'🌧️',grad:['#1a3a5e','#3a5a7e'] },
   71: { label:'Leichter Schneefall',      emoji:'🌨️', nightEmoji:'🌨️',grad:['#7090b8','#a0b8d8'] },
   73: { label:'Schneefall',               emoji:'❄️',  nightEmoji:'❄️', grad:['#5878a0','#8ab0d0'] },
-  75: { label:'Starker Schneefall',       emoji:'❄️',  nightEmoji:'❄️', grad:['#4060880','#6890b8'] },
+  75: { label:'Starker Schneefall',       emoji:'❄️',  nightEmoji:'❄️', grad:['#406088','#6890b8'] },
   80: { label:'Regenschauer',             emoji:'🌦️', nightEmoji:'🌧️',grad:['#3a6186','#537aaa'] },
   81: { label:'Regenschauer',             emoji:'🌧️', nightEmoji:'🌧️',grad:['#2c4a6e','#4a6a8e'] },
   82: { label:'Starke Schauer',           emoji:'🌧️', nightEmoji:'🌧️',grad:['#1a3a5e','#3a5a7e'] },
@@ -385,38 +340,29 @@ const WEATHER = {
 };
 
 function getWeatherInfo(code) {
-  // Exakter Match oder nächst niedrigerer Code
   if (WEATHER[code]) return WEATHER[code];
   const keys = Object.keys(WEATHER).map(Number).sort((a,b)=>b-a);
   for (const k of keys) { if (k <= code) return WEATHER[k]; }
   return { label:'–', emoji:'🌡️', nightEmoji:'🌡️', grad:['#444','#666'] };
 }
 
-// ── Wetter laden ──
 async function loadWeather(lat, lon) {
   try {
     const [forecastRes, geoRes] = await Promise.all([
       fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min&wind_speed_unit=kmh&timezone=auto&forecast_days=1`),
       fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=de`)
     ]);
-
     const forecast = await forecastRes.json();
     const geo      = await geoRes.json();
-
     const c    = forecast.current;
     const d    = forecast.daily;
     const code = c.weather_code;
     const hour = new Date().getHours();
     const isNight = hour < 6 || hour >= 21;
-
     const info  = getWeatherInfo(code);
     const emoji = isNight ? info.nightEmoji : info.emoji;
     const grad  = isNight ? ['#0d1b2a','#1b2838'] : info.grad;
-
-    // Location
     const loc = geo.address?.city || geo.address?.town || geo.address?.village || geo.address?.county || 'Unbekannt';
-
-    // UI befüllen
     document.getElementById('wLocation').textContent = loc;
     document.getElementById('wEmoji').textContent    = emoji;
     document.getElementById('wTemp').textContent     = Math.round(c.temperature_2m);
@@ -427,95 +373,69 @@ async function loadWeather(lat, lon) {
     document.getElementById('wMin').textContent      = Math.round(d.temperature_2m_min[0]);
     document.getElementById('wMax').textContent      = Math.round(d.temperature_2m_max[0]);
     document.getElementById('weatherBgEmoji').textContent = emoji;
-
-    // Gradient setzen
-    document.getElementById('weatherCard').style.background =
-      `linear-gradient(145deg, ${grad[0]}, ${grad[1]})`;
-
+    document.getElementById('weatherCard').style.background = `linear-gradient(145deg, ${grad[0]}, ${grad[1]})`;
     document.getElementById('weatherLoading').style.display = 'none';
     document.getElementById('weatherContent').style.display = '';
-
   } catch(e) {
-    document.getElementById('weatherLoading').innerHTML =
-      '<div class="weather-error">⚠️ Wetter konnte nicht geladen werden</div>';
+    document.getElementById('weatherLoading').innerHTML = '<div class="weather-error">⚠️ Nicht verfügbar</div>';
   }
 }
 
 // ── Spritpreis ──
-const TK_CACHE     = 'tk_quick_e5';
-const TK_HOUR      = 3600000;
-const FAV_DELTA    = 0.03; // Favorit bis 3 ct/L teurer bevorzugen
-const escH = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const TK_CACHE = 'tk_quick_e5';
+const TK_HOUR  = 3600000;
 
-const _BC={'ARAL':{bg:'#0066B2',fg:'#fff'},'Shell':{bg:'#FFD500',fg:'#D01919'},'BP':{bg:'#007A33',fg:'#fff'},'JET':{bg:'#E2001A',fg:'#fff'},'Esso':{bg:'#EE2436',fg:'#fff'},'ESSO':{bg:'#EE2436',fg:'#fff'},'TotalEnergies':{bg:'#E95B0C',fg:'#fff'},'TOTAL':{bg:'#E95B0C',fg:'#fff'},'OMV':{bg:'#E6380B',fg:'#fff'},'Star':{bg:'#2a2a2a',fg:'#F5C400'},'STAR':{bg:'#2a2a2a',fg:'#F5C400'},'AVIA':{bg:'#E30613',fg:'#fff'},'Westfalen':{bg:'#003399',fg:'#fff'},'HEM':{bg:'#FF6600',fg:'#fff'},'Q1':{bg:'#005CA9',fg:'#fff'},'Raiffeisen':{bg:'#005CA9',fg:'#fff'},'Agip':{bg:'#EB0028',fg:'#fff'}};
-function brandChip(brand){const b=brand||'?';const cfg=_BC[b]||{bg:'#888',fg:'#fff'};const t=b.replace(/\s+/g,'').replace(/[^A-Za-z0-9]/g,'').slice(0,2).toUpperCase()||'??';return `<span class="fav-chip-brand" style="background:${cfg.bg};color:${cfg.fg}">${t}</span>`;}
+function fmtTs(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'})
+       + ', ' + d.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}) + ' Uhr';
+}
 
 function renderFuelWidget(cheapest, stations, favorites, ts) {
-  // Favoriten in den Ergebnissen finden, nach Preis sortiert
   const favIds = Object.keys(favorites);
   const favStations = favIds
     .map(id => stations.find(s => s.id === id))
     .filter(s => s && typeof s.e5 === 'number' && s.e5 > 0.5)
     .sort((a, b) => a.e5 - b.e5);
 
-  // Empfehlung: günstigster Favorit wenn ≤ 3 ct teurer als Billigste
-  let rec = cheapest, isFav = false;
-  if (favStations.length && favStations[0].e5 <= cheapest.e5 + FAV_DELTA) {
-    rec = favStations[0]; isFav = true;
-  }
+  // Always show cheapest favorite if one exists, otherwise cheapest overall
+  const rec   = favStations.length ? favStations[0] : cheapest;
+  const isFav = favStations.length > 0;
 
-  // Primäre Karte
   document.getElementById('fuelPrice').textContent =
     rec.e5.toLocaleString('de-DE', {minimumFractionDigits:3, maximumFractionDigits:3});
   document.getElementById('fuelName').textContent = rec.name;
   const dist = rec.dist ? Number(rec.dist).toLocaleString('de-DE',{maximumFractionDigits:1})+' km' : '';
-  const open = rec.isOpen ? '· Geöffnet' : '· Geschlossen';
-  const upd  = 'Stand '+new Date(ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('fuelMeta').textContent = [dist, open, upd].filter(Boolean).join(' ');
+  const open = rec.isOpen ? 'Geöffnet' : 'Geschlossen';
+  document.getElementById('fuelMeta').textContent = [dist, open].filter(Boolean).join(' · ');
+  document.getElementById('fuelUpdated').textContent = 'Stand: ' + fmtTs(ts);
   document.getElementById('fuelFavBadge').style.display = isFav ? '' : 'none';
-
-  // Favoriten-Galerie
-  const sec = document.getElementById('favGallerySection');
-  if (favStations.length) {
-    sec.style.display = '';
-    document.getElementById('favGallery').innerHTML = favStations.map(s =>
-      `<div class="fav-chip${s.isOpen?' is-open':''}">
-        ${brandChip(s.brand)}
-        <div class="fav-chip-name" title="${escH(s.name)}">${escH(s.name)}</div>
-        <div class="fav-chip-price">${s.e5.toLocaleString('de-DE',{minimumFractionDigits:3,maximumFractionDigits:3})}</div>
-        <div class="fav-chip-dist">${s.dist?Number(s.dist).toLocaleString('de-DE',{maximumFractionDigits:1})+' km':''}</div>
-        <div class="fav-chip-status ${s.isOpen?'open':'closed'}">${s.isOpen?'Geöffnet':'Geschlossen'}</div>
-      </div>`
-    ).join('');
-  } else {
-    sec.style.display = 'none';
-  }
 }
 
-async function loadFuelPrice() {
+async function loadFuelPrice(force = false) {
   const tkState   = JSON.parse(localStorage.getItem('tankstellen_finder_v2') || '{}');
   const favorites = tkState.favorites || {};
 
   if (!tkState.apiKey) {
-    document.getElementById('fuelName').textContent = 'API-Key in der Tankstellen-App hinterlegen';
-    document.getElementById('fuelMeta').textContent = '';
+    document.getElementById('fuelName').textContent = 'API-Key hinterlegen';
+    document.getElementById('fuelMeta').textContent = 'In Tankstellen-App einrichten';
+    document.getElementById('fuelUpdated').textContent = '';
     return;
   }
 
-  // Cache sofort anzeigen — immer, auch wenn veraltet
   const cached = JSON.parse(localStorage.getItem(TK_CACHE) || 'null');
   if (cached) renderFuelWidget(cached.cheapest, cached.stations, favorites, cached.ts);
+  if (!force && cached && (Date.now() - cached.ts) < TK_HOUR) return;
 
-  // Cache noch frisch? Kein Refresh nötig.
-  if (cached && (Date.now() - cached.ts) < TK_HOUR) return;
-
-  // Rate-Limit: tankstellen_finder und index teilen denselben API-Key (1 req/min)
   const sinceLastReq = Date.now() - (tkState.lastRequest || 0);
   if (sinceLastReq < 62000) {
-    // Automatisch nochmal versuchen wenn Rate-Limit abgelaufen
-    setTimeout(loadFuelPrice, 62000 - sinceLastReq + 2000);
+    const remSec = Math.ceil((62000 - sinceLastReq) / 1000);
+    document.getElementById('fuelUpdated').textContent = `Rate-Limit: noch ${remSec} s warten`;
     return;
   }
+
+  const refreshBtn = document.getElementById('fuelRefreshBtn');
+  if (refreshBtn) { refreshBtn.textContent = '⟳'; refreshBtn.disabled = true; }
 
   try {
     let coords = JSON.parse(localStorage.getItem('tk_default_coords') || 'null');
@@ -530,28 +450,27 @@ async function loadFuelPrice() {
     const r = await fetch('https://creativecommons.tankerkoenig.de/json/list.php?'+p);
     const data = await r.json();
 
-    if (!data.ok) {
-      // Rate-Limit von Tankerkönig-Seite → automatisch nochmal versuchen
-      setTimeout(loadFuelPrice, 65000);
-      return;
-    }
+    if (!data.ok) { setTimeout(()=>loadFuelPrice(), 65000); return; }
     if (!data.stations?.length) throw new Error('Keine Stationen');
 
     const stations = data.stations.filter(s => typeof s.e5==='number' && s.e5>0.5);
     if (!stations.length) throw new Error('Keine Super-95-Preise');
 
-    // lastRequest schreiben damit tankstellen_finder das Rate-Limit mitbekommt
     tkState.lastRequest = Date.now();
     localStorage.setItem('tankstellen_finder_v2', JSON.stringify(tkState));
 
     const result = {ts: Date.now(), cheapest: stations[0], stations};
     localStorage.setItem(TK_CACHE, JSON.stringify(result));
     renderFuelWidget(result.cheapest, result.stations, favorites, result.ts);
+
   } catch(err) {
     if (!cached) {
-      document.getElementById('fuelName').textContent = 'Preis nicht verfügbar';
+      document.getElementById('fuelName').textContent = 'Nicht verfügbar';
       document.getElementById('fuelMeta').textContent = String(err.message || '');
     }
+    document.getElementById('fuelUpdated').textContent = 'Fehler beim Laden';
+  } finally {
+    if (refreshBtn) { refreshBtn.textContent = '↻'; refreshBtn.disabled = false; }
   }
 }
 
@@ -585,7 +504,6 @@ function doBackup() {
     const v = localStorage.getItem(k);
     if (v != null) { try { payload[k] = JSON.parse(v); } catch { payload[k] = v; } }
   });
-  // Dynamische list_* Keys der Einkaufsliste
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
     if (k && k.startsWith('list_') && payload[k] === undefined) {
@@ -615,12 +533,12 @@ if (navigator.geolocation) {
     pos => loadWeather(pos.coords.latitude, pos.coords.longitude),
     ()  => {
       document.getElementById('weatherLoading').innerHTML =
-        '<div class="weather-error">📍 Standortzugriff verweigert<br><small>Bitte in den Browser-Einstellungen erlauben</small></div>';
+        '<div class="weather-error">📍 Standort verweigert</div>';
     },
     { timeout: 8000 }
   );
 } else {
-  document.getElementById('weatherLoading').textContent = 'Standort nicht verfügbar';
+  document.getElementById('weatherLoading').textContent = 'Nicht verfügbar';
 }
 </script>
 
