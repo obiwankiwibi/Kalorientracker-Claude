@@ -11,6 +11,7 @@
   })();</script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -671,11 +672,12 @@
 //  FIREBASE KONFIGURATION
 //  Dieselbe Datenbank wie die Einkaufsliste.
 //
-//  Firebase-Regeln um "todos" ergänzen:
+//  Firebase-Regeln (Console → Realtime Database → Regeln):
 //  {
 //    "rules": {
-//      "lists": { "$id": { ".read": true, ".write": true } },
-//      "todos": { ".read": true, ".write": true }
+//      "lists":    { "$id": { ".read": true, ".write": true } },
+//      "todos":    { ".read": true, ".write": true },
+//      "settings": { ".read": true, ".write": true }
 //    }
 //  }
 // ═══════════════════════════════════════════════
@@ -718,6 +720,33 @@ let tasksRef = null;
 let listsRef = null;
 let offlineMode = false;
 
+// Gemeinsame Geräte-ID (dieselbe wie Einkaufsliste)
+const MY_DEVICE_ID = (() => {
+  let id = localStorage.getItem('haushalt_device_id');
+  if (!id) { id = 'd_' + Math.random().toString(36).slice(2,9) + '_' + Date.now(); localStorage.setItem('haushalt_device_id', id); }
+  return id;
+})();
+
+let registeredUsers = {};
+let usersRef        = null;
+
+const ejsServiceId  = () => localStorage.getItem('ejs_service')  || '';
+const ejsTemplateId = () => localStorage.getItem('ejs_template') || '';
+const ejsPublicKey  = () => localStorage.getItem('ejs_pubkey')   || '';
+let ejsInited = false;
+
+function initEmailJS() {
+  const key = ejsPublicKey();
+  if (key && !ejsInited) { emailjs.init(key); ejsInited = true; }
+}
+
+async function sendEmail(toEmail, toName, subject, message) {
+  initEmailJS();
+  const svc = ejsServiceId(), tpl = ejsTemplateId(), key = ejsPublicKey();
+  if (!svc || !tpl || !key || !toEmail) return;
+  return emailjs.send(svc, tpl, { to_email: toEmail, to_name: toName || 'Du', subject, message });
+}
+
 let currentListId  = null;   // null = lists view
 let detailTaskId   = null;
 let doneOpen       = true;
@@ -758,6 +787,9 @@ function initApp() {
       lists = snap.val() || {};
       renderAll();
     });
+
+    usersRef = db.ref('settings/users');
+    usersRef.on('value', snap => { registeredUsers = snap.val() || {}; });
   } catch(e) {
     console.error('Firebase:', e);
     startOffline();
@@ -1342,14 +1374,30 @@ function scheduleReminder(taskId, ts) {
   const delay = ts - Date.now();
   if (delay <= 0 || delay > 24 * 3600000) return; // only within 24h
 
-  reminderTimeouts[taskId] = setTimeout(() => {
+  reminderTimeouts[taskId] = setTimeout(async () => {
     const t = tasks[taskId];
     if (!t || t.completed) return;
+
+    // Browser-Benachrichtigung
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('🔔 Erinnerung', { body: t.title, icon: '📅' });
     } else {
       toast(`🔔 ${t.title}`);
     }
+
+    // E-Mail an mich selbst
+    const me = registeredUsers[MY_DEVICE_ID];
+    if (me?.email) {
+      try {
+        await sendEmail(
+          me.email,
+          me.name,
+          `🔔 Erinnerung: ${t.title}`,
+          `Deine Erinnerung ist fällig:\n\n${t.title}${t.notes ? '\n\n' + t.notes : ''}`
+        );
+      } catch(e) { console.warn('Reminder-Mail fehlgeschlagen:', e); }
+    }
+
     delete reminderTimeouts[taskId];
   }, delay);
 }

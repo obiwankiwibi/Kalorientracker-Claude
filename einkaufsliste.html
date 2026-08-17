@@ -9,6 +9,7 @@
   <!-- Firebase SDK (nur geladen wenn konfiguriert) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -832,6 +833,7 @@
   <div class="header-title" id="listTitle">Zuhause</div>
   <a href="index.html" class="icon-btn" style="text-decoration:none;font-size:17px" title="Startseite">⌂</a>
   <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Design wechseln">🌙</button>
+  <button class="icon-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
   <button class="icon-btn" onclick="shareList()" title="Teilen">⎘</button>
   <button class="icon-btn" onclick="clearDone()" title="Erledigte löschen">✓</button>
 </header>
@@ -1016,6 +1018,41 @@
       <button class="sh-btn secondary" onclick="closeImportSheet()">Abbrechen</button>
       <button class="sh-btn secondary" onclick="loadDemoOffers()">Demo-Daten</button>
       <button class="sh-btn primary" onclick="importFromJson()">JSON importieren</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SETTINGS SHEET ══ -->
+<div class="sheet-overlay" id="settingsOverlay" onclick="settingsOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="padding:0 14px 36px">
+      <div style="font-size:18px;font-weight:700;margin-bottom:20px">⚙️ Einstellungen</div>
+
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Mein Profil</div>
+      <input class="sheet-input" id="settingName"  placeholder="Dein Name (z.B. Yannick)">
+      <input class="sheet-input" id="settingEmail" type="email" placeholder="Deine E-Mail-Adresse" style="margin-top:-6px">
+
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 6px">E-Mail-Benachrichtigungen (EmailJS)</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+        1. Kostenlosen Account auf <strong>emailjs.com</strong> erstellen<br>
+        2. E-Mail-Dienst hinzufügen (z.B. Gmail)<br>
+        3. Template erstellen (Variablen: <code style="background:rgba(0,0,0,.2);padding:1px 4px;border-radius:3px">{{to_email}}</code>, <code style="background:rgba(0,0,0,.2);padding:1px 4px;border-radius:3px">{{to_name}}</code>, <code style="background:rgba(0,0,0,.2);padding:1px 4px;border-radius:3px">{{subject}}</code>, <code style="background:rgba(0,0,0,.2);padding:1px 4px;border-radius:3px">{{message}}</code>)<br>
+        4. IDs unten eintragen
+      </div>
+      <input class="sheet-input" id="settingEjsService"  placeholder="Service ID (z.B. service_abc123)">
+      <input class="sheet-input" id="settingEjsTemplate" placeholder="Template ID (z.B. template_xyz)" style="margin-top:-6px">
+      <input class="sheet-input" id="settingEjsKey"      placeholder="Public Key (Account → API Keys)" style="margin-top:-6px">
+
+      <div style="font-size:11px;color:var(--muted);margin:10px 0 16px;line-height:1.5">
+        🔔 <strong>Einkaufsliste:</strong> 10 Min. nach letzter Änderung → Mail an die andere Person<br>
+        📅 <strong>Erinnerungen:</strong> Mail an dich selbst wenn Fälligkeit erreicht
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="sh-btn secondary" onclick="closeSettings()">Abbrechen</button>
+        <button class="sh-btn primary"   onclick="saveSettings()">Speichern</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1290,6 +1327,24 @@ let items   = {};      // { id: { name, emoji, amount, checked } }
 let listRef = null;    // Firebase ref
 let offlineMode = false;
 
+// ── Geräte-ID (einmalig, persistent) ──
+const MY_DEVICE_ID = (() => {
+  let id = localStorage.getItem('haushalt_device_id');
+  if (!id) { id = 'd_' + Math.random().toString(36).slice(2,9) + '_' + Date.now(); localStorage.setItem('haushalt_device_id', id); }
+  return id;
+})();
+
+// ── Einstellungen & Benachrichtigungen ──
+let registeredUsers = {};   // { deviceId: { name, email } }
+let shoppingPing    = {};   // { changedAt, sentAt, firstChangedAt, changedBy }
+let usersRef        = null;
+let shoppingPingRef = null;
+
+let ejsServiceId  = localStorage.getItem('ejs_service')  || '';
+let ejsTemplateId = localStorage.getItem('ejs_template') || '';
+let ejsPublicKey  = localStorage.getItem('ejs_pubkey')   || '';
+let ejsInited     = false;
+
 let customRestaurants = {};    // { id: { name, emoji, bg, hours, url } }
 let restRef = null;            // Firebase ref für Restaurants
 
@@ -1344,6 +1399,12 @@ function initApp() {
       scannedSuggestions = snap.val() || {};
       renderSuggestions();
     });
+
+    usersRef = db.ref('settings/users');
+    usersRef.on('value', snap => { registeredUsers = snap.val() || {}; });
+
+    shoppingPingRef = db.ref('settings/shoppingPing');
+    shoppingPingRef.on('value', snap => { shoppingPing = snap.val() || {}; });
   } catch(e) {
     console.error('Firebase init failed:', e);
     startOffline();
@@ -1381,6 +1442,7 @@ function persist(id, data) {
     if (data === null) listRef.child(id).remove();
     else listRef.child(id).set(data);
     // Firebase listener updates `items` automatically
+    notifyChange();
   } else {
     if (data === null) delete items[id];
     else items[id] = data;
@@ -2491,6 +2553,129 @@ function addOfferToList(id) {
   });
   toast(`🏷️ ${offer.name} von ${offer.haendler} hinzugefügt`);
   renderOffers();
+}
+
+// ═══════════════════════════════════════════════
+//  EMAILJS
+// ═══════════════════════════════════════════════
+function initEmailJS() {
+  if (ejsPublicKey && !ejsInited) {
+    emailjs.init(ejsPublicKey);
+    ejsInited = true;
+  }
+}
+
+async function sendEmail(toEmail, toName, subject, message) {
+  initEmailJS();
+  if (!ejsServiceId || !ejsTemplateId || !ejsPublicKey || !toEmail) return;
+  return emailjs.send(ejsServiceId, ejsTemplateId, {
+    to_email: toEmail,
+    to_name:  toName  || 'Du',
+    subject,
+    message,
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  EINKAUFSLISTEN-BENACHRICHTIGUNG (Debounce)
+// ═══════════════════════════════════════════════
+function notifyChange() {
+  if (!shoppingPingRef) return;
+  const now = Date.now();
+  const isNewBatch = (shoppingPing.sentAt || 0) >= (shoppingPing.changedAt || 1);
+  shoppingPingRef.set({
+    changedAt:      now,
+    changedBy:      MY_DEVICE_ID,
+    sentAt:         shoppingPing.sentAt || 0,
+    firstChangedAt: isNewBatch ? now : (shoppingPing.firstChangedAt || now),
+  });
+}
+
+let _notifLock = false;
+async function checkAndSendShoppingNotification() {
+  if (_notifLock || !shoppingPingRef) return;
+  const { changedAt = 0, sentAt = 0, firstChangedAt, changedBy } = shoppingPing;
+  if (!changedAt || changedAt <= sentAt) return;
+
+  const now               = Date.now();
+  const sinceLastChange   = now - changedAt;
+  const sinceFirstChange  = now - (firstChangedAt || changedAt);
+  const DEBOUNCE          = 10 * 60 * 1000;  // 10 Minuten
+  const MAX_WAIT          = 30 * 60 * 1000;  // 30 Minuten
+
+  // Veraltete Benachrichtigungen verwerfen (älter als 2 Std.)
+  if (sinceLastChange > 2 * 3600000) {
+    shoppingPingRef.update({ sentAt: now });
+    return;
+  }
+  // Noch nicht bereit
+  if (sinceLastChange < DEBOUNCE && sinceFirstChange < MAX_WAIT) return;
+
+  _notifLock = true;
+  try {
+    // Als gesendet markieren (verhindert Doppel-Sends von mehreren Geräten)
+    await shoppingPingRef.update({ sentAt: now });
+
+    const senderName = registeredUsers[changedBy]?.name || 'Jemand';
+    const listName   = listId.charAt(0).toUpperCase() + listId.slice(1);
+    const subject    = `🛒 Einkaufsliste "${listName}" aktualisiert`;
+    const message    = `${senderName} hat die Einkaufsliste "${listName}" aktualisiert.\n\nÖffne die App um die aktuellen Änderungen zu sehen.`;
+
+    for (const [deviceId, user] of Object.entries(registeredUsers)) {
+      if (deviceId !== changedBy && user?.email) {
+        try { await sendEmail(user.email, user.name, subject, message); }
+        catch(e) { console.warn('Mail fehlgeschlagen:', e); }
+      }
+    }
+  } finally {
+    _notifLock = false;
+  }
+}
+
+// Jede Minute prüfen ob eine Benachrichtigung fällig ist
+setInterval(checkAndSendShoppingNotification, 60000);
+
+// ═══════════════════════════════════════════════
+//  EINSTELLUNGEN
+// ═══════════════════════════════════════════════
+function openSettings() {
+  const me = registeredUsers[MY_DEVICE_ID] || {};
+  document.getElementById('settingName').value         = me.name  || '';
+  document.getElementById('settingEmail').value        = me.email || '';
+  document.getElementById('settingEjsService').value   = ejsServiceId;
+  document.getElementById('settingEjsTemplate').value  = ejsTemplateId;
+  document.getElementById('settingEjsKey').value       = ejsPublicKey;
+  document.getElementById('settingsOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('settingName').focus(), 200);
+}
+
+function closeSettings() {
+  document.getElementById('settingsOverlay').classList.remove('open');
+}
+
+function settingsOverlayClick(e) {
+  if (e.target === document.getElementById('settingsOverlay')) closeSettings();
+}
+
+async function saveSettings() {
+  const name  = document.getElementById('settingName').value.trim();
+  const email = document.getElementById('settingEmail').value.trim();
+  ejsServiceId  = document.getElementById('settingEjsService').value.trim();
+  ejsTemplateId = document.getElementById('settingEjsTemplate').value.trim();
+  ejsPublicKey  = document.getElementById('settingEjsKey').value.trim();
+
+  localStorage.setItem('ejs_service',  ejsServiceId);
+  localStorage.setItem('ejs_template', ejsTemplateId);
+  localStorage.setItem('ejs_pubkey',   ejsPublicKey);
+  ejsInited = false; // neu initialisieren
+
+  if (name || email) {
+    const userData = { name: name || 'Anonym', email: email || '', updatedAt: Date.now() };
+    if (usersRef) await usersRef.child(MY_DEVICE_ID).set(userData);
+  }
+
+  closeSettings();
+  toast('✓ Einstellungen gespeichert');
 }
 
 // ═══════════════════════════════════════════════
