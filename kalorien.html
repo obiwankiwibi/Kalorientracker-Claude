@@ -1910,6 +1910,7 @@ document.addEventListener('touchend',e=>{
 initTheme();
 render();
 fetchWeather();
+if (location.hash === '#scan') { setTimeout(openScan, 300); }
 </script>
 
 <!-- Backup Modal -->
