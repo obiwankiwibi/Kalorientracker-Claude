@@ -325,7 +325,9 @@
     .kal-sub { font-size: 10px; color: var(--muted); margin-top: 3px; margin-bottom: 10px; }
     .kal-bar-wrap { width: 100%; height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
     .kal-bar { height: 100%; background: var(--salmon); border-radius: 3px; transition: width 0.5s ease; max-width: 100%; }
-    .kal-water { font-size: 11px; color: #4a9eff; margin-top: 8px; font-weight: 600; }
+    .kal-water { font-size: 11px; color: #4a9eff; margin-top: 8px; font-weight: 600; margin-bottom: 4px; }
+    .kal-water-bar-wrap { width: 100%; height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
+    .kal-water-bar { height: 100%; background: #4a9eff; border-radius: 3px; transition: width 0.5s ease; max-width: 100%; }
     .kal-card { cursor: pointer; }
 
     /* ── To-Do card ── */
@@ -438,12 +440,12 @@
         <div class="kal-sub" id="kalSub">kcal heute</div>
         <div class="kal-bar-wrap"><div class="kal-bar" id="kalBar" style="width:0%"></div></div>
         <div class="kal-water" id="kalWater">💧 – L</div>
+        <div class="kal-water-bar-wrap"><div class="kal-water-bar" id="kalWaterBar" style="width:0%"></div></div>
       </div>
       <div class="todo-card" onclick="location.href='todo.html'">
         <div class="todo-head">
           <span class="todo-icon">✅</span>
           <span class="todo-lbl">To-Do</span>
-          <span class="todo-badge" id="todoBadge">–</span>
         </div>
         <div class="todo-open-count" id="todoNum">–</div>
         <div class="todo-open-lbl">offen</div>
@@ -815,9 +817,11 @@ function initKalWidget() {
     document.getElementById('kalBar').style.width = pct + '%';
     const waterMl     = (store[key] || {}).water || 0;
     const waterGoalMl = parseInt(localStorage.getItem('kalorientracker_watergoal') || '2000') || 2000;
+    const wPct = Math.min(100, Math.round(waterMl / waterGoalMl * 100));
     const wL  = (waterMl / 1000).toFixed(1).replace('.', ',');
     const wGL = (waterGoalMl / 1000).toFixed(1).replace('.', ',');
     document.getElementById('kalWater').textContent = '💧 ' + wL + ' / ' + wGL + ' L';
+    document.getElementById('kalWaterBar').style.width = wPct + '%';
   } catch(e) {}
 }
 initKalWidget();
@@ -836,16 +840,14 @@ function initTodoWidget() {
       .then(r => r.json())
       .then(data => {
         const open = Object.values(data || {}).filter(t => !t.completed).length;
-        document.getElementById('todoNum').textContent   = open;
-        document.getElementById('todoBadge').textContent = open + ' offen';
+        document.getElementById('todoNum').textContent = open;
       })
       .catch(() => {});
   } else {
     try {
       const tasks = JSON.parse(localStorage.getItem('todo_tasks') || '{}');
       const open = Object.values(tasks).filter(t => !t.completed).length;
-      document.getElementById('todoNum').textContent   = open;
-      document.getElementById('todoBadge').textContent = open + ' offen';
+      document.getElementById('todoNum').textContent = open;
     } catch(e) {}
   }
 }
