@@ -882,10 +882,16 @@ function initApp() {
     db.ref('.info/connected').on('value', snap => setConnected(snap.val() === true));
 
     tasksRef = db.ref('todos/tasks');
+    let _autoAddDone = false;
     tasksRef.on('value', snap => {
       tasks = snap.val() || {};
       renderAll();
       checkReminders();
+      if (!_autoAddDone && sessionStorage.getItem('autoAddTask') === '1') {
+        _autoAddDone = true;
+        sessionStorage.removeItem('autoAddTask');
+        setTimeout(() => { openList('all'); document.getElementById('addTaskInput').focus(); }, 300);
+      }
     });
 
     listsRef = db.ref('todos/lists');
@@ -909,6 +915,10 @@ function startOffline() {
   try { lists = JSON.parse(localStorage.getItem('todo_lists') || '{}'); } catch { lists = {}; }
   renderAll();
   checkReminders();
+  if (sessionStorage.getItem('autoAddTask') === '1') {
+    sessionStorage.removeItem('autoAddTask');
+    setTimeout(() => { openList('all'); document.getElementById('addTaskInput').focus(); }, 300);
+  }
 }
 
 function setConnected(on, isOffline = false) {
