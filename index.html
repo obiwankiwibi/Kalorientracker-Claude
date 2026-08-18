@@ -845,16 +845,7 @@ function addWater250() {
 }
 
 function openWetter() {
-  if (window._wLat && window._wLon) {
-    const lat = window._wLat.toFixed(4);
-    const lon = window._wLon.toFixed(4);
-    window.open('https://weather.com/de-DE/weather/today/l/' + lat + ',' + lon, '_blank');
-  } else {
-    navigator.geolocation.getCurrentPosition(
-      pos => window.open('https://weather.com/de-DE/weather/today/l/' + pos.coords.latitude.toFixed(4) + ',' + pos.coords.longitude.toFixed(4), '_blank'),
-      ()  => window.open('https://www.wetter.com/suche/?q=' + encodeURIComponent(window._wLoc || 'Hilchenbach'), '_blank')
-    );
-  }
+  window.open('https://www.wetter.com', '_blank');
 }
 
 function initTodoWidget() {
