@@ -280,6 +280,25 @@
     .backup-title { display: block; font-size: 14px; font-weight: 700; }
     .backup-sub   { display: block; font-size: 10px; color: var(--muted); margin-top: 2px; }
     .backup-arrow { font-size: 18px; color: var(--teal); flex-shrink: 0; }
+
+    /* ── Müll widget ── */
+    .muell-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--layer2); margin-bottom: 8px; }
+    .muell-row:last-child { margin-bottom: 0; }
+    .muell-date-block { text-align: center; min-width: 34px; flex-shrink: 0; }
+    .muell-day-num  { font-size: 22px; font-weight: 800; line-height: 1; color: var(--text); }
+    .muell-day-name { font-size: 9px; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-top: 2px; }
+    .muell-right    { flex: 1; min-width: 0; }
+    .muell-diff     { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+    .muell-chips    { display: flex; flex-wrap: wrap; gap: 5px; }
+    .muell-chip     { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 99px; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+    .muell-note     { font-size: 9px; color: var(--muted); margin-top: 2px; }
+    .mc-grau  { background: rgba(107,117,153,0.18); color: #8a95b8; }
+    .mc-braun { background: rgba(80,160,80,0.18);   color: #60b870; }
+    .mc-gelb  { background: rgba(240,170,50,0.18);  color: #c89020; }
+    .mc-blau  { background: rgba(74,158,255,0.18);  color: #4a9eff; }
+    .mc-rot   { background: rgba(232,99,90,0.18);   color: #e8635a; }
+    .mc-teal  { background: var(--teal-dim);        color: var(--teal); }
+    .mc-gruen { background: rgba(80,190,100,0.18);  color: #50be64; }
   </style>
 </head>
 <body>
@@ -338,6 +357,14 @@
         <button class="fuel-overlay-save" onclick="saveFuelKey()">Speichern &amp; laden</button>
       </div>
     </div>
+  </div>
+
+  <!-- ══ MÜLL ══ -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-title">Müllabfuhr</span>
+    </div>
+    <div id="muellWidget"></div>
   </div>
 
   <!-- ══ APPS ══ -->
@@ -614,6 +641,85 @@ if (navigator.geolocation) {
 } else {
   document.getElementById('weatherLoading').textContent = 'Nicht verfügbar';
 }
+
+const MUELL_TYPES = {
+  'Restmüll':           { emoji: '🗑️', cls: 'mc-grau',  label: 'Restmüll' },
+  'Biomüll':            { emoji: '🌿', cls: 'mc-braun', label: 'Biomüll' },
+  'Gelbe Tonne':        { emoji: '🟡', cls: 'mc-gelb',  label: 'Gelbe Tonne' },
+  'Papier':             { emoji: '📰', cls: 'mc-blau',  label: 'Papier' },
+  'Schadstoffsammlung': { emoji: '⚠️', cls: 'mc-rot',   label: 'Schadstoffe' },
+  'Astschnitt':         { emoji: '✂️', cls: 'mc-teal',  label: 'Astschnitt' },
+  'Weihnachtsbäume':    { emoji: '🎄', cls: 'mc-gruen', label: 'Weihnachtsbäume' },
+};
+
+const MUELL_RAW = [
+  ['20260110','Weihnachtsbäume',''],
+  ['20260113','Biomüll',''],['20260115','Gelbe Tonne',''],['20260115','Restmüll',''],
+  ['20260127','Biomüll',''],['20260205','Papier',''],['20260210','Biomüll',''],
+  ['20260212','Gelbe Tonne',''],['20260212','Restmüll',''],['20260224','Biomüll',''],
+  ['20260305','Papier',''],['20260310','Biomüll',''],
+  ['20260312','Astschnitt',''],['20260312','Gelbe Tonne',''],['20260312','Restmüll',''],
+  ['20260324','Biomüll',''],['20260401','Papier','Verlegung Feiertag'],
+  ['20260408','Biomüll','Verlegung Feiertag'],
+  ['20260410','Gelbe Tonne',''],['20260410','Restmüll','Verlegung Feiertag'],
+  ['20260410','Schadstoffsammlung','Schillerstraße, 16:20–16:50 Uhr'],
+  ['20260411','Schadstoffsammlung','Wiesenstraße/B508, 08:00–08:30 Uhr'],
+  ['20260421','Biomüll',''],['20260429','Papier','Verlegung Feiertag'],
+  ['20260505','Biomüll',''],['20260507','Gelbe Tonne',''],['20260507','Restmüll',''],
+  ['20260519','Biomüll',''],['20260529','Papier','Verlegung Feiertag'],
+  ['20260602','Biomüll',''],['20260605','Gelbe Tonne',''],['20260605','Restmüll','Verlegung Feiertag'],
+  ['20260616','Biomüll',''],['20260625','Papier',''],['20260630','Biomüll',''],
+  ['20260702','Gelbe Tonne',''],['20260702','Restmüll',''],['20260714','Biomüll',''],
+  ['20260723','Papier',''],['20260728','Biomüll',''],
+  ['20260730','Gelbe Tonne',''],['20260730','Restmüll',''],
+  ['20260811','Biomüll',''],['20260820','Papier',''],['20260825','Biomüll',''],
+  ['20260827','Gelbe Tonne',''],['20260827','Restmüll',''],
+  ['20260908','Biomüll',''],['20260917','Papier',''],
+  ['20260918','Schadstoffsammlung','Schillerstraße, 16:20–16:50 Uhr'],
+  ['20260919','Schadstoffsammlung','Wiesenstraße/B508, 08:00–08:30 Uhr'],
+  ['20260922','Biomüll',''],['20260924','Gelbe Tonne',''],['20260924','Restmüll',''],
+  ['20261006','Biomüll',''],['20261015','Astschnitt',''],['20261015','Papier',''],
+  ['20261020','Biomüll',''],['20261022','Gelbe Tonne',''],['20261022','Restmüll',''],
+  ['20261103','Biomüll',''],['20261112','Papier',''],['20261117','Biomüll',''],
+  ['20261119','Gelbe Tonne',''],['20261119','Restmüll',''],
+  ['20261201','Biomüll',''],['20261210','Papier',''],['20261215','Biomüll',''],
+  ['20261217','Gelbe Tonne',''],['20261217','Restmüll',''],['20261229','Biomüll',''],
+];
+
+function initMuellWidget() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = today.toISOString().slice(0,10).replace(/-/g,'');
+  const byDate = {};
+  for (const [ds, type, note] of MUELL_RAW) {
+    if (ds < todayStr) continue;
+    if (!byDate[ds]) byDate[ds] = [];
+    byDate[ds].push({ type, note });
+  }
+  const sorted = Object.keys(byDate).sort().slice(0, 3);
+  const DAYS   = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  const html = sorted.map(ds => {
+    const d = new Date(ds.slice(0,4)+'-'+ds.slice(4,6)+'-'+ds.slice(6,8));
+    const diff = Math.round((d - today) / 86400000);
+    const diffTxt = diff === 0 ? 'Heute' : diff === 1 ? 'Morgen' : `in ${diff} Tagen`;
+    const chipsHtml = byDate[ds].map(({ type, note }) => {
+      const t = MUELL_TYPES[type] || { emoji: '📦', cls: 'mc-grau', label: type };
+      return `<div><span class="muell-chip ${t.cls}">${t.emoji} ${t.label}</span>${note ? `<div class="muell-note">${note}</div>` : ''}</div>`;
+    }).join('');
+    return `<div class="muell-row">
+      <div class="muell-date-block">
+        <div class="muell-day-num">${d.getDate()}</div>
+        <div class="muell-day-name">${DAYS[d.getDay()]} ${MONTHS[d.getMonth()]}</div>
+      </div>
+      <div class="muell-right">
+        <div class="muell-diff">${diffTxt}</div>
+        <div class="muell-chips">${chipsHtml}</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('muellWidget').innerHTML = html || '<div style="font-size:12px;color:var(--muted);padding:8px">Keine weiteren Termine in 2026</div>';
+}
+initMuellWidget();
 </script>
 
 </body>
