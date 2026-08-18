@@ -340,9 +340,18 @@
     .todo-icon  { font-size: 18px; line-height: 1; }
     .todo-lbl   { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; flex: 1; }
     .todo-badge { font-size: 9px; font-weight: 700; background: rgba(74,158,255,0.15); color: #4a9eff; padding: 2px 7px; border-radius: 99px; white-space: nowrap; }
-    .todo-add-btn { width: 27px; height: 27px; background: rgba(74,158,255,0.15); color: #4a9eff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; cursor: pointer; }
     .todo-open-count { font-size: 30px; font-weight: 800; color: #4a9eff; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; margin-bottom: 3px; }
-    .todo-open-lbl { font-size: 10px; color: var(--muted); }
+    .todo-open-lbl { font-size: 10px; color: var(--muted); margin-bottom: 10px; }
+    .todo-add-row {
+      display: flex; align-items: center; gap: 8px; margin-top: auto;
+      background: rgba(74,158,255,0.12); border-radius: 11px; padding: 9px 12px;
+      color: #4a9eff; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .todo-add-row-plus {
+      width: 26px; height: 26px; background: rgba(74,158,255,0.2); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 900; line-height: 1; flex-shrink: 0;
+    }
 
     /* ── Small apps 2×2 ── */
     .app-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -435,10 +444,13 @@
           <span class="todo-icon">✅</span>
           <span class="todo-lbl">To-Do</span>
           <span class="todo-badge" id="todoBadge">–</span>
-          <span class="todo-add-btn" onclick="event.stopPropagation(); sessionStorage.setItem('autoAddTask','1'); location.href='todo.html'">+</span>
         </div>
         <div class="todo-open-count" id="todoNum">–</div>
         <div class="todo-open-lbl">offen</div>
+        <div class="todo-add-row" onclick="event.stopPropagation(); sessionStorage.setItem('autoAddTask','1'); location.href='todo.html'">
+          <div class="todo-add-row-plus">+</div>
+          <span>Aufgabe hinzufügen</span>
+        </div>
       </div>
     </div>
     <div class="app-grid-2">
