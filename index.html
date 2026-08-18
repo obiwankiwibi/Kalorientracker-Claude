@@ -373,7 +373,7 @@
 
   <!-- ══ WIDGETS ══ -->
   <div class="widget-row">
-    <div class="weather-card" id="weatherCard" onclick="openWetter()" title="Auf wetter.com öffnen">
+    <div class="weather-card" id="weatherCard" onclick="openWetter()" title="Wettervorhersage öffnen">
       <div class="weather-bg-emoji" id="weatherBgEmoji">☀️</div>
       <div class="weather-loading" id="weatherLoading">📍 Lädt…</div>
       <div class="weather-content" id="weatherContent" style="display:none">
@@ -565,6 +565,8 @@ async function loadWeather(lat, lon) {
     const grad  = isNight ? ['#0d1b2a','#1b2838'] : info.grad;
     const loc = geo.address?.city || geo.address?.town || geo.address?.village || geo.address?.county || 'Unbekannt';
     window._wLoc = loc;
+    window._wLat = lat;
+    window._wLon = lon;
     document.getElementById('wLocation').textContent = loc;
     document.getElementById('wEmoji').textContent    = emoji;
     document.getElementById('wTemp').textContent     = Math.round(c.temperature_2m);
@@ -843,8 +845,16 @@ function addWater250() {
 }
 
 function openWetter() {
-  const q = encodeURIComponent(window._wLoc || 'Hilchenbach');
-  window.open('https://www.wetter.com/suche/?q=' + q, '_blank');
+  if (window._wLat && window._wLon) {
+    const lat = window._wLat.toFixed(4);
+    const lon = window._wLon.toFixed(4);
+    window.open('https://weather.com/de-DE/weather/today/l/' + lat + ',' + lon, '_blank');
+  } else {
+    navigator.geolocation.getCurrentPosition(
+      pos => window.open('https://weather.com/de-DE/weather/today/l/' + pos.coords.latitude.toFixed(4) + ',' + pos.coords.longitude.toFixed(4), '_blank'),
+      ()  => window.open('https://www.wetter.com/suche/?q=' + encodeURIComponent(window._wLoc || 'Hilchenbach'), '_blank')
+    );
+  }
 }
 
 function initTodoWidget() {
