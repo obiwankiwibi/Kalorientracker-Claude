@@ -144,6 +144,48 @@
     .fuel-refresh-btn:hover { color: var(--teal); }
     .fuel-refresh-btn:disabled { opacity: 0.4; cursor: default; }
     .fuel-open-link { font-size: 11px; color: var(--teal); text-decoration: none; font-weight: 700; }
+    .fuel-setup-btn {
+      display: none; margin-top: 8px; width: 100%;
+      background: var(--teal-dim); border: 1px solid rgba(61,189,181,0.3);
+      color: var(--teal); border-radius: 10px; padding: 8px;
+      font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+
+    /* ── Fuel setup overlay ── */
+    .fuel-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); z-index: 500;
+      align-items: flex-end; justify-content: center;
+    }
+    .fuel-overlay.open { display: flex; }
+    .fuel-overlay-box {
+      background: var(--layer1); width: 100%; max-width: 420px;
+      border-radius: 24px 24px 0 0; border-top: 1px solid var(--border2);
+      padding: 20px 20px 36px;
+    }
+    .fuel-overlay-handle {
+      width: 40px; height: 4px; background: var(--border2);
+      border-radius: 2px; margin: 0 auto 16px;
+    }
+    .fuel-overlay-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .fuel-overlay-sub   { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+    .fuel-overlay-input {
+      width: 100%; background: var(--layer2); border: 1px solid var(--border2);
+      color: var(--text); padding: 12px 14px; border-radius: 12px;
+      font-size: 14px; outline: none; font-family: inherit; margin-bottom: 12px;
+    }
+    .fuel-overlay-input:focus { border-color: var(--teal); }
+    .fuel-overlay-btns { display: flex; gap: 10px; }
+    .fuel-overlay-cancel {
+      flex: 1; padding: 13px; border-radius: 12px; border: 1px solid var(--border2);
+      background: none; color: var(--muted); font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+    }
+    .fuel-overlay-save {
+      flex: 2; padding: 13px; border-radius: 12px; border: none;
+      background: var(--teal); color: #fff; font-size: 14px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+    }
 
     /* ── Section container ── */
     .section {
@@ -276,9 +318,24 @@
       <div class="fuel-meta-sm" id="fuelMeta"></div>
       <div class="fuel-updated-sm" id="fuelUpdated"></div>
       <div class="fuel-fav-badge" id="fuelFavBadge" style="display:none">★ Favorit</div>
+      <button class="fuel-setup-btn" id="fuelSetupBtn" onclick="openFuelSetup()">⚙ API-Key einrichten</button>
       <div class="fuel-actions">
         <button class="fuel-refresh-btn" id="fuelRefreshBtn" onclick="loadFuelPrice(true)" title="Aktualisieren">↻</button>
         <a href="tankstellen_finder.html" class="fuel-open-link">Alle →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fuel API key setup overlay -->
+  <div class="fuel-overlay" id="fuelOverlay" onclick="if(event.target===this)closeFuelSetup()">
+    <div class="fuel-overlay-box">
+      <div class="fuel-overlay-handle"></div>
+      <div class="fuel-overlay-title">⛽ Spritpreise einrichten</div>
+      <div class="fuel-overlay-sub">Kostenlosen API-Key unter <strong>tankerkoenig.de</strong> registrieren, dann hier eingeben.</div>
+      <input class="fuel-overlay-input" id="fuelKeyInput" type="text" placeholder="Tankerkoenig API-Key" autocomplete="off" spellcheck="false">
+      <div class="fuel-overlay-btns">
+        <button class="fuel-overlay-cancel" onclick="closeFuelSetup()">Abbrechen</button>
+        <button class="fuel-overlay-save" onclick="saveFuelKey()">Speichern &amp; laden</button>
       </div>
     </div>
   </div>
@@ -441,11 +498,14 @@ async function loadFuelPrice(force = false) {
   const tkState   = JSON.parse(localStorage.getItem('tankstellen_finder_v2') || '{}');
   const favorites = tkState.favorites || {};
   if (!tkState.apiKey) {
-    document.getElementById('fuelName').textContent = 'API-Key hinterlegen';
-    document.getElementById('fuelMeta').textContent = 'In Tankstellen-App einrichten';
+    document.getElementById('fuelPrice').textContent = '–';
+    document.getElementById('fuelName').textContent = 'Kein API-Key';
+    document.getElementById('fuelMeta').textContent = 'Einmalig einrichten';
     document.getElementById('fuelUpdated').textContent = '';
+    document.getElementById('fuelSetupBtn').style.display = '';
     return;
   }
+  document.getElementById('fuelSetupBtn').style.display = 'none';
   const cached = JSON.parse(localStorage.getItem(TK_CACHE) || 'null');
   if (cached) renderFuelWidget(cached.cheapest, cached.stations, favorites, cached.ts);
   if (!force && cached && (Date.now() - cached.ts) < TK_HOUR) return;
@@ -486,6 +546,25 @@ async function loadFuelPrice(force = false) {
   } finally {
     if (refreshBtn) { refreshBtn.textContent = '↻'; refreshBtn.disabled = false; }
   }
+}
+
+function openFuelSetup() {
+  const tkState = JSON.parse(localStorage.getItem('tankstellen_finder_v2') || '{}');
+  document.getElementById('fuelKeyInput').value = tkState.apiKey || '';
+  document.getElementById('fuelOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('fuelKeyInput').focus(), 50);
+}
+function closeFuelSetup() {
+  document.getElementById('fuelOverlay').classList.remove('open');
+}
+function saveFuelKey() {
+  const key = document.getElementById('fuelKeyInput').value.trim();
+  if (!key) return;
+  const tkState = JSON.parse(localStorage.getItem('tankstellen_finder_v2') || '{}');
+  tkState.apiKey = key;
+  localStorage.setItem('tankstellen_finder_v2', JSON.stringify(tkState));
+  closeFuelSetup();
+  loadFuelPrice(true);
 }
 
 loadFuelPrice();

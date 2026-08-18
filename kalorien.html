@@ -69,12 +69,14 @@
   }
   .wrap{max-width:480px;margin:0 auto;padding:26px 16px 0;}
 
-  /* segmented switch */
-  .segwrap{display:flex;justify-content:center;align-items:center;margin-bottom:24px;position:relative;}
-  .header-actions{position:absolute;right:0;display:flex;gap:8px;}
-  .settings-btn{background:var(--card);border:1px solid var(--line);color:var(--text-faint);width:40px;height:40px;border-radius:14px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s;}
+  /* top nav header */
+  .kalorien-header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 14px;height:52px;gap:8px;}
+  .kalorien-header-title{flex:1;font-size:17px;font-weight:700;color:var(--text);}
+  .settings-btn{background:var(--card);border:1px solid var(--line);color:var(--text-faint);width:40px;height:40px;border-radius:14px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s;text-decoration:none;}
   .settings-btn:hover{color:var(--text);border-color:rgba(100,65,25,0.3);}
   .theme-toggle{font-size:18px;}
+  /* segmented switch */
+  .segwrap{display:flex;justify-content:center;align-items:center;margin-bottom:24px;}
   /* backup modal */
   .backup-modal{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:24px 20px;width:min(320px,90vw);box-shadow:var(--shadow-lg);}
   .backup-modal h3{margin:0 0 6px;font-size:16px;font-weight:700;}
@@ -441,16 +443,17 @@
 </head>
 <body>
 
+<header class="kalorien-header">
+  <div class="kalorien-header-title">🥗 Kalorien</div>
+  <a href="index.html" class="settings-btn" title="Startseite">⌂</a>
+  <button class="settings-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Design wechseln">🌙</button>
+  <button class="settings-btn" onclick="openBackup()" title="Backup">⚙</button>
+</header>
 <div class="wrap">
   <div class="segwrap">
     <div class="seg">
       <button id="segDay" class="active" onclick="switchView('day')">Tag</button>
       <button id="segWeek" onclick="switchView('week')">Woche</button>
-    </div>
-    <div class="header-actions">
-      <a href="index.html" class="settings-btn" style="text-decoration:none;font-size:17px" title="Startseite">⌂</a>
-      <button class="settings-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Design wechseln">🌙</button>
-      <button class="settings-btn" onclick="openBackup()" title="Backup">⚙</button>
     </div>
   </div>
 
