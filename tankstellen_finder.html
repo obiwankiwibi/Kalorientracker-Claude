@@ -43,6 +43,18 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 .filter-chip.active{background:var(--soft);border-color:var(--brand);color:var(--brand)}
 @media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.grid .place{grid-column:1/-1}.layout{grid-template-columns:1fr}.chart-card{position:static}.topstats{grid-template-columns:1fr 1fr}}
 @media(max-width:430px){.grid{grid-template-columns:1fr}.grid .place{grid-column:auto}.station{grid-template-columns:1fr}.price{text-align:left}.subactions{flex-wrap:wrap}.status{width:100%;margin-left:0}}
+
+/* ── Visual improvements ── */
+header { border-bottom: 2px solid var(--brand); }
+.section-title { display:flex;align-items:center;gap:8px; }
+.section-title::before { content:'';display:block;width:3px;height:14px;border-radius:2px;background:var(--brand);flex-shrink:0; }
+.topstats { border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow); }
+.stat { border-right:1px solid var(--line); }
+.stat:last-child { border-right:none; }
+.big { color:var(--brand); }
+.search-card { border:2px solid var(--brand); }
+.filter-bar { background:var(--soft);border-radius:10px;padding:12px;margin-top:12px;border-top:none; }
+.fav-section .section-title { color:var(--brand); }
 </style>
 </head>
 <body>

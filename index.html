@@ -8,13 +8,16 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:      #1e2030;
-      --surface: #272a3d;
-      --border:  #3a3d55;
-      --text:    #eef0f8;
-      --muted:   #7880a0;
-      --teal:    #3dbdb5;
-      --salmon:  #e8635a;
+      --bg:       #161829;
+      --layer1:   #1e2138;
+      --layer2:   #252944;
+      --border:   rgba(255,255,255,0.07);
+      --border2:  rgba(255,255,255,0.12);
+      --text:     #eef0f8;
+      --muted:    #6b7599;
+      --teal:     #3dbdb5;
+      --teal-dim: rgba(61,189,181,0.15);
+      --salmon:   #e8635a;
     }
 
     body {
@@ -25,28 +28,50 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px 16px 40px;
+      padding: 16px 14px 48px;
       -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Page header ── */
+    .page-header {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 2px 16px;
+    }
+    .page-logo {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    .page-logo span { color: var(--teal); }
+    .page-time {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
     }
 
     /* ── Widget row ── */
     .widget-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
     }
 
     /* ── Weather widget ── */
     .weather-card {
-      border-radius: 20px;
-      padding: 14px;
+      border-radius: 22px;
+      padding: 16px;
       background: linear-gradient(145deg, #FF8C00, #FFB347);
       position: relative;
       overflow: hidden;
       transition: background 0.8s ease;
-      min-height: 160px;
+      min-height: 168px;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
@@ -60,162 +85,170 @@
     .weather-bg-emoji {
       position: absolute;
       top: -4px; right: -4px;
-      font-size: 72px;
-      opacity: 0.15;
+      font-size: 78px;
+      opacity: 0.14;
       line-height: 1;
       pointer-events: none;
     }
     .weather-content { position: relative; z-index: 1; }
     .weather-main    { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
-    .weather-emoji   { font-size: 30px; line-height: 1; }
-    .weather-temp    { font-size: 38px; font-weight: 700; line-height: 1; color: #fff; letter-spacing: -1px; }
+    .weather-emoji   { font-size: 28px; line-height: 1; }
+    .weather-temp    { font-size: 40px; font-weight: 800; line-height: 1; color: #fff; letter-spacing: -2px; }
     .weather-desc    { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px; }
     .weather-location{ font-size: 10px; color: rgba(255,255,255,0.7); }
     .weather-minmax  { font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 2px; }
     .weather-loading {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      color: rgba(255,255,255,0.75);
-      z-index: 2;
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: rgba(255,255,255,0.75); z-index: 2;
     }
     .weather-error { font-size: 11px; color: rgba(255,255,255,0.7); text-align: center; padding: 8px; }
 
     /* ── Fuel widget ── */
     .fuel-widget {
-      border-radius: 20px;
-      padding: 14px;
-      background: var(--surface);
-      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 16px;
+      background: var(--layer2);
+      border: 1px solid var(--border2);
       color: var(--text);
       display: flex;
       flex-direction: column;
-      min-height: 160px;
+      min-height: 168px;
       position: relative;
       overflow: hidden;
     }
     .fuel-widget-bg {
-      position: absolute;
-      top: 2px; right: 2px;
-      font-size: 64px;
-      opacity: 0.06;
-      line-height: 1;
-      pointer-events: none;
+      position: absolute; top: 2px; right: 2px;
+      font-size: 70px; opacity: 0.05; line-height: 1; pointer-events: none;
     }
-    .fuel-widget-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; position: relative; }
-    .fuel-price-big  { font-size: 34px; font-weight: 700; color: var(--teal); line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; position: relative; }
-    .fuel-unit-sm    { font-size: 10px; color: var(--muted); margin-bottom: 4px; position: relative; }
-    .fuel-name-sm    { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
-    .fuel-meta-sm    { font-size: 10px; color: var(--muted); margin-top: 1px; position: relative; }
-    .fuel-updated-sm { font-size: 9px; color: var(--muted); margin-top: 3px; position: relative; opacity: 0.7; }
+    .fuel-widget-label { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px; position: relative; }
+    .fuel-price-big  { font-size: 34px; font-weight: 800; color: var(--teal); line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; position: relative; }
+    .fuel-unit-sm    { font-size: 10px; color: var(--muted); margin-bottom: 5px; position: relative; }
+    .fuel-name-sm    { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+    .fuel-meta-sm    { font-size: 10px; color: var(--muted); margin-top: 2px; position: relative; }
+    .fuel-updated-sm { font-size: 9px; color: var(--muted); margin-top: 3px; position: relative; opacity: 0.6; }
     .fuel-fav-badge  {
-      position: absolute;
-      top: 10px; right: 10px;
-      font-size: 9px;
-      background: rgba(61,189,181,0.15);
-      color: var(--teal);
-      padding: 2px 7px;
-      border-radius: 99px;
-      font-weight: 700;
+      position: absolute; top: 12px; right: 12px;
+      font-size: 9px; background: var(--teal-dim); color: var(--teal);
+      padding: 2px 8px; border-radius: 99px; font-weight: 700;
     }
     .fuel-actions {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: auto;
-      padding-top: 8px;
-      position: relative;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: auto; padding-top: 8px; position: relative;
     }
     .fuel-refresh-btn {
-      background: none;
-      border: none;
-      color: var(--muted);
-      font-size: 15px;
-      cursor: pointer;
-      padding: 2px 4px;
-      line-height: 1;
-      border-radius: 6px;
+      background: none; border: none; color: var(--muted);
+      font-size: 16px; cursor: pointer; padding: 2px 4px;
+      line-height: 1; border-radius: 8px;
     }
     .fuel-refresh-btn:hover { color: var(--teal); }
     .fuel-refresh-btn:disabled { opacity: 0.4; cursor: default; }
-    .fuel-open-link {
-      font-size: 11px;
-      color: var(--teal);
-      text-decoration: none;
-      font-weight: 600;
+    .fuel-open-link { font-size: 11px; color: var(--teal); text-decoration: none; font-weight: 700; }
+
+    /* ── Section container ── */
+    .section {
+      width: 100%;
+      max-width: 420px;
+      background: var(--layer1);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 18px;
+      margin-top: 12px;
     }
 
-    /* ── Section label ── */
-    .section-label {
-      width: 100%;
-      max-width: 400px;
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .section-head::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 16px;
+      border-radius: 2px;
+      background: var(--teal);
+      flex-shrink: 0;
+    }
+    .section-title {
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.8px;
-      padding: 20px 4px 10px;
     }
 
     /* ── App grid ── */
-    .grid {
+    .app-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 14px;
-      width: 100%;
-      max-width: 400px;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
     }
-    .card {
-      background: var(--surface);
+    .app-card {
+      background: var(--layer2);
       border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 24px 16px;
+      border-radius: 18px;
+      padding: 14px 10px 12px;
       text-decoration: none;
       color: var(--text);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
-      transition: transform 0.12s, border-color 0.15s;
+      gap: 7px;
+      transition: transform 0.12s, opacity 0.12s;
     }
-    .card:active { transform: scale(0.95); }
-    .card.teal   { border-color: rgba(61,189,181,0.35); }
-    .card.coral  { border-color: rgba(232,99,90,0.35);  }
-    .card.purple { border-color: rgba(160,100,220,0.38); }
-    .card.green  { border-color: rgba(80,190,120,0.38); }
-    .card.amber  { border-color: rgba(240,170,50,0.38); }
-    .card-icon { font-size: 38px; line-height: 1; }
-    .card-name { font-size: 14px; font-weight: 600; text-align: center; }
-    .card-desc { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.5; }
+    .app-card:active { transform: scale(0.93); opacity: 0.85; }
+
+    .app-icon-wrap {
+      width: 46px;
+      height: 46px;
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+    .c-teal   { background: rgba(61,189,181,0.18); }
+    .c-coral  { background: rgba(232,99,90,0.18); }
+    .c-purple { background: rgba(160,100,220,0.18); }
+    .c-green  { background: rgba(80,190,120,0.18); }
+    .c-amber  { background: rgba(240,170,50,0.18); }
+    .c-blue   { background: rgba(74,158,255,0.18); }
+
+    .app-name { font-size: 11px; font-weight: 700; text-align: center; line-height: 1.2; }
+    .app-desc { font-size: 9px; color: var(--muted); text-align: center; line-height: 1.4; }
 
     /* ── Backup ── */
-    .backup-row { width: 100%; max-width: 400px; }
     .backup-btn {
       width: 100%;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-      padding: 14px 18px; color: var(--text);
+      background: var(--layer2);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 14px 16px;
+      color: var(--text);
       display: flex; align-items: center; gap: 12px;
       cursor: pointer; font-family: inherit; text-align: left;
       transition: transform 0.12s, border-color 0.15s;
     }
     .backup-btn:active { transform: scale(0.97); }
     .backup-btn.success { border-color: rgba(61,189,181,0.5); }
-    .backup-icon  { font-size: 24px; flex-shrink: 0; }
+    .backup-icon  { font-size: 22px; flex-shrink: 0; }
     .backup-text  { flex: 1; }
-    .backup-title { display: block; font-size: 15px; font-weight: 700; }
-    .backup-sub   { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .backup-title { display: block; font-size: 14px; font-weight: 700; }
+    .backup-sub   { display: block; font-size: 10px; color: var(--muted); margin-top: 2px; }
     .backup-arrow { font-size: 18px; color: var(--teal); flex-shrink: 0; }
   </style>
 </head>
 <body>
 
-  <!-- ══ WIDGET ROW: Wetter + Sprit ══ -->
-  <div class="widget-row">
+  <div class="page-header">
+    <div class="page-logo">Mein<span>Hub</span></div>
+    <div class="page-time" id="headerTime"></div>
+  </div>
 
-    <!-- Wetter -->
+  <!-- ══ WIDGETS ══ -->
+  <div class="widget-row">
     <div class="weather-card" id="weatherCard">
       <div class="weather-bg-emoji" id="weatherBgEmoji">☀️</div>
       <div class="weather-loading" id="weatherLoading">📍 Lädt…</div>
@@ -227,16 +260,13 @@
         <div class="weather-desc" id="wDesc">–</div>
         <div class="weather-location">📍 <span id="wLocation">–</span></div>
         <div class="weather-minmax">↓<span id="wMin">–</span>° ↑<span id="wMax">–</span>°</div>
-        <!-- hidden spans for JS compat -->
         <span id="wClock"    style="display:none"></span>
-        <span id="wFeels"    style="display:none"></span>
-        <span id="wWind"     style="display:none"></span>
-        <span id="wHumid"    style="display:none"></span>
+        <span id="wFeels"   style="display:none"></span>
+        <span id="wWind"    style="display:none"></span>
+        <span id="wHumid"   style="display:none"></span>
         <span id="wMinMaxBox" style="display:none"></span>
       </div>
     </div>
-
-    <!-- Spritpreis -->
     <div class="fuel-widget">
       <div class="fuel-widget-bg">⛽</div>
       <div class="fuel-widget-label">Super 95</div>
@@ -251,48 +281,46 @@
         <a href="tankstellen_finder.html" class="fuel-open-link">Alle →</a>
       </div>
     </div>
-
   </div>
 
   <!-- ══ APPS ══ -->
-  <div class="section-label" style="padding-left:0">Apps</div>
-
-  <div class="grid">
-    <a class="card teal" href="einkaufsliste.html">
-      <div class="card-icon">🛒</div>
-      <div class="card-name">Einkaufsliste</div>
-      <div class="card-desc">Gemeinsam, in Echtzeit synchronisiert</div>
-    </a>
-    <a class="card coral" href="kalorien.html">
-      <div class="card-icon">🥗</div>
-      <div class="card-name">Kalorientracker</div>
-      <div class="card-desc">Mahlzeiten & Nährstoffe im Blick</div>
-    </a>
-    <a class="card purple" href="zähler.html">
-      <div class="card-icon">🔢</div>
-      <div class="card-name">Zähler</div>
-      <div class="card-desc">Einfacher Klick-Zähler</div>
-    </a>
-    <a class="card green" href="haushaltskosten_tracker.html">
-      <div class="card-icon">🏠</div>
-      <div class="card-name">Haushalt</div>
-      <div class="card-desc">Ausgaben & Kosten im Überblick</div>
-    </a>
-    <a class="card amber" href="tankstellen_finder.html">
-      <div class="card-icon">⛽</div>
-      <div class="card-name">Tankstellen</div>
-      <div class="card-desc">Günstige Preise in der Nähe finden</div>
-    </a>
-    <a class="card" href="todo.html" style="border-color:rgba(74,158,255,0.38)">
-      <div class="card-icon">✅</div>
-      <div class="card-name">To-Do</div>
-      <div class="card-desc">Aufgaben, live synchronisiert</div>
-    </a>
+  <div class="section">
+    <div class="section-head">
+      <span class="section-title">Apps</span>
+    </div>
+    <div class="app-grid">
+      <a class="app-card" href="einkaufsliste.html">
+        <div class="app-icon-wrap c-teal">🛒</div>
+        <div class="app-name">Einkaufs&shy;liste</div>
+      </a>
+      <a class="app-card" href="kalorien.html">
+        <div class="app-icon-wrap c-coral">🥗</div>
+        <div class="app-name">Kalorien&shy;tracker</div>
+      </a>
+      <a class="app-card" href="todo.html">
+        <div class="app-icon-wrap c-blue">✅</div>
+        <div class="app-name">To-Do</div>
+      </a>
+      <a class="app-card" href="haushaltskosten_tracker.html">
+        <div class="app-icon-wrap c-green">🏠</div>
+        <div class="app-name">Haushalt</div>
+      </a>
+      <a class="app-card" href="tankstellen_finder.html">
+        <div class="app-icon-wrap c-amber">⛽</div>
+        <div class="app-name">Tankstellen</div>
+      </a>
+      <a class="app-card" href="zähler.html">
+        <div class="app-icon-wrap c-purple">🔢</div>
+        <div class="app-name">Zähler</div>
+      </a>
+    </div>
   </div>
 
   <!-- ══ BACKUP ══ -->
-  <div class="section-label" style="padding-left:0">Datensicherung</div>
-  <div class="backup-row">
+  <div class="section">
+    <div class="section-head">
+      <span class="section-title">Datensicherung</span>
+    </div>
     <button class="backup-btn" id="backupBtn" onclick="doBackup()">
       <span class="backup-icon">💾</span>
       <span class="backup-text">
@@ -304,15 +332,16 @@
   </div>
 
 <script>
-// ── Uhr (compat only) ──
 function updateClock() {
-  const el = document.getElementById('wClock');
-  if (el) el.textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  const now = new Date();
+  const el = document.getElementById('headerTime');
+  if (el) el.textContent = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  const wc = document.getElementById('wClock');
+  if (wc) wc.textContent = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 }
 updateClock();
 setInterval(updateClock, 30000);
 
-// ── WMO Wettercodes ──
 const WEATHER = {
   0:  { label:'Klarer Himmel',           emoji:'☀️',  nightEmoji:'🌙', grad:['#FF8C00','#FFB347'] },
   1:  { label:'Überwiegend klar',         emoji:'🌤️', nightEmoji:'🌙', grad:['#FF8C00','#FFAA00'] },
@@ -381,7 +410,6 @@ async function loadWeather(lat, lon) {
   }
 }
 
-// ── Spritpreis ──
 const TK_CACHE = 'tk_quick_e5';
 const TK_HOUR  = 3600000;
 
@@ -397,11 +425,8 @@ function renderFuelWidget(cheapest, stations, favorites, ts) {
     .map(id => stations.find(s => s.id === id))
     .filter(s => s && typeof s.e5 === 'number' && s.e5 > 0.5)
     .sort((a, b) => a.e5 - b.e5);
-
-  // Always show cheapest favorite if one exists, otherwise cheapest overall
   const rec   = favStations.length ? favStations[0] : cheapest;
   const isFav = favStations.length > 0;
-
   document.getElementById('fuelPrice').textContent =
     rec.e5.toLocaleString('de-DE', {minimumFractionDigits:3, maximumFractionDigits:3});
   document.getElementById('fuelName').textContent = rec.name;
@@ -415,28 +440,23 @@ function renderFuelWidget(cheapest, stations, favorites, ts) {
 async function loadFuelPrice(force = false) {
   const tkState   = JSON.parse(localStorage.getItem('tankstellen_finder_v2') || '{}');
   const favorites = tkState.favorites || {};
-
   if (!tkState.apiKey) {
     document.getElementById('fuelName').textContent = 'API-Key hinterlegen';
     document.getElementById('fuelMeta').textContent = 'In Tankstellen-App einrichten';
     document.getElementById('fuelUpdated').textContent = '';
     return;
   }
-
   const cached = JSON.parse(localStorage.getItem(TK_CACHE) || 'null');
   if (cached) renderFuelWidget(cached.cheapest, cached.stations, favorites, cached.ts);
   if (!force && cached && (Date.now() - cached.ts) < TK_HOUR) return;
-
   const sinceLastReq = Date.now() - (tkState.lastRequest || 0);
   if (sinceLastReq < 62000) {
     const remSec = Math.ceil((62000 - sinceLastReq) / 1000);
     document.getElementById('fuelUpdated').textContent = `Rate-Limit: noch ${remSec} s warten`;
     return;
   }
-
   const refreshBtn = document.getElementById('fuelRefreshBtn');
   if (refreshBtn) { refreshBtn.textContent = '⟳'; refreshBtn.disabled = true; }
-
   try {
     let coords = JSON.parse(localStorage.getItem('tk_default_coords') || 'null');
     if (!coords) {
@@ -445,24 +465,18 @@ async function loadFuelPrice(force = false) {
       coords = gd.length ? {lat:+gd[0].lat, lng:+gd[0].lon} : {lat:50.982, lng:8.102};
       localStorage.setItem('tk_default_coords', JSON.stringify(coords));
     }
-
     const p = new URLSearchParams({lat:coords.lat, lng:coords.lng, rad:10, type:'e5', sort:'price', apikey:tkState.apiKey});
     const r = await fetch('https://creativecommons.tankerkoenig.de/json/list.php?'+p);
     const data = await r.json();
-
     if (!data.ok) { setTimeout(()=>loadFuelPrice(), 65000); return; }
     if (!data.stations?.length) throw new Error('Keine Stationen');
-
     const stations = data.stations.filter(s => typeof s.e5==='number' && s.e5>0.5);
     if (!stations.length) throw new Error('Keine Super-95-Preise');
-
     tkState.lastRequest = Date.now();
     localStorage.setItem('tankstellen_finder_v2', JSON.stringify(tkState));
-
     const result = {ts: Date.now(), cheapest: stations[0], stations};
     localStorage.setItem(TK_CACHE, JSON.stringify(result));
     renderFuelWidget(result.cheapest, result.stations, favorites, result.ts);
-
   } catch(err) {
     if (!cached) {
       document.getElementById('fuelName').textContent = 'Nicht verfügbar';
@@ -477,7 +491,6 @@ async function loadFuelPrice(force = false) {
 loadFuelPrice();
 setInterval(loadFuelPrice, TK_HOUR);
 
-// ── Backup ──
 const BACKUP_STATIC_KEYS = [
   'zaehler',
   'kalorientracker_v1','kalorientracker_goal','kalorientracker_watergoal',
@@ -527,7 +540,6 @@ function doBackup() {
 
 updateBackupSub();
 
-// ── Standort (nur Wetter) ──
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(
     pos => loadWeather(pos.coords.latitude, pos.coords.longitude),
