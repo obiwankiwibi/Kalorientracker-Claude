@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Freizeitaktivitäten</title>
+<style>
+:root{--bg:#eef1f4;--card:#fff;--ink:#17202a;--muted:#718096;--line:#dce2e8;--brand:#6c4fd8;--soft:#ede9fb;--warn:#a66016;--radius:13px;--shadow:0 10px 30px rgba(23,32,42,.07)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0d1015;--card:#181525;--ink:#e8e4ff;--muted:#8980a9;--line:#28224a;--brand:#9d7fff;--soft:#201a45;--warn:#e2a85c;--shadow:none}}
+:root[data-theme=dark]{--bg:#0d1015;--card:#181525;--ink:#e8e4ff;--muted:#8980a9;--line:#28224a;--brand:#9d7fff;--soft:#201a45;--warn:#e2a85c;--shadow:none}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.app{max-width:1050px;margin:auto;padding:0 18px 80px}
+.site-nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);margin-bottom:20px}
+.site-nav-title{flex:1;font-size:17px;font-weight:700;padding:0 4px;color:var(--ink)}
+.site-nav-btn{width:36px;height:36px;border-radius:50%;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;flex-shrink:0;font-family:inherit;transition:background .15s}
+.site-nav-btn:active{background:var(--card)}
+.topstats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.stat{background:var(--card);padding:14px 16px;border-right:1px solid var(--line)}.stat:last-child{border-right:none}
+.eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.big{font-size:25px;font-weight:750;margin-top:3px;color:var(--brand)}.hint{font-size:12px;color:var(--muted)}
+.filter-bar{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:18px}
+.filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.filter-input{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:9px 12px;font:inherit;flex:1;min-width:140px}
+.filter-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:99px;padding:6px 13px;cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap;font-family:inherit;transition:background .15s,color .15s,border-color .15s}
+.chip.active{background:var(--soft);border-color:var(--brand);color:var(--brand)}
+.primary{border:0;background:var(--brand);color:#fff;border-radius:9px;padding:10px 16px;font:700 14px/1 inherit;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.primary:active{opacity:.85}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin:0 0 12px}
+.section-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:750;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';display:block;width:3px;height:14px;border-radius:2px;background:var(--brand);flex-shrink:0}
+.count{font-size:11px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:2px 8px;color:var(--muted)}
+.activities-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.act-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:8px}
+.act-card.is-fav{border-color:var(--brand)}
+.act-header{display:flex;gap:10px;align-items:flex-start}
+.cat-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:var(--soft)}
+.act-name{font-weight:750;font-size:15px;line-height:1.3;flex:1}
+.act-cat{font-size:11px;color:var(--brand);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.act-address{font-size:12px;color:var(--muted);display:flex;gap:5px;align-items:flex-start}
+.act-note{font-size:13px;color:var(--ink);background:var(--bg);border-radius:8px;padding:8px 10px;line-height:1.4}
+.act-footer{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.act-rating{display:flex;gap:2px;font-size:17px;line-height:1}
+.star-btn{border:0;background:none;padding:0;cursor:pointer;font-size:17px;line-height:1;color:var(--line);transition:color .12s}
+.star-btn.on{color:#f6c000}
+.fav-btn{border:0;background:none;padding:2px 4px;cursor:pointer;font-size:20px;line-height:1;color:var(--line);margin-left:auto;transition:color .15s}
+.fav-btn.active{color:var(--brand)}
+.visit-badge{font-size:11px;border-radius:99px;padding:3px 9px;background:var(--soft);color:var(--brand);font-weight:700}
+.act-actions{display:flex;gap:6px;margin-top:2px}
+.act-btn{border:1px solid var(--line);background:none;color:var(--ink);border-radius:8px;padding:6px 11px;font:600 12px/1 inherit;cursor:pointer;transition:background .12s}
+.act-btn:hover{background:var(--bg)}
+.act-btn.danger{color:var(--warn);border-color:var(--warn)}
+.route-btn{color:var(--brand);border-color:var(--brand)}
+.empty{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:44px 24px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--ink);font-size:16px;margin-bottom:6px}
+.fav-section{margin-top:26px}
+.overlay{position:fixed;inset:0;background:rgba(9,15,18,.65);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}
+.overlay.open{display:flex}
+.modal{width:min(500px,100%);background:var(--card);border:1px solid var(--line);border-radius:15px;padding:24px;max-height:90vh;overflow-y:auto}
+.modal h2{margin:0 0 18px;font-size:20px}
+.field{margin-bottom:14px}.field label{display:block;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:10px 11px;font:inherit;resize:vertical}
+.field textarea{min-height:72px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.ghost{border:1px solid var(--line);background:none;color:var(--ink);border-radius:9px;padding:9px 14px;cursor:pointer;font:inherit}
+.star-pick{display:flex;gap:4px;font-size:24px}
+.star-pick span{cursor:pointer;color:var(--line);transition:color .12s;user-select:none}
+.star-pick span.on{color:#f6c000}
+@media(max-width:600px){.topstats{grid-template-columns:1fr 1fr}.field-row{grid-template-columns:1fr}}
+@media(max-width:400px){.topstats{grid-template-columns:1fr 1fr}.activities-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="site-nav">
+  <div class="site-nav-title">🎡 Freizeitaktivitäten</div>
+  <button class="site-nav-btn" id="themeBtn" title="Design wechseln">◐</button>
+  <a href="index.html" class="site-nav-btn" title="Startseite">⌂</a>
+</header>
+
+<div class="topstats">
+  <div class="stat"><div class="eyebrow">Aktivitäten</div><div class="big" id="statTotal">0</div><div class="hint">gesamt eingetragen</div></div>
+  <div class="stat"><div class="eyebrow">Besucht</div><div class="big" id="statVisited">0</div><div class="hint">mindestens einmal</div></div>
+  <div class="stat"><div class="eyebrow">Favoriten</div><div class="big" id="statFavs">0</div><div class="hint">auf Merkliste</div></div>
+  <div class="stat"><div class="eyebrow">Top-Kategorie</div><div class="big" id="statCat">—</div><div class="hint" id="statCatHint">meiste Einträge</div></div>
+</div>
+
+<div class="filter-bar">
+  <div class="filter-row">
+    <input id="searchInput" class="filter-input" placeholder="Aktivität oder Ort suchen …">
+    <button class="primary" id="addBtn">＋ Hinzufügen</button>
+  </div>
+  <div class="filter-chips" id="catChips">
+    <button class="chip active" data-cat="">Alle</button>
+  </div>
+</div>
+
+<div class="section-head">
+  <div class="section-title">Aktivitäten</div>
+  <span class="count" id="listCount">0</span>
+</div>
+<div class="activities-grid" id="actGrid"></div>
+
+<div class="fav-section" id="favSection" style="display:none">
+  <div class="section-head">
+    <div class="section-title">Favoriten</div>
+    <span class="count" id="favCount">0</span>
+  </div>
+  <div class="activities-grid" id="favGrid"></div>
+</div>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="overlay" id="overlay">
+<div class="modal">
+  <h2 id="modalTitle">Aktivität hinzufügen</h2>
+  <input type="hidden" id="editId">
+  <div class="field"><label>Name *</label><input id="fName" placeholder="z. B. Freizeitbad Siegen"></div>
+  <div class="field-row">
+    <div class="field"><label>Kategorie *</label>
+      <select id="fCat">
+        <option value="">Wählen …</option>
+        <option>🏊 Schwimmbad</option>
+        <option>⛳ Minigolf</option>
+        <option>🎬 Kino</option>
+        <option>🎭 Theater</option>
+        <option>🏛️ Museum</option>
+        <option>🎳 Bowling</option>
+        <option>🧗 Klettern</option>
+        <option>🛼 Rollschuhlaufen</option>
+        <option>🎡 Freizeitpark</option>
+        <option>🏋️ Fitness</option>
+        <option>🎮 Gaming / Escape Room</option>
+        <option>🍕 Restaurant</option>
+        <option>☕ Café</option>
+        <option>🌳 Natur / Wandern</option>
+        <option>🚴 Radfahren</option>
+        <option>⛷️ Ski / Winter</option>
+        <option>🎨 Kunst / Ausstellung</option>
+        <option>🎵 Konzert / Event</option>
+        <option>🐾 Zoo / Tierpark</option>
+        <option>🎯 Sonstiges</option>
+      </select>
+    </div>
+    <div class="field"><label>Bewertung</label>
+      <div class="star-pick" id="starPick">
+        <span data-s="1">★</span><span data-s="2">★</span><span data-s="3">★</span><span data-s="4">★</span><span data-s="5">★</span>
+      </div>
+    </div>
+  </div>
+  <div class="field"><label>Adresse / Ort</label><input id="fAddr" placeholder="z. B. Sandstraße 1, 57072 Siegen"></div>
+  <div class="field"><label>Website (optional)</label><input id="fUrl" type="url" placeholder="https://…"></div>
+  <div class="field"><label>Notizen</label><textarea id="fNote" placeholder="Öffnungszeiten, Preise, Tipps …"></textarea></div>
+  <div class="field-row">
+    <div class="field"><label>Zuletzt besucht</label><input id="fVisit" type="date"></div>
+    <div class="field"><label>Preis-Niveau</label>
+      <select id="fPrice">
+        <option value="">Unbekannt</option>
+        <option value="free">Kostenlos</option>
+        <option value="low">Günstig (€)</option>
+        <option value="mid">Mittel (€€)</option>
+        <option value="high">Teuer (€€€)</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="ghost" id="cancelBtn">Abbrechen</button>
+    <button class="primary" id="saveBtn">Speichern</button>
+  </div>
+</div>
+</div>
+
+<script>
+const STORE = 'freizeit_v1';
+const themes = ['system','light','dark'];
+let state = { activities: [], theme: 'system' };
+try { state = Object.assign(state, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch(e) {}
+if (!Array.isArray(state.activities)) state.activities = [];
+
+const $ = id => document.getElementById(id);
+function persist() { localStorage.setItem(STORE, JSON.stringify(state)); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function esc(s) { return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+const PRICE_LABEL = { free:'Kostenlos', low:'€', mid:'€€', high:'€€€' };
+const CATS = ['🏊 Schwimmbad','⛳ Minigolf','🎬 Kino','🎭 Theater','🏛️ Museum','🎳 Bowling','🧗 Klettern','🛼 Rollschuhlaufen','🎡 Freizeitpark','🏋️ Fitness','🎮 Gaming / Escape Room','🍕 Restaurant','☕ Café','🌳 Natur / Wandern','🚴 Radfahren','⛷️ Ski / Winter','🎨 Kunst / Ausstellung','🎵 Konzert / Event','🐾 Zoo / Tierpark','🎯 Sonstiges'];
+
+let filterCat = '', filterSearch = '', pickRating = 0;
+
+/* ── Star picker in modal ── */
+function updateStarPick() {
+  document.querySelectorAll('#starPick span').forEach(s => {
+    s.classList.toggle('on', +s.dataset.s <= pickRating);
+  });
+}
+document.querySelectorAll('#starPick span').forEach(s => {
+  s.onclick = () => { pickRating = +s.dataset.s === pickRating ? 0 : +s.dataset.s; updateStarPick(); };
+});
+
+/* ── Category chips ── */
+function buildCatChips() {
+  const used = [...new Set(state.activities.map(a => a.cat).filter(Boolean))].sort();
+  const chips = $('catChips');
+  chips.innerHTML = '<button class="chip' + (!filterCat?' active':'') + '" data-cat="">Alle</button>' +
+    used.map(c => `<button class="chip${filterCat===c?' active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+  chips.querySelectorAll('.chip').forEach(b => {
+    b.onclick = () => { filterCat = b.dataset.cat; render(); };
+  });
+}
+
+/* ── Stats ── */
+function updateStats() {
+  const all = state.activities;
+  $('statTotal').textContent = all.length;
+  $('statVisited').textContent = all.filter(a => a.lastVisit).length;
+  $('statFavs').textContent = all.filter(a => a.fav).length;
+  if (!all.length) { $('statCat').textContent = '—'; $('statCatHint').textContent = 'meiste Einträge'; return; }
+  const freq = {};
+  all.forEach(a => { if (a.cat) freq[a.cat] = (freq[a.cat]||0) + 1; });
+  const top = Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];
+  if (top) { $('statCat').textContent = top[0].split(' ')[0]; $('statCatHint').textContent = top[0].replace(/^\S+\s/,''); }
+}
+
+/* ── Card HTML ── */
+function cardHtml(a, inFavGrid) {
+  const stars = Array.from({length:5},(_,i)=>`<span class="star-btn${i<a.rating?' on':''}">★</span>`).join('');
+  const catIcon = (a.cat||'').split(' ')[0] || '🎯';
+  const catLabel = (a.cat||'').replace(/^\S+\s/,'') || a.cat || '';
+  const visitStr = a.lastVisit ? 'Besucht ' + new Date(a.lastVisit).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+  const priceStr = PRICE_LABEL[a.price] || '';
+  const mapHref = a.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(a.address) : '';
+  return `<div class="act-card${a.fav?' is-fav':''}" data-id="${esc(a.id)}">
+    <div class="act-header">
+      <div class="cat-icon">${catIcon}</div>
+      <div style="flex:1;min-width:0">
+        <div class="act-name">${esc(a.name)}</div>
+        <div class="act-cat">${esc(catLabel)}</div>
+      </div>
+      <button class="fav-btn${a.fav?' active':''}" data-fav="${esc(a.id)}" title="${a.fav?'Aus Favoriten entfernen':'Zu Favoriten'}">♥</button>
+    </div>
+    ${a.address?`<div class="act-address">📍 <span>${esc(a.address)}</span></div>`:''}
+    ${a.note?`<div class="act-note">${esc(a.note)}</div>`:''}
+    <div class="act-footer">
+      <div class="act-rating">${stars}</div>
+      ${visitStr?`<span class="visit-badge">${esc(visitStr)}</span>`:''}
+      ${priceStr?`<span class="visit-badge" style="background:var(--bg);color:var(--muted)">${esc(priceStr)}</span>`:''}
+    </div>
+    <div class="act-actions">
+      ${mapHref?`<a class="act-btn route-btn" href="${esc(mapHref)}" target="_blank" rel="noopener">🗺 Route</a>`:''}
+      ${a.url?`<a class="act-btn route-btn" href="${esc(a.url)}" target="_blank" rel="noopener">🔗 Website</a>`:''}
+      <button class="act-btn" data-edit="${esc(a.id)}">✏️ Bearbeiten</button>
+      <button class="act-btn danger" data-del="${esc(a.id)}">✕</button>
+    </div>
+  </div>`;
+}
+
+/* ── Render ── */
+function render() {
+  buildCatChips();
+  updateStats();
+  const q = filterSearch.toLowerCase();
+  let list = state.activities.filter(a => {
+    if (filterCat && a.cat !== filterCat) return false;
+    if (q && !(a.name||'').toLowerCase().includes(q) && !(a.address||'').toLowerCase().includes(q) && !(a.cat||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  $('listCount').textContent = list.length;
+  if (!list.length) {
+    $('actGrid').innerHTML = `<div class="empty" style="grid-column:1/-1"><strong>Keine Aktivitäten gefunden</strong>${state.activities.length?'Passe die Filter an oder füge eine neue Aktivität hinzu.':'Füge deine erste Freizeitaktivität hinzu!'}</div>`;
+  } else {
+    $('actGrid').innerHTML = list.map(a => cardHtml(a, false)).join('');
+  }
+  const favs = state.activities.filter(a => a.fav);
+  $('favSection').style.display = favs.length ? '' : 'none';
+  $('favCount').textContent = favs.length;
+  $('favGrid').innerHTML = favs.map(a => cardHtml(a, true)).join('');
+  bindCardEvents($('actGrid'));
+  bindCardEvents($('favGrid'));
+}
+
+function bindCardEvents(container) {
+  container.querySelectorAll('[data-fav]').forEach(btn => {
+    btn.onclick = () => toggleFav(btn.dataset.fav);
+  });
+  container.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.onclick = () => openEdit(btn.dataset.edit);
+  });
+  container.querySelectorAll('[data-del]').forEach(btn => {
+    btn.onclick = () => deleteAct(btn.dataset.del);
+  });
+}
+
+function toggleFav(id) {
+  const a = state.activities.find(x => x.id === id);
+  if (!a) return;
+  a.fav = !a.fav;
+  persist(); render();
+}
+
+function deleteAct(id) {
+  if (!confirm('Aktivität wirklich löschen?')) return;
+  state.activities = state.activities.filter(x => x.id !== id);
+  persist(); render();
+}
+
+/* ── Modal ── */
+function openAdd() {
+  $('modalTitle').textContent = 'Aktivität hinzufügen';
+  $('editId').value = '';
+  $('fName').value = ''; $('fCat').value = ''; $('fAddr').value = '';
+  $('fUrl').value = ''; $('fNote').value = ''; $('fVisit').value = ''; $('fPrice').value = '';
+  pickRating = 0; updateStarPick();
+  $('overlay').classList.add('open');
+  setTimeout(() => $('fName').focus(), 60);
+}
+
+function openEdit(id) {
+  const a = state.activities.find(x => x.id === id);
+  if (!a) return;
+  $('modalTitle').textContent = 'Aktivität bearbeiten';
+  $('editId').value = a.id;
+  $('fName').value = a.name || '';
+  $('fCat').value = a.cat || '';
+  $('fAddr').value = a.address || '';
+  $('fUrl').value = a.url || '';
+  $('fNote').value = a.note || '';
+  $('fVisit').value = a.lastVisit || '';
+  $('fPrice').value = a.price || '';
+  pickRating = a.rating || 0; updateStarPick();
+  $('overlay').classList.add('open');
+  setTimeout(() => $('fName').focus(), 60);
+}
+
+function closeModal() { $('overlay').classList.remove('open'); }
+
+function saveActivity() {
+  const name = $('fName').value.trim();
+  const cat = $('fCat').value.trim();
+  if (!name || !cat) { alert('Name und Kategorie sind Pflichtfelder.'); return; }
+  const id = $('editId').value;
+  if (id) {
+    const a = state.activities.find(x => x.id === id);
+    if (a) {
+      a.name = name; a.cat = cat; a.address = $('fAddr').value.trim();
+      a.url = $('fUrl').value.trim(); a.note = $('fNote').value.trim();
+      a.lastVisit = $('fVisit').value; a.price = $('fPrice').value; a.rating = pickRating;
+    }
+  } else {
+    state.activities.unshift({ id: uid(), name, cat, address: $('fAddr').value.trim(), url: $('fUrl').value.trim(), note: $('fNote').value.trim(), lastVisit: $('fVisit').value, price: $('fPrice').value, rating: pickRating, fav: false });
+  }
+  persist(); closeModal(); render();
+}
+
+/* ── Theme ── */
+function applyTheme() {
+  state.theme === 'system' ? document.documentElement.removeAttribute('data-theme') : document.documentElement.setAttribute('data-theme', state.theme);
+}
+$('themeBtn').onclick = () => { state.theme = themes[(themes.indexOf(state.theme)+1)%3]; applyTheme(); persist(); };
+
+/* ── Events ── */
+$('addBtn').onclick = openAdd;
+$('cancelBtn').onclick = closeModal;
+$('saveBtn').onclick = saveActivity;
+$('overlay').onclick = e => { if (e.target === e.currentTarget) closeModal(); };
+$('searchInput').oninput = () => { filterSearch = $('searchInput').value; render(); };
+
+applyTheme();
+render();
+</script>
+</body>
+</html>
