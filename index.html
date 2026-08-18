@@ -325,6 +325,7 @@
     .kal-sub { font-size: 10px; color: var(--muted); margin-top: 3px; margin-bottom: 10px; }
     .kal-bar-wrap { width: 100%; height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
     .kal-bar { height: 100%; background: var(--salmon); border-radius: 3px; transition: width 0.5s ease; max-width: 100%; }
+    .kal-water { font-size: 11px; color: #4a9eff; margin-top: 8px; font-weight: 600; }
     .kal-card { cursor: pointer; }
 
     /* ── To-Do card ── */
@@ -426,6 +427,7 @@
         <div class="kal-num" id="kalNum">–</div>
         <div class="kal-sub" id="kalSub">kcal heute</div>
         <div class="kal-bar-wrap"><div class="kal-bar" id="kalBar" style="width:0%"></div></div>
+        <div class="kal-water" id="kalWater">💧 – L</div>
       </div>
       <div class="todo-card" onclick="location.href='todo.html'">
         <div class="todo-head">
@@ -797,6 +799,11 @@ function initKalWidget() {
     document.getElementById('kalNum').textContent = kcal.toLocaleString('de-DE');
     document.getElementById('kalSub').textContent = 'von ' + goal.toLocaleString('de-DE') + ' kcal · ' + pct + '%';
     document.getElementById('kalBar').style.width = pct + '%';
+    const waterMl     = (store[key] || {}).water || 0;
+    const waterGoalMl = parseInt(localStorage.getItem('kalorientracker_watergoal') || '2000') || 2000;
+    const wL  = (waterMl / 1000).toFixed(1).replace('.', ',');
+    const wGL = (waterGoalMl / 1000).toFixed(1).replace('.', ',');
+    document.getElementById('kalWater').textContent = '💧 ' + wL + ' / ' + wGL + ' L';
   } catch(e) {}
 }
 initKalWidget();
