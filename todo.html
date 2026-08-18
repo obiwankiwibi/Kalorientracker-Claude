@@ -877,6 +877,7 @@ function initApp() {
   try {
     firebase.initializeApp(FIREBASE_CONFIG);
     const db = firebase.database();
+    localStorage.setItem('fb_db_url', FIREBASE_CONFIG.databaseURL);
 
     db.ref('.info/connected').on('value', snap => setConnected(snap.val() === true));
 

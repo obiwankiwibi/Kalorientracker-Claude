@@ -325,6 +325,34 @@
     .kal-sub { font-size: 10px; color: var(--muted); margin-top: 3px; margin-bottom: 10px; }
     .kal-bar-wrap { width: 100%; height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
     .kal-bar { height: 100%; background: var(--salmon); border-radius: 3px; transition: width 0.5s ease; max-width: 100%; }
+    .kal-card { cursor: pointer; }
+
+    /* ── Quick-add Kalorien modal ── */
+    .kal-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999;
+      display: none; align-items: center; justify-content: center;
+    }
+    .kal-modal-overlay.open { display: flex; }
+    .kal-modal {
+      background: var(--layer2); border: 1px solid var(--border2); border-radius: 18px;
+      padding: 20px; width: 270px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .kal-modal-title { font-size: 14px; font-weight: 700; text-align: center; }
+    .kal-modal-input {
+      background: var(--layer1); border: 1px solid var(--border2); color: var(--text);
+      padding: 10px 14px; border-radius: 10px; font-size: 26px; font-weight: 700;
+      text-align: center; outline: none; width: 100%; font-family: inherit;
+    }
+    .kal-modal-input:focus { border-color: rgba(232,99,90,0.5); }
+    .kal-modal-name {
+      background: var(--layer1); border: 1px solid var(--border2); color: var(--text);
+      padding: 8px 12px; border-radius: 10px; font-size: 13px; outline: none;
+      width: 100%; font-family: inherit;
+    }
+    .kal-modal-name::placeholder { color: var(--muted); }
+    .kal-modal-row { display: flex; gap: 8px; }
+    .kal-modal-cancel  { flex: 1; padding: 10px; background: var(--layer1); border: 1px solid var(--border2); color: var(--muted); border-radius: 10px; font-size: 13px; cursor: pointer; font-family: inherit; }
+    .kal-modal-confirm { flex: 1; padding: 10px; background: var(--salmon); border: none; color: #fff; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
 
     /* ── To-Do card ── */
     .todo-card {
@@ -425,21 +453,21 @@
       <span class="section-title">Apps</span>
     </div>
     <div class="featured-row">
-      <a class="kal-card" href="kalorien.html">
+      <div class="kal-card" onclick="location.href='kalorien.html'">
         <div class="kal-head">
           <div class="kal-head-left">
             <span class="kal-icon">🥗</span>
             <span class="kal-label">Kalorien</span>
           </div>
           <div class="kal-btns">
-            <span class="kal-btn">+</span>
-            <span class="kal-btn">📷</span>
+            <span class="kal-btn" onclick="event.stopPropagation(); openKalModal()">+</span>
+            <span class="kal-btn" onclick="event.stopPropagation(); location.href='kalorien.html'">📷</span>
           </div>
         </div>
         <div class="kal-num" id="kalNum">–</div>
         <div class="kal-sub" id="kalSub">kcal heute</div>
         <div class="kal-bar-wrap"><div class="kal-bar" id="kalBar" style="width:0%"></div></div>
-      </a>
+      </div>
       <div class="todo-card" onclick="location.href='todo.html'">
         <div class="todo-head">
           <span class="todo-icon">✅</span>
@@ -448,10 +476,11 @@
         </div>
         <div class="todo-open-count" id="todoNum">–</div>
         <div class="todo-open-lbl">offen</div>
-        <div class="todo-quick" onclick="event.stopPropagation()">
+        <div class="todo-quick">
           <input class="todo-input" id="todoInput" type="text" placeholder="Neue Aufgabe…"
-            onkeydown="if(event.key==='Enter')addTodoQuick()">
-          <button class="todo-add-btn" onclick="addTodoQuick()">+</button>
+            onclick="event.stopPropagation()"
+            onkeydown="event.stopPropagation(); if(event.key==='Enter')addTodoQuick()">
+          <button class="todo-add-btn" onclick="event.stopPropagation(); addTodoQuick()">+</button>
         </div>
       </div>
     </div>
@@ -497,6 +526,23 @@
       <span class="backup-arrow">↓</span>
     </button>
   </div>
+
+<!-- ── Kalorien quick-add modal ── -->
+<div class="kal-modal-overlay" id="kalModalOverlay" onclick="if(event.target===this)closeKalModal()">
+  <div class="kal-modal">
+    <div class="kal-modal-title">🥗 Kalorien hinzufügen</div>
+    <input class="kal-modal-input" id="kalModalKcal" type="number" inputmode="numeric"
+      placeholder="kcal" min="0" max="9999"
+      onkeydown="if(event.key==='Enter')confirmKalAdd()">
+    <input class="kal-modal-name" id="kalModalName" type="text"
+      placeholder="Bezeichnung (optional)"
+      onkeydown="if(event.key==='Enter')confirmKalAdd()">
+    <div class="kal-modal-row">
+      <button class="kal-modal-cancel" onclick="closeKalModal()">Abbrechen</button>
+      <button class="kal-modal-confirm" onclick="confirmKalAdd()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
 
 <script>
 function updateClock() {
@@ -837,14 +883,52 @@ function addTodoQuick() {
   const inp   = document.getElementById('todoInput');
   const title = inp.value.trim();
   if (!title) return;
+  const id   = 't_' + Date.now();
+  const task = { title, listId: null, completed: false, important: false, myDay: false,
+                 dueDate: null, reminderAt: null, notes: '', steps: [],
+                 createdAt: Date.now(), completedAt: null };
+  // Write to Firebase via REST (no API key needed for open-rules DB)
+  const dbUrl = localStorage.getItem('fb_db_url');
+  if (dbUrl) {
+    fetch(dbUrl + '/todos/tasks/' + id + '.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(task)
+    }).catch(() => {});
+  }
+  // Always write to localStorage too (offline fallback)
   try {
-    const tasks  = JSON.parse(localStorage.getItem('todo_tasks') || '{}');
-    const id     = 't_' + Date.now();
-    tasks[id]    = { title, listId: null, completed: false, important: false, myDay: false, dueDate: null, reminderAt: null, notes: '', steps: [], createdAt: Date.now(), completedAt: null };
+    const tasks = JSON.parse(localStorage.getItem('todo_tasks') || '{}');
+    tasks[id] = task;
     localStorage.setItem('todo_tasks', JSON.stringify(tasks));
-    inp.value = '';
-    initTodoWidget();
   } catch(e) {}
+  inp.value = '';
+  initTodoWidget();
+}
+
+// Kalorien quick-add modal
+function openKalModal() {
+  document.getElementById('kalModalKcal').value = '';
+  document.getElementById('kalModalName').value = '';
+  document.getElementById('kalModalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('kalModalKcal').focus(), 80);
+}
+function closeKalModal() {
+  document.getElementById('kalModalOverlay').classList.remove('open');
+}
+function confirmKalAdd() {
+  const kcal = parseInt(document.getElementById('kalModalKcal').value);
+  if (!kcal || kcal <= 0) { closeKalModal(); return; }
+  const name = document.getElementById('kalModalName').value.trim() || 'Schnelleintrag';
+  try {
+    const store = JSON.parse(localStorage.getItem('kalorientracker_v1') || '{}');
+    const key   = new Date().toISOString().slice(0, 10);
+    if (!store[key]) store[key] = { entries: [], water: 0 };
+    store[key].entries.push({ kcal, name, time: new Date().toISOString() });
+    localStorage.setItem('kalorientracker_v1', JSON.stringify(store));
+    initKalWidget();
+  } catch(e) {}
+  closeKalModal();
 }
 
 initTodoWidget();
