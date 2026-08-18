@@ -69,12 +69,11 @@
   }
   .wrap{max-width:480px;margin:0 auto;padding:26px 16px 0;}
 
-  /* top nav header */
-  .kalorien-header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 14px;height:52px;gap:8px;}
-  .kalorien-header-title{flex:1;font-size:17px;font-weight:700;color:var(--text);}
-  .settings-btn{background:var(--card);border:1px solid var(--line);color:var(--text-faint);width:40px;height:40px;border-radius:14px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s;text-decoration:none;}
-  .settings-btn:hover{color:var(--text);border-color:rgba(100,65,25,0.3);}
-  .theme-toggle{font-size:18px;}
+  /* ── Unified nav header ── */
+  .site-nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);}
+  .site-nav-title{flex:1;font-size:17px;font-weight:700;padding:0 4px;}
+  .site-nav-btn{width:36px;height:36px;border-radius:50%;background:none;border:none;color:var(--text-faint);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;flex-shrink:0;font-family:inherit;transition:background .15s;}
+  .site-nav-btn:active{background:var(--card);}
   /* segmented switch */
   .segwrap{display:flex;justify-content:center;align-items:center;margin-bottom:24px;}
   /* backup modal */
@@ -443,11 +442,11 @@
 </head>
 <body>
 
-<header class="kalorien-header">
-  <div class="kalorien-header-title">🥗 Kalorien</div>
-  <a href="index.html" class="settings-btn" title="Startseite">⌂</a>
-  <button class="settings-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Design wechseln">🌙</button>
-  <button class="settings-btn" onclick="openBackup()" title="Backup">⚙</button>
+<header class="site-nav">
+  <div class="site-nav-title">🥗 Kalorien</div>
+  <button class="site-nav-btn" onclick="openBackup()" title="Backup">⚙</button>
+  <button class="site-nav-btn" id="themeToggle" onclick="toggleTheme()" title="Design wechseln">🌙</button>
+  <a href="index.html" class="site-nav-btn" title="Startseite">⌂</a>
 </header>
 <div class="wrap">
   <div class="segwrap">

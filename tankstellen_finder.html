@@ -9,7 +9,11 @@
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0d1518;--card:#152126;--ink:#e8eff1;--muted:#8da1a9;--line:#2a3a40;--brand:#55c99b;--soft:#173a30;--warn:#e2a85c;--shadow:none}}
 :root[data-theme=dark]{--bg:#0d1518;--card:#152126;--ink:#e8eff1;--muted:#8da1a9;--line:#2a3a40;--brand:#55c99b;--soft:#173a30;--warn:#e2a85c;--shadow:none}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}.app{max-width:1050px;margin:auto;padding:0 18px 70px}
-header{display:flex;align-items:center;justify-content:space-between;padding:22px 0 18px;border-bottom:1px solid var(--line);margin-bottom:20px}.logo{font:700 19px/1.2 system-ui}.logo small{display:block;color:var(--muted);font-size:11px;font-weight:500;margin-top:3px}
+header{display:flex;}.logo{font:700 19px/1.2 system-ui}.logo small{display:block;color:var(--muted);font-size:11px;font-weight:500;margin-top:3px}
+.site-nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);margin-bottom:20px;}
+.site-nav-title{flex:1;font-size:17px;font-weight:700;padding:0 4px;color:var(--ink);}
+.site-nav-btn{width:36px;height:36px;border-radius:50%;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;flex-shrink:0;font-family:inherit;transition:background .15s;}
+.site-nav-btn:active{background:var(--card);}
 .icon{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:8px 11px;cursor:pointer}
 .search-card,.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}.search-card{padding:18px;margin-bottom:18px}
 .grid{display:grid;grid-template-columns:2fr .75fr .8fr auto;gap:10px;align-items:end}.field label{display:block;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}.field input,.field select{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:10px 11px;font:inherit}
@@ -59,7 +63,7 @@ header { border-bottom: 2px solid var(--brand); }
 </head>
 <body>
 <div class="app">
-<header><div style="display:flex;align-items:center;gap:10px"><a href="index.html" class="icon" style="text-decoration:none;font-size:17px" title="Startseite">⌂</a><div class="logo">Tankstellen-Finder<small>Aktuelle Preise in deiner Umgebung</small></div></div><div><button class="icon" id="themeBtn" title="Design wechseln">◐</button> <button class="icon" id="settingsBtn" title="API-Einstellungen">⚙</button></div></header>
+<header class="site-nav"><div class="site-nav-title">⛽ Tankstellen</div><button class="site-nav-btn" id="settingsBtn" title="API-Einstellungen">⚙</button><button class="site-nav-btn" id="themeBtn" title="Design wechseln">◐</button><a href="index.html" class="site-nav-btn" title="Startseite">⌂</a></header>
 <section class="search-card"><div class="grid"><div class="field place"><label>Ort oder Postleitzahl</label><div style="display:flex;gap:6px"><input id="place" value="Hilchenbach" placeholder="z. B. Hilchenbach" style="flex:1"><button id="gpsBtn" class="icon" title="Aktuellen Standort ermitteln" style="flex-shrink:0;font-size:15px">📍</button></div></div><div class="field"><label>Umkreis</label><select id="radius"><option value="3">3 km</option><option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="25">25 km</option></select></div><div class="field"><label>Sortierung</label><select id="sorting"><option value="price">Preis</option><option value="dist">Entfernung</option></select></div><button class="primary" id="searchBtn">Tankstellen suchen</button></div><div class="subactions"><span class="status" id="status">API-Key in den Einstellungen hinterlegen</span></div>
 <div class="filter-bar" id="filterBar" style="display:none">
   <input id="nameSearch" class="filter-input" placeholder="Name suchen…">
