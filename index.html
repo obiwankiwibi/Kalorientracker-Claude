@@ -325,7 +325,9 @@
     .kal-sub { font-size: 10px; color: var(--muted); margin-top: 3px; margin-bottom: 10px; }
     .kal-bar-wrap { width: 100%; height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
     .kal-bar { height: 100%; background: var(--salmon); border-radius: 3px; transition: width 0.5s ease; max-width: 100%; }
-    .kal-water { font-size: 11px; color: #4a9eff; margin-top: 8px; font-weight: 600; margin-bottom: 4px; }
+    .kal-water-row { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; margin-bottom: 4px; }
+    .kal-water { font-size: 11px; color: #4a9eff; font-weight: 600; }
+    .kal-water-plus { width: 22px; height: 22px; background: rgba(74,158,255,0.18); color: #4a9eff; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; cursor: pointer; flex-shrink: 0; line-height: 1; }
     .kal-water-bar-wrap { width: 100%; height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
     .kal-water-bar { height: 100%; background: #4a9eff; border-radius: 3px; transition: width 0.5s ease; max-width: 100%; }
     .kal-card { cursor: pointer; }
@@ -439,7 +441,10 @@
         <div class="kal-num" id="kalNum">–</div>
         <div class="kal-sub" id="kalSub">kcal heute</div>
         <div class="kal-bar-wrap"><div class="kal-bar" id="kalBar" style="width:0%"></div></div>
-        <div class="kal-water" id="kalWater">💧 – L</div>
+        <div class="kal-water-row">
+          <div class="kal-water" id="kalWater">💧 – L</div>
+          <div class="kal-water-plus" onclick="event.stopPropagation(); addWater250()">+</div>
+        </div>
         <div class="kal-water-bar-wrap"><div class="kal-water-bar" id="kalWaterBar" style="width:0%"></div></div>
       </div>
       <div class="todo-card" onclick="location.href='todo.html'">
@@ -825,6 +830,17 @@ function initKalWidget() {
   } catch(e) {}
 }
 initKalWidget();
+
+function addWater250() {
+  try {
+    const store = JSON.parse(localStorage.getItem('kalorientracker_v1') || '{}');
+    const key   = new Date().toISOString().slice(0, 10);
+    if (!store[key]) store[key] = { entries: [], water: 0 };
+    store[key].water = (store[key].water || 0) + 250;
+    localStorage.setItem('kalorientracker_v1', JSON.stringify(store));
+    initKalWidget();
+  } catch(e) {}
+}
 
 function openWetter() {
   const q = encodeURIComponent(window._wLoc || 'Hilchenbach');
