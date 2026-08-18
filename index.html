@@ -283,8 +283,8 @@
   <!-- ══ SPRITPREIS ══ -->
   <a class="fuel-primary" href="tankstellen_finder.html">
     <div class="fuel-primary-top">
-      <span class="fuel-primary-label">⛽ Super 95 · Empfehlung</span>
-      <span class="fuel-fav-badge" id="fuelFavBadge" style="display:none">★ Favorit</span>
+      <span class="fuel-primary-label">⛽ Super 95 · Günstigster Favorit</span>
+      <span class="fuel-fav-badge" id="fuelFavBadge" style="display:none">★ Favorit günstigster</span>
     </div>
     <div class="fuel-primary-body">
       <div class="fuel-primary-info">
@@ -446,50 +446,75 @@ async function loadWeather(lat, lon) {
   }
 }
 
-// ── Spritpreis ──
-const TK_CACHE     = 'tk_quick_e5';
-const TK_HOUR      = 3600000;
-const FAV_DELTA    = 0.03; // Favorit bis 3 ct/L teurer bevorzugen
+// ── Spritpreis (liest direkt aus tankstellen_finder_v2, kein eigener API-Call) ──
 const escH = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const _BC={'ARAL':{bg:'#0066B2',fg:'#fff'},'Shell':{bg:'#FFD500',fg:'#D01919'},'BP':{bg:'#007A33',fg:'#fff'},'JET':{bg:'#E2001A',fg:'#fff'},'Esso':{bg:'#EE2436',fg:'#fff'},'ESSO':{bg:'#EE2436',fg:'#fff'},'TotalEnergies':{bg:'#E95B0C',fg:'#fff'},'TOTAL':{bg:'#E95B0C',fg:'#fff'},'OMV':{bg:'#E6380B',fg:'#fff'},'Star':{bg:'#2a2a2a',fg:'#F5C400'},'STAR':{bg:'#2a2a2a',fg:'#F5C400'},'AVIA':{bg:'#E30613',fg:'#fff'},'Westfalen':{bg:'#003399',fg:'#fff'},'HEM':{bg:'#FF6600',fg:'#fff'},'Q1':{bg:'#005CA9',fg:'#fff'},'Raiffeisen':{bg:'#005CA9',fg:'#fff'},'Agip':{bg:'#EB0028',fg:'#fff'}};
 function brandChip(brand){const b=brand||'?';const cfg=_BC[b]||{bg:'#888',fg:'#fff'};const t=b.replace(/\s+/g,'').replace(/[^A-Za-z0-9]/g,'').slice(0,2).toUpperCase()||'??';return `<span class="fav-chip-brand" style="background:${cfg.bg};color:${cfg.fg}">${t}</span>`;}
 
-function renderFuelWidget(cheapest, stations, favorites, ts) {
-  // Favoriten in den Ergebnissen finden, nach Preis sortiert
-  const favIds = Object.keys(favorites);
-  const favStations = favIds
-    .map(id => stations.find(s => s.id === id))
-    .filter(s => s && typeof s.e5 === 'number' && s.e5 > 0.5)
-    .sort((a, b) => a.e5 - b.e5);
+function loadFuelPrice() {
+  const tkState   = JSON.parse(localStorage.getItem('tankstellen_finder_v2') || '{}');
+  const favorites = tkState.favorites  || {};
+  const stations  = tkState.stations   || [];
+  const favPrices = tkState.favPrices  || {};
+  const lastReq   = tkState.lastRequest || 0;
+  const favIds    = Object.keys(favorites);
 
-  // Empfehlung: günstigster Favorit wenn ≤ 3 ct teurer als Billigste
-  let rec = cheapest, isFav = false;
-  if (favStations.length && favStations[0].e5 <= cheapest.e5 + FAV_DELTA) {
-    rec = favStations[0]; isFav = true;
+  if (!tkState.apiKey) {
+    document.getElementById('fuelName').textContent = 'API-Key in der Tankstellen-App hinterlegen';
+    document.getElementById('fuelMeta').textContent = '';
+    document.getElementById('favGallerySection').style.display = 'none';
+    return;
+  }
+  if (!favIds.length) {
+    document.getElementById('fuelName').textContent = 'Noch keine Favoriten';
+    document.getElementById('fuelMeta').textContent = 'In der Tankstellen-App Stationen als ★ markieren';
+    document.getElementById('favGallerySection').style.display = 'none';
+    return;
   }
 
-  // Primäre Karte
-  document.getElementById('fuelPrice').textContent =
-    rec.e5.toLocaleString('de-DE', {minimumFractionDigits:3, maximumFractionDigits:3});
-  document.getElementById('fuelName').textContent = rec.name;
-  const dist = rec.dist ? Number(rec.dist).toLocaleString('de-DE',{maximumFractionDigits:1})+' km' : '';
-  const open = rec.isOpen ? '· Geöffnet' : '· Geschlossen';
-  const upd  = 'Stand '+new Date(ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('fuelMeta').textContent = [dist, open, upd].filter(Boolean).join(' ');
-  document.getElementById('fuelFavBadge').style.display = isFav ? '' : 'none';
+  // Favoriten aus den geladenen Stationen holen; Fallback: letzter bekannter Preis aus favPrices
+  const favStations = favIds.map(id => {
+    const s = stations.find(s => s.id === id);
+    if (s && typeof s.e5 === 'number' && s.e5 > 0.5) return s;
+    // Fallback: letzter gespeicherter Preis
+    const hist = (favPrices[id] || []).filter(h => h.fuel === 'e5');
+    if (!hist.length) return null;
+    const last = hist.at(-1);
+    return { id, name: favorites[id]?.name || id, brand: favorites[id]?.brand || '', e5: last.v, dist: null, isOpen: null, _ts: last.t };
+  }).filter(Boolean).sort((a, b) => a.e5 - b.e5);
 
-  // Favoriten-Galerie
+  if (!favStations.length) {
+    document.getElementById('fuelName').textContent = 'Preise noch nicht geladen';
+    document.getElementById('fuelMeta').textContent = 'Tankstellen-App öffnen und Suche starten';
+    document.getElementById('favGallerySection').style.display = 'none';
+    return;
+  }
+
+  // Günstigsten Favoriten anzeigen
+  const best = favStations[0];
+  const ts   = best._ts || lastReq;
+  document.getElementById('fuelPrice').textContent =
+    best.e5.toLocaleString('de-DE', {minimumFractionDigits:3, maximumFractionDigits:3});
+  document.getElementById('fuelName').textContent = best.name;
+  document.getElementById('fuelFavBadge').style.display = '';
+  const dist = best.dist != null ? Number(best.dist).toLocaleString('de-DE',{maximumFractionDigits:1})+' km' : '';
+  const open = best.isOpen != null ? (best.isOpen ? '· Geöffnet' : '· Geschlossen') : '';
+  const upd  = ts ? 'Stand '+new Date(ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}) : '';
+  document.getElementById('fuelMeta').textContent = [dist, open, upd].filter(Boolean).join(' ');
+
+  // Favoriten-Galerie (alle außer dem günstigsten, der oben steht)
   const sec = document.getElementById('favGallerySection');
-  if (favStations.length) {
+  const rest = favStations.slice(1);
+  if (rest.length) {
     sec.style.display = '';
-    document.getElementById('favGallery').innerHTML = favStations.map(s =>
+    document.getElementById('favGallery').innerHTML = rest.map(s =>
       `<div class="fav-chip${s.isOpen?' is-open':''}">
         ${brandChip(s.brand)}
         <div class="fav-chip-name" title="${escH(s.name)}">${escH(s.name)}</div>
         <div class="fav-chip-price">${s.e5.toLocaleString('de-DE',{minimumFractionDigits:3,maximumFractionDigits:3})}</div>
-        <div class="fav-chip-dist">${s.dist?Number(s.dist).toLocaleString('de-DE',{maximumFractionDigits:1})+' km':''}</div>
-        <div class="fav-chip-status ${s.isOpen?'open':'closed'}">${s.isOpen?'Geöffnet':'Geschlossen'}</div>
+        <div class="fav-chip-dist">${s.dist!=null?Number(s.dist).toLocaleString('de-DE',{maximumFractionDigits:1})+' km':''}</div>
+        <div class="fav-chip-status ${s.isOpen?'open':'closed'}">${s.isOpen!=null?(s.isOpen?'Geöffnet':'Geschlossen'):''}</div>
       </div>`
     ).join('');
   } else {
@@ -497,71 +522,9 @@ function renderFuelWidget(cheapest, stations, favorites, ts) {
   }
 }
 
-async function loadFuelPrice() {
-  const tkState   = JSON.parse(localStorage.getItem('tankstellen_finder_v2') || '{}');
-  const favorites = tkState.favorites || {};
-
-  if (!tkState.apiKey) {
-    document.getElementById('fuelName').textContent = 'API-Key in der Tankstellen-App hinterlegen';
-    document.getElementById('fuelMeta').textContent = '';
-    return;
-  }
-
-  // Cache sofort anzeigen — immer, auch wenn veraltet
-  const cached = JSON.parse(localStorage.getItem(TK_CACHE) || 'null');
-  if (cached) renderFuelWidget(cached.cheapest, cached.stations, favorites, cached.ts);
-
-  // Cache noch frisch? Kein Refresh nötig.
-  if (cached && (Date.now() - cached.ts) < TK_HOUR) return;
-
-  // Rate-Limit: tankstellen_finder und index teilen denselben API-Key (1 req/min)
-  const sinceLastReq = Date.now() - (tkState.lastRequest || 0);
-  if (sinceLastReq < 62000) {
-    // Automatisch nochmal versuchen wenn Rate-Limit abgelaufen
-    setTimeout(loadFuelPrice, 62000 - sinceLastReq + 2000);
-    return;
-  }
-
-  try {
-    let coords = JSON.parse(localStorage.getItem('tk_default_coords') || 'null');
-    if (!coords) {
-      const gr = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=de&q=57271+Hilchenbach-Dahlbruch', {headers:{'Accept-Language':'de'}});
-      const gd = await gr.json();
-      coords = gd.length ? {lat:+gd[0].lat, lng:+gd[0].lon} : {lat:50.982, lng:8.102};
-      localStorage.setItem('tk_default_coords', JSON.stringify(coords));
-    }
-
-    const p = new URLSearchParams({lat:coords.lat, lng:coords.lng, rad:10, type:'e5', sort:'price', apikey:tkState.apiKey});
-    const r = await fetch('https://creativecommons.tankerkoenig.de/json/list.php?'+p);
-    const data = await r.json();
-
-    if (!data.ok) {
-      // Rate-Limit von Tankerkönig-Seite → automatisch nochmal versuchen
-      setTimeout(loadFuelPrice, 65000);
-      return;
-    }
-    if (!data.stations?.length) throw new Error('Keine Stationen');
-
-    const stations = data.stations.filter(s => typeof s.e5==='number' && s.e5>0.5);
-    if (!stations.length) throw new Error('Keine Super-95-Preise');
-
-    // lastRequest schreiben damit tankstellen_finder das Rate-Limit mitbekommt
-    tkState.lastRequest = Date.now();
-    localStorage.setItem('tankstellen_finder_v2', JSON.stringify(tkState));
-
-    const result = {ts: Date.now(), cheapest: stations[0], stations};
-    localStorage.setItem(TK_CACHE, JSON.stringify(result));
-    renderFuelWidget(result.cheapest, result.stations, favorites, result.ts);
-  } catch(err) {
-    if (!cached) {
-      document.getElementById('fuelName').textContent = 'Preis nicht verfügbar';
-      document.getElementById('fuelMeta').textContent = String(err.message || '');
-    }
-  }
-}
-
 loadFuelPrice();
-setInterval(loadFuelPrice, TK_HOUR);
+// Alle 5 Minuten neu lesen, falls tank-Seite im Hintergrund aktualisiert hat
+setInterval(loadFuelPrice, 5 * 60 * 1000);
 
 // ── Backup ──
 const BACKUP_STATIC_KEYS = [
