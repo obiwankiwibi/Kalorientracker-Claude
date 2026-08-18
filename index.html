@@ -299,6 +299,39 @@
     .mc-rot   { background: rgba(232,99,90,0.18);   color: #e8635a; }
     .mc-teal  { background: var(--teal-dim);        color: var(--teal); }
     .mc-gruen { background: rgba(80,190,100,0.18);  color: #50be64; }
+
+    /* ── Kalorien featured card ── */
+    .kal-card {
+      grid-column: 1 / -1;
+      background: var(--layer2);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 16px 16px;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      transition: transform 0.12s, opacity 0.12s;
+    }
+    .kal-card:active { transform: scale(0.97); opacity: 0.88; }
+    .kal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .kal-head-left { display: flex; align-items: center; gap: 7px; }
+    .kal-icon { font-size: 20px; line-height: 1; }
+    .kal-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+    .kal-btns { display: flex; gap: 6px; }
+    .kal-btn {
+      width: 30px; height: 30px;
+      background: rgba(232,99,90,0.15);
+      color: var(--salmon);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 800; line-height: 1;
+    }
+    .kal-num { font-size: 34px; font-weight: 800; color: var(--salmon); line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+    .kal-sub { font-size: 10px; color: var(--muted); margin-top: 3px; margin-bottom: 10px; }
+    .kal-bar-wrap { width: 100%; height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
+    .kal-bar { height: 100%; background: var(--salmon); border-radius: 3px; transition: width 0.5s ease; max-width: 100%; }
   </style>
 </head>
 <body>
@@ -365,13 +398,24 @@
       <span class="section-title">Apps</span>
     </div>
     <div class="app-grid">
+      <a class="kal-card" href="kalorien.html">
+        <div class="kal-head">
+          <div class="kal-head-left">
+            <span class="kal-icon">🥗</span>
+            <span class="kal-label">Kalorientracker</span>
+          </div>
+          <div class="kal-btns">
+            <span class="kal-btn">+</span>
+            <span class="kal-btn">📷</span>
+          </div>
+        </div>
+        <div class="kal-num" id="kalNum">–</div>
+        <div class="kal-sub" id="kalSub">kcal heute</div>
+        <div class="kal-bar-wrap"><div class="kal-bar" id="kalBar" style="width:0%"></div></div>
+      </a>
       <a class="app-card" href="einkaufsliste.html">
         <div class="app-icon-wrap c-teal">🛒</div>
         <div class="app-name">Einkaufs&shy;liste</div>
-      </a>
-      <a class="app-card" href="kalorien.html">
-        <div class="app-icon-wrap c-coral">🥗</div>
-        <div class="app-name">Kalorien&shy;tracker</div>
       </a>
       <a class="app-card" href="todo.html">
         <div class="app-icon-wrap c-blue">✅</div>
@@ -720,6 +764,20 @@ function initMuellWidget() {
   document.getElementById('muellWidget').innerHTML = html || '<div style="font-size:12px;color:var(--muted);padding:8px">Keine weiteren Termine in 2026</div>';
 }
 initMuellWidget();
+
+function initKalWidget() {
+  try {
+    const goal = parseInt(localStorage.getItem('kalorientracker_goal') || '2000') || 2000;
+    const store = JSON.parse(localStorage.getItem('kalorientracker_v1') || '{}');
+    const key = new Date().toISOString().slice(0, 10);
+    const kcal = Math.round(((store[key] || {}).entries || []).reduce((s, e) => s + (e.kcal || 0), 0));
+    const pct = Math.min(100, Math.round(kcal / goal * 100));
+    document.getElementById('kalNum').textContent = kcal.toLocaleString('de-DE');
+    document.getElementById('kalSub').textContent = 'von ' + goal.toLocaleString('de-DE') + ' kcal · ' + pct + '%';
+    document.getElementById('kalBar').style.width = pct + '%';
+  } catch(e) {}
+}
+initKalWidget();
 </script>
 
 </body>
