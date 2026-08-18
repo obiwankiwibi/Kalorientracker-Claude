@@ -1477,7 +1477,7 @@ function scheduleReminder(taskId, ts) {
     delete reminderTimeouts[taskId];
   }
   const delay = ts - Date.now();
-  if (delay <= 0 || delay > 24 * 3600000) return; // only within 24h
+  if (delay <= 0 || delay > 7 * 24 * 3600000) return; // only within 7 days
 
   reminderTimeouts[taskId] = setTimeout(async () => {
     const t = tasks[taskId];
@@ -1492,11 +1492,13 @@ function scheduleReminder(taskId, ts) {
 
     // E-Mail an mich selbst
     const me = registeredUsers[MY_DEVICE_ID];
-    if (me?.email) {
+    const email = me?.email || localStorage.getItem('my_email');
+    const name  = me?.name  || (email ? email.split('@')[0] : null);
+    if (email) {
       try {
         await sendEmail(
-          me.email,
-          me.name,
+          email,
+          name,
           `🔔 Erinnerung: ${t.title}`,
           `Deine Erinnerung ist fällig:\n\n${t.title}${t.notes ? '\n\n' + t.notes : ''}`
         );
