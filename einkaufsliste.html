@@ -805,6 +805,17 @@
       opacity: 0.85;
     }
 
+    .offer-link-btn {
+      display: block; text-align: center;
+      margin: 0 8px 9px;
+      padding: 7px 0;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: none; color: var(--accent);
+      font-size: 12px; font-weight: 600; text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+    .offer-link-btn:active { background: var(--accent); color: #fff; }
+
     /* Offer badge on shopping list tile */
     .tile-offer-badge {
       font-size: 9px; font-weight: 700; letter-spacing: 0.3px;
@@ -1026,7 +1037,7 @@
     <p style="font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">JSON-Import (manuell)</p>
     <textarea id="importJson" class="sheet-input"
       style="height:90px;resize:none;font-size:12px;font-family:monospace;margin-bottom:10px"
-      placeholder='{"offers":[{"id":"1","name":"Butter","haendler":"Lidl","preis":2.19,"gueltigVon":"2026-08-17","gueltigBis":"2026-08-22","kategorie":"Milchprodukte"}]}'></textarea>
+      placeholder='{"offers":[{"id":"1","name":"Butter","haendler":"Lidl","preis":2.19,"gueltigVon":"2026-08-17","gueltigBis":"2026-08-22","kategorie":"Milchprodukte","bild":null,"url":null}]}'></textarea>
     <div class="sheet-btns" style="flex-wrap:wrap;gap:8px">
       <button class="sh-btn secondary" onclick="closeImportSheet()">Abbrechen</button>
       <button class="sh-btn secondary" onclick="loadDemoOffers()">Demo-Daten</button>
@@ -2391,6 +2402,7 @@ function mgTransform(raw) {
     gueltigVon:   (validity.from || '').split('T')[0] || null,
     gueltigBis:   (validity.to   || '').split('T')[0] || null,
     bild:         hasImg ? `${MG_CDN}/offers/${raw.id}/0.jpg` : null,
+    url:          adv.externalLink || null,
     favorit:      false,
     quelle:       'Marktguru',
     importDatum:  new Date().toISOString(),
@@ -2499,6 +2511,12 @@ function buildOfferCard(offer) {
     ? `<img src="${esc(offer.bild)}" alt="" class="offer-img" onerror="this.parentElement.innerHTML='<div class=offer-img-fallback>🛒</div>'">`
     : `<div class="offer-img-fallback">🛒</div>`;
 
+  const storeUrl = STORES.find(s => s.name === offer.haendler)?.url || null;
+  const linkUrl  = offer.url || storeUrl;
+  const linkHtml = linkUrl
+    ? `<a class="offer-link-btn" href="${esc(linkUrl)}" target="_blank" rel="noopener noreferrer">Zum Angebot →</a>`
+    : '';
+
   return `<div class="offer-card">
     <div class="offer-card-top">
       <span class="offer-retailer-badge" style="background:${col}">${esc(offer.haendler)}</span>
@@ -2518,6 +2536,7 @@ function buildOfferCard(offer) {
       ? `<button class="offer-add-btn in-list" disabled>✓ In der Liste</button>`
       : `<button class="offer-add-btn" onclick="addOfferToList('${esc(offer.id)}')">+ Einkaufsliste</button>`
     }
+    ${linkHtml}
   </div>`;
 }
 

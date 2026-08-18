@@ -451,6 +451,19 @@
     .pk-btn.cancel  { background: var(--card); color: var(--text); }
     .pk-btn.confirm { background: var(--accent); color: #fff; }
 
+    .settings-field-label {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .5px;
+      margin: 12px 0 6px;
+    }
+    .settings-field-label:first-of-type { margin-top: 0; }
+    .settings-notif-btn {
+      width: 100%; padding: 11px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--card);
+      color: var(--text); font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: inherit; margin-bottom: 14px;
+    }
+
     /* ══════════════════════════════════════════
        CONTEXT MENU
     ══════════════════════════════════════════ */
@@ -510,6 +523,7 @@
 <div id="listsView">
   <header class="header">
     <div class="header-title">Aufgaben</div>
+    <button class="icon-btn" onclick="openSettings()" title="Einstellungen">⚙</button>
     <button class="icon-btn" onclick="toggleTheme()" title="Design">🌙</button>
     <a class="icon-btn" href="index.html" title="Startseite">⌂</a>
   </header>
@@ -671,6 +685,38 @@
 </div>
 
 <!-- ══════════════════════════════════════════
+     SETTINGS SHEET
+══════════════════════════════════════════ -->
+<div class="sheet-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettings()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="picker-inner">
+      <div class="picker-title">⚙ Einstellungen</div>
+
+      <div class="settings-field-label">E-Mail-Adresse (für Erinnerungen)</div>
+      <input type="email" class="picker-input" id="settingsEmail" placeholder="deine@email.de">
+
+      <div class="settings-field-label">Benachrichtigungen</div>
+      <button class="settings-notif-btn" onclick="requestNotifPerm()">🔔 Browser-Benachrichtigungen erlauben</button>
+
+      <div class="settings-field-label">EmailJS – Public Key</div>
+      <input type="text" class="picker-input" id="settingsEjsKey" placeholder="user_xxxxxxxxxxxxxxxx" autocomplete="off">
+
+      <div class="settings-field-label">EmailJS – Service ID</div>
+      <input type="text" class="picker-input" id="settingsEjsSvc" placeholder="service_xxxxxxx" autocomplete="off">
+
+      <div class="settings-field-label">EmailJS – Template ID</div>
+      <input type="text" class="picker-input" id="settingsEjsTpl" placeholder="template_xxxxxxx" autocomplete="off">
+
+      <div class="picker-btns">
+        <button class="pk-btn cancel" onclick="closeSettings()">Abbrechen</button>
+        <button class="pk-btn confirm" onclick="saveSettings()">Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
      CONTEXT MENU (list options)
 ══════════════════════════════════════════ -->
 <div id="ctxOverlay" onclick="closeCtxMenu()"></div>
@@ -760,6 +806,50 @@ async function sendEmail(toEmail, toName, subject, message) {
   const svc = ejsServiceId(), tpl = ejsTemplateId(), key = ejsPublicKey();
   if (!svc || !tpl || !key || !toEmail) return;
   return emailjs.send(svc, tpl, { to_email: toEmail, to_name: toName || 'Du', subject, message });
+}
+
+function openSettings() {
+  const me = registeredUsers[MY_DEVICE_ID];
+  document.getElementById('settingsEmail').value   = me?.email || localStorage.getItem('my_email') || '';
+  document.getElementById('settingsEjsKey').value  = ejsPublicKey();
+  document.getElementById('settingsEjsSvc').value  = ejsServiceId();
+  document.getElementById('settingsEjsTpl').value  = ejsTemplateId();
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settingsOverlay').classList.remove('open');
+}
+
+function saveSettings() {
+  const email = document.getElementById('settingsEmail').value.trim();
+  const key   = document.getElementById('settingsEjsKey').value.trim();
+  const svc   = document.getElementById('settingsEjsSvc').value.trim();
+  const tpl   = document.getElementById('settingsEjsTpl').value.trim();
+
+  if (key)   localStorage.setItem('ejs_pubkey',   key);
+  if (svc)   localStorage.setItem('ejs_service',  svc);
+  if (tpl)   localStorage.setItem('ejs_template', tpl);
+  ejsInited = false;
+
+  if (email) {
+    localStorage.setItem('my_email', email);
+    const userData = { email, name: email.split('@')[0] };
+    if (usersRef) {
+      usersRef.child(MY_DEVICE_ID).set(userData);
+    } else {
+      registeredUsers[MY_DEVICE_ID] = userData;
+    }
+  }
+
+  closeSettings();
+  toast('Einstellungen gespeichert ✓');
+}
+
+async function requestNotifPerm() {
+  if (!('Notification' in window)) { toast('Benachrichtigungen werden nicht unterstützt'); return; }
+  const perm = await Notification.requestPermission();
+  toast(perm === 'granted' ? '✓ Benachrichtigungen erlaubt' : 'Benachrichtigungen abgelehnt');
 }
 
 let currentListId  = null;   // null = lists view
