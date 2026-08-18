@@ -311,7 +311,7 @@
     </div>
     <div class="fuel-widget">
       <div class="fuel-widget-bg">⛽</div>
-      <div class="fuel-widget-label">Super 95</div>
+      <div class="fuel-widget-label">Super 95 · Favoriten</div>
       <div class="fuel-price-big" id="fuelPrice">–</div>
       <div class="fuel-unit-sm">€ / Liter</div>
       <div class="fuel-name-sm" id="fuelName">Wird geladen…</div>
@@ -320,7 +320,7 @@
       <div class="fuel-fav-badge" id="fuelFavBadge" style="display:none">★ Favorit</div>
       <button class="fuel-setup-btn" id="fuelSetupBtn" onclick="openFuelSetup()">⚙ API-Key einrichten</button>
       <div class="fuel-actions">
-        <button class="fuel-refresh-btn" id="fuelRefreshBtn" onclick="loadFuelPrice(true)" title="Aktualisieren">↻</button>
+        <button class="fuel-refresh-btn" id="fuelRefreshBtn" onclick="loadFuelPrice()" title="Aktualisieren">↻</button>
         <a href="tankstellen_finder.html" class="fuel-open-link">Alle →</a>
       </div>
     </div>
@@ -467,85 +467,68 @@ async function loadWeather(lat, lon) {
   }
 }
 
-const TK_CACHE = 'tk_quick_e5';
-const TK_HOUR  = 3600000;
-
 function fmtTs(ts) {
   const d = new Date(ts);
   return d.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'})
        + ', ' + d.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}) + ' Uhr';
 }
 
-function renderFuelWidget(cheapest, stations, favorites, ts) {
-  const favIds = Object.keys(favorites);
-  const favStations = favIds
-    .map(id => stations.find(s => s.id === id))
-    .filter(s => s && typeof s.e5 === 'number' && s.e5 > 0.5)
-    .sort((a, b) => a.e5 - b.e5);
-  const rec   = favStations.length ? favStations[0] : cheapest;
-  const isFav = favStations.length > 0;
-  document.getElementById('fuelPrice').textContent =
-    rec.e5.toLocaleString('de-DE', {minimumFractionDigits:3, maximumFractionDigits:3});
-  document.getElementById('fuelName').textContent = rec.name;
-  const dist = rec.dist ? Number(rec.dist).toLocaleString('de-DE',{maximumFractionDigits:1})+' km' : '';
-  const open = rec.isOpen ? 'Geöffnet' : 'Geschlossen';
-  document.getElementById('fuelMeta').textContent = [dist, open].filter(Boolean).join(' · ');
-  document.getElementById('fuelUpdated').textContent = 'Stand: ' + fmtTs(ts);
-  document.getElementById('fuelFavBadge').style.display = isFav ? '' : 'none';
-}
-
-async function loadFuelPrice(force = false) {
+function loadFuelPrice() {
   const tkState   = JSON.parse(localStorage.getItem('tankstellen_finder_v2') || '{}');
-  const favorites = tkState.favorites || {};
+  const favorites = tkState.favorites  || {};
+  const stations  = tkState.stations   || [];
+  const favPrices = tkState.favPrices  || {};
+  const lastReq   = tkState.lastRequest || 0;
+  const favIds    = Object.keys(favorites);
+
   if (!tkState.apiKey) {
-    document.getElementById('fuelPrice').textContent = '–';
-    document.getElementById('fuelName').textContent = 'Kein API-Key';
-    document.getElementById('fuelMeta').textContent = 'Einmalig einrichten';
+    document.getElementById('fuelPrice').textContent   = '–';
+    document.getElementById('fuelName').textContent    = 'Kein API-Key';
+    document.getElementById('fuelMeta').textContent    = 'Einmalig einrichten';
     document.getElementById('fuelUpdated').textContent = '';
     document.getElementById('fuelSetupBtn').style.display = '';
+    document.getElementById('fuelFavBadge').style.display = 'none';
     return;
   }
   document.getElementById('fuelSetupBtn').style.display = 'none';
-  const cached = JSON.parse(localStorage.getItem(TK_CACHE) || 'null');
-  if (cached) renderFuelWidget(cached.cheapest, cached.stations, favorites, cached.ts);
-  if (!force && cached && (Date.now() - cached.ts) < TK_HOUR) return;
-  const sinceLastReq = Date.now() - (tkState.lastRequest || 0);
-  if (sinceLastReq < 62000) {
-    const remSec = Math.ceil((62000 - sinceLastReq) / 1000);
-    document.getElementById('fuelUpdated').textContent = `Rate-Limit: noch ${remSec} s warten`;
+
+  if (!favIds.length) {
+    document.getElementById('fuelPrice').textContent   = '–';
+    document.getElementById('fuelName').textContent    = 'Keine Favoriten';
+    document.getElementById('fuelMeta').textContent    = 'Auf der Tankseite Stationen markieren';
+    document.getElementById('fuelUpdated').textContent = '';
+    document.getElementById('fuelFavBadge').style.display = 'none';
     return;
   }
-  const refreshBtn = document.getElementById('fuelRefreshBtn');
-  if (refreshBtn) { refreshBtn.textContent = '⟳'; refreshBtn.disabled = true; }
-  try {
-    let coords = JSON.parse(localStorage.getItem('tk_default_coords') || 'null');
-    if (!coords) {
-      const gr = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=de&q=57271+Hilchenbach-Dahlbruch', {headers:{'Accept-Language':'de'}});
-      const gd = await gr.json();
-      coords = gd.length ? {lat:+gd[0].lat, lng:+gd[0].lon} : {lat:50.982, lng:8.102};
-      localStorage.setItem('tk_default_coords', JSON.stringify(coords));
-    }
-    const p = new URLSearchParams({lat:coords.lat, lng:coords.lng, rad:10, type:'e5', sort:'price', apikey:tkState.apiKey});
-    const r = await fetch('https://creativecommons.tankerkoenig.de/json/list.php?'+p);
-    const data = await r.json();
-    if (!data.ok) { setTimeout(()=>loadFuelPrice(), 65000); return; }
-    if (!data.stations?.length) throw new Error('Keine Stationen');
-    const stations = data.stations.filter(s => typeof s.e5==='number' && s.e5>0.5);
-    if (!stations.length) throw new Error('Keine Super-95-Preise');
-    tkState.lastRequest = Date.now();
-    localStorage.setItem('tankstellen_finder_v2', JSON.stringify(tkState));
-    const result = {ts: Date.now(), cheapest: stations[0], stations};
-    localStorage.setItem(TK_CACHE, JSON.stringify(result));
-    renderFuelWidget(result.cheapest, result.stations, favorites, result.ts);
-  } catch(err) {
-    if (!cached) {
-      document.getElementById('fuelName').textContent = 'Nicht verfügbar';
-      document.getElementById('fuelMeta').textContent = String(err.message || '');
-    }
-    document.getElementById('fuelUpdated').textContent = 'Fehler beim Laden';
-  } finally {
-    if (refreshBtn) { refreshBtn.textContent = '↻'; refreshBtn.disabled = false; }
+
+  const favStations = favIds.map(id => {
+    const s = stations.find(s => s.id === id);
+    if (s && typeof s.e5 === 'number' && s.e5 > 0.5) return s;
+    const hist = (favPrices[id] || []).filter(h => h.fuel === 'e5');
+    if (!hist.length) return null;
+    const last = hist[hist.length - 1];
+    return { id, name: favorites[id]?.name || id, brand: favorites[id]?.brand || '', e5: last.v, dist: null, isOpen: null, _ts: last.t };
+  }).filter(Boolean).sort((a, b) => a.e5 - b.e5);
+
+  if (!favStations.length) {
+    document.getElementById('fuelPrice').textContent   = '–';
+    document.getElementById('fuelName').textContent    = 'Noch nicht geladen';
+    document.getElementById('fuelMeta').textContent    = 'Tankseite öffnen um Preise zu laden';
+    document.getElementById('fuelUpdated').textContent = '';
+    document.getElementById('fuelFavBadge').style.display = 'none';
+    return;
   }
+
+  const best = favStations[0];
+  const ts   = best._ts || lastReq;
+  document.getElementById('fuelPrice').textContent =
+    best.e5.toLocaleString('de-DE', {minimumFractionDigits:3, maximumFractionDigits:3});
+  document.getElementById('fuelName').textContent = best.name || best.brand || best.id;
+  const dist = best.dist ? Number(best.dist).toLocaleString('de-DE',{maximumFractionDigits:1})+' km' : '';
+  const open = best.isOpen === true ? 'Geöffnet' : best.isOpen === false ? 'Geschlossen' : '';
+  document.getElementById('fuelMeta').textContent = [dist, open].filter(Boolean).join(' · ');
+  document.getElementById('fuelUpdated').textContent = ts ? 'Stand: ' + fmtTs(ts) : '';
+  document.getElementById('fuelFavBadge').style.display = '';
 }
 
 function openFuelSetup() {
@@ -564,11 +547,11 @@ function saveFuelKey() {
   tkState.apiKey = key;
   localStorage.setItem('tankstellen_finder_v2', JSON.stringify(tkState));
   closeFuelSetup();
-  loadFuelPrice(true);
+  loadFuelPrice();
 }
 
 loadFuelPrice();
-setInterval(loadFuelPrice, TK_HOUR);
+setInterval(loadFuelPrice, 5 * 60 * 1000);
 
 const BACKUP_STATIC_KEYS = [
   'zaehler',
