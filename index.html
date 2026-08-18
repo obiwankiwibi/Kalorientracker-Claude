@@ -300,38 +300,65 @@
     .mc-teal  { background: var(--teal-dim);        color: var(--teal); }
     .mc-gruen { background: rgba(80,190,100,0.18);  color: #50be64; }
 
-    /* ── Kalorien featured card ── */
+    /* ── Featured apps row ── */
+    .featured-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+
+    /* ── Kalorien card ── */
     .kal-card {
-      grid-column: 1 / -1;
-      background: var(--layer2);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 14px 16px 16px;
-      text-decoration: none;
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      gap: 0;
+      background: var(--layer2); border: 1px solid var(--border); border-radius: 18px;
+      padding: 14px 14px 14px; text-decoration: none; color: var(--text);
+      display: flex; flex-direction: column; gap: 0;
       transition: transform 0.12s, opacity 0.12s;
     }
     .kal-card:active { transform: scale(0.97); opacity: 0.88; }
     .kal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-    .kal-head-left { display: flex; align-items: center; gap: 7px; }
-    .kal-icon { font-size: 20px; line-height: 1; }
-    .kal-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
-    .kal-btns { display: flex; gap: 6px; }
+    .kal-head-left { display: flex; align-items: center; gap: 6px; }
+    .kal-icon { font-size: 18px; line-height: 1; }
+    .kal-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+    .kal-btns { display: flex; gap: 5px; }
     .kal-btn {
-      width: 30px; height: 30px;
-      background: rgba(232,99,90,0.15);
-      color: var(--salmon);
-      border-radius: 9px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px; font-weight: 800; line-height: 1;
+      width: 27px; height: 27px; background: rgba(232,99,90,0.15); color: var(--salmon);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; line-height: 1;
     }
-    .kal-num { font-size: 34px; font-weight: 800; color: var(--salmon); line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+    .kal-num { font-size: 30px; font-weight: 800; color: var(--salmon); line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
     .kal-sub { font-size: 10px; color: var(--muted); margin-top: 3px; margin-bottom: 10px; }
     .kal-bar-wrap { width: 100%; height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
     .kal-bar { height: 100%; background: var(--salmon); border-radius: 3px; transition: width 0.5s ease; max-width: 100%; }
+
+    /* ── To-Do card ── */
+    .todo-card {
+      background: var(--layer2); border: 1px solid var(--border); border-radius: 18px;
+      padding: 14px 14px 14px; cursor: pointer; color: var(--text);
+      display: flex; flex-direction: column; gap: 0;
+      transition: transform 0.12s, opacity 0.12s; -webkit-tap-highlight-color: transparent;
+    }
+    .todo-card:active { transform: scale(0.97); opacity: 0.88; }
+    .todo-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+    .todo-icon  { font-size: 18px; line-height: 1; }
+    .todo-lbl   { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; flex: 1; }
+    .todo-badge { font-size: 9px; font-weight: 700; background: rgba(74,158,255,0.15); color: #4a9eff; padding: 2px 7px; border-radius: 99px; white-space: nowrap; }
+    .todo-open-count { font-size: 30px; font-weight: 800; color: #4a9eff; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; margin-bottom: 3px; }
+    .todo-open-lbl { font-size: 10px; color: var(--muted); margin-bottom: 10px; }
+    .todo-quick { display: flex; gap: 6px; margin-top: auto; }
+    .todo-input {
+      flex: 1; min-width: 0; background: var(--layer1); border: 1px solid var(--border2);
+      color: var(--text); padding: 7px 10px; border-radius: 9px;
+      font-size: 12px; outline: none; font-family: inherit;
+    }
+    .todo-input::placeholder { color: var(--muted); }
+    .todo-input:focus { border-color: rgba(74,158,255,0.5); }
+    .todo-add-btn {
+      width: 30px; height: 30px; flex-shrink: 0; background: rgba(74,158,255,0.15);
+      color: #4a9eff; border: none; border-radius: 9px; font-size: 18px; font-weight: 700;
+      cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Small apps 2×2 ── */
+    .app-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ── Wetter clickable ── */
+    .weather-card { cursor: pointer; }
   </style>
 </head>
 <body>
@@ -343,7 +370,7 @@
 
   <!-- ══ WIDGETS ══ -->
   <div class="widget-row">
-    <div class="weather-card" id="weatherCard">
+    <div class="weather-card" id="weatherCard" onclick="openWetter()" title="Auf wetter.com öffnen">
       <div class="weather-bg-emoji" id="weatherBgEmoji">☀️</div>
       <div class="weather-loading" id="weatherLoading">📍 Lädt…</div>
       <div class="weather-content" id="weatherContent" style="display:none">
@@ -397,12 +424,12 @@
     <div class="section-head">
       <span class="section-title">Apps</span>
     </div>
-    <div class="app-grid">
+    <div class="featured-row">
       <a class="kal-card" href="kalorien.html">
         <div class="kal-head">
           <div class="kal-head-left">
             <span class="kal-icon">🥗</span>
-            <span class="kal-label">Kalorientracker</span>
+            <span class="kal-label">Kalorien</span>
           </div>
           <div class="kal-btns">
             <span class="kal-btn">+</span>
@@ -413,13 +440,25 @@
         <div class="kal-sub" id="kalSub">kcal heute</div>
         <div class="kal-bar-wrap"><div class="kal-bar" id="kalBar" style="width:0%"></div></div>
       </a>
+      <div class="todo-card" onclick="location.href='todo.html'">
+        <div class="todo-head">
+          <span class="todo-icon">✅</span>
+          <span class="todo-lbl">To-Do</span>
+          <span class="todo-badge" id="todoBadge">–</span>
+        </div>
+        <div class="todo-open-count" id="todoNum">–</div>
+        <div class="todo-open-lbl">offen</div>
+        <div class="todo-quick" onclick="event.stopPropagation()">
+          <input class="todo-input" id="todoInput" type="text" placeholder="Neue Aufgabe…"
+            onkeydown="if(event.key==='Enter')addTodoQuick()">
+          <button class="todo-add-btn" onclick="addTodoQuick()">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="app-grid-2">
       <a class="app-card" href="einkaufsliste.html">
         <div class="app-icon-wrap c-teal">🛒</div>
         <div class="app-name">Einkaufs&shy;liste</div>
-      </a>
-      <a class="app-card" href="todo.html">
-        <div class="app-icon-wrap c-blue">✅</div>
-        <div class="app-name">To-Do</div>
       </a>
       <a class="app-card" href="haushaltskosten_tracker.html">
         <div class="app-icon-wrap c-green">🏠</div>
@@ -520,6 +559,7 @@ async function loadWeather(lat, lon) {
     const emoji = isNight ? info.nightEmoji : info.emoji;
     const grad  = isNight ? ['#0d1b2a','#1b2838'] : info.grad;
     const loc = geo.address?.city || geo.address?.town || geo.address?.village || geo.address?.county || 'Unbekannt';
+    window._wLoc = loc;
     document.getElementById('wLocation').textContent = loc;
     document.getElementById('wEmoji').textContent    = emoji;
     document.getElementById('wTemp').textContent     = Math.round(c.temperature_2m);
@@ -778,6 +818,36 @@ function initKalWidget() {
   } catch(e) {}
 }
 initKalWidget();
+
+function openWetter() {
+  const q = encodeURIComponent(window._wLoc || 'Hilchenbach');
+  window.open('https://www.wetter.com/suche/?q=' + q, '_blank');
+}
+
+function initTodoWidget() {
+  try {
+    const tasks = JSON.parse(localStorage.getItem('todo_tasks') || '{}');
+    const open = Object.values(tasks).filter(t => !t.completed).length;
+    document.getElementById('todoNum').textContent   = open;
+    document.getElementById('todoBadge').textContent = open + ' offen';
+  } catch(e) {}
+}
+
+function addTodoQuick() {
+  const inp   = document.getElementById('todoInput');
+  const title = inp.value.trim();
+  if (!title) return;
+  try {
+    const tasks  = JSON.parse(localStorage.getItem('todo_tasks') || '{}');
+    const id     = 't_' + Date.now();
+    tasks[id]    = { title, listId: null, completed: false, important: false, myDay: false, dueDate: null, reminderAt: null, notes: '', steps: [], createdAt: Date.now(), completedAt: null };
+    localStorage.setItem('todo_tasks', JSON.stringify(tasks));
+    inp.value = '';
+    initTodoWidget();
+  } catch(e) {}
+}
+
+initTodoWidget();
 </script>
 
 </body>
