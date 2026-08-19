@@ -353,6 +353,8 @@
       transition: background 0.15s, color 0.15s;
     }
     .chip.on { background: var(--teal); color: #fff; border-color: var(--teal); }
+    .sort-row .chip { font-size: 11px; padding: 3px 10px; }
+    .sort-row .chip.on { background: var(--layer2); color: var(--teal); border-color: var(--teal); font-weight: 700; }
 
     /* ── Bottom picker sheet ── */
     .sheet-overlay {
@@ -912,6 +914,9 @@
 <!-- ══ CATEGORY CHIPS ══ -->
 <div class="cat-row" id="catRow"></div>
 
+<!-- ══ SORT ROW ══ -->
+<div class="cat-row sort-row" id="sortRow" style="padding-top:0;padding-bottom:8px"></div>
+
 <!-- ══ SUGGESTIONS ══ -->
 <div class="section" id="sugSection">
   <div class="grid" id="sugGrid"></div>
@@ -1422,6 +1427,8 @@ let scannerRunning2 = false, scanLoopId2 = null, scanTorchOn = false;
 
 let picker = { id: null, name: '', emoji: '', amount: '', isNew: true };
 let activeCat   = 'Alle';
+let activeSort  = '';    // 'az' | 'typ' | 'preis' | 'kg' | 'kcal'
+let sortDir     = 1;     // 1=aufsteigend, -1=absteigend
 let doneOpen    = false;
 
 // List ID aus URL
@@ -1624,6 +1631,21 @@ function renderSuggestions() {
   if (activeCat !== 'Alle') list = list.filter(s => s.cat === activeCat);
   if (search)               list = list.filter(s => s.name.toLowerCase().includes(search));
 
+  // Sortierung
+  if (activeSort) {
+    list = [...list].sort((a, b) => {
+      let va, vb;
+      if (activeSort === 'az')    { va = a.name.toLowerCase(); vb = b.name.toLowerCase(); }
+      else if (activeSort === 'typ')   { va = a.cat + a.name; vb = b.cat + b.name; }
+      else if (activeSort === 'preis') { va = a.price ?? Infinity; vb = b.price ?? Infinity; }
+      else if (activeSort === 'kg')    { va = pricePerKg(a) ?? Infinity; vb = pricePerKg(b) ?? Infinity; }
+      else if (activeSort === 'kcal')  { va = pricePerHundredKcal(a) ?? Infinity; vb = pricePerHundredKcal(b) ?? Infinity; }
+      if (va < vb) return -sortDir;
+      if (va > vb) return  sortDir;
+      return 0;
+    });
+  }
+
   const sg = document.getElementById('sugGrid');
   if (list.length === 0) {
     sg.innerHTML = `<div class="empty">Kein Vorschlag gefunden.<br>Drücke <strong>+</strong> um "${esc(document.getElementById('searchInput').value.trim())}" hinzuzufügen.</div>`;
@@ -1643,6 +1665,32 @@ function renderSuggestions() {
   }
 
   renderCats();
+  renderSort();
+}
+
+const SORT_OPTIONS = [
+  { id:'az',    label:'A–Z'        },
+  { id:'typ',   label:'Typ'        },
+  { id:'preis', label:'Preis'      },
+  { id:'kg',    label:'€/kg'       },
+  { id:'kcal',  label:'€/100 kcal' },
+];
+
+function renderSort() {
+  const sr = document.getElementById('sortRow');
+  if (!sr) return;
+  sr.innerHTML = '<span style="font-size:10px;color:var(--muted);flex-shrink:0;align-self:center;padding-right:2px">↕</span>'
+    + SORT_OPTIONS.map(o => {
+      const active = o.id === activeSort;
+      const arrow  = active ? (sortDir === 1 ? ' ↑' : ' ↓') : '';
+      return `<button class="chip ${active ? 'on' : ''}" onclick="setSort('${o.id}')">${o.label}${arrow}</button>`;
+    }).join('');
+}
+
+function setSort(id) {
+  if (activeSort === id) sortDir = -sortDir;
+  else { activeSort = id; sortDir = 1; }
+  renderSuggestions();
 }
 
 function renderCats() {
@@ -1911,6 +1959,7 @@ function showTab(tab) {
   document.querySelector('.search-wrap').style.display   = isListe ? '' : 'none';
   document.querySelector('.divider').style.display       = isListe ? '' : 'none';
   document.getElementById('catRow').style.display        = isListe ? '' : 'none';
+  document.getElementById('sortRow').style.display       = isListe ? '' : 'none';
   if (!isListe) {
     const pb = document.getElementById('priceBar');
     if (pb) pb.style.display = 'none';
