@@ -2547,7 +2547,12 @@ async function fetchMarktguruLive() {
       if (total === null) total = data.totalResults || 0;
       const results = data.results || [];
       if (!results.length) break;
-      if (all.length === 0 && results.length > 0) console.log('[MG] first offer raw:', JSON.stringify(results[0], null, 2));
+      if (all.length === 0 && results.length > 0) {
+        const r = results[0];
+        console.log('[MG] first offer raw:', JSON.stringify(r, null, 2));
+        const imgInfo = JSON.stringify({ images: r.images, imageUrl: r.imageUrl, product_img: r.product?.imageUrl });
+        alert('Bild-Debug (1. Angebot):\n\n' + imgInfo);
+      }
       all.push(...results);
       offset += results.length;
       if (offset >= total) break;
