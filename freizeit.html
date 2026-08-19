@@ -19,20 +19,37 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-app
 .stat{background:var(--card);padding:14px 16px;border-right:1px solid var(--line)}.stat:last-child{border-right:none}
 .eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
 .big{font-size:25px;font-weight:750;margin-top:3px;color:var(--brand)}.hint{font-size:12px;color:var(--muted)}
+
+/* ── Search card ── */
+.search-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:18px}
+.sc-grid{display:grid;grid-template-columns:1fr .6fr auto auto;gap:10px;align-items:end}
+.sc-status{font-size:12px;color:var(--muted);margin-top:8px;min-height:18px}
+.result-cat-bar{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+
+/* ── Filter bar (saved activities) ── */
 .filter-bar{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:18px}
 .filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .filter-input{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:9px 12px;font:inherit;flex:1;min-width:120px}
 .filter-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
 .chip{border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:99px;padding:6px 13px;cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap;font-family:inherit;transition:background .15s,color .15s,border-color .15s}
 .chip.active{background:var(--soft);border-color:var(--brand);color:var(--brand)}
-.primary{border:0;background:var(--brand);color:#fff;border-radius:9px;padding:10px 16px;font:700 14px/1 inherit;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px}
+
+/* ── Buttons ── */
+.primary{border:0;background:var(--brand);color:#fff;border-radius:9px;padding:10px 16px;font:700 14px/1 inherit;cursor:pointer;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:6px}
 .primary:active{opacity:.85}
-.secondary{border:1px solid var(--brand);background:none;color:var(--brand);border-radius:9px;padding:9px 15px;font:700 14px/1 inherit;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.secondary{border:1px solid var(--brand);background:none;color:var(--brand);border-radius:9px;padding:9px 15px;font:700 14px/1 inherit;cursor:pointer;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:6px}
 .secondary:active{opacity:.8}
+.icon-btn{width:42px;height:42px;border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:9px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit;transition:border-color .15s,color .15s}
+.icon-btn:hover{border-color:var(--brand);color:var(--brand)}
+
+/* ── Section heading ── */
 .section-head{display:flex;justify-content:space-between;align-items:center;margin:0 0 12px}
 .section-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:750;display:flex;align-items:center;gap:8px}
 .section-title::before{content:'';display:block;width:3px;height:14px;border-radius:2px;background:var(--brand);flex-shrink:0}
 .count{font-size:11px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:2px 8px;color:var(--muted)}
+.results-section{margin-bottom:24px}
+
+/* ── Activity cards ── */
 .activities-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
 .act-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:8px}
 .act-card.is-fav{border-color:var(--brand)}
@@ -58,45 +75,32 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-app
 .empty strong{display:block;color:var(--ink);font-size:16px;margin-bottom:6px}
 .fav-section{margin-top:26px}
 
+/* ── Fields (shared: search card + modal) ── */
+.field{margin-bottom:0}.field label{display:block;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:10px 11px;font:inherit;resize:vertical}
+.field textarea{min-height:72px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
 /* ── Overlays ── */
 .overlay{position:fixed;inset:0;background:rgba(9,15,18,.65);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}
 .overlay.open{display:flex}
 .modal{width:min(500px,100%);background:var(--card);border:1px solid var(--line);border-radius:15px;padding:24px;max-height:90vh;overflow-y:auto}
 .modal h2{margin:0 0 18px;font-size:20px}
-.field{margin-bottom:14px}.field label{display:block;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
-.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:10px 11px;font:inherit;resize:vertical}
-.field textarea{min-height:72px}
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal .field{margin-bottom:14px}
+.modal .field input,.modal .field select,.modal .field textarea{width:100%}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
 .ghost{border:1px solid var(--line);background:none;color:var(--ink);border-radius:9px;padding:9px 14px;cursor:pointer;font:inherit}
 .star-pick{display:flex;gap:4px;font-size:24px;padding-top:4px}
 .star-pick span{cursor:pointer;color:var(--line);transition:color .12s;user-select:none}
 .star-pick span.on{color:#f6c000}
 
-/* ── OSM Search overlay ── */
-.search-overlay{position:fixed;inset:0;background:rgba(9,15,18,.7);display:none;align-items:flex-start;justify-content:center;padding:16px;padding-top:52px;z-index:30}
-.search-overlay.open{display:flex}
-.search-modal{width:min(580px,100%);background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-.search-head{padding:14px 16px;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--line)}
-.search-inp{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:10px 13px;font:inherit;outline:none}
-.search-inp:focus{border-color:var(--brand)}
-.search-icon-btn{width:40px;height:40px;border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:9px;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit;transition:border-color .15s,color .15s}
-.search-icon-btn:hover{border-color:var(--brand);color:var(--brand)}
-.search-status{padding:9px 16px;font-size:12px;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--line);min-height:34px;line-height:1.4}
-.search-results-list{overflow-y:auto;flex:1}
-.sr-item{display:flex;gap:12px;align-items:center;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--line);transition:background .1s}
-.sr-item:last-child{border-bottom:none}
-.sr-item:hover,.sr-item:active{background:var(--soft)}
-.sr-icon{width:38px;height:38px;border-radius:10px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.sr-body{flex:1;min-width:0}
-.sr-name{font-weight:700;font-size:14px;line-height:1.3}
-.sr-meta{font-size:11px;color:var(--brand);font-weight:700;margin-top:1px}
-.sr-addr{font-size:12px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sr-add{border:1px solid var(--brand);background:none;color:var(--brand);border-radius:8px;padding:6px 12px;font:700 12px/1 inherit;cursor:pointer;flex-shrink:0;white-space:nowrap}
-.search-empty{padding:40px 20px;text-align:center;color:var(--muted)}
-.search-empty strong{display:block;color:var(--ink);margin-bottom:6px}
-
-@media(max-width:600px){.topstats{grid-template-columns:1fr 1fr}.field-row{grid-template-columns:1fr}.filter-row{flex-wrap:wrap}}
+@media(max-width:600px){
+  .topstats{grid-template-columns:1fr 1fr}
+  .sc-grid{grid-template-columns:1fr auto auto}
+  .sc-grid .field:first-child{grid-column:1/-1}
+  .sc-grid .field:nth-child(2){grid-column:1/2}
+  .field-row{grid-template-columns:1fr}
+}
 @media(max-width:400px){.activities-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -115,10 +119,44 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-app
   <div class="stat"><div class="eyebrow">Top-Kategorie</div><div class="big" id="statCat">—</div><div class="hint" id="statCatHint">meiste Einträge</div></div>
 </div>
 
+<!-- ── Aktivitäten in der Nähe suchen ── -->
+<div class="search-card">
+  <div class="sc-grid">
+    <div class="field">
+      <label>Ort / PLZ</label>
+      <input id="scOrt" placeholder="z. B. Siegen, 57072 …" autocomplete="off" autocorrect="off">
+    </div>
+    <div class="field">
+      <label>Umkreis</label>
+      <select id="scRadius">
+        <option value="2000">2 km</option>
+        <option value="5000" selected>5 km</option>
+        <option value="10000">10 km</option>
+        <option value="15000">15 km</option>
+        <option value="25000">25 km</option>
+        <option value="50000">50 km</option>
+      </select>
+    </div>
+    <button class="icon-btn" id="scGpsBtn" title="Meinen Standort verwenden">📍</button>
+    <button class="primary" id="scSearchBtn">Suchen</button>
+  </div>
+  <div class="sc-status" id="scStatus"></div>
+  <div class="result-cat-bar" id="resultCatBar" style="display:none"></div>
+</div>
+
+<!-- ── OSM Suchergebnisse ── -->
+<div class="results-section" id="scResultsSection" style="display:none">
+  <div class="section-head">
+    <div class="section-title">Aktivitäten in der Nähe</div>
+    <span class="count" id="scResultsCount">0</span>
+  </div>
+  <div class="activities-grid" id="scResults"></div>
+</div>
+
+<!-- ── Gespeicherte Aktivitäten ── -->
 <div class="filter-bar">
   <div class="filter-row">
     <input id="filterInput" class="filter-input" placeholder="In meiner Liste suchen …">
-    <button class="secondary" id="osmSearchBtn">🔍 Ort suchen</button>
     <button class="primary" id="addBtn">＋ Manuell</button>
   </div>
   <div class="filter-chips" id="catChips">
@@ -127,7 +165,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-app
 </div>
 
 <div class="section-head">
-  <div class="section-title">Aktivitäten</div>
+  <div class="section-title">Meine Aktivitäten</div>
   <span class="count" id="listCount">0</span>
 </div>
 <div class="activities-grid" id="actGrid"></div>
@@ -138,19 +176,6 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-app
     <span class="count" id="favCount">0</span>
   </div>
   <div class="activities-grid" id="favGrid"></div>
-</div>
-</div>
-
-<!-- ── OSM Suche ── -->
-<div class="search-overlay" id="searchOverlay">
-<div class="search-modal">
-  <div class="search-head">
-    <input id="osmInp" class="search-inp" placeholder="z. B. Schwimmbad Siegen, Kino Hilchenbach …" autocomplete="off" autocorrect="off">
-    <button class="search-icon-btn" id="osmGpsBtn" title="Aktivitäten in meiner Nähe">📍</button>
-    <button class="search-icon-btn" id="osmCloseBtn" title="Schließen">✕</button>
-  </div>
-  <div class="search-status" id="osmStatus">Suchbegriff eingeben oder 📍 für Aktivitäten in der Nähe</div>
-  <div class="search-results-list" id="osmResults"></div>
 </div>
 </div>
 
@@ -166,23 +191,45 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-app
         <option value="">Wählen …</option>
         <option>🏊 Schwimmbad</option>
         <option>⛳ Minigolf</option>
+        <option>⛳ Golf</option>
+        <option>🥏 Disc Golf</option>
         <option>🎬 Kino</option>
         <option>🎭 Theater</option>
         <option>🏛️ Museum</option>
+        <option>🏰 Schloss / Burg</option>
+        <option>🔭 Planetarium</option>
+        <option>📚 Bibliothek</option>
         <option>🎳 Bowling</option>
         <option>🧗 Klettern</option>
         <option>🛼 Rollschuhlaufen</option>
         <option>🎡 Freizeitpark</option>
         <option>🏋️ Fitness</option>
+        <option>🏟️ Stadion</option>
+        <option>🏃 Sport / Outdoor</option>
         <option>🎮 Gaming / Escape Room</option>
+        <option>🤸 Trampolin</option>
+        <option>🏎️ Kart / Fahrspaß</option>
+        <option>🐴 Reiten</option>
+        <option>🚴 Bike Park</option>
+        <option>🚴 Radfahren</option>
+        <option>🛹 Skatepark</option>
+        <option>🚲 Fahrradverleih</option>
         <option>🍕 Restaurant</option>
         <option>☕ Café</option>
+        <option>🍺 Bar / Pub</option>
+        <option>🍺 Biergarten</option>
+        <option>🎰 Casino</option>
         <option>🌳 Natur / Wandern</option>
-        <option>🚴 Radfahren</option>
-        <option>⛷️ Ski / Winter</option>
+        <option>🌸 Garten / Park</option>
+        <option>👁️ Aussichtspunkt</option>
+        <option>🏖️ Strand</option>
+        <option>⛺ Camping</option>
         <option>🎨 Kunst / Ausstellung</option>
         <option>🎵 Konzert / Event</option>
         <option>🐾 Zoo / Tierpark</option>
+        <option>🐠 Aquarium</option>
+        <option>🧖 Wellness / Sauna</option>
+        <option>⛷️ Ski / Winter</option>
         <option>🎯 Sonstiges</option>
       </select>
     </div>
@@ -233,6 +280,7 @@ const OSM_CAT = {
   // Wasser
   swimming_pool:'🏊 Schwimmbad', water_park:'🏊 Schwimmbad', swimming_area:'🏊 Schwimmbad',
   paddling_pool:'🏊 Schwimmbad', lido:'🏊 Schwimmbad',
+  swimming:'🏊 Schwimmbad',
   // Golf
   miniature_golf:'⛳ Minigolf', golf_course:'⛳ Golf', disc_golf_course:'🥏 Disc Golf',
   // Kino / Theater
@@ -262,7 +310,12 @@ const OSM_CAT = {
   trampoline_park:'🤸 Trampolin',
   go_kart:'🏎️ Kart / Fahrspaß', karting:'🏎️ Kart / Fahrspaß',
   // Reiten
-  horse_riding:'🐴 Reiten',
+  horse_riding:'🐴 Reiten', equestrian:'🐴 Reiten',
+  // Bike / Skate
+  bike_park:'🚴 Bike Park', pump_track:'🚴 Bike Park', bmx_track:'🚴 Bike Park',
+  cycling:'🚴 Radfahren',
+  bmx:'🛹 Skatepark', skateboard:'🛹 Skatepark', skatepark:'🛹 Skatepark',
+  bicycle_rental:'🚲 Fahrradverleih',
   // Restaurant / Essen
   restaurant:'🍕 Restaurant', fast_food:'🍕 Restaurant', food_court:'🍕 Restaurant',
   cafe:'☕ Café', coffee_shop:'☕ Café',
@@ -320,93 +373,59 @@ function osmAddress(r) {
   return '';
 }
 
-function osmCatLabel(r) {
-  const c = osmCat(r);
-  return c.replace(/^\S+\s/, '');
+/* ── Geocode helpers ── */
+async function geocodeOrt(q) {
+  const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=de,at,ch&q=' + encodeURIComponent(q);
+  const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+  const data = await res.json();
+  return data[0] || null;
 }
 
-/* ── OSM Search ── */
-let osmDebounce = null;
+/* ── Search card logic ── */
+function setScStatus(msg) { $('scStatus').textContent = msg; }
 
-function openSearch() {
-  $('searchOverlay').classList.add('open');
-  setTimeout(() => $('osmInp').focus(), 80);
-}
-function closeSearch() { $('searchOverlay').classList.remove('open'); }
-
-$('osmInp').addEventListener('input', () => {
-  clearTimeout(osmDebounce);
-  const q = $('osmInp').value.trim();
-  if (!q) { $('osmStatus').textContent = 'Suchbegriff eingeben oder 📍 für Aktivitäten in der Nähe'; $('osmResults').innerHTML = ''; return; }
-  $('osmStatus').textContent = 'Suche läuft …';
-  osmDebounce = setTimeout(() => doNominatimSearch(q), 600);
-});
-
-$('osmInp').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { clearTimeout(osmDebounce); doNominatimSearch($('osmInp').value.trim()); }
-});
-
-async function doNominatimSearch(q) {
-  if (!q) return;
-  $('osmStatus').textContent = 'Suche läuft …';
+async function doSearch() {
+  const q = $('scOrt').value.trim();
+  const r = +$('scRadius').value;
+  if (!q) { setScStatus('Bitte Ort oder PLZ eingeben.'); return; }
+  setScStatus('Standort wird gesucht …');
   try {
-    const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=20&countrycodes=de,at,ch&q=' + encodeURIComponent(q);
-    const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
-    const data = await res.json();
-    showNominatimResults(data, q);
+    const place = await geocodeOrt(q);
+    if (!place) { setScStatus('Ort nicht gefunden – anderen Suchbegriff versuchen.'); return; }
+    doOverpassNearby(+place.lat, +place.lon, r);
   } catch(e) {
-    $('osmStatus').textContent = 'Suche fehlgeschlagen – Internetverbindung prüfen.';
+    setScStatus('Suche fehlgeschlagen – Internetverbindung prüfen.');
   }
 }
 
-function showNominatimResults(items, q) {
-  if (!items.length) {
-    $('osmStatus').textContent = `Keine Ergebnisse für „${q}"`;
-    $('osmResults').innerHTML = `<div class="search-empty"><strong>Nichts gefunden</strong>Versuche es mit einem anderen Suchbegriff, z. B. „Kino Siegen" oder „Schwimmbad Hilchenbach".</div>`;
-    return;
-  }
-  $('osmStatus').textContent = `${items.length} Ergebnis${items.length===1?'':'se'} gefunden`;
-  $('osmResults').innerHTML = items.map((r,i) => {
-    const cat = osmCat(r);
-    const icon = cat.split(' ')[0];
-    const catLabel = cat.replace(/^\S+\s/, '');
-    const name = r.display_name?.split(',')[0] || 'Unbekannt';
-    const addr = osmAddress(r);
-    return `<div class="sr-item" data-idx="${i}">
-      <div class="sr-icon">${icon}</div>
-      <div class="sr-body">
-        <div class="sr-name">${esc(name)}</div>
-        <div class="sr-meta">${esc(catLabel)}</div>
-        ${addr ? `<div class="sr-addr">${esc(addr)}</div>` : ''}
-      </div>
-      <button class="sr-add" data-idx="${i}">＋ Hinzufügen</button>
-    </div>`;
-  }).join('');
-  $('osmResults').querySelectorAll('[data-idx]').forEach(el => {
-    el.addEventListener('click', () => prefillFromNominatim(items[+el.dataset.idx]));
-  });
-}
+$('scSearchBtn').onclick = doSearch;
+$('scOrt').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
 
-/* ── Nearby search via Overpass ── */
-$('osmGpsBtn').onclick = () => {
-  if (!navigator.geolocation) { $('osmStatus').textContent = 'Geolocation nicht verfügbar.'; return; }
-  $('osmStatus').textContent = '📍 Standort wird ermittelt …';
-  $('osmResults').innerHTML = '';
+$('scGpsBtn').onclick = () => {
+  if (!navigator.geolocation) { setScStatus('Geolocation nicht verfügbar.'); return; }
+  setScStatus('📍 Standort wird ermittelt …');
   navigator.geolocation.getCurrentPosition(
-    pos => doOverpassNearby(pos.coords.latitude, pos.coords.longitude),
-    ()  => { $('osmStatus').textContent = 'Standortzugriff verweigert.'; },
+    pos => doOverpassNearby(pos.coords.latitude, pos.coords.longitude, +$('scRadius').value),
+    ()  => setScStatus('Standortzugriff verweigert.'),
     { timeout: 8000 }
   );
 };
 
-async function doOverpassNearby(lat, lon) {
-  $('osmStatus').textContent = '🔍 Suche Freizeitaktivitäten in der Nähe …';
-  const r = 15000;
-  const L = `"leisure"~"swimming_pool|water_park|swimming_area|miniature_golf|golf_course|disc_golf_course|bowling_alley|fitness_centre|sports_centre|sports_hall|ice_rink|theme_park|amusement_park|climbing|climbing_wall|go_kart|karting|escape_game|laser_tag|paintball|trampoline_park|horse_riding|beach_resort|sauna|stadium|track|pitch|garden|dog_park|nature_reserve"`;
+/* ── Overpass nearby ── */
+async function doOverpassNearby(lat, lon, radius) {
+  const kmStr = radius >= 1000 ? (radius/1000).toFixed(0) + ' km' : radius + ' m';
+  setScStatus(`🔍 Suche Freizeitaktivitäten im Umkreis von ${kmStr} …`);
+  $('scResultsSection').style.display = 'none';
+  $('resultCatBar').style.display = 'none';
+
+  const r = radius;
+  const L = `"leisure"~"swimming_pool|water_park|swimming_area|paddling_pool|lido|miniature_golf|golf_course|disc_golf_course|bowling_alley|fitness_centre|sports_centre|sports_hall|ice_rink|theme_park|amusement_park|climbing|climbing_wall|go_kart|karting|escape_game|laser_tag|paintball|trampoline_park|horse_riding|beach_resort|sauna|stadium|track|pitch|garden|dog_park|nature_reserve|bike_park|pump_track|bmx_track|bicycle_rental"`;
   const A = `"amenity"~"cinema|theatre|arts_centre|nightclub|bar|pub|biergarten|planetarium|library|bowling_alley|casino|community_centre|social_centre"`;
   const T = `"tourism"~"museum|zoo|gallery|theme_park|amusement_park|attraction|viewpoint|aquarium|artwork|castle|ruins|camp_site|caravan_site"`;
   const N = `"natural"~"beach|peak"`;
-  const query = `[out:json][timeout:30];(
+  const S = `"sport"~"swimming|cycling|bmx|skateboard|equestrian"`;
+
+  const query = `[out:json][timeout:40];(
     node[${L}](around:${r},${lat},${lon});
     way[${L}](around:${r},${lat},${lon});
     node[${A}](around:${r},${lat},${lon});
@@ -415,16 +434,19 @@ async function doOverpassNearby(lat, lon) {
     way[${T}](around:${r},${lat},${lon});
     node[${N}](around:${r},${lat},${lon});
     way[${N}](around:${r},${lat},${lon});
-  );out center qt 150;`;
+    node[${S}](around:${r},${lat},${lon});
+    way[${S}](around:${r},${lat},${lon});
+  );out center qt 200;`;
+
   try {
     const res = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       body: 'data=' + encodeURIComponent(query)
     });
     const data = await res.json();
-    showOverpassResults(data.elements || [], lat, lon);
+    showOverpassResults(data.elements || [], lat, lon, kmStr);
   } catch(e) {
-    $('osmStatus').textContent = 'Abruf fehlgeschlagen – Internetverbindung prüfen.';
+    setScStatus('Abruf fehlgeschlagen – Internetverbindung prüfen.');
   }
 }
 
@@ -439,76 +461,95 @@ function elCoords(e) {
   return { lat: e.lat ?? e.center?.lat, lon: e.lon ?? e.center?.lon };
 }
 
-function showOverpassResults(elements, userLat, userLon) {
+/* ── OSM results state ── */
+let scAllResults = [];
+let scUserLat = 0, scUserLon = 0;
+let scActiveCat = '';
+
+function showOverpassResults(elements, userLat, userLon, kmStr) {
+  scUserLat = userLat; scUserLon = userLon;
   const named = elements.filter(e => e.tags && e.tags.name && (e.lat != null || e.center?.lat != null));
   named.sort((a,b) => {
     const ca = elCoords(a), cb = elCoords(b);
     return dist(userLat,userLon,ca.lat,ca.lon) - dist(userLat,userLon,cb.lat,cb.lon);
   });
+  scAllResults = named;
+  scActiveCat = '';
+
   if (!named.length) {
-    $('osmStatus').textContent = 'Keine Freizeitaktivitäten im Umkreis von 15 km gefunden.';
-    $('osmResults').innerHTML = `<div class="search-empty"><strong>Nichts gefunden</strong>Versuche eine manuelle Suche mit dem Suchfeld.</div>`;
+    setScStatus(`Keine Freizeitaktivitäten im Umkreis von ${kmStr} gefunden.`);
     return;
   }
-  $('osmStatus').textContent = `${named.length} Aktivität${named.length===1?'':'en'} in der Nähe`;
-  $('osmResults').innerHTML = named.map((e,i) => {
+  setScStatus(`${named.length} Aktivität${named.length===1?'':'en'} im Umkreis von ${kmStr} gefunden`);
+  buildResultCatChips(named);
+  renderScResults();
+}
+
+function buildResultCatChips(items) {
+  const catCounts = {};
+  items.forEach(e => { const c = osmCat(e); catCounts[c] = (catCounts[c]||0) + 1; });
+  const cats = Object.keys(catCounts).sort();
+  const bar = $('resultCatBar');
+  if (cats.length < 2) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = `<button class="chip active" data-rcat="">Alle (${items.length})</button>` +
+    cats.map(c => `<button class="chip" data-rcat="${esc(c)}">${esc(c)} <span style="opacity:.65;font-size:11px">${catCounts[c]}</span></button>`).join('');
+  bar.querySelectorAll('.chip').forEach(b => {
+    b.onclick = () => {
+      scActiveCat = b.dataset.rcat;
+      bar.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.rcat === scActiveCat));
+      renderScResults();
+    };
+  });
+}
+
+function renderScResults() {
+  const filtered = scActiveCat ? scAllResults.filter(e => osmCat(e) === scActiveCat) : scAllResults;
+  $('scResultsCount').textContent = filtered.length;
+  $('scResultsSection').style.display = '';
+  $('scResults').innerHTML = filtered.map((e, fi) => {
+    const ridx = scAllResults.indexOf(e);
     const cat = osmCat(e);
     const icon = cat.split(' ')[0];
     const catLabel = cat.replace(/^\S+\s/, '');
     const name = e.tags.name;
     const addr = osmAddress(e);
     const c = elCoords(e);
-    const km = dist(userLat,userLon,c.lat,c.lon);
+    const km = dist(scUserLat,scUserLon,c.lat,c.lon);
     const distStr = km < 1 ? Math.round(km*1000) + ' m' : km.toFixed(1) + ' km';
-    return `<div class="sr-item" data-idx="${i}">
-      <div class="sr-icon">${icon}</div>
-      <div class="sr-body">
-        <div class="sr-name">${esc(name)}</div>
-        <div class="sr-meta">${esc(catLabel)} · ${distStr}</div>
-        ${addr ? `<div class="sr-addr">${esc(addr)}</div>` : ''}
+    const mapQ = encodeURIComponent(name + (addr ? ' ' + addr : ''));
+    const alreadySaved = state.activities.some(a => a.name === name);
+    return `<div class="act-card">
+      <div class="act-header">
+        <div class="cat-icon">${icon}</div>
+        <div style="flex:1;min-width:0">
+          <div class="act-name">${esc(name)}</div>
+          <div class="act-cat">${esc(catLabel)}</div>
+        </div>
       </div>
-      <button class="sr-add" data-idx="${i}">＋ Hinzufügen</button>
+      ${addr ? `<div class="act-address">📍 <span>${esc(addr)}</span></div>` : ''}
+      <div class="act-footer">
+        <span class="visit-badge">${distStr}</span>
+      </div>
+      <div class="act-actions">
+        <a class="act-btn route-btn" href="https://www.google.com/maps/search/?api=1&query=${mapQ}" target="_blank" rel="noopener">🗺 Maps</a>
+        ${alreadySaved
+          ? `<button class="act-btn" disabled style="opacity:.5">✓ Gespeichert</button>`
+          : `<button class="act-btn route-btn" onclick="addFromResult(${ridx})">＋ Speichern</button>`}
+      </div>
     </div>`;
-  }).join('');
-  $('osmResults').querySelectorAll('[data-idx]').forEach(el => {
-    el.addEventListener('click', () => prefillFromOverpass(named[+el.dataset.idx]));
-  });
+  }).join('') || `<div class="empty" style="grid-column:1/-1"><strong>Keine Ergebnisse in dieser Kategorie</strong></div>`;
 }
 
-function prefillFromNominatim(r) {
-  const name = r.display_name?.split(',')[0] || '';
-  const addr = osmAddress(r);
-  const cat = osmCat(r);
-  openAddPrefilled(name, cat, addr, '');
-}
-
-function prefillFromOverpass(e) {
+function addFromResult(ridx) {
+  const e = scAllResults[ridx];
+  if (!e) return;
   const name = e.tags.name || '';
   const addr = osmAddress(e);
   const cat = osmCat(e);
   const website = e.tags.website || e.tags['contact:website'] || '';
   openAddPrefilled(name, cat, addr, website);
 }
-
-function openAddPrefilled(name, cat, addr, url) {
-  closeSearch();
-  $('modalTitle').textContent = 'Aktivität hinzufügen';
-  $('editId').value = '';
-  $('fName').value = name;
-  $('fCat').value = cat;
-  $('fAddr').value = addr;
-  $('fUrl').value = url;
-  $('fNote').value = '';
-  $('fVisit').value = '';
-  $('fPrice').value = '';
-  pickRating = 0; updateStarPick();
-  $('overlay').classList.add('open');
-  setTimeout(() => $('fCat').focus(), 60);
-}
-
-$('osmCloseBtn').onclick = closeSearch;
-$('searchOverlay').onclick = e => { if (e.target === e.currentTarget) closeSearch(); };
-$('osmSearchBtn').onclick = openSearch;
 
 /* ── Star picker ── */
 let pickRating = 0;
@@ -519,7 +560,7 @@ document.querySelectorAll('#starPick span').forEach(s => {
   s.onclick = () => { pickRating = +s.dataset.s === pickRating ? 0 : +s.dataset.s; updateStarPick(); };
 });
 
-/* ── Category chips ── */
+/* ── Category chips (saved activities) ── */
 let filterCat = '', filterSearch = '';
 function buildCatChips() {
   const used = [...new Set(state.activities.map(a => a.cat).filter(Boolean))].sort();
@@ -577,7 +618,7 @@ function cardHtml(a) {
   </div>`;
 }
 
-/* ── Render ── */
+/* ── Render saved activities ── */
 function render() {
   buildCatChips(); updateStats();
   const q = filterSearch.toLowerCase();
@@ -589,12 +630,14 @@ function render() {
   $('listCount').textContent = list.length;
   $('actGrid').innerHTML = list.length
     ? list.map(cardHtml).join('')
-    : `<div class="empty" style="grid-column:1/-1"><strong>Keine Aktivitäten gefunden</strong>${state.activities.length?'Passe die Filter an.':'Nutze „Ort suchen" oder „Manuell" zum Hinzufügen.'}</div>`;
+    : `<div class="empty" style="grid-column:1/-1"><strong>Keine Aktivitäten gefunden</strong>${state.activities.length?'Passe die Filter an.':'Nutze die Suche oben oder „Manuell" zum Hinzufügen.'}</div>`;
   const favs = state.activities.filter(a => a.fav);
   $('favSection').style.display = favs.length ? '' : 'none';
   $('favCount').textContent = favs.length;
   $('favGrid').innerHTML = favs.map(cardHtml).join('');
   bindCardEvents($('actGrid')); bindCardEvents($('favGrid'));
+  // refresh OSM result cards (saved status may have changed)
+  if (scAllResults.length) renderScResults();
 }
 
 function bindCardEvents(container) {
@@ -620,6 +663,20 @@ function openEdit(id) {
   $('fUrl').value=a.url||''; $('fNote').value=a.note||''; $('fVisit').value=a.lastVisit||''; $('fPrice').value=a.price||'';
   pickRating=a.rating||0; updateStarPick();
   $('overlay').classList.add('open'); setTimeout(()=>$('fName').focus(),60);
+}
+function openAddPrefilled(name, cat, addr, url) {
+  $('modalTitle').textContent = 'Aktivität hinzufügen';
+  $('editId').value = '';
+  $('fName').value = name;
+  $('fCat').value = cat;
+  $('fAddr').value = addr;
+  $('fUrl').value = url;
+  $('fNote').value = '';
+  $('fVisit').value = '';
+  $('fPrice').value = '';
+  pickRating = 0; updateStarPick();
+  $('overlay').classList.add('open');
+  setTimeout(() => $('fCat').focus(), 60);
 }
 function closeModal() { $('overlay').classList.remove('open'); }
 function saveActivity() {
