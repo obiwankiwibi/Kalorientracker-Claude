@@ -830,6 +830,32 @@
     }
     .offer-link-btn:active { background: var(--accent); color: #fff; }
 
+    /* ── Collapsible offer cards ── */
+    .offer-card { cursor: pointer; }
+    .offer-summary { padding: 6px 9px 8px; }
+    .offer-expandable { display: none; }
+    .offer-card.expanded .offer-expandable { display: block; }
+    .offer-chevron {
+      font-size: 9px; color: var(--muted); margin-left: auto; padding: 0 4px;
+      transition: transform 0.2s; pointer-events: none;
+    }
+    .offer-card.expanded .offer-chevron { transform: rotate(180deg); }
+
+    /* ── Scroll-to-top button ── */
+    #scrollTopBtn {
+      position: fixed; bottom: 80px; right: 16px;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--teal); color: #fff;
+      border: none; font-size: 20px; cursor: pointer;
+      display: none; align-items: center; justify-content: center;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.28);
+      z-index: 190; transition: opacity 0.2s, transform 0.2s;
+      opacity: 0; transform: scale(0.8);
+    }
+    #scrollTopBtn.visible {
+      display: flex; opacity: 1; transform: scale(1);
+    }
+
     /* Offer badge on shopping list tile */
     .tile-offer-badge {
       font-size: 9px; font-weight: 700; letter-spacing: 0.3px;
@@ -1107,6 +1133,9 @@
     </div>
   </div>
 </div>
+
+<!-- ══ SCROLL TO TOP ══ -->
+<button id="scrollTopBtn" onclick="scrollToTop()" aria-label="Nach oben">↑</button>
 
 <!-- ══ BOTTOM NAV ══ -->
 <nav class="bottom-nav">
@@ -1979,6 +2008,8 @@ function showTab(tab) {
   // Andere Views
   document.getElementById('offersView').style.display      = isAngebote    ? 'block' : 'none';
   document.getElementById('restaurantsView').style.display = isRestaurants ? 'block' : 'none';
+  const stb = document.getElementById('scrollTopBtn');
+  if (stb && !isAngebote) stb.classList.remove('visible');
 
   // Nav
   document.getElementById('navListe').classList.toggle('on',       isListe);
@@ -2639,26 +2670,30 @@ function buildOfferCard(offer) {
     ? `<a class="offer-link-btn" href="${esc(linkUrl)}" target="_blank" rel="noopener noreferrer">Zum Angebot →</a>`
     : '';
 
-  return `<div class="offer-card">
+  const addBtn = isOfferInList(offer.name)
+    ? `<button class="offer-add-btn in-list" disabled onclick="event.stopPropagation()">✓ In der Liste</button>`
+    : `<button class="offer-add-btn" onclick="event.stopPropagation();addOfferToList('${esc(offer.id)}')">+ Einkaufsliste</button>`;
+
+  return `<div class="offer-card" onclick="toggleOfferExpand(this)">
     <div class="offer-card-top">
       <span class="offer-retailer-badge" style="background:${col}">${esc(offer.haendler)}</span>
-      <button class="offer-fav-btn ${offer.favorit ? 'on' : ''}" onclick="toggleOfferFav('${esc(offer.id)}')">${offer.favorit ? '★' : '☆'}</button>
+      <span class="offer-chevron">▼</span>
+      <button class="offer-fav-btn ${offer.favorit ? 'on' : ''}" onclick="event.stopPropagation();toggleOfferFav('${esc(offer.id)}')">${offer.favorit ? '★' : '☆'}</button>
     </div>
-    <div class="offer-img-wrap">${imgHtml}</div>
-    <div class="offer-info">
+    <div class="offer-summary">
       <div class="offer-name">${esc(offer.name)}</div>
-      ${offer.kategorie ? `<div class="offer-cat">${esc(offer.kategorie)}</div>` : ''}
       <div class="offer-price">
         <span class="offer-price-val">${Number(offer.preis).toFixed(2).replace('.',',')} €</span>
         ${offer.grundpreis ? `<span class="offer-grundpreis">${esc(offer.grundpreis)}</span>` : ''}
       </div>
       ${validTxt ? `<div class="offer-valid ${urgentCls}">${validTxt}</div>` : ''}
     </div>
-    ${isOfferInList(offer.name)
-      ? `<button class="offer-add-btn in-list" disabled>✓ In der Liste</button>`
-      : `<button class="offer-add-btn" onclick="addOfferToList('${esc(offer.id)}')">+ Einkaufsliste</button>`
-    }
-    ${linkHtml}
+    <div class="offer-expandable">
+      <div class="offer-img-wrap">${imgHtml}</div>
+      ${offer.kategorie ? `<div class="offer-info"><div class="offer-cat">${esc(offer.kategorie)}</div></div>` : ''}
+      ${addBtn}
+      ${linkHtml}
+    </div>
   </div>`;
 }
 
@@ -2697,6 +2732,21 @@ function renderHaendlerChips() {
 }
 
 function setOfferHaendler(h) { activeHaendler = h; renderOffers(); }
+
+function toggleOfferExpand(card) {
+  card.classList.toggle('expanded');
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scrollTopBtn');
+  if (!btn) return;
+  const show = window.scrollY > 200 && activeTab === 'angebote';
+  btn.classList.toggle('visible', show);
+}, { passive: true });
 
 function toggleOfferFav(id) {
   const o = allOffers.find(x => x.id === id);
