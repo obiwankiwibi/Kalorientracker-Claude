@@ -46,7 +46,6 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 15% 50%,rgba(200,200,220,.04),transparent 65%);pointer-events:none}
 /* red rail */
 .hero-rail{position:absolute;top:0;left:0;width:4px;height:100%;background:var(--mc)}
-.hero-inner{max-width:1080px;margin:auto;padding:52px 28px 48px 36px}
 .hero-kicker{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(200,16,46,.35);background:rgba(200,16,46,.1);color:var(--mc);border-radius:4px;padding:4px 11px;font:700 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;text-transform:uppercase;margin-bottom:22px}
 .hero-name{font:800 clamp(52px,12vw,112px)/1 'Barlow Condensed',sans-serif;text-transform:uppercase;color:#fff;letter-spacing:-.01em;line-height:.95;text-wrap:balance}
 .hero-name em{color:var(--mc);font-style:normal;display:block}
@@ -155,16 +154,30 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 /* ── Footer ── */
 .footer{margin-top:60px;padding:24px 0;border-top:1px solid var(--line);text-align:center;font-size:12px;color:var(--muted);letter-spacing:.04em}
 
+/* ── Hero layout with logo ── */
+.hero-inner{display:flex;align-items:center;gap:52px;max-width:1080px;margin:auto;padding:52px 28px 48px 36px}
+.hero-text{flex:1;min-width:0}
+.hero-logo-svg{width:180px;height:180px;flex-shrink:0;filter:drop-shadow(0 0 32px rgba(200,16,46,.3))}
+
+/* ── Mein Exemplar highlight cards ── */
+.exemplar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.ex-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.ex-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--mc)}
+.ex-lbl{font:700 10px/1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.ex-val{font:700 20px/1.2 'Barlow Condensed',sans-serif;color:var(--ink);margin-top:5px}
+.ex-note{font-size:12px;color:var(--muted);margin-top:3px}
+
 /* ── Responsive ── */
 @media(max-width:640px){
-  .hero-inner{padding:38px 20px 36px 24px}
+  .hero-inner{flex-direction:column-reverse;align-items:flex-start;gap:24px;padding:38px 20px 36px 24px}
+  .hero-logo-svg{width:130px;height:130px;align-self:center}
   .hero-stats{gap:22px}
   .two-col,.mc-grid,.kit-grid{grid-template-columns:1fr}
   .gallery-grid{grid-template-columns:1fr 1fr}
   .g-w2{grid-column:span 1}
 }
 @media(max-width:400px){
-  .card-grid{grid-template-columns:1fr}
+  .card-grid,.exemplar-grid{grid-template-columns:1fr}
   .clever-grid{grid-template-columns:1fr}
 }
 </style>
@@ -181,28 +194,40 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 <div class="hero">
   <div class="hero-rail"></div>
   <div class="hero-inner">
-    <div class="hero-kicker">Mein Auto · Modelljahr 2025</div>
-    <div class="hero-name">
-      Škoda Scala
-      <em>Monte Carlo</em>
-    </div>
-    <div class="hero-sub">1.0 TSI · 116 PS · Kompakthatchback</div>
-    <div class="hero-stats">
-      <div>
-        <div class="hstat-val">116 PS</div>
-        <div class="hstat-label">Motorleistung</div>
+    <!-- Škoda winged-arrow badge -->
+    <svg class="hero-logo-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="100" cy="100" r="96" stroke="#c8102e" stroke-width="4" opacity="0.75"/>
+      <circle cx="100" cy="100" r="80" stroke="#c8102e" stroke-width="1.5" opacity="0.35"/>
+      <!-- Winged arrow -->
+      <path d="M 28,100 C 50,86 72,76 90,70 L 170,52 L 140,72 L 112,84 L 112,116 L 140,128 L 170,148 L 90,130 C 72,124 50,114 28,100 Z" fill="white" opacity="0.92"/>
+      <!-- Center dot -->
+      <circle cx="112" cy="100" r="5" fill="#c8102e" opacity="0.8"/>
+    </svg>
+
+    <div class="hero-text">
+      <div class="hero-kicker">Mein Auto · 2025 · Luna Silber Metallic</div>
+      <div class="hero-name">
+        Škoda Scala
+        <em>Monte Carlo</em>
       </div>
-      <div>
-        <div class="hstat-val">~5,5 L</div>
-        <div class="hstat-label">Realverbrauch / 100 km</div>
-      </div>
-      <div>
-        <div class="hstat-val">467 L</div>
-        <div class="hstat-label">Kofferraum</div>
-      </div>
-      <div>
-        <div class="hstat-val">E10</div>
-        <div class="hstat-label">Kraftstoff</div>
+      <div class="hero-sub">1.0 TSI · 116 PS · 6-Gang · Kompakthatchback</div>
+      <div class="hero-stats">
+        <div>
+          <div class="hstat-val">116 PS</div>
+          <div class="hstat-label">Motorleistung</div>
+        </div>
+        <div>
+          <div class="hstat-val">9.441 km</div>
+          <div class="hstat-label">Kilometerstand</div>
+        </div>
+        <div>
+          <div class="hstat-val">~5,5 L</div>
+          <div class="hstat-label">Realverbrauch</div>
+        </div>
+        <div>
+          <div class="hstat-val">467 L</div>
+          <div class="hstat-label">Kofferraum</div>
+        </div>
       </div>
     </div>
   </div>
@@ -213,6 +238,7 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
   <!-- Gallery -->
   <div class="gallery-wrap">
     <div class="gallery-grid">
+      <!-- Row 1: wide front + side -->
       <div class="g-slot g-w2">
         <div class="g-ph">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -225,16 +251,49 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
           <span>Seite</span>
         </div>
       </div>
+      <!-- Row 2: heck + grill + badge -->
       <div class="g-slot">
         <div class="g-ph">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           <span>Heck</span>
         </div>
       </div>
+      <div class="g-slot">
+        <div class="g-ph">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>Frontgrill</span>
+        </div>
+      </div>
+      <div class="g-slot">
+        <div class="g-ph">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>Monte Carlo Badge</span>
+        </div>
+      </div>
+      <!-- Row 3: cockpit wide + seats -->
       <div class="g-slot g-w2">
         <div class="g-ph">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          <span>Cockpit</span>
+          <span>Armaturenbrett</span>
+        </div>
+      </div>
+      <div class="g-slot">
+        <div class="g-ph">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>Fahrersitz</span>
+        </div>
+      </div>
+      <!-- Row 4: 3 details -->
+      <div class="g-slot">
+        <div class="g-ph">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>Lenkrad</span>
+        </div>
+      </div>
+      <div class="g-slot">
+        <div class="g-ph">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>Panoramadach</span>
         </div>
       </div>
       <div class="g-slot">
@@ -243,17 +302,58 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
           <span>Kofferraum</span>
         </div>
       </div>
-      <div class="g-slot">
+      <!-- Row 5: cockpit display wide -->
+      <div class="g-slot g-w2">
         <div class="g-ph">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          <span>Innenraum</span>
+          <span>Cockpit Display</span>
         </div>
       </div>
       <div class="g-slot">
         <div class="g-ph">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          <span>Monte Carlo Badge</span>
+          <span>Rücksitze</span>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mein Exemplar -->
+  <div class="sec">
+    <div class="sec-hd">
+      <span class="sec-eye">Dein Exemplar</span>
+      <span class="sec-title">Mein Scala</span>
+    </div>
+    <div class="exemplar-grid">
+      <div class="ex-card">
+        <div class="ex-lbl">Farbe</div>
+        <div class="ex-val">Luna Silber</div>
+        <div class="ex-note">Luna Silber Metallic</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-lbl">Kilometerstand</div>
+        <div class="ex-val">~9.441 km</div>
+        <div class="ex-note">Stand bei Übergabe · Aug. 2025</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-lbl">Sonderdach</div>
+        <div class="ex-val">Panoramadach</div>
+        <div class="ex-note">Elektrisch öffnend · Sonnenschutzrollo</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-lbl">Navigation</div>
+        <div class="ex-val">Columbus</div>
+        <div class="ex-note">9,2″ Infotainment · OTA-Updates</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-lbl">Getriebe</div>
+        <div class="ex-val">6-Gang</div>
+        <div class="ex-note">Manuelles Schaltgetriebe</div>
+      </div>
+      <div class="ex-card">
+        <div class="ex-lbl">Händler</div>
+        <div class="ex-val">Walter Schneider</div>
+        <div class="ex-note">Škoda Vertragshändler</div>
       </div>
     </div>
   </div>
@@ -305,6 +405,16 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
         <div class="sp-val">Kompakt</div>
         <div class="sp-note">VW-Konzern Plattform MQB</div>
       </div>
+      <div class="spec-card">
+        <div class="sp-lbl">Sonderdach</div>
+        <div class="sp-val">Panoramadach</div>
+        <div class="sp-note">Elektrisch öffnend · Rollo</div>
+      </div>
+      <div class="spec-card">
+        <div class="sp-lbl">Navigation</div>
+        <div class="sp-val">Columbus</div>
+        <div class="sp-note">9,2″ Touchscreen · Online-Dienste</div>
+      </div>
     </div>
   </div>
 
@@ -318,23 +428,25 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
       <div class="mc-card">
         <div class="mc-card-hd">Außen</div>
         <ul class="mc-list">
-          <li>Schwarzer Kühlergrill</li>
+          <li>Schwarzer Kühlergrill (Black-Pack)</li>
           <li>Schwarze Spiegelkappen</li>
-          <li>Schwarze Schriftzüge</li>
+          <li>Schwarze Schriftzüge &amp; Embleme</li>
           <li>Schwarze Dachreling</li>
           <li>Monte-Carlo-Badge an der Flanke</li>
+          <li>Panoramadach (elektrisch öffnend)</li>
           <li>Sportlicheres Bodykit-Design</li>
         </ul>
       </div>
       <div class="mc-card">
         <div class="mc-card-hd">Innen</div>
         <ul class="mc-list">
-          <li>Sportsitze mit roten Zierstreifen</li>
-          <li>Rote Ambientebeleuchtungs-Akzente</li>
+          <li>Sportsitze mit rot-weißer Kontrastnaht</li>
+          <li>Rote Ambientebeleuchtung (Armaturenbrett-Streifen)</li>
           <li>Sportlenkrad mit Monte-Carlo-Badge</li>
           <li>Schwarzer Dachhimmel</li>
           <li>Carbon-Optik-Dekor</li>
           <li>Digitales Kombiinstrument (Virtual Cockpit)</li>
+          <li>Columbus Infotainment 9,2 Zoll</li>
         </ul>
       </div>
     </div>
@@ -428,13 +540,13 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
       <span class="sec-title">Smartphone</span>
     </div>
     <div class="chips">
+      <div class="chip">🗺️ Columbus Navi 9,2″</div>
       <div class="chip">📱 Wireless Android Auto</div>
       <div class="chip">🍎 Wireless Apple CarPlay</div>
-      <div class="chip">🔵 Bluetooth Telefon</div>
-      <div class="chip">🎵 Bluetooth Musik</div>
+      <div class="chip">🔵 Bluetooth Telefon &amp; Musik</div>
     </div>
     <div class="info-box">
-      Kein Kabel nötig — Android Auto und Apple CarPlay verbinden sich vollständig kabellos. Handy einfach in die Ablage legen und das System verbindet sich automatisch.
+      Kein Kabel nötig — Android Auto und Apple CarPlay verbinden sich vollständig kabellos. Das Columbus-System zeigt Navigation, Musik und Fahrzeugmenüs auf dem 9,2″ Touchscreen.
     </div>
   </div>
 
@@ -541,7 +653,7 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
     </div>
   </div>
 
-  <div class="footer">Škoda Scala Monte Carlo · 1.0 TSI · 116 PS · 2025</div>
+  <div class="footer">Škoda Scala Monte Carlo · 1.0 TSI · 116 PS · 6-Gang · Luna Silber Metallic · 2025</div>
 
 </div><!-- /page -->
 
