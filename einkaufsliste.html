@@ -1281,13 +1281,16 @@ function sugPriceHtml(sug) {
   if (sug?.price == null) return '';
   const ppkg   = pricePerKg(sug);
   const ppkcal = pricePerHundredKcal(sug);
+  // Zeile 1: Original-Preis (für Einkaufszettel-Summe)
+  const origLine = `<div class="tile-price">${fmtPrice(sug.price)}/${sug.unit}</div>`;
   if (ppkg != null) {
-    const kcalLine = ppkcal != null
-      ? `<div class="tile-kcal-price">${fmtPrice(ppkcal)}/100 kcal</div>`
-      : '';
-    return `<div class="tile-price">${fmtPrice(ppkg)}/kg</div>${kcalLine}`;
+    // Zeile 2: €/kg + optional €/100 kcal
+    const cmp = ppkcal != null
+      ? `${fmtPrice(ppkg)}/kg · ${fmtPrice(ppkcal)}/100 kcal`
+      : `${fmtPrice(ppkg)}/kg`;
+    return origLine + `<div class="tile-kcal-price">${cmp}</div>`;
   }
-  return `<div class="tile-price">${fmtPrice(sug.price)}/${sug.unit}</div>`;
+  return origLine;
 }
 
 // Mengen-Multiplikator berechnen
