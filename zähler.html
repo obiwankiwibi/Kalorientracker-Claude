@@ -6,7 +6,7 @@
   <title>Zähler</title>
   <style>
     :root {
-      --bg:    #EEF1F7;
+      --bg:    #f5f0e8;
       --card:  #FFFFFF;
       --card2: #F0F3F9;
       --ink:   #151E2B;
@@ -16,30 +16,30 @@
       --pos:    #0F7A4C; --pos-bg:  rgba(15,122,76,.1);
       --neg:    #B8351E; --neg-bg:  rgba(184,53,30,.1);
       --warn:   #92400E; --warn-bg: rgba(217,119,6,.08); --warn-line: rgba(217,119,6,.28);
-      --brand:  #C47F17;
-      --brand-bg: rgba(196,127,23,.1);
+      --brand:  #c85800;
+      --brand-bg: rgba(200,88,0,.1);
       --radius: 13px;
       --mono: 'Courier New','Menlo','Monaco',monospace;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
-        --bg:#0C1117; --card:#14202E; --card2:#1C2B3A;
+        --bg:#0a0806; --card:rgba(20,16,10,0.82); --card2:#1C2B3A;
         --ink:#DDE4EF; --muted:#7A90A8; --line:#243044;
         --shadow: none;
         --pos:#2ADB8A; --pos-bg:rgba(42,219,138,.12);
         --neg:#F07060; --neg-bg:rgba(240,112,96,.12);
         --warn:#FCD34D; --warn-bg:rgba(252,211,77,.07); --warn-line:rgba(252,211,77,.22);
-        --brand-bg:rgba(196,127,23,.13);
+        --brand:#e8630a; --brand-bg:rgba(232,99,10,.13);
       }
     }
     :root[data-theme="dark"] {
-      --bg:#0C1117; --card:#14202E; --card2:#1C2B3A;
+      --bg:#0a0806; --card:rgba(20,16,10,0.82); --card2:#1C2B3A;
       --ink:#DDE4EF; --muted:#7A90A8; --line:#243044;
       --shadow: none;
       --pos:#2ADB8A; --pos-bg:rgba(42,219,138,.12);
       --neg:#F07060; --neg-bg:rgba(240,112,96,.12);
       --warn:#FCD34D; --warn-bg:rgba(252,211,77,.07); --warn-line:rgba(252,211,77,.22);
-      --brand-bg:rgba(196,127,23,.13);
+      --brand:#e8630a; --brand-bg:rgba(232,99,10,.13);
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -54,6 +54,7 @@
       height: 52px; padding: 0 12px;
       display: flex; align-items: center; gap: 4px;
       position: sticky; top: 0; z-index: 200;
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     }
     .wordmark {
       flex: 1; font-family: var(--mono); font-size: 15px; font-weight: 700;
@@ -252,9 +253,14 @@
 
     @media (max-width: 580px) { .hide-sm { display: none !important; } .content { padding: .875rem; } .big { font-size: 20px; } .big.sm { font-size: 16px; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+
+    /* ── Circuit background ── */
+    #page-bg { position: fixed; inset: 0; z-index: -1; background: url('images/circuit-bg.jpg') center/cover; }
+    [data-theme=light] #page-bg { display: none; }
   </style>
 </head>
 <body>
+<div id="page-bg" aria-hidden="true"></div>
 
 <header class="app-header">
   <div class="wordmark"><span class="wm-dot" id="wm-dot"></span>ZÄHLER</div>

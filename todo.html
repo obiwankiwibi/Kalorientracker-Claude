@@ -17,13 +17,13 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:      #1e2030;
+      --bg:      #0a0806;
       --surface: #272a3d;
       --card:    #313554;
       --border:  #3a3d55;
       --text:    #eef0f8;
       --muted:   #7880a0;
-      --accent:  #4a9eff;
+      --accent:  #e8630a;
       --star:    #f5a623;
       --green:   #4ade80;
       --red:     #e8635a;
@@ -31,13 +31,13 @@
     }
 
     html[data-theme="light"] {
-      --bg:      #f2f2f7;
+      --bg:      #f5f0e8;
       --surface: #ffffff;
       --card:    #e5e5ea;
       --border:  rgba(0,0,0,0.1);
       --text:    #1c1c1e;
       --muted:   #6c6c70;
-      --accent:  #2c6be4;
+      --accent:  #c85800;
       --star:    #d97706;
       --green:   #34c759;
       --red:     #ff3b30;
@@ -70,6 +70,7 @@
     .header {
       position: sticky; top: 0; z-index: 50;
       background: var(--bg);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
       padding: 14px 14px 10px;
       display: flex; align-items: center; gap: 10px;
       border-bottom: 2px solid var(--accent);
@@ -161,7 +162,7 @@
 
     .add-list-icon {
       width: 38px; height: 38px; border-radius: 50%;
-      background: rgba(74,158,255,0.15);
+      background: rgba(232,99,10,0.15);
       display: flex; align-items: center; justify-content: center;
       font-size: 22px; color: var(--accent);
     }
@@ -507,9 +508,14 @@
     /* scrollbar */
     ::-webkit-scrollbar { width: 3px; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── Circuit background ── */
+    #page-bg { position: fixed; inset: 0; z-index: -1; background: url('images/circuit-bg.jpg') center/cover; }
+    [data-theme=light] #page-bg { display: none; }
   </style>
 </head>
 <body>
+<div id="page-bg" aria-hidden="true"></div>
 
 <!-- ══ CONNECTION BAR ══ -->
 <div id="connBar">

@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tankstellen-Finder</title>
 <style>
-:root{--bg:#eef1f4;--card:#fff;--ink:#17202a;--muted:#718096;--line:#dce2e8;--brand:#176b4d;--soft:#e0f1ea;--warn:#a66016;--radius:13px;--shadow:0 10px 30px rgba(23,32,42,.07)}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0d1518;--card:#152126;--ink:#e8eff1;--muted:#8da1a9;--line:#2a3a40;--brand:#55c99b;--soft:#173a30;--warn:#e2a85c;--shadow:none}}
-:root[data-theme=dark]{--bg:#0d1518;--card:#152126;--ink:#e8eff1;--muted:#8da1a9;--line:#2a3a40;--brand:#55c99b;--soft:#173a30;--warn:#e2a85c;--shadow:none}
+:root{--bg:#f5f0e8;--card:#fff;--ink:#17202a;--muted:#718096;--line:#dce2e8;--brand:#c85800;--soft:rgba(200,88,0,0.12);--warn:#a66016;--radius:13px;--shadow:0 10px 30px rgba(23,32,42,.07)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0a0806;--card:rgba(20,16,10,0.82);--ink:#e8eff1;--muted:#8da1a9;--line:#2a3a40;--brand:#e8630a;--soft:rgba(232,99,10,0.14);--warn:#e2a85c;--shadow:none}}
+:root[data-theme=dark]{--bg:#0a0806;--card:rgba(20,16,10,0.82);--ink:#e8eff1;--muted:#8da1a9;--line:#2a3a40;--brand:#e8630a;--soft:rgba(232,99,10,0.14);--warn:#e2a85c;--shadow:none}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}.app{max-width:1050px;margin:auto;padding:0 18px 70px}
 header{display:flex;}.logo{font:700 19px/1.2 system-ui}.logo small{display:block;color:var(--muted);font-size:11px;font-weight:500;margin-top:3px}
-.site-nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);margin-bottom:20px;}
+.site-nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);margin-bottom:20px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
 .site-nav-title{flex:1;font-size:17px;font-weight:700;padding:0 4px;color:var(--ink);}
 .site-nav-btn{width:36px;height:36px;border-radius:50%;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;flex-shrink:0;font-family:inherit;transition:background .15s;}
 .site-nav-btn:active{background:var(--card);}
@@ -32,6 +32,10 @@ header{display:flex;}.logo{font:700 19px/1.2 system-ui}.logo small{display:block
 .overlay{position:fixed;inset:0;background:rgba(9,15,18,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}.overlay.open{display:flex}.modal{width:min(460px,100%);background:var(--card);border:1px solid var(--line);border-radius:15px;padding:22px}.modal h2{margin:0 0 8px;font-size:20px}.notice{font-size:12px;color:var(--muted);background:var(--bg);padding:10px;border-radius:9px;margin:0 0 16px}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.ghost{border:1px solid var(--line);background:none;color:var(--ink);border-radius:9px;padding:9px 14px;cursor:pointer}
 .attribution{text-align:center;font-size:11px;color:var(--muted);padding:22px 0 4px;border-top:1px solid var(--line);margin-top:28px}.attribution a{color:var(--brand);text-decoration:none}
 .station-left{display:flex;gap:10px;align-items:flex-start}
+
+/* ── Circuit background ── */
+#page-bg{position:fixed;inset:0;z-index:-1;background:url('images/circuit-bg.jpg') center/cover;}
+[data-theme=light] #page-bg{display:none;}
 .brand-badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;font-size:11px;font-weight:900;letter-spacing:-.5px;flex-shrink:0;margin-top:2px}
 .hours-btn{cursor:pointer;border:0;font:10px/1.6 inherit;padding:2px 8px;border-radius:99px;letter-spacing:inherit}
 .hours-btn.open{background:var(--soft);color:var(--brand)}
@@ -62,6 +66,7 @@ header { border-bottom: 2px solid var(--brand); }
 </style>
 </head>
 <body>
+<div id="page-bg" aria-hidden="true"></div>
 <div class="app">
 <header class="site-nav"><div class="site-nav-title">⛽ Tankstellen</div><button class="site-nav-btn" id="settingsBtn" title="API-Einstellungen">⚙</button><button class="site-nav-btn" id="themeBtn" title="Design wechseln">◐</button><a href="index.html" class="site-nav-btn" title="Startseite">⌂</a></header>
 <section class="search-card"><div class="grid"><div class="field place"><label>Ort oder Postleitzahl</label><div style="display:flex;gap:6px"><input id="place" value="Hilchenbach" placeholder="z. B. Hilchenbach" style="flex:1"><button id="gpsBtn" class="icon" title="Aktuellen Standort ermitteln" style="flex-shrink:0;font-size:15px">📍</button></div></div><div class="field"><label>Umkreis</label><select id="radius"><option value="3">3 km</option><option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="25">25 km</option></select></div><div class="field"><label>Sortierung</label><select id="sorting"><option value="price">Preis</option><option value="dist">Entfernung</option></select></div><button class="primary" id="searchBtn">Tankstellen suchen</button></div><div class="subactions"><span class="status" id="status">API-Key in den Einstellungen hinterlegen</span></div>
