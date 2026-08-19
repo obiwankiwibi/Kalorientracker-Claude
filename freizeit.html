@@ -230,23 +230,62 @@ const PRICE_LABEL = { free:'Kostenlos', low:'€', mid:'€€', high:'€€€
 
 /* ── OSM category mapping ── */
 const OSM_CAT = {
-  swimming_pool:'🏊 Schwimmbad', water_park:'🏊 Schwimmbad',
-  miniature_golf:'⛳ Minigolf',
+  // Wasser
+  swimming_pool:'🏊 Schwimmbad', water_park:'🏊 Schwimmbad', swimming_area:'🏊 Schwimmbad',
+  paddling_pool:'🏊 Schwimmbad', lido:'🏊 Schwimmbad',
+  // Golf
+  miniature_golf:'⛳ Minigolf', golf_course:'⛳ Golf', disc_golf_course:'🥏 Disc Golf',
+  // Kino / Theater
   cinema:'🎬 Kino',
   theatre:'🎭 Theater',
-  museum:'🏛️ Museum',
-  bowling_alley:'🎳 Bowling',
+  // Kultur
+  museum:'🏛️ Museum', archaeological_site:'🏛️ Museum', monument:'🏛️ Museum',
+  heritage:'🏛️ Museum', ruins:'🏰 Schloss / Burg', castle:'🏰 Schloss / Burg',
+  planetarium:'🔭 Planetarium', library:'📚 Bibliothek',
+  // Bowling
+  bowling_alley:'🎳 Bowling', bowling:'🎳 Bowling',
+  // Klettern
   climbing:'🧗 Klettern', climbing_wall:'🧗 Klettern',
+  // Eislaufen
   ice_rink:'🛼 Rollschuhlaufen',
+  // Freizeitpark
   theme_park:'🎡 Freizeitpark', amusement_park:'🎡 Freizeitpark',
+  attraction:'🎡 Freizeitpark',
+  // Fitness / Sport
   fitness_centre:'🏋️ Fitness', gym:'🏋️ Fitness', sports_centre:'🏋️ Fitness',
+  sports_hall:'🏋️ Fitness', stadium:'🏟️ Stadion',
+  pitch:'🏃 Sport / Outdoor', track:'🏃 Sport / Outdoor', recreation_ground:'🏃 Sport / Outdoor',
+  // Gaming / Escape
   amusement_arcade:'🎮 Gaming / Escape Room', escape_game:'🎮 Gaming / Escape Room',
+  laser_tag:'🎮 Gaming / Escape Room', paintball:'🎮 Gaming / Escape Room',
+  // Trampolin / Kart
+  trampoline_park:'🤸 Trampolin',
+  go_kart:'🏎️ Kart / Fahrspaß', karting:'🏎️ Kart / Fahrspaß',
+  // Reiten
+  horse_riding:'🐴 Reiten',
+  // Restaurant / Essen
   restaurant:'🍕 Restaurant', fast_food:'🍕 Restaurant', food_court:'🍕 Restaurant',
   cafe:'☕ Café', coffee_shop:'☕ Café',
+  // Bar / Nachtleben
+  bar:'🍺 Bar / Pub', pub:'🍺 Bar / Pub', biergarten:'🍺 Biergarten',
+  nightclub:'🎵 Konzert / Event', casino:'🎰 Casino',
+  // Natur
   park:'🌳 Natur / Wandern', nature_reserve:'🌳 Natur / Wandern', forest:'🌳 Natur / Wandern',
-  gallery:'🎨 Kunst / Ausstellung', arts_centre:'🎨 Kunst / Ausstellung', exhibition:'🎨 Kunst / Ausstellung',
-  zoo:'🐾 Zoo / Tierpark', animal_shelter:'🐾 Zoo / Tierpark',
+  garden:'🌸 Garten / Park', dog_park:'🌳 Natur / Wandern',
+  picnic_site:'🌳 Natur / Wandern', viewpoint:'👁️ Aussichtspunkt',
+  beach:'🏖️ Strand', beach_resort:'🏖️ Strand',
+  // Camping
+  camp_site:'⛺ Camping', caravan_site:'⛺ Camping',
+  // Kunst
+  gallery:'🎨 Kunst / Ausstellung', arts_centre:'🎨 Kunst / Ausstellung',
+  exhibition:'🎨 Kunst / Ausstellung', artwork:'🎨 Kunst / Ausstellung',
+  // Zoo / Tiere
+  zoo:'🐾 Zoo / Tierpark', animal_park:'🐾 Zoo / Tierpark', aquarium:'🐠 Aquarium',
+  // Wellness
+  sauna:'🧖 Wellness / Sauna', spa:'🧖 Wellness / Sauna',
+  // Konzert / Event
   concert_hall:'🎵 Konzert / Event', events_venue:'🎵 Konzert / Event',
+  social_centre:'🎵 Konzert / Event', community_centre:'🎵 Konzert / Event',
 };
 
 function osmCat(r) {
@@ -362,12 +401,21 @@ $('osmGpsBtn').onclick = () => {
 
 async function doOverpassNearby(lat, lon) {
   $('osmStatus').textContent = '🔍 Suche Freizeitaktivitäten in der Nähe …';
-  const r = 15000; // 15 km radius
-  const query = `[out:json][timeout:20];(
-    node["leisure"~"swimming_pool|miniature_golf|bowling_alley|fitness_centre|ice_rink|theme_park|climbing|climbing_wall|water_park|amusement_park"](around:${r},${lat},${lon});
-    node["amenity"~"cinema|theatre|arts_centre"](around:${r},${lat},${lon});
-    node["tourism"~"museum|zoo|gallery|theme_park|amusement_park"](around:${r},${lat},${lon});
-  );out body;`;
+  const r = 15000;
+  const L = `"leisure"~"swimming_pool|water_park|swimming_area|miniature_golf|golf_course|disc_golf_course|bowling_alley|fitness_centre|sports_centre|sports_hall|ice_rink|theme_park|amusement_park|climbing|climbing_wall|go_kart|karting|escape_game|laser_tag|paintball|trampoline_park|horse_riding|beach_resort|sauna|stadium|track|pitch|garden|dog_park|nature_reserve"`;
+  const A = `"amenity"~"cinema|theatre|arts_centre|nightclub|bar|pub|biergarten|planetarium|library|bowling_alley|casino|community_centre|social_centre"`;
+  const T = `"tourism"~"museum|zoo|gallery|theme_park|amusement_park|attraction|viewpoint|aquarium|artwork|castle|ruins|camp_site|caravan_site"`;
+  const N = `"natural"~"beach|peak"`;
+  const query = `[out:json][timeout:30];(
+    node[${L}](around:${r},${lat},${lon});
+    way[${L}](around:${r},${lat},${lon});
+    node[${A}](around:${r},${lat},${lon});
+    way[${A}](around:${r},${lat},${lon});
+    node[${T}](around:${r},${lat},${lon});
+    way[${T}](around:${r},${lat},${lon});
+    node[${N}](around:${r},${lat},${lon});
+    way[${N}](around:${r},${lat},${lon});
+  );out center qt 150;`;
   try {
     const res = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
@@ -387,9 +435,16 @@ function dist(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+function elCoords(e) {
+  return { lat: e.lat ?? e.center?.lat, lon: e.lon ?? e.center?.lon };
+}
+
 function showOverpassResults(elements, userLat, userLon) {
-  const named = elements.filter(e => e.tags && e.tags.name);
-  named.sort((a,b) => dist(userLat,userLon,a.lat,a.lon) - dist(userLat,userLon,b.lat,b.lon));
+  const named = elements.filter(e => e.tags && e.tags.name && (e.lat != null || e.center?.lat != null));
+  named.sort((a,b) => {
+    const ca = elCoords(a), cb = elCoords(b);
+    return dist(userLat,userLon,ca.lat,ca.lon) - dist(userLat,userLon,cb.lat,cb.lon);
+  });
   if (!named.length) {
     $('osmStatus').textContent = 'Keine Freizeitaktivitäten im Umkreis von 15 km gefunden.';
     $('osmResults').innerHTML = `<div class="search-empty"><strong>Nichts gefunden</strong>Versuche eine manuelle Suche mit dem Suchfeld.</div>`;
@@ -402,7 +457,8 @@ function showOverpassResults(elements, userLat, userLon) {
     const catLabel = cat.replace(/^\S+\s/, '');
     const name = e.tags.name;
     const addr = osmAddress(e);
-    const km = dist(userLat,userLon,e.lat,e.lon);
+    const c = elCoords(e);
+    const km = dist(userLat,userLon,c.lat,c.lon);
     const distStr = km < 1 ? Math.round(km*1000) + ' m' : km.toFixed(1) + ' km';
     return `<div class="sr-item" data-idx="${i}">
       <div class="sr-icon">${icon}</div>
