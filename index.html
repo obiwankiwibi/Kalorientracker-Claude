@@ -536,6 +536,17 @@
     </div>
     <div style="text-align:center;padding-bottom:6px">
       <div id="lifePct" style="font-size:11px;color:var(--muted);margin-top:2px"></div>
+      <div style="display:flex;gap:14px;justify-content:center;margin-top:5px;flex-wrap:wrap">
+        <span style="font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px">
+          <span style="display:inline-block;width:18px;height:4px;background:#e8ecff;border-radius:2px"></span>Lebensjahre
+        </span>
+        <span style="font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px">
+          <span style="display:inline-block;width:18px;height:4px;background:#3dbdb5;border-radius:2px"></span>Tag im Jahr
+        </span>
+        <span style="font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px">
+          <span style="display:inline-block;width:18px;height:4px;background:#e05555;border-radius:2px"></span>Sekunden ↺
+        </span>
+      </div>
       <div id="lifeCountdown" style="
         display:inline-flex;gap:6px;align-items:baseline;
         margin-top:10px;padding:7px 14px;border-radius:10px;
@@ -914,24 +925,29 @@ function initTodoWidget() {
 initTodoWidget();
 
 /* ── Lebens-Uhr ── */
+let _lcSize = 0;
 function drawLifeClock() {
   const canvas = document.getElementById('lifeCanvas');
   if (!canvas) return;
   const dpr  = window.devicePixelRatio || 1;
   const size = Math.min(document.body.clientWidth - 56, 360);
-  canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
-  canvas.width = size * dpr; canvas.height = size * dpr;
+  if (size !== _lcSize) {
+    _lcSize = size;
+    canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
+    canvas.width = size * dpr; canvas.height = size * dpr;
+  }
   const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const cx = size/2, cy = size/2;
 
   // Theme
   const cs = getComputedStyle(document.documentElement);
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
     || (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme:dark)').matches);
-  const ink  = cs.getPropertyValue('--text').trim();
-  const mut  = cs.getPropertyValue('--muted').trim();
-  const teal = cs.getPropertyValue('--teal').trim();
+  const ink    = cs.getPropertyValue('--text').trim();
+  const mut    = cs.getPropertyValue('--muted').trim();
+  const teal   = cs.getPropertyValue('--teal').trim();
+  const salmon = '#e05555';
 
   // Life data
   const birth   = new Date(1995, 11, 7);
@@ -944,10 +960,13 @@ function drawLifeClock() {
   const yrsLeft  = Math.floor(daysLeft / 365.25);
   const pct      = (progress * 100).toFixed(1);
 
-  // Day-in-year progress (minute hand)
+  // Day-in-year progress (teal hand)
   const soy    = new Date(now.getFullYear(), 0, 1);
   const eoy    = new Date(now.getFullYear() + 1, 0, 1);
   const dayPrg = (now - soy) / (eoy - soy);
+
+  // Seconds-in-minute progress (salmon hand, sweeps counter-clockwise)
+  const secPrg = (now.getSeconds() + now.getMilliseconds() / 1000) / 60;
 
   // Dimensions
   const outerR  = size * 0.455;
@@ -958,8 +977,9 @@ function drawLifeClock() {
   const yearTL  = faceR  * 0.16;
   const dayL    = arcMid * 0.74;
   const dayTL   = faceR  * 0.18;
-  const sdR     = faceR  * 0.245;   // subdial radius at 6-o'clock
-  const sdY     = cy + faceR * 0.43; // subdial center Y
+  const secL    = arcMid * 0.90;
+  const sdR     = faceR  * 0.245;
+  const sdY     = cy + faceR * 0.43;
 
   ctx.clearRect(0, 0, size, size);
 
@@ -1079,50 +1099,66 @@ function drawLifeClock() {
     ctx.restore();
   }
 
-  // Year hand — white/dark tapered (Stundenzeiger: once around in 78.6 years)
+  // Year hand — white/dark (once around in 78.6 years)
   hand(-Math.PI/2 + progress*2*Math.PI, yearL, yearTL, size*0.012, isDark?'#e8ecff':'#1a1f3a', 7);
+  // Day hand — teal (once around per year)
+  hand(-Math.PI/2 + dayPrg*2*Math.PI, dayL, dayTL, size*0.009, teal, 5);
+  // Seconds hand — salmon, COUNTER-CLOCKWISE (countdown direction)
+  {
+    const sa = -Math.PI/2 - secPrg * 2*Math.PI;
+    const hc = Math.cos(sa), hs = Math.sin(sa);
+    const pc = Math.cos(sa + Math.PI/2), ps = Math.sin(sa + Math.PI/2);
+    const hw = 1.8, tail = dayTL * 0.55;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 5; ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + pc*hw - hc*tail, cy + ps*hw - hs*tail);
+    ctx.lineTo(cx + hc*secL,         cy + hs*secL);
+    ctx.lineTo(cx - pc*hw - hc*tail, cy - ps*hw - hs*tail);
+    ctx.closePath();
+    ctx.fillStyle = salmon; ctx.fill();
+    // counterweight tail
+    ctx.beginPath();
+    ctx.moveTo(cx + pc*3,            cy + ps*3);
+    ctx.lineTo(cx - hc*secL*0.20,    cy - hs*secL*0.20);
+    ctx.lineTo(cx - pc*3,            cy - ps*3);
+    ctx.closePath();
+    ctx.fillStyle = salmon; ctx.fill();
+    ctx.restore();
+  }
 
-  // Day hand — teal tapered (Minutenzeiger: once around per year)
-  hand(-Math.PI/2 + dayPrg*2*Math.PI,  dayL,  dayTL,  size*0.009, teal, 5);
-
-  // ── Hub ──
+  // ── Hub (drawn on top of all hands) ──
   ctx.save();
   ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 6;
   ctx.beginPath(); ctx.arc(cx, cy, size*0.032, 0, 2*Math.PI);
   ctx.fillStyle = isDark ? '#1a1d3c' : '#ffffff'; ctx.fill();
-  ctx.strokeStyle = teal; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.strokeStyle = salmon; ctx.lineWidth = 2.5; ctx.stroke();
   ctx.restore();
-  ctx.beginPath(); ctx.arc(cx, cy, size*0.014, 0, 2*Math.PI);
-  ctx.fillStyle = teal; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, size*0.013, 0, 2*Math.PI);
+  ctx.fillStyle = salmon; ctx.fill();
 
-  // ── Subdial at 6-o'clock (countdown display) ──
-  // Outer ring of subdial
+  // ── Subdial at 6-o'clock — always dark for contrast ──
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 4;
+  ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 5;
   ctx.beginPath(); ctx.arc(cx, sdY, sdR, 0, 2*Math.PI);
-  ctx.strokeStyle = isDark?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.12)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 1.5; ctx.stroke();
   ctx.restore();
-  // Subdial fill
   const sdg = ctx.createRadialGradient(cx - sdR*0.1, sdY - sdR*0.15, 0, cx, sdY, sdR);
-  if (isDark) { sdg.addColorStop(0,'#1a1e45'); sdg.addColorStop(1,'#0e1028'); }
-  else        { sdg.addColorStop(0,'#f0f2ff'); sdg.addColorStop(1,'#d8dcf0'); }
+  sdg.addColorStop(0, '#1e2250'); sdg.addColorStop(1, '#0d0f26');
   ctx.beginPath(); ctx.arc(cx, sdY, sdR, 0, 2*Math.PI); ctx.fillStyle = sdg; ctx.fill();
-  // Subdial tick marks (12 marks like a watch complication)
   for (let i = 0; i < 12; i++) {
     const a = (i/12)*2*Math.PI - Math.PI/2;
-    const r1 = sdR - 5, r2 = sdR - 2;
     ctx.beginPath();
-    ctx.moveTo(cx + r1*Math.cos(a), sdY + r1*Math.sin(a));
-    ctx.lineTo(cx + r2*Math.cos(a), sdY + r2*Math.sin(a));
-    ctx.strokeStyle = isDark?'rgba(255,255,255,0.35)':'rgba(0,0,0,0.28)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.moveTo(cx + (sdR-5)*Math.cos(a), sdY + (sdR-5)*Math.sin(a));
+    ctx.lineTo(cx + (sdR-2)*Math.cos(a), sdY + (sdR-2)*Math.sin(a));
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1; ctx.stroke();
   }
-  // Subdial text
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.font = `800 ${Math.round(sdR*0.60)}px system-ui`;
-  ctx.fillStyle = ink;
+  ctx.fillStyle = '#ffffff';
   ctx.fillText(daysLeft.toLocaleString('de-DE'), cx, sdY - sdR*0.06);
   ctx.font = `600 ${Math.round(sdR*0.27)}px system-ui`;
-  ctx.fillStyle = mut;
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
   ctx.fillText('Tage', cx, sdY + sdR*0.40);
 
   // ── Top area text (above center) ──
@@ -1139,12 +1175,12 @@ function drawLifeClock() {
   ctx.beginPath(); ctx.moveTo(cx - faceR*0.3, cy - faceR*0.29); ctx.lineTo(cx + faceR*0.3, cy - faceR*0.29);
   ctx.strokeStyle = isDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.09)'; ctx.lineWidth = 0.8; ctx.stroke();
 
-  // ── Bottom pct label ──
+  // ── pct label ──
   const pctEl = document.getElementById('lifePct');
-  if (pctEl) pctEl.textContent = `${pct} % gelebt  ·  weißer Zeiger: Lebensjahre  ·  türkiser Zeiger: Tag im Jahr`;
+  if (pctEl) pctEl.textContent = `${pct} % gelebt`;
 }
-drawLifeClock();
-window.addEventListener('resize', drawLifeClock);
+(function loop() { drawLifeClock(); requestAnimationFrame(loop); })();
+window.addEventListener('resize', () => { _lcSize = 0; });
 
 /* ── Digitaler Lebens-Countdown ── */
 (function() {
