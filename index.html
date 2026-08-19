@@ -35,8 +35,14 @@
       --bar-bg:   rgba(0,0,0,0.08);
     }
 
+    #page-bg {
+      position: fixed; inset: 0; z-index: -1;
+      background: url('images/circuit-bg.jpg') center/cover;
+    }
+    [data-theme=light] #page-bg { display: none; }
+
     body {
-      background: var(--bg) url('images/circuit-bg.jpg') center/cover fixed;
+      background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       min-height: 100vh;
@@ -47,7 +53,14 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    [data-theme=light] body { background-image: none; }
+    .header-backup-btn {
+      background: none; border: none; cursor: pointer; font-family: inherit;
+      font-size: 10px; font-weight: 600; color: var(--muted); padding: 0;
+      line-height: 1; display: flex; align-items: center; gap: 3px;
+      transition: color 0.15s;
+    }
+    .header-backup-btn:hover { color: var(--teal); }
+    .header-backup-btn.ok { color: var(--teal); }
 
     /* ── Page header ── */
     .page-header {
@@ -389,11 +402,15 @@
   </style>
 </head>
 <body>
+  <div id="page-bg" aria-hidden="true"></div>
 
   <div class="page-header">
     <div class="page-logo">Mein<span>Hub</span></div>
     <div style="display:flex;align-items:center;gap:10px">
-      <div class="page-time" id="headerTime"></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <div class="page-time" id="headerTime"></div>
+        <button id="headerBackupBtn" class="header-backup-btn" onclick="doBackup()" title="Backup erstellen">💾 Backup</button>
+      </div>
       <button id="themeToggleBtn" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px;color:var(--muted);line-height:1;border-radius:8px" title="Design wechseln">◐</button>
     </div>
   </div>
@@ -782,6 +799,8 @@ function doBackup() {
   const btn = document.getElementById('backupBtn');
   btn.classList.add('success');
   setTimeout(() => btn.classList.remove('success'), 1800);
+  const hBtn = document.getElementById('headerBackupBtn');
+  if (hBtn) { hBtn.classList.add('ok'); hBtn.textContent = '✓ Gesichert'; setTimeout(() => { hBtn.classList.remove('ok'); hBtn.innerHTML = '💾 Backup'; }, 2000); }
 }
 
 updateBackupSub();
