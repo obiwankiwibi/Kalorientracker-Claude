@@ -2514,6 +2514,12 @@ function refreshOffers() {
 // ── Marktguru Live-Import ──
 const MG_API_KEY = '8Kk+pmbf7TgJ9nVj2cXeA7P5zBGv8iuutVVMRfOfvNE=';
 const MG_CDN     = 'https://cdn.marktguru.de';
+const MG_CDN_FALLBACKS = [
+  'https://images.marktguru.de',
+  'https://assets.marktguru.de',
+  'https://static.marktguru.de',
+  'https://media.marktguru.de',
+];
 
 function getMgPlz() {
   return localStorage.getItem('einkauf_mg_plz') || '57271';
@@ -2579,10 +2585,7 @@ async function fetchMarktguruLive() {
       const results = data.results || [];
       if (!results.length) break;
       if (all.length === 0 && results.length > 0) {
-        const r = results[0];
-        console.log('[MG] first offer raw:', JSON.stringify(r, null, 2));
-        const constructed = `https://cdn.marktguru.de/offers/${r.id}/0.jpg`;
-        alert(`Bild-Debug:\nid: ${r.id}\nURL: ${constructed}\nimages.count: ${r.images?.count}`);
+        console.log('[MG] first offer raw:', JSON.stringify(results[0], null, 2));
       }
       all.push(...results);
       offset += results.length;
@@ -2649,6 +2652,15 @@ function renderOffers() {
   if (activeHaendler !== 'Alle') renderStores();
 }
 
+function mgImgFallback(img, originalUrl) {
+  img._mgTry = (img._mgTry || 0) + 1;
+  if (img._mgTry <= MG_CDN_FALLBACKS.length) {
+    img.src = originalUrl.replace(MG_CDN, MG_CDN_FALLBACKS[img._mgTry - 1]);
+  } else {
+    img.parentElement.innerHTML = '<div class="offer-img-fallback">🛒</div>';
+  }
+}
+
 function buildOfferCard(offer) {
   const today     = todayStr();
   const msLeft    = new Date(offer.gueltigBis || '9999-12-31') - new Date(today);
@@ -2661,7 +2673,7 @@ function buildOfferCard(offer) {
 
   const col = HAENDLER_COLORS[offer.haendler] || '#666';
   const imgHtml = offer.bild
-    ? `<img src="${esc(offer.bild)}" alt="" class="offer-img" onerror="this.parentElement.innerHTML='<div class=offer-img-fallback>🛒</div>'">`
+    ? `<img src="${esc(offer.bild)}" alt="" class="offer-img" onerror="mgImgFallback(this,'${esc(offer.bild)}')">`
     : `<div class="offer-img-fallback">🛒</div>`;
 
   const storeUrl = STORES.find(s => s.name === offer.haendler)?.url || null;
