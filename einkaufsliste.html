@@ -2581,8 +2581,8 @@ async function fetchMarktguruLive() {
       if (all.length === 0 && results.length > 0) {
         const r = results[0];
         console.log('[MG] first offer raw:', JSON.stringify(r, null, 2));
-        const imgInfo = JSON.stringify({ images: r.images, imageUrl: r.imageUrl, product_img: r.product?.imageUrl });
-        alert('Bild-Debug (1. Angebot):\n\n' + imgInfo);
+        const constructed = `https://cdn.marktguru.de/offers/${r.id}/0.jpg`;
+        alert(`Bild-Debug:\nid: ${r.id}\nURL: ${constructed}\nimages.count: ${r.images?.count}`);
       }
       all.push(...results);
       offset += results.length;
