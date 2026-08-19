@@ -160,10 +160,9 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 /* ── Footer ── */
 .footer{margin-top:60px;padding:24px 0;border-top:1px solid var(--line);text-align:center;font-size:12px;color:var(--muted);letter-spacing:.04em}
 
-/* ── Hero layout with logo ── */
-.hero-inner{display:flex;align-items:center;gap:52px;max-width:1080px;margin:auto;padding:52px 28px 48px 36px}
-.hero-text{flex:1;min-width:0}
-.hero-logo-svg{width:180px;height:180px;flex-shrink:0;filter:drop-shadow(0 0 32px rgba(200,16,46,.3))}
+/* ── Hero layout ── */
+.hero-inner{max-width:1080px;margin:auto;padding:52px 28px 48px 36px}
+.hero-wordmark{display:block;height:28px;width:auto;margin-bottom:20px;filter:invert(1) grayscale(1) brightness(10) contrast(2);mix-blend-mode:screen;image-rendering:crisp-edges}
 
 /* ── Mein Exemplar highlight cards ── */
 .exemplar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
@@ -175,8 +174,8 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 
 /* ── Responsive ── */
 @media(max-width:640px){
-  .hero-inner{flex-direction:column-reverse;align-items:flex-start;gap:24px;padding:38px 20px 36px 24px}
-  .hero-logo-svg{width:130px;height:130px;align-self:center}
+  .hero-inner{padding:38px 20px 36px 24px}
+  .hero-wordmark{height:22px}
   .hero-stats{gap:22px}
   .two-col,.mc-grid,.kit-grid{grid-template-columns:1fr}
   .gallery-grid{grid-template-columns:1fr 1fr}
@@ -200,40 +199,29 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 <div class="hero">
   <div class="hero-rail"></div>
   <div class="hero-inner">
-    <!-- Škoda winged-arrow badge -->
-    <svg class="hero-logo-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="100" cy="100" r="96" stroke="#c8102e" stroke-width="4" opacity="0.75"/>
-      <circle cx="100" cy="100" r="80" stroke="#c8102e" stroke-width="1.5" opacity="0.35"/>
-      <!-- Winged arrow -->
-      <path d="M 28,100 C 50,86 72,76 90,70 L 170,52 L 140,72 L 112,84 L 112,116 L 140,128 L 170,148 L 90,130 C 72,124 50,114 28,100 Z" fill="white" opacity="0.92"/>
-      <!-- Center dot -->
-      <circle cx="112" cy="100" r="5" fill="#c8102e" opacity="0.8"/>
-    </svg>
-
-    <div class="hero-text">
-      <div class="hero-kicker">Mein Auto · 2025 · Luna Silber Metallic</div>
-      <div class="hero-name">
-        Škoda Scala
-        <em>Monte Carlo</em>
+    <img class="hero-wordmark" src="images/scala/skoda-wordmark.jpg" alt="Škoda">
+    <div class="hero-kicker">Mein Auto · 2025 · Luna Silber Metallic</div>
+    <div class="hero-name">
+      Scala
+      <em>Monte Carlo</em>
+    </div>
+    <div class="hero-sub">1.0 TSI · 116 PS · 6-Gang · Kompakthatchback</div>
+    <div class="hero-stats">
+      <div>
+        <div class="hstat-val">116 PS</div>
+        <div class="hstat-label">Motorleistung</div>
       </div>
-      <div class="hero-sub">1.0 TSI · 116 PS · 6-Gang · Kompakthatchback</div>
-      <div class="hero-stats">
-        <div>
-          <div class="hstat-val">116 PS</div>
-          <div class="hstat-label">Motorleistung</div>
-        </div>
-        <div>
-          <div class="hstat-val">9.441 km</div>
-          <div class="hstat-label">Kilometerstand</div>
-        </div>
-        <div>
-          <div class="hstat-val">~5,5 L</div>
-          <div class="hstat-label">Realverbrauch</div>
-        </div>
-        <div>
-          <div class="hstat-val">467 L</div>
-          <div class="hstat-label">Kofferraum</div>
-        </div>
+      <div>
+        <div class="hstat-val">9.441 km</div>
+        <div class="hstat-label">Kilometerstand</div>
+      </div>
+      <div>
+        <div class="hstat-val">~5,5 L</div>
+        <div class="hstat-label">Realverbrauch</div>
+      </div>
+      <div>
+        <div class="hstat-val">467 L</div>
+        <div class="hstat-label">Kofferraum</div>
       </div>
     </div>
   </div>
