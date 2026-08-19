@@ -777,18 +777,6 @@
     }
     .offer-fav-btn.on { color: #f5a623; transform: scale(1.15); }
 
-    .offer-img-wrap {
-      width: 100%; aspect-ratio: 1;
-      display: flex; align-items: center; justify-content: center;
-      background: var(--card); overflow: hidden;
-      max-height: 100px;
-    }
-    .offer-img { width: 100%; height: 100%; object-fit: cover; }
-    .offer-img-fallback {
-      font-size: 40px; display: flex;
-      align-items: center; justify-content: center;
-      width: 100%; height: 100px;
-    }
 
     .offer-info { padding: 8px 9px 6px; flex: 1; }
     .offer-name {
@@ -830,16 +818,8 @@
     }
     .offer-link-btn:active { background: var(--accent); color: #fff; }
 
-    /* ── Collapsible offer cards ── */
-    .offer-card { cursor: pointer; }
-    .offer-summary { padding: 6px 9px 8px; }
-    .offer-expandable { display: none; }
-    .offer-card.expanded .offer-expandable { display: block; }
-    .offer-chevron {
-      font-size: 9px; color: var(--muted); margin-left: auto; padding: 0 4px;
-      transition: transform 0.2s; pointer-events: none;
-    }
-    .offer-card.expanded .offer-chevron { transform: rotate(180deg); }
+    /* ── Collapsible offers list ── */
+    #offersGrid.collapsed { display: none; }
 
     /* ── Scroll-to-top button ── */
     #scrollTopBtn {
@@ -1032,6 +1012,7 @@
     <div class="offers-topbar-actions">
       <button class="offers-action-btn" onclick="refreshOffers()" title="Aktualisieren">↻</button>
       <button class="offers-action-btn" onclick="openImportSheet()" title="Importieren">⊕</button>
+      <button class="offers-action-btn" id="offersCollapseBtn" onclick="toggleOffersList()" title="Liste ein-/ausklappen" style="font-size:14px">▼</button>
     </div>
   </div>
 
@@ -2643,11 +2624,6 @@ function renderOffers() {
   if (activeHaendler !== 'Alle') renderStores();
 }
 
-function mgImgFallback(img) {
-  clearTimeout(img._mgT);
-  if (img.parentElement) img.parentElement.innerHTML = '<div class="offer-img-fallback">🛒</div>';
-}
-
 function buildOfferCard(offer) {
   const today     = todayStr();
   const msLeft    = new Date(offer.gueltigBis || '9999-12-31') - new Date(today);
@@ -2659,12 +2635,6 @@ function buildOfferCard(offer) {
     `Noch ${daysLeft} Tage · bis ${fmtDate(offer.gueltigBis)}`;
 
   const col = HAENDLER_COLORS[offer.haendler] || '#666';
-  const imgHtml = offer.bild
-    ? `<img src="${esc(offer.bild)}" alt="" class="offer-img"
-        onerror="mgImgFallback(this)"
-        onload="clearTimeout(this._mgT)"
-        onloadstart="this._mgT=setTimeout(()=>mgImgFallback(this),4000)">`
-    : `<div class="offer-img-fallback">🛒</div>`;
 
   const storeUrl = STORES.find(s => s.name === offer.haendler)?.url || null;
   const linkUrl  = offer.url || storeUrl;
@@ -2672,30 +2642,25 @@ function buildOfferCard(offer) {
     ? `<a class="offer-link-btn" href="${esc(linkUrl)}" target="_blank" rel="noopener noreferrer">Zum Angebot →</a>`
     : '';
 
-  const addBtn = isOfferInList(offer.name)
-    ? `<button class="offer-add-btn in-list" disabled onclick="event.stopPropagation()">✓ In der Liste</button>`
-    : `<button class="offer-add-btn" onclick="event.stopPropagation();addOfferToList('${esc(offer.id)}')">+ Einkaufsliste</button>`;
-
-  return `<div class="offer-card" onclick="toggleOfferExpand(this)">
+  return `<div class="offer-card">
     <div class="offer-card-top">
       <span class="offer-retailer-badge" style="background:${col}">${esc(offer.haendler)}</span>
-      <span class="offer-chevron">▼</span>
-      <button class="offer-fav-btn ${offer.favorit ? 'on' : ''}" onclick="event.stopPropagation();toggleOfferFav('${esc(offer.id)}')">${offer.favorit ? '★' : '☆'}</button>
+      <button class="offer-fav-btn ${offer.favorit ? 'on' : ''}" onclick="toggleOfferFav('${esc(offer.id)}')">${offer.favorit ? '★' : '☆'}</button>
     </div>
-    <div class="offer-summary">
+    <div class="offer-info">
       <div class="offer-name">${esc(offer.name)}</div>
+      ${offer.kategorie ? `<div class="offer-cat">${esc(offer.kategorie)}</div>` : ''}
       <div class="offer-price">
         <span class="offer-price-val">${Number(offer.preis).toFixed(2).replace('.',',')} €</span>
         ${offer.grundpreis ? `<span class="offer-grundpreis">${esc(offer.grundpreis)}</span>` : ''}
       </div>
       ${validTxt ? `<div class="offer-valid ${urgentCls}">${validTxt}</div>` : ''}
     </div>
-    <div class="offer-expandable">
-      <div class="offer-img-wrap">${imgHtml}</div>
-      ${offer.kategorie ? `<div class="offer-info"><div class="offer-cat">${esc(offer.kategorie)}</div></div>` : ''}
-      ${addBtn}
-      ${linkHtml}
-    </div>
+    ${isOfferInList(offer.name)
+      ? `<button class="offer-add-btn in-list" disabled>✓ In der Liste</button>`
+      : `<button class="offer-add-btn" onclick="addOfferToList('${esc(offer.id)}')">+ Einkaufsliste</button>`
+    }
+    ${linkHtml}
   </div>`;
 }
 
@@ -2735,8 +2700,11 @@ function renderHaendlerChips() {
 
 function setOfferHaendler(h) { activeHaendler = h; renderOffers(); }
 
-function toggleOfferExpand(card) {
-  card.classList.toggle('expanded');
+let offersListCollapsed = false;
+function toggleOffersList() {
+  offersListCollapsed = !offersListCollapsed;
+  document.getElementById('offersGrid').classList.toggle('collapsed', offersListCollapsed);
+  document.getElementById('offersCollapseBtn').textContent = offersListCollapsed ? '▲' : '▼';
 }
 
 function scrollToTop() {
