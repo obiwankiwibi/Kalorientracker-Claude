@@ -2498,6 +2498,14 @@ function mgTransform(raw) {
   const unit     = raw.unit?.shortName || 'Stk';
   const ref      = raw.referencePrice;
   const grundpreis = ref ? (ref.toFixed(2).replace('.', ',') + ' €/' + unit) : '';
+  // Try multiple image sources: direct API URL > CDN pattern
+  const imgItems = Array.isArray(raw.images?.items) ? raw.images.items : [];
+  const apiImgUrl = imgItems.find(i => i.url)?.url
+    || raw.product?.imageUrl
+    || raw.imageUrl
+    || null;
+  const bildUrl = apiImgUrl || ((raw.images?.count || 0) > 0 ? `${MG_CDN}/offers/${raw.id}/0.jpg` : null)
+    || `${MG_CDN}/offers/${raw.id}/0.jpg`;
   return {
     id:           'mg_' + raw.id,
     name:         raw.product?.name || raw.description || 'Unbekannt',
@@ -2510,7 +2518,7 @@ function mgTransform(raw) {
     kategorie:    (cat.name || ''),
     gueltigVon:   (validity.from || '').split('T')[0] || null,
     gueltigBis:   (validity.to   || '').split('T')[0] || null,
-    bild:         `${MG_CDN}/offers/${raw.id}/0.jpg`,
+    bild:         bildUrl,
     url:          adv.externalLink || null,
     favorit:      false,
     quelle:       'Marktguru',
@@ -2539,6 +2547,7 @@ async function fetchMarktguruLive() {
       if (total === null) total = data.totalResults || 0;
       const results = data.results || [];
       if (!results.length) break;
+      if (all.length === 0 && results.length > 0) console.log('[MG] first offer raw:', JSON.stringify(results[0], null, 2));
       all.push(...results);
       offset += results.length;
       if (offset >= total) break;
