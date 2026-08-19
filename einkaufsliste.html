@@ -2514,16 +2514,6 @@ function refreshOffers() {
 // ── Marktguru Live-Import ──
 const MG_API_KEY = '8Kk+pmbf7TgJ9nVj2cXeA7P5zBGv8iuutVVMRfOfvNE=';
 const MG_CDN     = 'https://cdn.marktguru.de';
-const MG_CDN_FALLBACKS = [
-  'https://images.marktguru.de',
-  'https://img.marktguru.de',
-  'https://assets.marktguru.de',
-  'https://static.marktguru.de',
-  'https://media.marktguru.de',
-  'https://cdn.bonial.com',
-  'https://images.bonial.com',
-  'https://img.bonial.com',
-];
 
 function getMgPlz() {
   return localStorage.getItem('einkauf_mg_plz') || '57271';
@@ -2539,14 +2529,11 @@ function mgTransform(raw) {
   const unit     = raw.unit?.shortName || 'Stk';
   const ref      = raw.referencePrice;
   const grundpreis = ref ? (ref.toFixed(2).replace('.', ',') + ' €/' + unit) : '';
-  // Try multiple image sources: direct API URL > CDN pattern
+  // API returns no image URL — construct from CDN + offer ID; onerror shows fallback icon
   const imgItems = Array.isArray(raw.images?.items) ? raw.images.items : [];
-  const apiImgUrl = imgItems.find(i => i.url)?.url
+  const bildUrl = imgItems.find(i => i.url)?.url
     || raw.product?.imageUrl
-    || raw.imageUrl
-    || null;
-  const bildUrl = apiImgUrl || ((raw.images?.count || 0) > 0 ? `${MG_CDN}/offers/${raw.id}/0.jpg` : null)
-    || `${MG_CDN}/offers/${raw.id}/0.jpg`;
+    || ((raw.images?.count || 0) > 0 ? `${MG_CDN}/offers/${raw.id}/0.jpg` : null);
   return {
     id:           'mg_' + raw.id,
     name:         raw.product?.name || raw.description || 'Unbekannt',
@@ -2656,15 +2643,9 @@ function renderOffers() {
   if (activeHaendler !== 'Alle') renderStores();
 }
 
-function mgImgFallback(img, originalUrl) {
-  img._mgTry = (img._mgTry || 0) + 1;
-  if (img._mgTry <= MG_CDN_FALLBACKS.length) {
-    const nextUrl = originalUrl.replace(MG_CDN, MG_CDN_FALLBACKS[img._mgTry - 1]);
-    img.src = nextUrl;
-    img.onload = () => toast(`✓ Bilder: ${MG_CDN_FALLBACKS[img._mgTry - 1].replace('https://','')}`);
-  } else {
-    img.parentElement.innerHTML = '<div class="offer-img-fallback">🛒</div>';
-  }
+function mgImgFallback(img) {
+  clearTimeout(img._mgT);
+  if (img.parentElement) img.parentElement.innerHTML = '<div class="offer-img-fallback">🛒</div>';
 }
 
 function buildOfferCard(offer) {
@@ -2679,7 +2660,10 @@ function buildOfferCard(offer) {
 
   const col = HAENDLER_COLORS[offer.haendler] || '#666';
   const imgHtml = offer.bild
-    ? `<img src="${esc(offer.bild)}" alt="" class="offer-img" onerror="mgImgFallback(this,'${esc(offer.bild)}')">`
+    ? `<img src="${esc(offer.bild)}" alt="" class="offer-img"
+        onerror="mgImgFallback(this)"
+        onload="clearTimeout(this._mgT)"
+        onloadstart="this._mgT=setTimeout(()=>mgImgFallback(this),4000)">`
     : `<div class="offer-img-fallback">🛒</div>`;
 
   const storeUrl = STORES.find(s => s.name === offer.haendler)?.url || null;
