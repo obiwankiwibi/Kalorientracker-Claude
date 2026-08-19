@@ -32,13 +32,13 @@
     --bg-elev2:var(--card-elev);
   }
   html[data-theme="dark"]{
-    --bg:#111827;
-    --card:#1F2937;
-    --card-elev:#374151;
-    --text:#F9FAFB;
-    --text-soft:#9CA3AF;
-    --text-faint:#6B7280;
-    --line:rgba(255,255,255,0.09);
+    --bg:#0a0806;
+    --card:rgba(22,16,10,0.82);
+    --card-elev:rgba(34,26,16,0.85);
+    --text:#f0ebe4;
+    --text-soft:#9a8470;
+    --text-faint:#7a6550;
+    --line:rgba(232,99,10,0.14);
     --mint:#34D399;
     --mint-deep:#059669;
     --coral:#F87171;
@@ -49,8 +49,8 @@
     --protein:#4ADE80;
     --carbs-c:#FBBF24;
     --fat-c:#F87171;
-    --shadow:0 4px 18px rgba(0,0,0,0.35);
-    --shadow-lg:0 12px 40px rgba(0,0,0,0.5);
+    --shadow:0 4px 18px rgba(0,0,0,0.45);
+    --shadow-lg:0 12px 40px rgba(0,0,0,0.6);
     --bg-elev:var(--card);
     --bg-elev2:var(--card-elev);
   }
@@ -70,7 +70,7 @@
   .wrap{max-width:480px;margin:0 auto;padding:26px 16px 0;}
 
   /* ── Unified nav header ── */
-  .site-nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);}
+  .site-nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
   .site-nav-title{flex:1;font-size:17px;font-weight:700;padding:0 4px;}
   .site-nav-btn{width:36px;height:36px;border-radius:50%;background:none;border:none;color:var(--text-faint);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;flex-shrink:0;font-family:inherit;transition:background .15s;}
   .site-nav-btn:active{background:var(--card);}
@@ -367,7 +367,9 @@
   .product-card .pname{font-weight:700;font-size:14.5px;}
   .product-card .pkcal{font-size:12.5px;color:var(--mint);margin-top:3px;font-weight:600;}
   /* dark theme overrides for hardcoded light-only colors */
-  html[data-theme="dark"] body{background:radial-gradient(ellipse 65% 45% at 20% -5%,rgba(52,211,153,0.06),transparent),radial-gradient(ellipse 55% 35% at 92% 8%,rgba(248,113,113,0.04),transparent),var(--bg);}
+  #page-bg{position:fixed;inset:0;z-index:-1;background:url('images/circuit-bg.jpg') center/cover}
+  [data-theme=light] #page-bg{display:none}
+  html[data-theme="dark"] body{background:var(--bg);}
   html[data-theme="dark"] .hero::before{background:radial-gradient(ellipse 80% 60% at 50% -15%,rgba(52,211,153,0.09),transparent);}
   html[data-theme="dark"] .hero-bar-track{background:rgba(255,255,255,0.08);}
   html[data-theme="dark"] .hero-pct-badge{background:rgba(52,211,153,0.15);}
@@ -441,6 +443,7 @@
 </style>
 </head>
 <body>
+<div id="page-bg" aria-hidden="true"></div>
 
 <header class="site-nav">
   <div class="site-nav-title">🥗 Kalorien</div>
