@@ -536,6 +536,12 @@
     </div>
     <div style="text-align:center;padding-bottom:6px">
       <div id="lifePct" style="font-size:11px;color:var(--muted);margin-top:2px"></div>
+      <div id="lifeCountdown" style="
+        display:inline-flex;gap:6px;align-items:baseline;
+        margin-top:10px;padding:7px 14px;border-radius:10px;
+        background:var(--layer2);border:1px solid var(--border);
+        font-variant-numeric:tabular-nums;letter-spacing:0.01em;
+      "></div>
     </div>
   </div>
 
@@ -1139,6 +1145,43 @@ function drawLifeClock() {
 }
 drawLifeClock();
 window.addEventListener('resize', drawLifeClock);
+
+/* ── Digitaler Lebens-Countdown ── */
+(function() {
+  const birth = new Date(1995, 11, 7);
+  const totalMs = 78.6 * 365.25 * 24 * 3600 * 1000;
+  const endDate = new Date(birth.getTime() + totalMs);
+
+  function unit(val, label) {
+    return `<span style="display:inline-flex;flex-direction:column;align-items:center;gap:1px">
+      <span style="font-size:13px;font-weight:700;color:var(--text)">${String(val).padStart(2,'0')}</span>
+      <span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em">${label}</span>
+    </span>`;
+  }
+  function sep() {
+    return `<span style="font-size:12px;color:var(--muted);opacity:.5;padding-bottom:10px">:</span>`;
+  }
+
+  function tick() {
+    const el = document.getElementById('lifeCountdown');
+    if (!el) return;
+    const now = new Date();
+    let rem = Math.max(0, endDate - now);
+    const yrs  = Math.floor(rem / (365.25*24*3600*1000)); rem -= yrs*(365.25*24*3600*1000);
+    const days = Math.floor(rem / (24*3600*1000));        rem -= days*(24*3600*1000);
+    const hrs  = Math.floor(rem / (3600*1000));           rem -= hrs*3600*1000;
+    const mins = Math.floor(rem / 60000);                 rem -= mins*60000;
+    const secs = Math.floor(rem / 1000);
+    el.innerHTML =
+      unit(yrs,'Jahre') + sep() +
+      unit(days,'Tage') + sep() +
+      unit(hrs,'Std') + sep() +
+      unit(mins,'Min') + sep() +
+      unit(secs,'Sek');
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
 
 (function() {
   const TKEY = 'dashboard_theme';
