@@ -290,6 +290,7 @@
     .tile-emoji { font-size: 26px; line-height: 1; }
     .tile-name  { font-size: 11.5px; font-weight: 500; text-align: center; line-height: 1.25; word-break: break-word; }
     .tile-price { font-size: 10px; font-weight: 600; opacity: 0.72; margin-top: 1px; }
+    .tile-kcal-price { font-size: 8.5px; font-weight: 500; opacity: 0.6; color: var(--teal); margin-top: 0; }
     .tile-amount { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 700; opacity: 0.9; }
 
     /* Active items — salmon */
@@ -1157,83 +1158,83 @@ const FIREBASE_CONFIG = {
 //  ARTIKEL-DATEN
 // ═══════════════════════════════════════════════
 const SUGGESTIONS = [
-  // Gemüse
-  { name:'Zucchini',      emoji:'🥒', cat:'Gemüse',       price: 0.79, unit:'Stück'   },
-  { name:'Möhren',        emoji:'🥕', cat:'Gemüse',       price: 0.89, unit:'500g'    },
-  { name:'Paprika',       emoji:'🫑', cat:'Gemüse',       price: 1.29, unit:'Stück'   },
-  { name:'Gurke',         emoji:'🥒', cat:'Gemüse',       price: 0.69, unit:'Stück'   },
-  { name:'Tomaten',       emoji:'🍅', cat:'Gemüse',       price: 1.49, unit:'500g'    },
-  { name:'Zwiebeln',      emoji:'🧅', cat:'Gemüse',       price: 0.89, unit:'1kg'     },
-  { name:'Knoblauch',     emoji:'🧄', cat:'Gemüse',       price: 0.59, unit:'Stück'   },
-  { name:'Spinat',        emoji:'🥬', cat:'Gemüse',       price: 1.29, unit:'300g'    },
-  { name:'Brokkoli',      emoji:'🥦', cat:'Gemüse',       price: 0.99, unit:'Stück'   },
-  { name:'Salat',         emoji:'🥗', cat:'Gemüse',       price: 0.89, unit:'Stück'   },
-  { name:'Kartoffeln',    emoji:'🥔', cat:'Gemüse',       price: 1.99, unit:'1kg'     },
-  { name:'Mais',          emoji:'🌽', cat:'Gemüse',       price: 0.89, unit:'Stück'   },
-  { name:'Pilze',         emoji:'🍄', cat:'Gemüse',       price: 1.49, unit:'250g'    },
-  { name:'Aubergine',     emoji:'🍆', cat:'Gemüse',       price: 0.99, unit:'Stück'   },
-  { name:'Kohl',          emoji:'🥬', cat:'Gemüse',       price: 0.99, unit:'Stück'   },
-  { name:'Lauch',         emoji:'🌿', cat:'Gemüse',       price: 0.89, unit:'Stück'   },
-  { name:'Sellerie',      emoji:'🥬', cat:'Gemüse',       price: 0.99, unit:'Stück'   },
+  // Gemüse                                                              kcal/100g
+  { name:'Zucchini',      emoji:'🥒', cat:'Gemüse',       price: 0.79, unit:'Stück',    kcal: 17  },
+  { name:'Möhren',        emoji:'🥕', cat:'Gemüse',       price: 0.89, unit:'500g',     kcal: 41  },
+  { name:'Paprika',       emoji:'🫑', cat:'Gemüse',       price: 1.29, unit:'Stück',    kcal: 27  },
+  { name:'Gurke',         emoji:'🥒', cat:'Gemüse',       price: 0.69, unit:'Stück',    kcal: 12  },
+  { name:'Tomaten',       emoji:'🍅', cat:'Gemüse',       price: 1.49, unit:'500g',     kcal: 18  },
+  { name:'Zwiebeln',      emoji:'🧅', cat:'Gemüse',       price: 0.89, unit:'1kg',      kcal: 38  },
+  { name:'Knoblauch',     emoji:'🧄', cat:'Gemüse',       price: 0.59, unit:'Stück',    kcal: 135 },
+  { name:'Spinat',        emoji:'🥬', cat:'Gemüse',       price: 1.29, unit:'300g',     kcal: 20  },
+  { name:'Brokkoli',      emoji:'🥦', cat:'Gemüse',       price: 0.99, unit:'Stück',    kcal: 34  },
+  { name:'Salat',         emoji:'🥗', cat:'Gemüse',       price: 0.89, unit:'Stück',    kcal: 14  },
+  { name:'Kartoffeln',    emoji:'🥔', cat:'Gemüse',       price: 1.99, unit:'1kg',      kcal: 76  },
+  { name:'Mais',          emoji:'🌽', cat:'Gemüse',       price: 0.89, unit:'Stück',    kcal: 86  },
+  { name:'Pilze',         emoji:'🍄', cat:'Gemüse',       price: 1.49, unit:'250g',     kcal: 22  },
+  { name:'Aubergine',     emoji:'🍆', cat:'Gemüse',       price: 0.99, unit:'Stück',    kcal: 25  },
+  { name:'Kohl',          emoji:'🥬', cat:'Gemüse',       price: 0.99, unit:'Stück',    kcal: 25  },
+  { name:'Lauch',         emoji:'🌿', cat:'Gemüse',       price: 0.89, unit:'Stück',    kcal: 31  },
+  { name:'Sellerie',      emoji:'🥬', cat:'Gemüse',       price: 0.99, unit:'Stück',    kcal: 13  },
   // Obst
-  { name:'Äpfel',         emoji:'🍎', cat:'Obst',         price: 1.99, unit:'1kg'     },
-  { name:'Bananen',       emoji:'🍌', cat:'Obst',         price: 1.49, unit:'1kg'     },
-  { name:'Zitrone',       emoji:'🍋', cat:'Obst',         price: 0.39, unit:'Stück'   },
-  { name:'Erdbeeren',     emoji:'🍓', cat:'Obst',         price: 2.99, unit:'500g'    },
-  { name:'Trauben',       emoji:'🍇', cat:'Obst',         price: 2.49, unit:'500g'    },
-  { name:'Orangen',       emoji:'🍊', cat:'Obst',         price: 1.99, unit:'1kg'     },
-  { name:'Avocado',       emoji:'🥑', cat:'Obst',         price: 0.99, unit:'Stück'   },
-  { name:'Wassermelone',  emoji:'🍉', cat:'Obst',         price: 3.99, unit:'Stück'   },
-  { name:'Himbeeren',     emoji:'🫐', cat:'Obst',         price: 1.99, unit:'150g'    },
-  { name:'Mango',         emoji:'🥭', cat:'Obst',         price: 1.29, unit:'Stück'   },
-  { name:'Kiwi',          emoji:'🥝', cat:'Obst',         price: 0.49, unit:'Stück'   },
+  { name:'Äpfel',         emoji:'🍎', cat:'Obst',         price: 1.99, unit:'1kg',      kcal: 52  },
+  { name:'Bananen',       emoji:'🍌', cat:'Obst',         price: 1.49, unit:'1kg',      kcal: 89  },
+  { name:'Zitrone',       emoji:'🍋', cat:'Obst',         price: 0.39, unit:'Stück',    kcal: 29  },
+  { name:'Erdbeeren',     emoji:'🍓', cat:'Obst',         price: 2.99, unit:'500g',     kcal: 32  },
+  { name:'Trauben',       emoji:'🍇', cat:'Obst',         price: 2.49, unit:'500g',     kcal: 67  },
+  { name:'Orangen',       emoji:'🍊', cat:'Obst',         price: 1.99, unit:'1kg',      kcal: 47  },
+  { name:'Avocado',       emoji:'🥑', cat:'Obst',         price: 0.99, unit:'Stück',    kcal: 160 },
+  { name:'Wassermelone',  emoji:'🍉', cat:'Obst',         price: 3.99, unit:'Stück',    kcal: 30  },
+  { name:'Himbeeren',     emoji:'🫐', cat:'Obst',         price: 1.99, unit:'150g',     kcal: 52  },
+  { name:'Mango',         emoji:'🥭', cat:'Obst',         price: 1.29, unit:'Stück',    kcal: 60  },
+  { name:'Kiwi',          emoji:'🥝', cat:'Obst',         price: 0.49, unit:'Stück',    kcal: 61  },
   // Milch & Käse
-  { name:'Milch',         emoji:'🥛', cat:'Milch',        price: 1.09, unit:'1L'      },
-  { name:'Joghurt',       emoji:'🍮', cat:'Milch',        price: 0.79, unit:'500g'    },
-  { name:'Käse',          emoji:'🧀', cat:'Milch',        price: 1.99, unit:'200g'    },
-  { name:'Butter',        emoji:'🧈', cat:'Milch',        price: 1.89, unit:'250g'    },
-  { name:'Sahne',         emoji:'🥛', cat:'Milch',        price: 0.89, unit:'Packung' },
-  { name:'Quark',         emoji:'🍦', cat:'Milch',        price: 0.99, unit:'500g'    },
-  { name:'Frischkäse',    emoji:'🧀', cat:'Milch',        price: 1.29, unit:'200g'    },
-  { name:'Hafermilch',    emoji:'🥛', cat:'Milch',        price: 1.49, unit:'1L'      },
+  { name:'Milch',         emoji:'🥛', cat:'Milch',        price: 1.09, unit:'1L',       kcal: 64  },
+  { name:'Joghurt',       emoji:'🍮', cat:'Milch',        price: 0.79, unit:'500g',     kcal: 59  },
+  { name:'Käse',          emoji:'🧀', cat:'Milch',        price: 1.99, unit:'200g',     kcal: 380 },
+  { name:'Butter',        emoji:'🧈', cat:'Milch',        price: 1.89, unit:'250g',     kcal: 740 },
+  { name:'Sahne',         emoji:'🥛', cat:'Milch',        price: 0.89, unit:'Packung',  kcal: 302 },
+  { name:'Quark',         emoji:'🍦', cat:'Milch',        price: 0.99, unit:'500g',     kcal: 67  },
+  { name:'Frischkäse',    emoji:'🧀', cat:'Milch',        price: 1.29, unit:'200g',     kcal: 244 },
+  { name:'Hafermilch',    emoji:'🥛', cat:'Milch',        price: 1.49, unit:'1L',       kcal: 45  },
   // Brot & Backwaren
-  { name:'Toast',         emoji:'🍞', cat:'Brot',         price: 1.19, unit:'Packung' },
-  { name:'Brot',          emoji:'🥖', cat:'Brot',         price: 1.99, unit:'Stück'   },
-  { name:'Brötchen',      emoji:'🥐', cat:'Brot',         price: 1.29, unit:'6 Stück' },
-  { name:'Croissant',     emoji:'🥐', cat:'Brot',         price: 1.49, unit:'Stück'   },
+  { name:'Toast',         emoji:'🍞', cat:'Brot',         price: 1.19, unit:'Packung',  kcal: 265 },
+  { name:'Brot',          emoji:'🥖', cat:'Brot',         price: 1.99, unit:'Stück',    kcal: 247 },
+  { name:'Brötchen',      emoji:'🥐', cat:'Brot',         price: 1.29, unit:'6 Stück',  kcal: 270 },
+  { name:'Croissant',     emoji:'🥐', cat:'Brot',         price: 1.49, unit:'Stück',    kcal: 406 },
   // Getränke
-  { name:'Wasser',        emoji:'💧', cat:'Getränke',     price: 0.29, unit:'1,5L'    },
-  { name:'Saft',          emoji:'🧃', cat:'Getränke',     price: 1.29, unit:'1L'      },
-  { name:'Kaffee',        emoji:'☕', cat:'Getränke',     price: 4.99, unit:'500g'    },
-  { name:'Tee',           emoji:'🍵', cat:'Getränke',     price: 1.49, unit:'Packung' },
-  { name:'Bier',          emoji:'🍺', cat:'Getränke',     price: 4.99, unit:'6er Pack'},
-  { name:'Wein',          emoji:'🍷', cat:'Getränke',     price: 4.99, unit:'Flasche' },
-  { name:'Cola',          emoji:'🥤', cat:'Getränke',     price: 1.69, unit:'2L'      },
+  { name:'Wasser',        emoji:'💧', cat:'Getränke',     price: 0.29, unit:'1,5L',     kcal: 0   },
+  { name:'Saft',          emoji:'🧃', cat:'Getränke',     price: 1.29, unit:'1L',       kcal: 45  },
+  { name:'Kaffee',        emoji:'☕', cat:'Getränke',     price: 4.99, unit:'500g',     kcal: 330 },
+  { name:'Tee',           emoji:'🍵', cat:'Getränke',     price: 1.49, unit:'Packung',  kcal: 2   },
+  { name:'Bier',          emoji:'🍺', cat:'Getränke',     price: 4.99, unit:'6er Pack', kcal: 43  },
+  { name:'Wein',          emoji:'🍷', cat:'Getränke',     price: 4.99, unit:'Flasche',  kcal: 85  },
+  { name:'Cola',          emoji:'🥤', cat:'Getränke',     price: 1.69, unit:'2L',       kcal: 42  },
   // Grundnahrung
-  { name:'Eier',          emoji:'🥚', cat:'Grundnahrung', price: 2.19, unit:'10 St.'  },
-  { name:'Nudeln',        emoji:'🍝', cat:'Grundnahrung', price: 1.09, unit:'500g'    },
-  { name:'Reis',          emoji:'🍚', cat:'Grundnahrung', price: 1.49, unit:'1kg'     },
-  { name:'Mehl',          emoji:'🌾', cat:'Grundnahrung', price: 0.89, unit:'1kg'     },
-  { name:'Zucker',        emoji:'🍬', cat:'Grundnahrung', price: 0.99, unit:'1kg'     },
-  { name:'Öl',            emoji:'🫙', cat:'Grundnahrung', price: 2.49, unit:'1L'      },
-  { name:'Salz',          emoji:'🧂', cat:'Grundnahrung', price: 0.39, unit:'1kg'     },
-  { name:'Pfeffer',       emoji:'🫙', cat:'Grundnahrung', price: 1.49, unit:'Packung' },
+  { name:'Eier',          emoji:'🥚', cat:'Grundnahrung', price: 2.19, unit:'10 St.',   kcal: 155 },
+  { name:'Nudeln',        emoji:'🍝', cat:'Grundnahrung', price: 1.09, unit:'500g',     kcal: 350 },
+  { name:'Reis',          emoji:'🍚', cat:'Grundnahrung', price: 1.49, unit:'1kg',      kcal: 360 },
+  { name:'Mehl',          emoji:'🌾', cat:'Grundnahrung', price: 0.89, unit:'1kg',      kcal: 342 },
+  { name:'Zucker',        emoji:'🍬', cat:'Grundnahrung', price: 0.99, unit:'1kg',      kcal: 397 },
+  { name:'Öl',            emoji:'🫙', cat:'Grundnahrung', price: 2.49, unit:'1L',       kcal: 882 },
+  { name:'Salz',          emoji:'🧂', cat:'Grundnahrung', price: 0.39, unit:'1kg',      kcal: 0   },
+  { name:'Pfeffer',       emoji:'🫙', cat:'Grundnahrung', price: 1.49, unit:'Packung',  kcal: 251 },
   // Fleisch & Fisch
-  { name:'Hähnchen',      emoji:'🍗', cat:'Fleisch',      price: 4.99, unit:'1kg'     },
-  { name:'Hackfleisch',   emoji:'🥩', cat:'Fleisch',      price: 3.49, unit:'500g'    },
-  { name:'Lachs',         emoji:'🐟', cat:'Fleisch',      price: 4.99, unit:'300g'    },
-  { name:'Würstchen',     emoji:'🌭', cat:'Fleisch',      price: 2.49, unit:'Packung' },
-  { name:'Thunfisch',     emoji:'🐠', cat:'Fleisch',      price: 1.49, unit:'Dose'    },
-  { name:'Schinken',      emoji:'🥩', cat:'Fleisch',      price: 1.99, unit:'150g'    },
+  { name:'Hähnchen',      emoji:'🍗', cat:'Fleisch',      price: 4.99, unit:'1kg',      kcal: 165 },
+  { name:'Hackfleisch',   emoji:'🥩', cat:'Fleisch',      price: 3.49, unit:'500g',     kcal: 242 },
+  { name:'Lachs',         emoji:'🐟', cat:'Fleisch',      price: 4.99, unit:'300g',     kcal: 208 },
+  { name:'Würstchen',     emoji:'🌭', cat:'Fleisch',      price: 2.49, unit:'Packung',  kcal: 301 },
+  { name:'Thunfisch',     emoji:'🐠', cat:'Fleisch',      price: 1.49, unit:'Dose',     kcal: 116 },
+  { name:'Schinken',      emoji:'🥩', cat:'Fleisch',      price: 1.99, unit:'150g',     kcal: 145 },
   // Haushalt
-  { name:'Toilettenpapier', emoji:'🧻', cat:'Haushalt',   price: 2.99, unit:'8 Rollen'},
-  { name:'Spülmittel',    emoji:'🧴', cat:'Haushalt',     price: 1.19, unit:'Flasche' },
-  { name:'Waschmittel',   emoji:'🧺', cat:'Haushalt',     price: 5.99, unit:'Packung' },
-  { name:'Müllbeutel',    emoji:'🗑️', cat:'Haushalt',    price: 1.99, unit:'Packung' },
-  { name:'Shampoo',       emoji:'🧴', cat:'Haushalt',     price: 2.49, unit:'Flasche' },
-  { name:'Zahnpasta',     emoji:'🪥', cat:'Haushalt',     price: 1.49, unit:'Packung' },
-  { name:'Seife',         emoji:'🧼', cat:'Haushalt',     price: 0.99, unit:'Stück'   },
-  { name:'Taschentücher', emoji:'🤧', cat:'Haushalt',     price: 1.29, unit:'Packung' },
+  { name:'Toilettenpapier', emoji:'🧻', cat:'Haushalt',   price: 2.99, unit:'8 Rollen' },
+  { name:'Spülmittel',    emoji:'🧴', cat:'Haushalt',     price: 1.19, unit:'Flasche'  },
+  { name:'Waschmittel',   emoji:'🧺', cat:'Haushalt',     price: 5.99, unit:'Packung'  },
+  { name:'Müllbeutel',    emoji:'🗑️', cat:'Haushalt',    price: 1.99, unit:'Packung'  },
+  { name:'Shampoo',       emoji:'🧴', cat:'Haushalt',     price: 2.49, unit:'Flasche'  },
+  { name:'Zahnpasta',     emoji:'🪥', cat:'Haushalt',     price: 1.49, unit:'Packung'  },
+  { name:'Seife',         emoji:'🧼', cat:'Haushalt',     price: 0.99, unit:'Stück'    },
+  { name:'Taschentücher', emoji:'🤧', cat:'Haushalt',     price: 1.29, unit:'Packung'  },
 ];
 
 const AMOUNTS = ['1','2','3','4','5','6','300g','500g','750g','1kg','2kg','1L','1,5L','2L'];
@@ -1250,6 +1251,44 @@ function getSug(name) {
 }
 function getItemPrice(name){ return getSug(name)?.price ?? null; }
 function fmtPrice(p)       { return p.toFixed(2).replace('.', ',') + ' €'; }
+
+// Einheit → Gramm (1L ≈ 1000g für Vergleichszwecke)
+function parseWeightG(unit) {
+  if (!unit) return null;
+  const u = unit.trim();
+  let m;
+  m = u.match(/^([\d,]+)\s*g$/i);  if (m) return parseFloat(m[1].replace(',','.'));
+  m = u.match(/^([\d,]+)\s*kg$/i); if (m) return parseFloat(m[1].replace(',','.')) * 1000;
+  m = u.match(/^([\d,]+)\s*[Ll]$/);if (m) return parseFloat(m[1].replace(',','.')) * 1000;
+  return null;
+}
+// Preis normiert auf 1 kg (Supermarkt-Grundpreis)
+function pricePerKg(sug) {
+  const g = parseWeightG(sug.unit);
+  if (!g) return null;
+  return sug.price / g * 1000;
+}
+// Preis pro 100 kcal
+function pricePerHundredKcal(sug) {
+  if (sug.kcal == null || sug.kcal <= 0) return null;
+  const g = parseWeightG(sug.unit);
+  if (!g) return null;
+  const totalKcal = sug.kcal / 100 * g;
+  return totalKcal > 0 ? sug.price / totalKcal * 100 : null;
+}
+// Preis-HTML für ein SUGGESTIONS-Objekt (Tile-Kachel)
+function sugPriceHtml(sug) {
+  if (sug?.price == null) return '';
+  const ppkg   = pricePerKg(sug);
+  const ppkcal = pricePerHundredKcal(sug);
+  if (ppkg != null) {
+    const kcalLine = ppkcal != null
+      ? `<div class="tile-kcal-price">${fmtPrice(ppkcal)}/100 kcal</div>`
+      : '';
+    return `<div class="tile-price">${fmtPrice(ppkg)}/kg</div>${kcalLine}`;
+  }
+  return `<div class="tile-price">${fmtPrice(sug.price)}/${sug.unit}</div>`;
+}
 
 // Mengen-Multiplikator berechnen
 function parseGrams(s) {
@@ -1525,11 +1564,11 @@ function tile(type, it) {
     priceHtml = `<div class="tile-offer-badge">${esc(it.offerHaendler || '')} ${Number(it.offerPrice).toFixed(2).replace('.',',')} €</div>`;
   } else if (sug?.price != null) {
     const mult = calcMultiplier(it.amount, sug.unit);
-    const effective = sug.price * mult;
-    const label = mult > 1
-      ? `${fmtPrice(effective)}`
-      : `${fmtPrice(sug.price)}/${sug.unit}`;
-    priceHtml = `<div class="tile-price">${label}</div>`;
+    if (mult > 1) {
+      priceHtml = `<div class="tile-price">${fmtPrice(sug.price * mult)}</div>`;
+    } else {
+      priceHtml = sugPriceHtml(sug);
+    }
   }
   if (type === 'active') {
     return `<div class="tile active"
@@ -1590,8 +1629,7 @@ function renderSuggestions() {
       const inList = inListNames.has(s.name.toLowerCase());
       const isScanned = s.cat === 'Gescannt';
       const p = s.price ?? getItemPrice(s.name);
-      const unit = s.unit || '';
-      const priceHtml = p != null ? `<div class="tile-price">${fmtPrice(p)}${unit ? '/' + unit : ''}</div>` : '';
+      const priceHtml = p != null ? sugPriceHtml({...s, price: p}) : '';
       return `<div class="tile sug ${isScanned ? 'scanned' : ''} ${inList ? 'in-list' : ''}"
         onclick="tapSuggestion('${esc(s.name)}','${s.emoji}')">
         <div class="tile-emoji">${s.emoji}</div>
