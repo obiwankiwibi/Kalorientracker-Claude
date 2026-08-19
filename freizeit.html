@@ -94,6 +94,15 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-app
 .star-pick span{cursor:pointer;color:var(--line);transition:color .12s;user-select:none}
 .star-pick span.on{color:#f6c000}
 
+/* ── Scroll-to-top button ── */
+#scrollTopBtn{position:fixed;bottom:80px;right:16px;width:44px;height:44px;border-radius:50%;background:var(--brand);color:#fff;border:none;font-size:20px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.25);z-index:190;transition:opacity .2s,transform .2s}
+#scrollTopBtn.visible{display:flex;opacity:1;transform:scale(1)}
+
+/* ── Collapse toggle ── */
+#scResults.collapsed{display:none}
+.collapse-btn{border:1px solid var(--line);background:none;color:var(--muted);border-radius:8px;padding:4px 10px;font:700 13px/1 inherit;cursor:pointer;transition:background .12s}
+.collapse-btn:hover{background:var(--bg)}
+
 @media(max-width:600px){
   .topstats{grid-template-columns:1fr 1fr}
   .sc-grid{grid-template-columns:1fr auto auto}
@@ -148,7 +157,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-app
 <div class="results-section" id="scResultsSection" style="display:none">
   <div class="section-head">
     <div class="section-title">Aktivitäten in der Nähe</div>
-    <span class="count" id="scResultsCount">0</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="count" id="scResultsCount">0</span>
+      <button class="collapse-btn" id="scCollapseBtn" onclick="toggleScResults()" title="Liste ein-/ausklappen">▼</button>
+    </div>
   </div>
   <div class="activities-grid" id="scResults"></div>
 </div>
@@ -178,6 +190,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-app
   <div class="activities-grid" id="favGrid"></div>
 </div>
 </div>
+
+<button id="scrollTopBtn" onclick="scrollToTop()" aria-label="Nach oben">↑</button>
 
 <!-- ── Hinzufügen / Bearbeiten ── -->
 <div class="overlay" id="overlay">
@@ -475,6 +489,10 @@ function showOverpassResults(elements, userLat, userLon, kmStr) {
   });
   scAllResults = named;
   scActiveCat = '';
+  scResultsCollapsed = false;
+  const cb = document.getElementById('scCollapseBtn');
+  if (cb) cb.textContent = '▼';
+  document.getElementById('scResults').classList.remove('collapsed');
 
   if (!named.length) {
     setScStatus(`Keine Freizeitaktivitäten im Umkreis von ${kmStr} gefunden.`);
@@ -701,6 +719,22 @@ $('filterInput').oninput=()=>{filterSearch=$('filterInput').value;render();};
 /* ── Theme ── */
 function applyTheme(){state.theme==='system'?document.documentElement.removeAttribute('data-theme'):document.documentElement.setAttribute('data-theme',state.theme);}
 $('themeBtn').onclick=()=>{state.theme=themes[(themes.indexOf(state.theme)+1)%3];applyTheme();persist();};
+
+/* ── Collapse results ── */
+let scResultsCollapsed = false;
+function toggleScResults() {
+  scResultsCollapsed = !scResultsCollapsed;
+  document.getElementById('scResults').classList.toggle('collapsed', scResultsCollapsed);
+  document.getElementById('scCollapseBtn').textContent = scResultsCollapsed ? '▲' : '▼';
+}
+
+/* ── Scroll to top ── */
+function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scrollTopBtn');
+  if (!btn) return;
+  btn.classList.toggle('visible', window.scrollY > 200);
+}, { passive: true });
 
 applyTheme();
 render();
