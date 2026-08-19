@@ -353,6 +353,17 @@
       transition: background 0.15s, color 0.15s;
     }
     .chip.on { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+    /* Split Händler chip: [Name | ★] */
+    .haendler-chip-wrap { display: inline-flex; flex-shrink: 0; }
+    .haendler-chip-wrap .chip { border-radius: 18px 0 0 18px; border-right: none; white-space: nowrap; }
+    .haendler-star-btn {
+      flex-shrink: 0; padding: 5px 8px;
+      border: 1px solid var(--border); border-left: none; border-radius: 0 18px 18px 0;
+      background: var(--surface); color: var(--muted); font-size: 11px; cursor: pointer;
+      transition: color 0.15s, background 0.15s;
+    }
+    .haendler-star-btn.on { color: #f5a623; background: rgba(245,166,35,0.1); border-color: rgba(245,166,35,0.4); }
     .sort-row .chip { font-size: 11px; padding: 3px 10px; }
     .sort-row .chip.on { background: var(--layer2); color: var(--teal); border-color: var(--teal); font-weight: 700; }
 
@@ -1007,12 +1018,6 @@
 
   <div class="cat-row" id="offersHaendlerRow"></div>
 
-  <div class="offers-fav-row">
-    <label class="offers-fav-label">
-      <input type="checkbox" id="favOnlyToggle" onchange="renderOffers()">
-      Nur Favoriten
-    </label>
-  </div>
 
 
   <div class="offers-grid" id="offersGrid"></div>
@@ -2363,6 +2368,17 @@ const HAENDLER_COLORS = {
 };
 let allOffers = [];
 let activeHaendler = 'Alle';
+let favHaendler = new Set(JSON.parse(localStorage.getItem('einkauf_fav_haendler') || '[]'));
+
+function toggleFavHaendler(h, e) {
+  e.stopPropagation();
+  if (favHaendler.has(h)) favHaendler.delete(h);
+  else favHaendler.add(h);
+  localStorage.setItem('einkauf_fav_haendler', JSON.stringify([...favHaendler]));
+  // if we were filtering by fav and unfav'd the last one, reset
+  if (activeHaendler === '★FAV' && favHaendler.size === 0) activeHaendler = 'Alle';
+  renderOffers();
+}
 
 // ── Demo-Datensatz (realistische Beispiele Aug 2026) ──
 const DEMO_OFFERS = [
@@ -2480,7 +2496,6 @@ function mgTransform(raw) {
   const validity = (raw.validityDates || [])[0] || {};
   const cat      = (raw.categories    || [])[0] || {};
   const unit     = raw.unit?.shortName || 'Stk';
-  const hasImg   = (raw.images?.count || 0) > 0;
   const ref      = raw.referencePrice;
   const grundpreis = ref ? (ref.toFixed(2).replace('.', ',') + ' €/' + unit) : '';
   return {
@@ -2495,7 +2510,7 @@ function mgTransform(raw) {
     kategorie:    (cat.name || ''),
     gueltigVon:   (validity.from || '').split('T')[0] || null,
     gueltigBis:   (validity.to   || '').split('T')[0] || null,
-    bild:         hasImg ? `${MG_CDN}/offers/${raw.id}/0.jpg` : null,
+    bild:         `${MG_CDN}/offers/${raw.id}/0.jpg`,
     url:          adv.externalLink || null,
     favorit:      false,
     quelle:       'Marktguru',
@@ -2553,12 +2568,11 @@ function importOverlayClick(e) { if (e.target === document.getElementById('impor
 
 // ── Render ──
 function renderOffers() {
-  const search     = (document.getElementById('offersSearch')?.value || '').toLowerCase().trim();
-  const favOnly    = document.getElementById('favOnlyToggle')?.checked || false;
+  const search = (document.getElementById('offersSearch')?.value || '').toLowerCase().trim();
 
   let filtered = [...allOffers];
-  if (activeHaendler !== 'Alle') filtered = filtered.filter(o => o.haendler === activeHaendler);
-  if (favOnly)  filtered = filtered.filter(o => o.favorit);
+  if (activeHaendler === '★FAV') filtered = filtered.filter(o => favHaendler.has(o.haendler));
+  else if (activeHaendler !== 'Alle') filtered = filtered.filter(o => o.haendler === activeHaendler);
   if (search)   filtered = filtered.filter(o =>
     o.name.toLowerCase().includes(search) ||
     o.haendler.toLowerCase().includes(search) ||
@@ -2641,12 +2655,31 @@ function fmtDate(iso) {
 }
 
 function renderHaendlerChips() {
-  const haendlers = ['Alle', ...new Set(allOffers.map(o => o.haendler).sort())];
   const row = document.getElementById('offersHaendlerRow');
   if (!row) return;
-  row.innerHTML = haendlers.map(h =>
-    `<button class="chip ${h === activeHaendler ? 'on' : ''}" onclick="setOfferHaendler('${esc(h)}')">${esc(h)}</button>`
-  ).join('');
+
+  // Stores sorted: favorites first, then alphabetical
+  const stores = [...new Set(allOffers.map(o => o.haendler).filter(Boolean))].sort((a, b) => {
+    const af = favHaendler.has(a), bf = favHaendler.has(b);
+    return af !== bf ? (af ? -1 : 1) : a.localeCompare(b);
+  });
+
+  const favChip = favHaendler.size > 0
+    ? `<button class="chip ${activeHaendler === '★FAV' ? 'on' : ''}" onclick="setOfferHaendler('★FAV')" style="flex-shrink:0">★ Favoriten</button>`
+    : '';
+
+  const allChip = `<button class="chip ${activeHaendler === 'Alle' ? 'on' : ''}" onclick="setOfferHaendler('Alle')" style="flex-shrink:0">Alle</button>`;
+
+  const storeChips = stores.map(h => {
+    const isFav = favHaendler.has(h);
+    const active = activeHaendler === h;
+    return `<span class="haendler-chip-wrap">
+      <button class="chip ${active ? 'on' : ''}" onclick="setOfferHaendler('${esc(h)}')">${esc(h)}</button>
+      <button class="haendler-star-btn ${isFav ? 'on' : ''}" onclick="toggleFavHaendler('${esc(h)}',event)" title="${isFav ? 'Favorit entfernen' : 'Als Favorit merken'}">${isFav ? '★' : '☆'}</button>
+    </span>`;
+  }).join('');
+
+  row.innerHTML = allChip + favChip + storeChips;
 }
 
 function setOfferHaendler(h) { activeHaendler = h; renderOffers(); }
