@@ -1688,8 +1688,12 @@ function renderSort() {
 }
 
 function setSort(id) {
-  if (activeSort === id) sortDir = -sortDir;
-  else { activeSort = id; sortDir = 1; }
+  if (activeSort === id) {
+    if (sortDir === 1) { sortDir = -1; }   // asc → desc
+    else { activeSort = ''; sortDir = 1; } // desc → aus
+  } else {
+    activeSort = id; sortDir = 1;
+  }
   renderSuggestions();
 }
 
