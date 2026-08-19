@@ -80,13 +80,12 @@
 
     /* ── Weather widget ── */
     .weather-card {
-      border-radius: 22px;
-      padding: 16px;
+      border-radius: 16px;
+      padding: 11px 12px;
       background: linear-gradient(145deg, #FF8C00, #FFB347);
       position: relative;
       overflow: hidden;
       transition: background 0.8s ease;
-      min-height: 168px;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
@@ -99,19 +98,19 @@
     }
     .weather-bg-emoji {
       position: absolute;
-      top: -4px; right: -4px;
-      font-size: 78px;
+      top: -4px; right: -2px;
+      font-size: 52px;
       opacity: 0.14;
       line-height: 1;
       pointer-events: none;
     }
     .weather-content { position: relative; z-index: 1; }
-    .weather-main    { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
-    .weather-emoji   { font-size: 28px; line-height: 1; }
-    .weather-temp    { font-size: 40px; font-weight: 800; line-height: 1; color: #fff; letter-spacing: -2px; }
-    .weather-desc    { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px; }
-    .weather-location{ font-size: 10px; color: rgba(255,255,255,0.7); }
-    .weather-minmax  { font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+    .weather-main    { display: flex; align-items: center; gap: 3px; margin-bottom: 1px; }
+    .weather-emoji   { font-size: 18px; line-height: 1; }
+    .weather-temp    { font-size: 26px; font-weight: 800; line-height: 1; color: #fff; letter-spacing: -1px; }
+    .weather-desc    { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 1px; }
+    .weather-location{ font-size: 9px; color: rgba(255,255,255,0.7); }
+    .weather-minmax  { font-size: 9px; color: rgba(255,255,255,0.6); margin-top: 1px; }
     .weather-loading {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
@@ -121,27 +120,26 @@
 
     /* ── Fuel widget ── */
     .fuel-widget {
-      border-radius: 22px;
-      padding: 16px;
+      border-radius: 16px;
+      padding: 11px 12px;
       background: var(--layer2);
       border: 1px solid var(--border2);
       color: var(--text);
       display: flex;
       flex-direction: column;
-      min-height: 168px;
       position: relative;
       overflow: hidden;
     }
     .fuel-widget-bg {
       position: absolute; top: 2px; right: 2px;
-      font-size: 70px; opacity: 0.05; line-height: 1; pointer-events: none;
+      font-size: 48px; opacity: 0.05; line-height: 1; pointer-events: none;
     }
-    .fuel-widget-label { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px; position: relative; }
-    .fuel-price-big  { font-size: 34px; font-weight: 800; color: var(--teal); line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; position: relative; }
-    .fuel-unit-sm    { font-size: 10px; color: var(--muted); margin-bottom: 5px; position: relative; }
-    .fuel-name-sm    { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
-    .fuel-meta-sm    { font-size: 10px; color: var(--muted); margin-top: 2px; position: relative; }
-    .fuel-updated-sm { font-size: 9px; color: var(--muted); margin-top: 3px; position: relative; opacity: 0.6; }
+    .fuel-widget-label { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; position: relative; }
+    .fuel-price-big  { font-size: 24px; font-weight: 800; color: var(--teal); line-height: 1; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; position: relative; }
+    .fuel-unit-sm    { font-size: 9px; color: var(--muted); margin-bottom: 3px; position: relative; }
+    .fuel-name-sm    { font-size: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+    .fuel-meta-sm    { font-size: 9px; color: var(--muted); margin-top: 1px; position: relative; }
+    .fuel-updated-sm { font-size: 8px; color: var(--muted); margin-top: 2px; position: relative; opacity: 0.6; }
     .fuel-fav-badge  {
       position: absolute; top: 12px; right: 12px;
       font-size: 9px; background: var(--teal-dim); color: var(--teal);
@@ -149,7 +147,7 @@
     }
     .fuel-actions {
       display: flex; align-items: center; justify-content: space-between;
-      margin-top: auto; padding-top: 8px; position: relative;
+      margin-top: auto; padding-top: 4px; position: relative;
     }
     .fuel-refresh-btn {
       background: none; border: none; color: var(--muted);
