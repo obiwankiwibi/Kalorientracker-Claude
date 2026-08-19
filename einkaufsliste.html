@@ -2516,9 +2516,13 @@ const MG_API_KEY = '8Kk+pmbf7TgJ9nVj2cXeA7P5zBGv8iuutVVMRfOfvNE=';
 const MG_CDN     = 'https://cdn.marktguru.de';
 const MG_CDN_FALLBACKS = [
   'https://images.marktguru.de',
+  'https://img.marktguru.de',
   'https://assets.marktguru.de',
   'https://static.marktguru.de',
   'https://media.marktguru.de',
+  'https://cdn.bonial.com',
+  'https://images.bonial.com',
+  'https://img.bonial.com',
 ];
 
 function getMgPlz() {
@@ -2655,7 +2659,9 @@ function renderOffers() {
 function mgImgFallback(img, originalUrl) {
   img._mgTry = (img._mgTry || 0) + 1;
   if (img._mgTry <= MG_CDN_FALLBACKS.length) {
-    img.src = originalUrl.replace(MG_CDN, MG_CDN_FALLBACKS[img._mgTry - 1]);
+    const nextUrl = originalUrl.replace(MG_CDN, MG_CDN_FALLBACKS[img._mgTry - 1]);
+    img.src = nextUrl;
+    img.onload = () => toast(`✓ Bilder: ${MG_CDN_FALLBACKS[img._mgTry - 1].replace('https://','')}`);
   } else {
     img.parentElement.innerHTML = '<div class="offer-img-fallback">🛒</div>';
   }
