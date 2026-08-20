@@ -70,7 +70,7 @@
   .wrap{max-width:480px;margin:0 auto;padding:26px 16px 0;}
 
   /* ── Unified nav header ── */
-  .site-nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+  .site-nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);}
   .site-nav-title{flex:1;font-size:17px;font-weight:700;padding:0 4px;}
   .site-nav-btn{width:36px;height:36px;border-radius:50%;background:none;border:none;color:var(--text-faint);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;flex-shrink:0;font-family:inherit;transition:background .15s;}
   .site-nav-btn:active{background:var(--card);}
@@ -367,7 +367,7 @@
   .product-card .pname{font-weight:700;font-size:14.5px;}
   .product-card .pkcal{font-size:12.5px;color:var(--mint);margin-top:3px;font-weight:600;}
   /* dark theme overrides for hardcoded light-only colors */
-  #page-bg{position:fixed;inset:0;z-index:-1;background:url('images/circuit-bg.jpg') center/cover}
+  #page-bg{position:fixed;inset:0;z-index:-1;background:url('images/circuit-bg.jpg') center/cover;will-change:transform}
   [data-theme=light] #page-bg{display:none}
   html[data-theme="dark"] body{background:var(--bg);}
   html[data-theme="dark"] .hero::before{background:radial-gradient(ellipse 80% 60% at 50% -15%,rgba(52,211,153,0.09),transparent);}

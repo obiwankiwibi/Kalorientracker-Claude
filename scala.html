@@ -35,12 +35,12 @@ html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 
 /* ── Circuit background ── */
-#page-bg{position:fixed;inset:0;z-index:-1;background:url('images/circuit-bg.jpg') center/cover}
+#page-bg{position:fixed;inset:0;z-index:-1;background:url('images/circuit-bg.jpg') center/cover;will-change:transform}
 [data-theme=light] #page-bg{display:none}
 @media(prefers-color-scheme:light){:root:not([data-theme=dark]) #page-bg{display:none}}
 
 /* ── Nav ── */
-.nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:6px;padding:0 20px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:6px;padding:0 20px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
 .nav-title{flex:1;font:700 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .nav-btn{width:36px;height:36px;border-radius:50%;border:none;background:none;color:var(--muted);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;font-family:inherit;transition:background .12s}
 .nav-btn:hover{background:var(--card)}
@@ -70,7 +70,7 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 .slide{flex:0 0 100%;position:relative;overflow:hidden}
 .slide img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;pointer-events:none}
 .slide-cap{position:absolute;inset:auto 0 0;padding:14px 16px 12px;background:linear-gradient(transparent,rgba(0,0,0,.7));color:#fff;font:700 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase}
-.sl-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.28);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.13);color:rgba(255,255,255,.85);width:40px;height:40px;border-radius:50%;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s,opacity .18s;opacity:0;z-index:10}
+.sl-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.28);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.13);color:rgba(255,255,255,.85);width:40px;height:40px;border-radius:50%;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s,opacity .18s;opacity:0;z-index:10}
 .slider-viewport:hover .sl-btn{opacity:1}
 .sl-btn:hover{background:rgba(0,0,0,.5)}
 .sl-prev{left:12px}.sl-next{right:12px}
@@ -85,9 +85,9 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 .sec-title{font:700 22px/1.1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.04em;color:var(--ink)}
 
 /* ── Cards ── */
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:22px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:22px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
-.spec-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.spec-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .sp-lbl{font:700 10px/1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
 .sp-val{font:700 20px/1.2 'Barlow Condensed',sans-serif;color:var(--ink);margin-top:5px}
 .sp-note{font-size:12px;color:var(--muted);margin-top:3px}
@@ -106,7 +106,7 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 
 /* ── Monte Carlo feature ── */
 .mc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.mc-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--sh);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.mc-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--sh);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .mc-card-hd{font:700 10px/1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.14em;color:var(--mc);margin-bottom:12px}
 .mc-list{list-style:none;display:flex;flex-direction:column;gap:6px}
 .mc-list li{font-size:13px;padding-left:14px;position:relative;line-height:1.5}
@@ -122,12 +122,12 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 
 /* ── Tip list ── */
 .tips{list-style:none;display:flex;flex-direction:column;gap:8px}
-.tips li{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.6;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:11px 14px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.tips li{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.6;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:11px 14px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .tips li .ti{font-size:18px;flex-shrink:0;margin-top:1px}
 
 /* ── Assistenten ── */
 .assist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
-.assist-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--sh);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.assist-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--sh);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .assist-icon{font-size:24px;margin-bottom:9px}
 .assist-name{font:700 14px/1.2 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
 .assist-desc{font-size:12px;color:var(--muted);line-height:1.55}
@@ -138,12 +138,12 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 
 /* ── Clever grid ── */
 .clever-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
-.clever-item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.5;box-shadow:var(--sh);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.clever-item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.5;box-shadow:var(--sh);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .clever-em{font-size:20px;flex-shrink:0;margin-top:1px}
 
 /* ── Kit ── */
 .kit-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.kit-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--sh);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.kit-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--sh);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .kit-hd{font:700 11px/1 'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:12px}
 .kit-card.pflicht .kit-hd{color:var(--mc)}
 .kit-card.pflicht{border-color:rgba(200,16,46,.25)}

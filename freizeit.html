@@ -8,13 +8,13 @@
 :root{--bg:#f5f0e8;--card:#fff;--ink:#17202a;--muted:#718096;--line:#dce2e8;--brand:#c85800;--soft:rgba(200,88,0,0.1);--warn:#a66016;--radius:13px;--shadow:0 10px 30px rgba(23,32,42,.07)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0a0806;--card:rgba(20,16,10,0.82);--ink:#e8e4ff;--muted:#8980a9;--line:rgba(232,99,10,0.18);--brand:#e8630a;--soft:rgba(232,99,10,0.14);--warn:#e2a85c;--shadow:none}}
 :root[data-theme=dark]{--bg:#0a0806;--card:rgba(20,16,10,0.82);--ink:#e8e4ff;--muted:#8980a9;--line:rgba(232,99,10,0.18);--brand:#e8630a;--soft:rgba(232,99,10,0.14);--warn:#e2a85c;--shadow:none}
-#page-bg{position:fixed;inset:0;z-index:-1;background:url('images/circuit-bg.jpg') center/cover}
+#page-bg{position:fixed;inset:0;z-index:-1;background:url('images/circuit-bg.jpg') center/cover;will-change:transform}
 [data-theme=light] #page-bg{display:none}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]) #page-bg{display:block}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 .app{max-width:1050px;margin:auto;padding:0 18px 80px}
-.site-nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);margin-bottom:20px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.site-nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);margin-bottom:20px;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
 .site-nav-title{flex:1;font-size:17px;font-weight:700;padding:0 4px;color:var(--ink)}
 .site-nav-btn{width:36px;height:36px;border-radius:50%;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;flex-shrink:0;font-family:inherit;transition:background .15s}
 .site-nav-btn:active{background:var(--card)}

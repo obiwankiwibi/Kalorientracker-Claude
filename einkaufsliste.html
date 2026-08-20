@@ -46,8 +46,8 @@
 
     html[data-theme="dark"] .tile:not(.active):not(.done):not(.sug) {
       background: rgba(28,20,12,0.80);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
     }
 
     html, body {
@@ -112,7 +112,7 @@
     }
 
     /* ── Page background (circuit board) ── */
-    #page-bg{position:fixed;inset:0;z-index:-1;background:url('images/circuit-bg.jpg') center/cover}
+    #page-bg{position:fixed;inset:0;z-index:-1;background:url('images/circuit-bg.jpg') center/cover;will-change:transform}
     [data-theme=light] #page-bg{display:none}
 
     /* ── Header ── */
@@ -126,8 +126,8 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(7px);
+      -webkit-backdrop-filter: blur(7px);
     }
 
     .header-back {
@@ -326,8 +326,8 @@
     .tile.sug {
       background: linear-gradient(145deg, rgba(232,99,10,0.55), rgba(170,58,5,0.45));
       color: #fff;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
     }
     .tile.sug.in-list { opacity: 0.45; filter: grayscale(30%); }
 
