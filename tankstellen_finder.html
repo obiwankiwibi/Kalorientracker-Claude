@@ -68,7 +68,7 @@ header { border-bottom: 2px solid var(--brand); }
 <body>
 <div id="page-bg" aria-hidden="true"></div>
 <div class="app">
-<header class="site-nav"><div class="site-nav-title">⛽ Tankstellen</div><button class="site-nav-btn" id="settingsBtn" title="API-Einstellungen">⚙</button><button class="site-nav-btn" id="themeBtn" title="Design wechseln">◐</button><a href="index.html" class="site-nav-btn" title="Startseite">⌂</a></header>
+<header class="site-nav"><div class="site-nav-title">⛽ Tankstellen</div><button class="site-nav-btn" id="settingsBtn" title="API-Einstellungen">⚙</button><button class="site-nav-btn" onclick="doQuickBackup()" title="Backup erstellen">💾</button><button class="site-nav-btn" id="themeBtn" title="Design wechseln">◐</button><a href="index.html" class="site-nav-btn" title="Startseite">⌂</a></header>
 <section class="search-card"><div class="grid"><div class="field place"><label>Ort oder Postleitzahl</label><div style="display:flex;gap:6px"><input id="place" value="Hilchenbach" placeholder="z. B. Hilchenbach" style="flex:1"><button id="gpsBtn" class="icon" title="Aktuellen Standort ermitteln" style="flex-shrink:0;font-size:15px">📍</button></div></div><div class="field"><label>Umkreis</label><select id="radius"><option value="3">3 km</option><option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="25">25 km</option></select></div><div class="field"><label>Sortierung</label><select id="sorting"><option value="price">Preis</option><option value="dist">Entfernung</option></select></div><button class="primary" id="searchBtn">Tankstellen suchen</button></div><div class="subactions"><span class="status" id="status">API-Key in den Einstellungen hinterlegen</span></div>
 <div class="filter-bar" id="filterBar" style="display:none">
   <input id="nameSearch" class="filter-input" placeholder="Name suchen…">
@@ -341,6 +341,16 @@ window.onresize=()=>requestAnimationFrame(drawChart);applyTheme();$('place').val
 // Stündliche Auto-Abfrage; sofortige Abfrage falls Daten fehlen oder veraltet
 if(state.apiKey&&(!state.stations.length||Date.now()-state.lastRequest>TK_HOUR))search();
 setInterval(search,TK_HOUR);
+
+function doQuickBackup(){
+  var d={};
+  for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);try{d[k]=JSON.parse(localStorage.getItem(k));}catch(e){d[k]=localStorage.getItem(k);}}
+  d._backup={created:new Date().toISOString()};
+  var bl=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(bl);
+  a.download="hub-backup-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();URL.revokeObjectURL(a.href);
+}
 </script>
 </body>
 </html>

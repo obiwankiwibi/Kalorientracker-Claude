@@ -265,6 +265,7 @@
 <header class="app-header">
   <div class="wordmark"><span class="wm-dot" id="wm-dot"></span>ZÄHLER</div>
   <div class="hctrl">
+    <button class="hbtn" onclick="doQuickBackup()" title="Backup erstellen" style="font-size:17px">💾</button>
     <a href="index.html" class="hbtn" title="Startseite" style="text-decoration:none;font-size:17px;display:flex;align-items:center;justify-content:center;">⌂</a>
     <button class="hbtn" id="settingsBtn" title="Einstellungen">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -989,6 +990,16 @@ document.addEventListener('touchend',e=>{
 const savedTheme=localStorage.getItem('zaehler-theme');
 if(savedTheme) document.documentElement.setAttribute('data-theme',savedTheme);
 render();
+
+function doQuickBackup(){
+  var d={};
+  for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);try{d[k]=JSON.parse(localStorage.getItem(k));}catch(e){d[k]=localStorage.getItem(k);}}
+  d._backup={created:new Date().toISOString()};
+  var bl=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(bl);
+  a.download="hub-backup-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();URL.revokeObjectURL(a.href);
+}
 </script>
 </body>
 </html>

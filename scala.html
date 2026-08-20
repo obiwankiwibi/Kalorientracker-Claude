@@ -198,6 +198,7 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 <nav class="nav">
   <a href="index.html" class="nav-btn" title="Dashboard">⌂</a>
   <div class="nav-title">Mein Fahrzeug</div>
+  <button class="nav-btn" onclick="doQuickBackup()" title="Backup erstellen">💾</button>
   <button class="nav-btn" id="themeBtn">◐</button>
 </nav>
 
@@ -711,6 +712,16 @@ document.querySelectorAll('.cl-item').forEach(item => {
     saveChecks();
   });
 });
+
+function doQuickBackup(){
+  var d={};
+  for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);try{d[k]=JSON.parse(localStorage.getItem(k));}catch(e){d[k]=localStorage.getItem(k);}}
+  d._backup={created:new Date().toISOString()};
+  var bl=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(bl);
+  a.download="hub-backup-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();URL.revokeObjectURL(a.href);
+}
 </script>
 </body>
 </html>
