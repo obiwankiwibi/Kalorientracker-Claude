@@ -407,10 +407,7 @@
   <div class="page-header">
     <div class="page-logo">Mein<span>Hub</span></div>
     <div style="display:flex;align-items:center;gap:10px">
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-        <div class="page-time" id="headerTime"></div>
-        <button id="headerBackupBtn" class="header-backup-btn" onclick="doBackup()" title="Backup erstellen">💾 Backup</button>
-      </div>
+      <div class="page-time" id="headerTime"></div>
       <button id="themeToggleBtn" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px;color:var(--muted);line-height:1;border-radius:8px" title="Design wechseln">◐</button>
     </div>
   </div>
@@ -540,21 +537,6 @@
     <div id="muellWidget"></div>
   </div>
 
-  <!-- ══ BACKUP ══ -->
-  <div class="section">
-    <div class="section-head">
-      <span class="section-title">Datensicherung</span>
-    </div>
-    <button class="backup-btn" id="backupBtn" onclick="doBackup()">
-      <span class="backup-icon">💾</span>
-      <span class="backup-text">
-        <span class="backup-title">Backup erstellen</span>
-        <span class="backup-sub" id="backupSub">Alle App-Daten sichern</span>
-      </span>
-      <span class="backup-arrow">↓</span>
-    </button>
-  </div>
-
   <!-- ══ LEBENS-UHR ══ -->
   <div class="section" style="margin-top:12px">
     <div class="section-head">
@@ -584,6 +566,21 @@
         font-variant-numeric:tabular-nums;letter-spacing:0.01em;
       "></div>
     </div>
+  </div>
+
+  <!-- ══ BACKUP ══ -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-title">Datensicherung</span>
+    </div>
+    <button class="backup-btn" id="backupBtn" onclick="doBackup()">
+      <span class="backup-icon">💾</span>
+      <span class="backup-text">
+        <span class="backup-title">Backup erstellen</span>
+        <span class="backup-sub" id="backupSub">Alle App-Daten sichern</span>
+      </span>
+      <span class="backup-arrow">↓</span>
+    </button>
   </div>
 
 <script>
