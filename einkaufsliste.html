@@ -31,17 +31,23 @@
 
     html[data-theme="dark"] {
       --bg:       #0a0806;
-      --surface:  #1F2937;
-      --card:     #374151;
+      --surface:  rgba(22,16,10,0.82);
+      --card:     rgba(32,24,16,0.78);
       --teal:     #e8630a;
       --teal-dim: rgba(232,99,10,0.5);
       --salmon:   #F87171;
-      --text:     #F9FAFB;
-      --muted:    #9CA3AF;
-      --border:   rgba(255,255,255,0.09);
+      --text:     #f0ebe4;
+      --muted:    #8a7255;
+      --border:   rgba(232,99,10,0.14);
       --green:    #4ADE80;
       --red:      #F87171;
       --shadow:   0 4px 18px rgba(0,0,0,0.35);
+    }
+
+    html[data-theme="dark"] .tile:not(.active):not(.done):not(.sug) {
+      background: rgba(28,20,12,0.80);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     html, body {
@@ -316,10 +322,12 @@
       font-size: 13px;
     }
 
-    /* Suggestions — dark teal for readable white text (contrast >7:1) */
+    /* Suggestions */
     .tile.sug {
-      background: linear-gradient(145deg, #0e7b73, #0a5c55);
+      background: linear-gradient(145deg, rgba(232,99,10,0.55), rgba(170,58,5,0.45));
       color: #fff;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .tile.sug.in-list { opacity: 0.45; filter: grayscale(30%); }
 
