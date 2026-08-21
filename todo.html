@@ -6,7 +6,7 @@
   <title>Aufgaben</title>
 
   <script>(function(){
-    var t = localStorage.getItem('todo_theme') || 'dark';
+    var t = localStorage.getItem('todo_theme') || 'light';
     document.documentElement.setAttribute('data-theme', t);
   })();</script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1672,7 +1672,7 @@ function toast(msg) {
 }
 
 function toggleTheme() {
-  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  const cur = document.documentElement.getAttribute('data-theme') || 'light';
   const next = cur === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('todo_theme', next);

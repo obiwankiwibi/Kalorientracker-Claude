@@ -987,8 +987,8 @@ document.addEventListener('touchend',e=>{
 
 // ── Init ───────────────────────────────────────────────────────────────────
 
-const savedTheme=localStorage.getItem('zaehler-theme');
-if(savedTheme) document.documentElement.setAttribute('data-theme',savedTheme);
+const savedTheme=localStorage.getItem('zaehler-theme')||'light';
+document.documentElement.setAttribute('data-theme',savedTheme);
 render();
 
 function doQuickBackup(){

@@ -603,7 +603,7 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 /* ── Theme ── */
 const TKEY = 'scala_theme';
 const themes = ['system','light','dark'];
-let theme = localStorage.getItem(TKEY) || 'system';
+let theme = localStorage.getItem(TKEY) || 'light';
 function applyTheme() {
   theme === 'system'
     ? document.documentElement.removeAttribute('data-theme')

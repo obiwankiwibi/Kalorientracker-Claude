@@ -98,7 +98,7 @@ const STORE='tankstellen_finder_v2';
 // Für eigenen Key bitte hier https://creativecommons.tankerkoenig.de registrieren.
 // Der Key wird nur lokal im Browser gespeichert und darf nicht im Code veröffentlicht werden.
 const TK_HOUR=3600000;
-const state=Object.assign({apiKey:'',fuel:'e5',theme:'system',history:{e10:[],e5:[],diesel:[]},stations:[],place:'57271 Hilchenbach-Dahlbruch',coords:null,lastRequest:0,favorites:{},favPrices:{}},JSON.parse(localStorage.getItem(STORE)||'{}'));
+const state=Object.assign({apiKey:'',fuel:'e5',theme:'light',history:{e10:[],e5:[],diesel:[]},stations:[],place:'57271 Hilchenbach-Dahlbruch',coords:null,lastRequest:0,favorites:{},favPrices:{}},JSON.parse(localStorage.getItem(STORE)||'{}'));
 const $=id=>document.getElementById(id), euro=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:3,maximumFractionDigits:3})+' €';
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){localStorage.setItem(STORE,JSON.stringify(state))}

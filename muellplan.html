@@ -424,14 +424,14 @@ function render() {
 
 // ── Theme ──
 function toggleTheme() {
-  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  const cur = document.documentElement.getAttribute('data-theme') || 'light';
   const next = cur === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('hub_theme', next);
   document.getElementById('themeBtn').textContent = next === 'dark' ? '🌙' : '☀️';
 }
 (function() {
-  const t = document.documentElement.getAttribute('data-theme') || 'dark';
+  const t = document.documentElement.getAttribute('data-theme') || 'light';
   document.getElementById('themeBtn').textContent = t === 'dark' ? '🌙' : '☀️';
 })();
 

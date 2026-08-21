@@ -283,7 +283,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-app
 <script>
 const STORE = 'freizeit_v1';
 const themes = ['system','light','dark'];
-let state = { activities: [], theme: 'system' };
+let state = { activities: [], theme: 'light' };
 try { state = Object.assign(state, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch(e) {}
 if (!Array.isArray(state.activities)) state.activities = [];
 

@@ -61,7 +61,7 @@ header { border-bottom: 2px solid var(--a); }
 const KEY='haushaltskosten_v1';
 const months=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 const now=new Date();
-const defaults={owner:'Benutzer',persons:[],theme:'system',costs:[]};
+const defaults={owner:'Benutzer',persons:[],theme:'light',costs:[]};
 function load(){try{return {...defaults,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){return structuredClone(defaults)}}
 let state=load();
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
