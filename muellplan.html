@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Müllplan</title>
+<script>(function(){var t=localStorage.getItem('hub_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #f5f0e8;
+  --surface: rgba(255,252,248,0.92);
+  --card:    #fffefa;
+  --teal:    #c85800;
+  --text:    #17120a;
+  --muted:   #7a6548;
+  --border:  rgba(100,65,25,0.14);
+  --shadow:  0 4px 18px rgba(80,45,10,0.10);
+}
+html[data-theme="dark"] {
+  --bg:      #0a0806;
+  --surface: rgba(22,16,10,0.88);
+  --card:    rgba(28,20,12,0.82);
+  --teal:    #e8630a;
+  --text:    #f0ebe4;
+  --muted:   #8a7255;
+  --border:  rgba(232,99,10,0.14);
+  --shadow:  0 4px 18px rgba(0,0,0,0.35);
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding-bottom: 60px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#page-bg { position: fixed; inset: 0; z-index: -1; background: url('images/circuit-bg.jpg') center/cover; will-change: transform; }
+[data-theme=light] #page-bg { display: none; }
+
+/* ── Nav ── */
+.site-nav {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 14px; height: 52px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.nav-back {
+  width: 36px; height: 36px; border-radius: 50%; border: none;
+  background: none; color: var(--muted); font-size: 20px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  text-decoration: none;
+}
+.nav-back:hover { background: var(--card); }
+.nav-title { flex: 1; font-size: 15px; font-weight: 700; color: var(--text); }
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 50%; border: none;
+  background: none; color: var(--muted); font-size: 17px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.icon-btn:hover { background: var(--card); }
+
+/* ── Plan validity banner ── */
+.plan-banner {
+  margin: 12px 14px 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.plan-banner-row { display: flex; align-items: center; gap: 8px; }
+.plan-icon { font-size: 18px; flex-shrink: 0; }
+.plan-label { font-size: 12px; color: var(--muted); font-weight: 600; flex: 1; }
+.plan-range { font-size: 13px; font-weight: 700; color: var(--text); }
+.plan-days-pill {
+  font-size: 11px; font-weight: 700; padding: 3px 9px;
+  border-radius: 99px; white-space: nowrap;
+}
+.pill-ok   { background: rgba(74,222,128,0.18); color: #3ab768; }
+.pill-warn { background: rgba(240,170,50,0.22);  color: #c89020; }
+.pill-crit { background: rgba(232,50,30,0.20);   color: #d84020; }
+.plan-warning {
+  margin-top: 9px; padding: 8px 10px;
+  background: rgba(232,99,10,0.12);
+  border: 1px solid rgba(232,99,10,0.28);
+  border-radius: 9px;
+  font-size: 12px; line-height: 1.5; color: var(--teal);
+  display: none;
+}
+.plan-warning.show { display: block; }
+
+/* ── Controls ── */
+.controls { padding: 12px 14px 0; display: flex; flex-direction: column; gap: 8px; }
+
+.filter-scroll {
+  display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.filter-scroll::-webkit-scrollbar { display: none; }
+.f-chip {
+  flex-shrink: 0; padding: 6px 13px; border-radius: 99px;
+  border: 1px solid var(--border); background: var(--card);
+  font-size: 12px; font-weight: 600; color: var(--muted);
+  cursor: pointer; white-space: nowrap; transition: all .15s;
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+}
+.f-chip.active {
+  background: var(--teal); color: #fff; border-color: transparent;
+}
+
+.sort-row { display: flex; gap: 8px; align-items: center; }
+.sort-btn {
+  flex: 1; padding: 7px 12px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--card);
+  font-size: 12px; font-weight: 600; color: var(--muted);
+  cursor: pointer; text-align: left;
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+  transition: all .15s;
+}
+.sort-btn.asc::after  { content: ' ↑'; color: var(--teal); }
+.sort-btn.desc::after { content: ' ↓'; color: var(--teal); }
+.past-toggle {
+  padding: 7px 12px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--card);
+  font-size: 12px; font-weight: 600; color: var(--muted);
+  cursor: pointer; white-space: nowrap;
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+  transition: all .15s;
+}
+.past-toggle.on { color: var(--teal); border-color: var(--teal); }
+
+/* ── Stats row ── */
+.stats-row {
+  display: flex; gap: 8px; margin: 10px 14px 0;
+}
+.stat-pill {
+  flex: 1; background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 10px; text-align: center;
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+}
+.stat-num { font-size: 18px; font-weight: 800; color: var(--teal); line-height: 1; }
+.stat-lbl { font-size: 10px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+
+/* ── List ── */
+.list-wrap { padding: 10px 14px 0; }
+
+.muell-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 14px;
+  background: var(--card); margin-bottom: 7px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+}
+.muell-row.past { opacity: 0.45; }
+.muell-date-block { text-align: center; min-width: 36px; flex-shrink: 0; }
+.muell-day-num  { font-size: 22px; font-weight: 800; line-height: 1; color: var(--text); }
+.muell-day-name { font-size: 9px; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-top: 2px; }
+.muell-right { flex: 1; min-width: 0; }
+.muell-diff { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+.muell-diff.today { color: var(--teal); font-weight: 700; }
+.muell-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.muell-chip { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 99px; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+.muell-note { font-size: 9px; color: var(--muted); margin-top: 2px; }
+.mc-grau  { background: rgba(107,117,153,0.18); color: #8a95b8; }
+.mc-braun { background: rgba(80,160,80,0.18);   color: #60b870; }
+.mc-gelb  { background: rgba(240,170,50,0.18);  color: #c89020; }
+.mc-blau  { background: rgba(50,130,220,0.18);  color: #4a8cd8; }
+.mc-rot   { background: rgba(220,60,50,0.18);   color: #d04040; }
+.mc-gruen { background: rgba(40,160,80,0.18);   color: #30a860; }
+
+.empty-state { text-align: center; padding: 32px 20px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="page-bg" aria-hidden="true"></div>
+
+<nav class="site-nav">
+  <a href="index.html" class="nav-back" title="Zurück">‹</a>
+  <span class="nav-title">🗑️ Müllplan</span>
+  <button class="icon-btn" onclick="doQuickBackup()" title="Backup">💾</button>
+  <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Theme">🌙</button>
+</nav>
+
+<!-- Plan validity banner -->
+<div class="plan-banner">
+  <div class="plan-banner-row">
+    <span class="plan-icon">📅</span>
+    <div style="flex:1">
+      <div class="plan-label">Aktueller Plan</div>
+      <div class="plan-range" id="planRange">–</div>
+    </div>
+    <span class="plan-days-pill" id="planDaysPill">–</span>
+  </div>
+  <div class="plan-warning" id="planWarning">
+    ⚠️ Der Plan läuft bald ab – bitte eine neue iCal-Datei hinterlegen!
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-pill"><div class="stat-num" id="statTotal">–</div><div class="stat-lbl">Gesamt</div></div>
+  <div class="stat-pill"><div class="stat-num" id="statLeft">–</div><div class="stat-lbl">Noch offen</div></div>
+  <div class="stat-pill"><div class="stat-num" id="statNext">–</div><div class="stat-lbl">Nächste in Tagen</div></div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <div class="filter-scroll" id="filterRow"></div>
+  <div class="sort-row">
+    <button class="sort-btn asc" id="sortBtn" onclick="toggleSort()">Datum</button>
+    <button class="past-toggle" id="pastBtn" onclick="togglePast()">Vergangene</button>
+  </div>
+</div>
+
+<!-- List -->
+<div class="list-wrap" id="listWrap"></div>
+
+<script>
+const MUELL_TYPES = {
+  'Restmüll':           { emoji: '🗑️', cls: 'mc-grau',  label: 'Restmüll' },
+  'Biomüll':            { emoji: '🌿', cls: 'mc-braun', label: 'Biomüll' },
+  'Gelbe Tonne':        { emoji: '🟡', cls: 'mc-gelb',  label: 'Gelbe Tonne' },
+  'Papier':             { emoji: '📰', cls: 'mc-blau',  label: 'Papier' },
+  'Schadstoffsammlung': { emoji: '⚠️', cls: 'mc-rot',   label: 'Schadstoffe' },
+  'Astschnitt':         { emoji: '🌳', cls: 'mc-gruen', label: 'Astschnitt' },
+  'Weihnachtsbäume':    { emoji: '🎄', cls: 'mc-gruen', label: 'Weihnachtsbäume' },
+};
+
+const MUELL_RAW = [
+  ['20260110','Weihnachtsbäume',''],
+  ['20260113','Biomüll',''],['20260115','Gelbe Tonne',''],['20260115','Restmüll',''],
+  ['20260127','Biomüll',''],['20260205','Papier',''],['20260210','Biomüll',''],
+  ['20260212','Gelbe Tonne',''],['20260212','Restmüll',''],['20260224','Biomüll',''],
+  ['20260305','Papier',''],['20260310','Biomüll',''],
+  ['20260312','Astschnitt',''],['20260312','Gelbe Tonne',''],['20260312','Restmüll',''],
+  ['20260324','Biomüll',''],['20260401','Papier','Verlegung Feiertag'],
+  ['20260408','Biomüll','Verlegung Feiertag'],
+  ['20260410','Gelbe Tonne',''],['20260410','Restmüll','Verlegung Feiertag'],
+  ['20260410','Schadstoffsammlung','Schillerstraße, 16:20–16:50 Uhr'],
+  ['20260411','Schadstoffsammlung','Wiesenstraße/B508, 08:00–08:30 Uhr'],
+  ['20260421','Biomüll',''],['20260429','Papier','Verlegung Feiertag'],
+  ['20260505','Biomüll',''],['20260507','Gelbe Tonne',''],['20260507','Restmüll',''],
+  ['20260519','Biomüll',''],['20260529','Papier','Verlegung Feiertag'],
+  ['20260602','Biomüll',''],['20260605','Gelbe Tonne',''],['20260605','Restmüll','Verlegung Feiertag'],
+  ['20260616','Biomüll',''],['20260625','Papier',''],['20260630','Biomüll',''],
+  ['20260702','Gelbe Tonne',''],['20260702','Restmüll',''],['20260714','Biomüll',''],
+  ['20260723','Papier',''],['20260728','Biomüll',''],
+  ['20260730','Gelbe Tonne',''],['20260730','Restmüll',''],
+  ['20260811','Biomüll',''],['20260820','Papier',''],['20260825','Biomüll',''],
+  ['20260827','Gelbe Tonne',''],['20260827','Restmüll',''],
+  ['20260908','Biomüll',''],['20260917','Papier',''],
+  ['20260918','Schadstoffsammlung','Schillerstraße, 16:20–16:50 Uhr'],
+  ['20260919','Schadstoffsammlung','Wiesenstraße/B508, 08:00–08:30 Uhr'],
+  ['20260922','Biomüll',''],['20260924','Gelbe Tonne',''],['20260924','Restmüll',''],
+  ['20261006','Biomüll',''],['20261015','Astschnitt',''],['20261015','Papier',''],
+  ['20261020','Biomüll',''],['20261022','Gelbe Tonne',''],['20261022','Restmüll',''],
+  ['20261103','Biomüll',''],['20261112','Papier',''],['20261117','Biomüll',''],
+  ['20261119','Gelbe Tonne',''],['20261119','Restmüll',''],
+  ['20261201','Biomüll',''],['20261210','Papier',''],['20261215','Biomüll',''],
+  ['20261217','Gelbe Tonne',''],['20261217','Restmüll',''],['20261229','Biomüll',''],
+];
+
+const DAYS   = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+const MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const MONTHS_LONG = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+function localDateStr() {
+  const t = new Date(); t.setHours(0,0,0,0);
+  const y = t.getFullYear(), m = String(t.getMonth()+1).padStart(2,'0'), d = String(t.getDate()).padStart(2,'0');
+  return `${y}${m}${d}`;
+}
+
+function parseDateStr(ds) {
+  return new Date(ds.slice(0,4)+'-'+ds.slice(4,6)+'-'+ds.slice(6,8));
+}
+
+function formatDateLong(ds) {
+  const d = parseDateStr(ds);
+  return `${d.getDate()}. ${MONTHS_LONG[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// ── State ──
+let sortAsc  = true;
+let showPast = false;
+let activeFilter = 'all';
+
+// ── Plan validity ──
+function initBanner() {
+  const first = MUELL_RAW[0][0];
+  const last  = MUELL_RAW[MUELL_RAW.length - 1][0];
+  document.getElementById('planRange').textContent = `${formatDateLong(first)} – ${formatDateLong(last)}`;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const lastDate = parseDateStr(last);
+  const daysLeft = Math.ceil((lastDate - today) / 86400000);
+
+  const pill = document.getElementById('planDaysPill');
+  const warn = document.getElementById('planWarning');
+  if (daysLeft <= 0) {
+    pill.textContent = 'Abgelaufen';
+    pill.className = 'plan-days-pill pill-crit';
+    warn.classList.add('show');
+  } else if (daysLeft <= 30) {
+    pill.textContent = `${daysLeft} Tage`;
+    pill.className = 'plan-days-pill pill-crit';
+    warn.classList.add('show');
+  } else if (daysLeft <= 60) {
+    pill.textContent = `${daysLeft} Tage`;
+    pill.className = 'plan-days-pill pill-warn';
+    warn.classList.add('show');
+    warn.textContent = `⚠️ Noch ${daysLeft} Tage – bitte neue iCal-Datei bereithalten!`;
+  } else {
+    pill.textContent = `${daysLeft} Tage`;
+    pill.className = 'plan-days-pill pill-ok';
+  }
+}
+
+// ── Filter chips ──
+function buildFilters() {
+  const types = ['all', ...Object.keys(MUELL_TYPES)];
+  const labels = { all: '🗂 Alle', ...Object.fromEntries(Object.entries(MUELL_TYPES).map(([k,v]) => [k, `${v.emoji} ${v.label}`])) };
+  const present = new Set(MUELL_RAW.map(r => r[1]));
+  const filtered = types.filter(t => t === 'all' || present.has(t));
+
+  document.getElementById('filterRow').innerHTML = filtered.map(t =>
+    `<button class="f-chip${t === activeFilter ? ' active' : ''}" onclick="setFilter('${t}')">${labels[t]||t}</button>`
+  ).join('');
+}
+
+function setFilter(type) {
+  activeFilter = type;
+  buildFilters();
+  render();
+}
+
+// ── Sort ──
+function toggleSort() {
+  sortAsc = !sortAsc;
+  const btn = document.getElementById('sortBtn');
+  btn.className = 'sort-btn ' + (sortAsc ? 'asc' : 'desc');
+  render();
+}
+
+// ── Past toggle ──
+function togglePast() {
+  showPast = !showPast;
+  const btn = document.getElementById('pastBtn');
+  btn.classList.toggle('on', showPast);
+  render();
+}
+
+// ── Render list ──
+function render() {
+  const todayStr = localDateStr();
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Group by date
+  const byDate = {};
+  for (const [ds, type, note] of MUELL_RAW) {
+    if (!showPast && ds < todayStr) continue;
+    if (activeFilter !== 'all' && type !== activeFilter) continue;
+    if (!byDate[ds]) byDate[ds] = [];
+    byDate[ds].push({ type, note });
+  }
+
+  let dates = Object.keys(byDate).sort();
+  if (!sortAsc) dates = dates.slice().reverse();
+
+  // Stats (always upcoming)
+  const allUpcoming = MUELL_RAW.filter(r => r[0] >= todayStr);
+  const uniqueUpcomingDates = [...new Set(allUpcoming.map(r => r[0]))].sort();
+  document.getElementById('statTotal').textContent = MUELL_RAW.length;
+  document.getElementById('statLeft').textContent  = allUpcoming.length;
+
+  if (uniqueUpcomingDates.length > 0) {
+    const nextDate = parseDateStr(uniqueUpcomingDates[0]);
+    const diff = Math.round((nextDate - today) / 86400000);
+    document.getElementById('statNext').textContent = diff === 0 ? 'Heute' : diff;
+  } else {
+    document.getElementById('statNext').textContent = '–';
+  }
+
+  if (dates.length === 0) {
+    document.getElementById('listWrap').innerHTML = `<div class="empty-state">Keine Einträge gefunden</div>`;
+    return;
+  }
+
+  const html = dates.map(ds => {
+    const d = parseDateStr(ds);
+    const isPast = ds < todayStr;
+    const diff = Math.round((d - today) / 86400000);
+    const diffTxt = diff === 0 ? 'Heute' : diff === 1 ? 'Morgen' : isPast ? `vor ${Math.abs(diff)} Tagen` : `in ${diff} Tagen`;
+    const diffCls = diff === 0 ? ' today' : '';
+    const rowCls  = isPast ? ' past' : '';
+
+    const chipsHtml = byDate[ds].map(({ type, note }) => {
+      const t = MUELL_TYPES[type] || { emoji: '📦', cls: 'mc-grau', label: type };
+      return `<div><span class="muell-chip ${t.cls}">${t.emoji} ${t.label}</span>${note ? `<div class="muell-note">${note}</div>` : ''}</div>`;
+    }).join('');
+
+    return `<div class="muell-row${rowCls}">
+      <div class="muell-date-block">
+        <div class="muell-day-num">${d.getDate()}</div>
+        <div class="muell-day-name">${DAYS[d.getDay()]} ${MONTHS[d.getMonth()]}</div>
+      </div>
+      <div class="muell-right">
+        <div class="muell-diff${diffCls}">${diffTxt}</div>
+        <div class="muell-chips">${chipsHtml}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('listWrap').innerHTML = html;
+}
+
+// ── Theme ──
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('hub_theme', next);
+  document.getElementById('themeBtn').textContent = next === 'dark' ? '🌙' : '☀️';
+}
+(function() {
+  const t = document.documentElement.getAttribute('data-theme') || 'dark';
+  document.getElementById('themeBtn').textContent = t === 'dark' ? '🌙' : '☀️';
+})();
+
+// ── Backup ──
+function doQuickBackup() {
+  var d = {};
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    try { d[k] = JSON.parse(localStorage.getItem(k)); } catch(e) { d[k] = localStorage.getItem(k); }
+  }
+  d._backup = { created: new Date().toISOString() };
+  var bl = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(bl);
+  a.download = 'hub-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+// ── Init ──
+initBanner();
+buildFilters();
+render();
+</script>
+</body>
+</html>
