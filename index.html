@@ -861,7 +861,8 @@ const MUELL_RAW = [
 
 function initMuellWidget() {
   const today = new Date(); today.setHours(0,0,0,0);
-  const todayStr = today.toISOString().slice(0,10).replace(/-/g,'');
+  const y = today.getFullYear(), mo = String(today.getMonth()+1).padStart(2,'0'), dy = String(today.getDate()).padStart(2,'0');
+  const todayStr = `${y}${mo}${dy}`;
   const byDate = {};
   for (const [ds, type, note] of MUELL_RAW) {
     if (ds < todayStr) continue;
