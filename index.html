@@ -22,27 +22,30 @@
       --bar-bg:   rgba(255,255,255,0.06);
     }
     :root[data-theme=light] {
-      --bg:       #edf2f7;
+      --bg:       #dce8f5;
       --layer1:   #ffffff;
-      --layer2:   #ede8dc;
-      --border:   rgba(0,0,0,0.08);
-      --border2:  rgba(0,0,0,0.13);
+      --layer2:   #e8f0fc;
+      --border:   rgba(0,50,150,0.10);
+      --border2:  rgba(0,50,150,0.16);
       --text:     #1a1a2e;
-      --muted:    #7a6a50;
+      --muted:    #6b7a99;
       --teal:     #0050c8;
-      --teal-dim: rgba(200,88,0,0.13);
+      --teal-dim: rgba(0,80,200,0.10);
       --salmon:   #d04030;
-      --bar-bg:   rgba(0,0,0,0.08);
+      --bar-bg:   rgba(0,0,0,0.07);
     }
 
     #page-bg {
       position: fixed; inset: 0; z-index: -1;
-      background: url('images/circuit-bg.jpg') center/cover;
+      background: #0a0d1a url('images/circuit-bg.jpg') center/cover;
+      will-change: transform;
     }
-    [data-theme=light] #page-bg { display: none; }
+    [data-theme=light] #page-bg {
+      background: linear-gradient(155deg, #b8d4f0 0%, #dce8f5 45%, #e8f2fc 100%);
+    }
 
     body {
-      background: var(--bg);
+      background: transparent;
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       min-height: 100vh;

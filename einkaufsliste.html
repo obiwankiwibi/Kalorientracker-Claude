@@ -55,7 +55,7 @@
     }
 
     body {
-      background: var(--bg);
+      background: transparent;
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       max-width: 430px;
@@ -113,7 +113,7 @@
 
     /* ── Page background (circuit board) ── */
     #page-bg{position:fixed;inset:0;z-index:-1;background:url('images/circuit-bg.jpg') center/cover;will-change:transform}
-    [data-theme=light] #page-bg{display:none}
+    [data-theme=light] #page-bg{background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%)}
 
     /* ── Header ── */
     .header {
@@ -324,10 +324,17 @@
 
     /* Suggestions */
     .tile.sug {
-      background: linear-gradient(145deg, rgba(232,99,10,0.55), rgba(170,58,5,0.45));
+      background: linear-gradient(145deg, rgba(27,79,216,0.55), rgba(0,50,180,0.45));
       color: #fff;
       backdrop-filter: blur(5px);
       -webkit-backdrop-filter: blur(5px);
+    }
+
+    /* Light mode tiles — white card look */
+    html[data-theme="light"] .tile:not(.active):not(.done):not(.sug) {
+      background: #ffffff;
+      box-shadow: 0 2px 10px rgba(0,50,150,0.08);
+      color: var(--text);
     }
     .tile.sug.in-list { opacity: 0.45; filter: grayscale(30%); }
 
