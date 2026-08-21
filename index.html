@@ -9,27 +9,27 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #080604;
-      --layer1:   rgba(22,16,10,0.82);
-      --layer2:   rgba(32,24,16,0.76);
-      --border:   rgba(232,99,10,0.14);
+      --bg:       #0a0d1a;
+      --layer1:   rgba(18,24,52,0.85);
+      --layer2:   rgba(24,32,74,0.78);
+      --border:   rgba(27,79,216,0.12);
       --border2:  rgba(232,99,10,0.26);
-      --text:     #f0ebe4;
-      --muted:    #8a7255;
-      --teal:     #e8630a;
-      --teal-dim: rgba(232,99,10,0.16);
+      --text:     #e8ecf8;
+      --muted:    #7a8aaa;
+      --teal:     #1b4fd8;
+      --teal-dim: rgba(27,79,216,0.14);
       --salmon:   #e85030;
       --bar-bg:   rgba(255,255,255,0.06);
     }
     :root[data-theme=light] {
-      --bg:       #f5f0e8;
-      --layer1:   #fffefa;
+      --bg:       #edf2f7;
+      --layer1:   #ffffff;
       --layer2:   #ede8dc;
       --border:   rgba(0,0,0,0.08);
       --border2:  rgba(0,0,0,0.13);
-      --text:     #17120a;
+      --text:     #1a1a2e;
       --muted:    #7a6a50;
-      --teal:     #c85800;
+      --teal:     #0050c8;
       --teal-dim: rgba(200,88,0,0.13);
       --salmon:   #d04030;
       --bar-bg:   rgba(0,0,0,0.08);
@@ -201,18 +201,18 @@
     .fuel-overlay-sub   { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
     .fuel-overlay-input {
       width: 100%; background: var(--layer2); border: 1px solid var(--border2);
-      color: var(--text); padding: 12px 14px; border-radius: 12px;
+      color: var(--text); padding: 12px 14px; border-radius: 18px;
       font-size: 14px; outline: none; font-family: inherit; margin-bottom: 12px;
     }
     .fuel-overlay-input:focus { border-color: var(--teal); }
     .fuel-overlay-btns { display: flex; gap: 10px; }
     .fuel-overlay-cancel {
-      flex: 1; padding: 13px; border-radius: 12px; border: 1px solid var(--border2);
+      flex: 1; padding: 13px; border-radius: 18px; border: 1px solid var(--border2);
       background: none; color: var(--muted); font-size: 14px; font-weight: 600;
       cursor: pointer; font-family: inherit;
     }
     .fuel-overlay-save {
-      flex: 2; padding: 13px; border-radius: 12px; border: none;
+      flex: 2; padding: 13px; border-radius: 18px; border: none;
       background: var(--teal); color: #fff; font-size: 14px; font-weight: 700;
       cursor: pointer; font-family: inherit;
     }
@@ -317,7 +317,7 @@
     .backup-arrow { font-size: 18px; color: var(--teal); flex-shrink: 0; }
 
     /* ── Müll widget ── */
-    .muell-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--layer2); margin-bottom: 8px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+    .muell-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 20px; background: var(--layer2); margin-bottom: 8px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
     .muell-row:last-child { margin-bottom: 0; }
     .muell-date-block { text-align: center; min-width: 34px; flex-shrink: 0; }
     .muell-day-num  { font-size: 22px; font-weight: 800; line-height: 1; color: var(--text); }

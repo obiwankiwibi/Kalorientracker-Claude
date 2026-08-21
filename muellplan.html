@@ -9,23 +9,23 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:      #f5f0e8;
+  --bg:      #edf2f7;
   --surface: rgba(255,252,248,0.92);
-  --card:    #fffefa;
-  --teal:    #c85800;
-  --text:    #17120a;
-  --muted:   #7a6548;
-  --border:  rgba(100,65,25,0.14);
-  --shadow:  0 4px 18px rgba(80,45,10,0.10);
+  --card:    #ffffff;
+  --teal:    #0050c8;
+  --text:    #1a1a2e;
+  --muted:   #6b7a99;
+  --border:  rgba(0,0,80,0.09);
+  --shadow:  0 4px 18px rgba(0,0,80,0.07);
 }
 html[data-theme="dark"] {
-  --bg:      #0a0806;
-  --surface: rgba(22,16,10,0.88);
-  --card:    rgba(28,20,12,0.82);
-  --teal:    #e8630a;
-  --text:    #f0ebe4;
-  --muted:   #8a7255;
-  --border:  rgba(232,99,10,0.14);
+  --bg:      #0c0f1e;
+  --surface: rgba(18,24,52,0.90);
+  --card:    rgba(20,28,64,0.85);
+  --teal:    #1b4fd8;
+  --text:    #e8ecf8;
+  --muted:   #7a8aaa;
+  --border:  rgba(27,79,216,0.12);
   --shadow:  0 4px 18px rgba(0,0,0,0.35);
 }
 
@@ -73,7 +73,7 @@ body {
   margin: 12px 14px 0;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 20px;
   padding: 12px 14px;
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
@@ -90,8 +90,8 @@ body {
 .pill-crit { background: rgba(232,50,30,0.20);   color: #d84020; }
 .plan-warning {
   margin-top: 9px; padding: 8px 10px;
-  background: rgba(232,99,10,0.12);
-  border: 1px solid rgba(232,99,10,0.28);
+  background: rgba(27,79,216,0.10);
+  border: 1px solid rgba(27,79,216,0.28);
   border-radius: 9px;
   font-size: 12px; line-height: 1.5; color: var(--teal);
   display: none;
@@ -155,7 +155,7 @@ body {
 
 .muell-row {
   display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px; border-radius: 14px;
+  padding: 10px 12px; border-radius: 20px;
   background: var(--card); margin-bottom: 7px;
   border: 1px solid var(--border);
   backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);

@@ -17,13 +17,13 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:      #0a0806;
+      --bg:      #0c0f1e;
       --surface: #272a3d;
       --card:    #313554;
       --border:  #3a3d55;
       --text:    #eef0f8;
       --muted:   #7880a0;
-      --accent:  #e8630a;
+      --accent:  #1b4fd8;
       --star:    #f5a623;
       --green:   #4ade80;
       --red:     #e8635a;
@@ -31,13 +31,13 @@
     }
 
     html[data-theme="light"] {
-      --bg:      #f5f0e8;
+      --bg:      #edf2f7;
       --surface: #ffffff;
       --card:    #e5e5ea;
       --border:  rgba(0,0,0,0.1);
       --text:    #1c1c1e;
       --muted:   #6c6c70;
-      --accent:  #c85800;
+      --accent:  #0050c8;
       --star:    #d97706;
       --green:   #34c759;
       --red:     #ff3b30;
@@ -162,7 +162,7 @@
 
     .add-list-icon {
       width: 38px; height: 38px; border-radius: 50%;
-      background: rgba(232,99,10,0.15);
+      background: rgba(27,79,216,0.14);
       display: flex; align-items: center; justify-content: center;
       font-size: 22px; color: var(--accent);
     }
@@ -403,7 +403,7 @@
 
     .emoji-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 26px; }
     .emoji-opt {
-      font-size: 22px; width: 42px; height: 42px; border-radius: 12px;
+      font-size: 22px; width: 42px; height: 42px; border-radius: 18px;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; background: var(--card);
       border: 2px solid transparent; transition: border-color 0.15s, transform 0.1s;
@@ -413,7 +413,7 @@
 
     .create-list-btn {
       width: 100%; padding: 14px; background: var(--accent); color: #fff;
-      border: none; border-radius: 14px; font-size: 16px; font-weight: 700;
+      border: none; border-radius: 20px; font-size: 16px; font-weight: 700;
       cursor: pointer; font-family: inherit; transition: opacity 0.15s;
     }
     .create-list-btn:active { opacity: 0.8; }
@@ -427,7 +427,7 @@
     .picker-input {
       width: 100%; background: var(--card);
       border: 1px solid var(--border); color: var(--text);
-      padding: 12px 14px; border-radius: 12px; font-size: 15px;
+      padding: 12px 14px; border-radius: 18px; font-size: 15px;
       outline: none; margin-bottom: 14px; font-family: inherit;
     }
     .picker-input:focus { border-color: var(--accent); }
@@ -435,7 +435,7 @@
     .quick-reminder-item {
       display: flex; align-items: center; gap: 12px;
       padding: 12px 14px; background: var(--card);
-      border-radius: 12px; margin-bottom: 8px; cursor: pointer;
+      border-radius: 18px; margin-bottom: 8px; cursor: pointer;
       transition: background 0.1s;
     }
     .quick-reminder-item:active { background: var(--border); }
@@ -445,7 +445,7 @@
 
     .picker-btns { display: flex; gap: 10px; margin-top: 4px; }
     .pk-btn {
-      flex: 1; padding: 13px; border-radius: 12px;
+      flex: 1; padding: 13px; border-radius: 18px;
       border: none; font-size: 15px; font-weight: 600;
       cursor: pointer; font-family: inherit;
     }
@@ -459,7 +459,7 @@
     }
     .settings-field-label:first-of-type { margin-top: 0; }
     .settings-notif-btn {
-      width: 100%; padding: 11px; border-radius: 12px;
+      width: 100%; padding: 11px; border-radius: 18px;
       border: 1px solid var(--border); background: var(--card);
       color: var(--text); font-size: 14px; font-weight: 600;
       cursor: pointer; font-family: inherit; margin-bottom: 14px;

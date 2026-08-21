@@ -8,26 +8,26 @@
 <style>
 /* ── Tokens ── */
 :root {
-  --bg:      #f5f0e8;
-  --card:    #fffefa;
-  --ink:     #17120a;
-  --muted:   #7a6548;
-  --line:    #e8dcc8;
+  --bg:      #edf2f7;
+  --card:    #ffffff;
+  --ink:     #1a1a2e;
+  --muted:   #6b7a99;
+  --line:    #dde8f5;
   --mc:      #c8102e;
   --mc2:     rgba(200,16,46,.09);
   --hero:    #141419;
   --r:       12px;
-  --sh:      0 6px 24px rgba(24,24,31,.07);
+  --sh:      0 6px 24px rgba(0,0,80,0.07);
 }
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){
-  --bg:#0a0806; --card:rgba(18,14,10,0.85); --ink:#f0ebe4; --muted:#8a7560;
-  --line:rgba(232,99,10,0.16); --mc:#e8193e; --mc2:rgba(232,25,62,.11);
-  --hero:#060404; --sh:none;
+  --bg:#0c0f1e; --card:rgba(16,22,52,0.88); --ink:#e8ecf8; --muted:#8a95bb;
+  --line:rgba(27,79,216,0.14); --mc:#e8193e; --mc2:rgba(232,25,62,.11);
+  --hero:#080c18; --sh:none;
 }}
 :root[data-theme=dark]{
-  --bg:#0a0806; --card:rgba(18,14,10,0.85); --ink:#f0ebe4; --muted:#8a7560;
-  --line:rgba(232,99,10,0.16); --mc:#e8193e; --mc2:rgba(232,25,62,.11);
-  --hero:#060404; --sh:none;
+  --bg:#0c0f1e; --card:rgba(16,22,52,0.88); --ink:#e8ecf8; --muted:#8a95bb;
+  --line:rgba(27,79,216,0.14); --mc:#e8193e; --mc2:rgba(232,25,62,.11);
+  --hero:#080c18; --sh:none;
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -64,7 +64,7 @@ body{background:var(--bg);color:var(--ink);font:400 15px/1.65 'Nunito Sans',syst
 
 /* ── Slider ── */
 .slider-wrap{padding:36px 0 0}
-.slider-viewport{position:relative;border-radius:12px;overflow:hidden;background:var(--hero);user-select:none}
+.slider-viewport{position:relative;border-radius:18px;overflow:hidden;background:var(--hero);user-select:none}
 .slider-track{display:flex;will-change:transform;transition:transform .38s cubic-bezier(.25,.46,.45,.94)}
 .slider-track.no-anim{transition:none}
 .slide{flex:0 0 100%;position:relative;overflow:hidden}

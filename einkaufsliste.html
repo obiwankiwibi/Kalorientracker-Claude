@@ -15,37 +15,37 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #f5f0e8;
+      --bg:       #edf2f7;
       --surface:  #FFFFFF;
-      --card:     #EDE7D8;
-      --teal:     #c85800;
-      --teal-dim: rgba(200,88,0,0.5);
+      --card:     #eef4ff;
+      --teal:     #0050c8;
+      --teal-dim: rgba(27,79,216,0.5);
       --salmon:   #C84B32;
-      --text:     #1C1108;
-      --muted:    #6B4E38;
-      --border:   rgba(100,65,25,0.15);
+      --text:     #1a1a2e;
+      --muted:    #6b7a99;
+      --border:   rgba(0,0,80,0.10);
       --green:    #2A8C54;
       --red:      #C84B32;
-      --shadow:   0 4px 18px rgba(80,45,10,0.12);
+      --shadow:   0 4px 18px rgba(0,0,80,0.08);
     }
 
     html[data-theme="dark"] {
-      --bg:       #0a0806;
-      --surface:  rgba(22,16,10,0.82);
-      --card:     rgba(32,24,16,0.78);
-      --teal:     #e8630a;
-      --teal-dim: rgba(232,99,10,0.5);
+      --bg:       #0c0f1e;
+      --surface:  rgba(18,24,52,0.85);
+      --card:     rgba(24,32,74,0.80);
+      --teal:     #1b4fd8;
+      --teal-dim: rgba(27,79,216,0.5);
       --salmon:   #F87171;
-      --text:     #f0ebe4;
-      --muted:    #8a7255;
-      --border:   rgba(232,99,10,0.14);
+      --text:     #e8ecf8;
+      --muted:    #7a8aaa;
+      --border:   rgba(27,79,216,0.12);
       --green:    #4ADE80;
       --red:      #F87171;
       --shadow:   0 4px 18px rgba(0,0,0,0.35);
     }
 
     html[data-theme="dark"] .tile:not(.active):not(.done):not(.sug) {
-      background: rgba(28,20,12,0.80);
+      background: rgba(20,28,64,0.82);
       backdrop-filter: blur(5px);
       -webkit-backdrop-filter: blur(5px);
     }
@@ -93,7 +93,7 @@
       display: none;
       background: #2d2510;
       border: 1px solid #6b5a20;
-      border-radius: 12px;
+      border-radius: 18px;
       margin: 12px;
       padding: 14px;
       font-size: 13px;
@@ -277,7 +277,7 @@
     }
 
     .tile {
-      border-radius: 14px;
+      border-radius: 20px;
       padding: 12px 8px 10px;
       display: flex;
       flex-direction: column;
@@ -442,7 +442,7 @@
       border: 1px solid var(--border);
       color: var(--text);
       padding: 11px 14px;
-      border-radius: 12px;
+      border-radius: 18px;
       font-size: 14px;
       outline: none;
       margin-bottom: 14px;
@@ -454,7 +454,7 @@
     .sh-btn {
       flex: 1;
       padding: 13px;
-      border-radius: 12px;
+      border-radius: 18px;
       border: none;
       cursor: pointer;
       font-size: 15px;
@@ -636,7 +636,7 @@
       transform: translate(-50%, -60%);
       width: 260px; height: 160px;
       border: 2px solid #fff;
-      border-radius: 12px;
+      border-radius: 18px;
       box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
       pointer-events: none;
     }
@@ -750,7 +750,7 @@
       padding: 10px 14px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 18px;
       font-size: 12px;
       color: var(--muted);
       line-height: 1.5;
@@ -1933,7 +1933,7 @@ function renderListSheet() {
   saved.innerHTML = allLists.map(l => `
     <div onclick="goToList('${esc(l.name)}')" style="
       display:flex; align-items:center; gap:12px;
-      padding:13px 14px; border-radius:14px;
+      padding:13px 14px; border-radius:20px;
       background:${l.name.toLowerCase() === listId ? 'var(--teal)' : 'var(--card)'};
       cursor:pointer; margin-bottom:8px;
       border: 1px solid ${l.name.toLowerCase() === listId ? 'var(--teal)' : 'var(--border)'};
