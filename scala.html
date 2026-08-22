@@ -266,6 +266,23 @@ html,body{
   transition:border-color .2s;
 }
 
+/* ── Manual link card ── */
+.manual-link{
+  display:flex;align-items:center;gap:16px;
+  margin-top:24px;margin-bottom:32px;
+  padding:18px 20px;
+  border:1px solid var(--line);border-radius:12px;
+  text-decoration:none;color:var(--text);
+  background:var(--bg2);
+  transition:border-color .2s,background .2s;
+}
+.manual-link:hover{border-color:var(--text);}
+.manual-link-icon{font-size:24px;flex-shrink:0;}
+.manual-link-body{flex:1;}
+.manual-link-title{font-size:14px;font-weight:600;margin-bottom:3px;}
+.manual-link-meta{font-size:12px;color:var(--muted);}
+.manual-link-arrow{font-size:18px;color:var(--muted);flex-shrink:0;}
+
 /* ── Bedienungsanleitung ── */
 .manual-list{
   list-style:none;
@@ -584,6 +601,16 @@ html,body{
 <div class="sec" id="anleitung" style="padding-top:40px;padding-bottom:48px">
   <div class="eyebrow">Fahrzeug</div>
   <div class="sec-title">Bedienungsanleitung</div>
+
+  <a class="manual-link" href="https://www.skoda-auto.de/apps/manuals/Models" target="_blank" rel="noopener">
+    <div class="manual-link-icon">📖</div>
+    <div class="manual-link-body">
+      <div class="manual-link-title">Offizielle Bedienungsanleitung öffnen</div>
+      <div class="manual-link-meta">Škoda Digital · Produktionszeitraum 11/2024 · Sprache: Deutsch</div>
+    </div>
+    <div class="manual-link-arrow">→</div>
+  </a>
+
 
   <div class="tech-blocks" style="margin-top:28px">
 
