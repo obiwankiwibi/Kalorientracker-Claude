@@ -74,9 +74,11 @@ html,body{
 }
 .brand-logo{
   display:block;margin:0 auto 24px;
-  width:60px;height:60px;
+  width:72px;height:72px;
   color:var(--text);
 }
+.brand-logo .lbg{fill:var(--bg);}
+.brand-logo .lfg{fill:currentColor;}
 .brand-name{
   font-size:clamp(2.4rem,9vw,3.6rem);
   font-weight:700;letter-spacing:-.02em;line-height:1;
@@ -258,15 +260,31 @@ html,body{
 <!-- Brand -->
 <div class="brand">
   <div class="brand-wordmark">Škoda Auto</div>
-  <!-- Škoda emblem (simplified SVG) -->
-  <svg class="brand-logo" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <circle cx="60" cy="60" r="56" stroke="currentColor" stroke-width="4"/>
-    <circle cx="60" cy="60" r="46" stroke="currentColor" stroke-width="1.5" opacity=".35"/>
-    <!-- Winged arrow simplified -->
-    <path d="M60 30 L60 90" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-    <path d="M40 48 Q60 30 80 48" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M34 65 Q60 42 86 65" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/>
-    <circle cx="60" cy="60" r="5" fill="currentColor"/>
+  <!-- Škoda 2022 emblem -->
+  <svg class="brand-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <clipPath id="sc"><circle cx="100" cy="100" r="99"/></clipPath>
+    </defs>
+    <g clip-path="url(#sc)">
+      <!-- background -->
+      <circle class="lbg" cx="100" cy="100" r="99"/>
+      <!-- main body (right-facing head) -->
+      <path class="lfg" d="M163,97C159,72,137,51,109,47L79,47C53,49,37,69,37,95L37,105C39,131,57,149,83,151L109,151C137,147,159,127,163,101Z"/>
+      <!-- lower chin / arrow tail -->
+      <path class="lfg" d="M83,151C65,153,51,163,55,175L67,181L165,117C173,113,173,103,165,97L163,101C159,117,143,133,121,141Z"/>
+      <!-- feather 1 – top (~11-12 o'clock) -->
+      <path class="lfg" d="M79,47C75,30,77,8,91,-2C105,-10,113,4,105,18C97,28,87,40,81,47Z"/>
+      <!-- feather 2 (~11 o'clock) -->
+      <path class="lfg" d="M58,60C50,44,46,20,58,10C70,0,82,10,76,26C70,38,64,52,62,60Z"/>
+      <!-- feather 3 (~10 o'clock) -->
+      <path class="lfg" d="M43,78C29,64,7,54,5,40C3,26,23,22,31,34C37,44,43,64,43,78Z"/>
+      <!-- feather 4 – bottom (~9 o'clock) -->
+      <path class="lfg" d="M37,92C17,84,-7,86,-7,100C-7,114,17,116,37,108Z"/>
+      <!-- white eye -->
+      <circle class="lbg" cx="145" cy="85" r="9"/>
+      <!-- ring on top – covers feather ends at boundary -->
+      <circle cx="100" cy="100" r="88" stroke="currentColor" stroke-width="24" fill="none"/>
+    </g>
   </svg>
   <div class="brand-name">Scala</div>
   <span class="brand-badge">Monte Carlo</span>
