@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Škoda Scala Monte Carlo</title>
+<script>(function(){var t=localStorage.getItem('scala_theme')||'light';document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#ffffff;--bg2:#f4f4f4;--text:#111111;--muted:#888888;--line:#e5e5e5;
+}
+[data-theme=dark]{
+  --bg:#111111;--bg2:#1c1c1c;--text:#f0f0f0;--muted:#777777;--line:#2a2a2a;
+}
+
+html,body{
+  background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+
+/* ── Nav ── */
+.app-nav{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;background:var(--bg);
+  border-bottom:1px solid var(--line);transition:background .2s,border-color .2s;
+}
+.app-nav-label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.app-nav-theme{
+  background:none;border:none;cursor:pointer;
+  font-size:20px;color:var(--muted);
+  width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+}
+
+/* ── Quick-nav ── */
+.page-nav{
+  display:flex;overflow-x:auto;gap:8px;padding:14px 20px;
+  border-bottom:1px solid var(--line);scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.page-nav::-webkit-scrollbar{display:none;}
+.page-nav a{
+  flex-shrink:0;padding:7px 16px;border-radius:100px;border:1px solid var(--line);
+  font-size:12px;letter-spacing:.04em;color:var(--text);text-decoration:none;
+  white-space:nowrap;transition:background .15s;
+}
+.page-nav a:hover{background:var(--bg2);}
+
+/* ── Brand ── */
+.brand{text-align:center;padding:48px 20px 0;}
+.brand-logo{display:block;margin:0 auto 20px;width:220px;height:auto;}
+[data-theme=dark] .brand-logo{filter:invert(1);}
+.brand-name{
+  font-size:clamp(2.4rem,9vw,3.6rem);font-weight:700;
+  letter-spacing:-.02em;line-height:1;margin-bottom:14px;
+}
+.brand-badge{
+  display:inline-block;padding:6px 16px;border-radius:100px;
+  border:1px solid var(--line);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);
+}
+
+/* ── Hero ── */
+.hero-img{margin:32px auto 0;max-width:100%;overflow:hidden;background:var(--bg2);}
+.hero-img img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;}
+
+/* ── Stats ── */
+.stats{padding:56px 20px;display:flex;flex-direction:column;align-items:center;gap:52px;}
+.stat{text-align:center;}
+.stat-num{
+  font-size:clamp(3rem,12vw,5rem);font-weight:700;color:var(--text);
+  letter-spacing:-.03em;line-height:1;display:flex;align-items:baseline;justify-content:center;gap:6px;
+}
+.stat-unit{font-size:clamp(1.4rem,5vw,2.4rem);font-weight:400;color:var(--muted);}
+.stat-word{font-size:clamp(1.6rem,7vw,3rem);font-weight:700;color:var(--text);letter-spacing:-.01em;line-height:1;}
+.stat-lbl{margin-top:10px;font-size:14px;color:var(--muted);letter-spacing:.02em;}
+
+/* ── Band ── */
+.band{height:8px;background:var(--bg2);margin:0;transition:background .2s;}
+
+/* ── Section ── */
+.sec{padding:40px 20px 0;max-width:640px;margin:0 auto;}
+.eyebrow{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.sec-title{font-size:22px;font-weight:700;margin-bottom:28px;}
+
+/* ── Slider ── */
+.slider-outer{margin-top:40px;}
+.slider-wrap{position:relative;}
+.slider-vp{overflow:hidden;}
+.slider-track{display:flex;transition:transform .35s cubic-bezier(.25,.46,.45,.94);will-change:transform;}
+.slide{flex:0 0 100%;position:relative;}
+.slide img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;}
+.slide-cap{
+  position:absolute;bottom:0;left:0;right:0;padding:12px 16px;
+  background:linear-gradient(transparent,rgba(0,0,0,.6));
+  color:#fff;font-size:13px;letter-spacing:.02em;
+}
+.sl-btn{
+  position:absolute;top:50%;transform:translateY(-50%);
+  background:rgba(255,255,255,.88);border:none;cursor:pointer;
+  width:42px;height:42px;border-radius:50%;font-size:24px;
+  display:flex;align-items:center;justify-content:center;
+  color:#111;box-shadow:0 2px 10px rgba(0,0,0,.15);transition:background .15s;
+}
+[data-theme=dark] .sl-btn{background:rgba(0,0,0,.75);color:#f0f0f0;}
+.sl-prev{left:12px;}.sl-next{right:12px;}
+.sl-dots{display:flex;justify-content:center;align-items:center;gap:6px;padding:18px 0;}
+.sl-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--muted);opacity:.35;
+  cursor:pointer;border:none;transition:opacity .2s,width .2s,border-radius .2s;
+}
+.sl-dot.on{opacity:1;width:20px;border-radius:3px;background:var(--text);}
+
+/* ── Accordion ── */
+.tech-blocks{margin-top:0;}
+.tblock{border-top:1px solid var(--line);transition:border-color .2s;}
+.tblock:last-child{border-bottom:1px solid var(--line);margin-bottom:48px;}
+.tblock-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 0;cursor:pointer;user-select:none;}
+.tblock-title{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text);}
+.tblock-arrow{
+  font-size:12px;color:var(--muted);transition:transform .25s;
+  border:1px solid var(--line);border-radius:50%;
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+}
+.tblock.open .tblock-arrow{transform:rotate(180deg);}
+.tblock-body{display:none;padding-bottom:20px;}
+.tblock.open .tblock-body{display:block;}
+.trow{display:flex;justify-content:space-between;align-items:baseline;padding:11px 0;border-top:1px solid var(--line);gap:16px;}
+.trow:first-child{border-top:none;}
+.tlbl{font-size:13px;color:var(--muted);flex-shrink:0;}
+.tval{font-size:15px;font-weight:600;color:var(--text);text-align:right;}
+.tval.mono{font-family:ui-monospace,monospace;font-size:13px;word-break:break-all;}
+
+/* ── Equipment ── */
+.equip{display:flex;flex-wrap:wrap;gap:8px;padding-top:4px;}
+.etag{
+  padding:6px 13px;border-radius:100px;border:1px solid var(--line);
+  font-size:12px;color:var(--text);letter-spacing:.01em;transition:border-color .2s;
+}
+
+/* ── Footer ── */
+.footer{
+  text-align:center;padding:32px 20px;
+  font-size:12px;color:var(--muted);letter-spacing:.05em;
+  border-top:1px solid var(--line);
+}
+</style>
+</head>
+<body>
+
+<!-- Nav (kein Back-Button, kein App-Link) -->
+<nav class="app-nav">
+  <span style="width:36px"></span>
+  <span class="app-nav-label">Škoda Scala</span>
+  <button class="app-nav-theme" id="themeBtn" aria-label="Design wechseln">◐</button>
+</nav>
+
+<!-- Quick-nav -->
+<nav class="page-nav" aria-label="Seitennavigation">
+  <a href="#galerie">Galerie</a>
+  <a href="#technik">Technik</a>
+  <a href="#ausstattung">Ausstattung</a>
+</nav>
+
+<!-- Brand -->
+<div class="brand">
+  <img class="brand-logo" src="images/skoda-logo.png" alt="Škoda" width="220" height="154">
+  <div class="brand-name">Scala</div>
+  <span class="brand-badge">Monte Carlo</span>
+</div>
+
+<!-- Hero image -->
+<div class="hero-img">
+  <img src="images/scala/02-seite.jpg" alt="Škoda Scala Monte Carlo – Seitenansicht" loading="eager">
+</div>
+
+<!-- Key stats -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-num">115<span class="stat-unit">PS</span></div>
+    <div class="stat-lbl">Leistung · 85 kW · 1.0 TSI</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">9.438<span class="stat-unit">km</span></div>
+    <div class="stat-lbl">Kilometerstand</div>
+  </div>
+  <div class="stat">
+    <div class="stat-word">Automatik</div>
+    <div class="stat-lbl">Getriebe</div>
+  </div>
+  <div class="stat">
+    <div class="stat-word" style="font-size:clamp(1.4rem,5vw,2.2rem)">22.05.2025</div>
+    <div class="stat-lbl">Erstzulassung</div>
+  </div>
+</div>
+
+<div class="band"></div>
+
+<!-- Gallery -->
+<div class="slider-outer" id="galerie">
+  <div class="sec">
+    <div class="eyebrow">Galerie</div>
+    <div class="sec-title">Fotos</div>
+  </div>
+  <div class="slider-wrap">
+    <div class="slider-vp" id="slVp">
+      <div class="slider-track" id="slTrack">
+        <div class="slide"><img src="images/scala/01-front.jpg"             alt="Frontansicht"     loading="lazy"><div class="slide-cap">Frontansicht</div></div>
+        <div class="slide"><img src="images/scala/02-seite.jpg"             alt="Seitenansicht"    loading="lazy"><div class="slide-cap">Seitenansicht</div></div>
+        <div class="slide"><img src="images/scala/03-heck.jpg"              alt="Heck"             loading="lazy"><div class="slide-cap">Heck</div></div>
+        <div class="slide"><img src="images/scala/04-frontgrill.jpg"        alt="Frontgrill"       loading="lazy"><div class="slide-cap">Frontgrill</div></div>
+        <div class="slide"><img src="images/scala/10-badge.jpg"             alt="Monte Carlo Badge" loading="lazy"><div class="slide-cap">Monte Carlo Badge</div></div>
+        <div class="slide"><img src="images/scala/09-armaturenbrett.jpg"    alt="Armaturenbrett"   loading="lazy"><div class="slide-cap">Armaturenbrett</div></div>
+        <div class="slide"><img src="images/scala/05-fahrersitz.jpg"        alt="Fahrersitz"       loading="lazy"><div class="slide-cap">Fahrersitz</div></div>
+        <div class="slide"><img src="images/scala/13-lenkrad.jpg"           alt="Lenkrad"          loading="lazy"><div class="slide-cap">Lenkrad</div></div>
+        <div class="slide"><img src="images/scala/11-panoramadach.jpg"      alt="Panoramadach"     loading="lazy"><div class="slide-cap">Panoramadach</div></div>
+        <div class="slide"><img src="images/scala/07-kofferraum.jpg"        alt="Kofferraum"       loading="lazy"><div class="slide-cap">Kofferraum · 467 L</div></div>
+        <div class="slide"><img src="images/scala/12-cockpit.jpg"           alt="Cockpit"          loading="lazy"><div class="slide-cap">Cockpit · Columbus Navi</div></div>
+        <div class="slide"><img src="images/scala/06-ruecksitze-aussen.jpg" alt="Rücksitze"        loading="lazy"><div class="slide-cap">Rücksitze</div></div>
+        <div class="slide"><img src="images/scala/08-ruecksitze.jpg"        alt="Rücksitze innen"  loading="lazy"><div class="slide-cap">Rücksitze innen</div></div>
+      </div>
+      <button class="sl-btn sl-prev" id="slPrev" aria-label="Zurück">&#8249;</button>
+      <button class="sl-btn sl-next" id="slNext" aria-label="Weiter">&#8250;</button>
+    </div>
+    <div class="sl-dots" id="slDots"></div>
+  </div>
+</div>
+
+<div class="band" style="margin-top:40px"></div>
+
+<!-- Technical Data -->
+<div class="sec" id="technik" style="padding-top:40px">
+  <div class="eyebrow">Fahrzeugdaten</div>
+  <div class="sec-title">Technische Daten</div>
+  <div class="tech-blocks">
+    <div class="tblock open">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Fahrzeug</span><span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="trow"><span class="tlbl">Marke</span><span class="tval">Škoda</span></div>
+        <div class="trow"><span class="tlbl">Modell</span><span class="tval">Scala</span></div>
+        <div class="trow"><span class="tlbl">Ausstattung</span><span class="tval">Monte Carlo</span></div>
+        <div class="trow"><span class="tlbl">Typ</span><span class="tval">Limousine · Gebrauchtwagen</span></div>
+        <div class="trow"><span class="tlbl">Farbe</span><span class="tval">Silber Metallic</span></div>
+        <div class="trow"><span class="tlbl">Türen</span><span class="tval">5</span></div>
+        <div class="trow"><span class="tlbl">Sitze</span><span class="tval">5</span></div>
+        <div class="trow"><span class="tlbl">Erstzulassung</span><span class="tval">22. Mai 2025</span></div>
+        <div class="trow"><span class="tlbl">Kilometerstand</span><span class="tval">9.438 km</span></div>
+      </div>
+    </div>
+    <div class="tblock">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Motor &amp; Antrieb</span><span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="trow"><span class="tlbl">Motor</span><span class="tval">1.0 TSI Turbobenziner</span></div>
+        <div class="trow"><span class="tlbl">Hubraum</span><span class="tval">999 cm³</span></div>
+        <div class="trow"><span class="tlbl">Zylinder</span><span class="tval">3</span></div>
+        <div class="trow"><span class="tlbl">Leistung</span><span class="tval">85 kW / 115 PS</span></div>
+        <div class="trow"><span class="tlbl">Kraftstoff</span><span class="tval">Super (Benzin)</span></div>
+        <div class="trow"><span class="tlbl">Getriebe</span><span class="tval">Automatik</span></div>
+        <div class="trow"><span class="tlbl">Antrieb</span><span class="tval">Frontantrieb</span></div>
+        <div class="trow"><span class="tlbl">Anhängelast gebremst</span><span class="tval">1.200 kg</span></div>
+        <div class="trow"><span class="tlbl">Anhängelast ungebremst</span><span class="tval">610 kg</span></div>
+      </div>
+    </div>
+    <div class="tblock">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Fahrzeug-ID</span><span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="trow"><span class="tlbl">FIN / VIN</span><span class="tval mono">TMBER6NW4S3111082</span></div>
+        <div class="trow"><span class="tlbl">HSN</span><span class="tval mono">8004</span></div>
+        <div class="trow"><span class="tlbl">TSN</span><span class="tval mono">AUA</span></div>
+        <div class="trow"><span class="tlbl">Schadstoffklasse</span><span class="tval">Euro 6 · Grüne Plakette</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="band"></div>
+
+<!-- Equipment -->
+<div class="sec" id="ausstattung" style="padding-top:40px">
+  <div class="eyebrow">Serienausstattung</div>
+  <div class="sec-title">Ausstattung</div>
+  <div class="tech-blocks">
+    <div class="tblock open">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Sicherheit</span><span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="equip">
+          <span class="etag">Fahrerairbag</span><span class="etag">Beifahrerairbag</span>
+          <span class="etag">Seitenairbags vorne</span><span class="etag">Fußgänger-Airbag</span>
+          <span class="etag">ABS</span><span class="etag">ESP</span>
+          <span class="etag">Notbremsassistent</span><span class="etag">Spurhalteassistent</span>
+          <span class="etag">Rückfahrkamera</span><span class="etag">Reifendruckkontrolle</span>
+          <span class="etag">Wegfahrsperre</span><span class="etag">LED Matrix-Scheinwerfer</span>
+          <span class="etag">Nebelscheinwerfer</span><span class="etag">Tagfahrlicht</span>
+          <span class="etag">Lichtautomatik</span><span class="etag">Scheinwerferreinigung</span>
+          <span class="etag">ISOFIX</span><span class="etag">Notrufsystem</span>
+          <span class="etag">Innenspiegel abblendbar</span><span class="etag">Kopfstützen hinten</span>
+        </div>
+      </div>
+    </div>
+    <div class="tblock">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Komfort &amp; Funktion</span><span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="equip">
+          <span class="etag">Klimaautomatik</span><span class="etag">Sitzheizung</span>
+          <span class="etag">Sportsitze</span><span class="etag">Panoramadach</span>
+          <span class="etag">Keyless-Go</span><span class="etag">Keyless Start</span>
+          <span class="etag">Tempomat</span><span class="etag">Abstandswarner</span>
+          <span class="etag">Geschw.-Begrenzer</span><span class="etag">Lenkrad beheizbar</span>
+          <span class="etag">Multifunktionslenkrad</span><span class="etag">Lederlenkrad</span>
+          <span class="etag">Schaltwippen</span><span class="etag">Servolenkung</span>
+          <span class="etag">Lenksäule einstellbar</span><span class="etag">Lordosenstütze</span>
+          <span class="etag">Mittelarmlehne</span><span class="etag">Fensterheber elektrisch</span>
+          <span class="etag">Außenspiegel elektrisch</span><span class="etag">Außenspiegel beheizbar</span>
+          <span class="etag">Außenspiegel anklappbar</span><span class="etag">Zentralverriegelung</span>
+          <span class="etag">Regensensor</span><span class="etag">Colorverglasung</span>
+          <span class="etag">Innenraumfilter</span><span class="etag">Gepäcknetze</span>
+          <span class="etag">Nichtraucherfahrzeug</span><span class="etag">Berganfahrhilfe</span>
+          <span class="etag">Müdigkeitserkennung</span><span class="etag">Abbiegelicht</span>
+          <span class="etag">Fernlichtregulierung</span><span class="etag">Aktives Kurvenlicht</span>
+          <span class="etag">Einparkhilfe vorne &amp; hinten</span><span class="etag">Verkehrsschilderkennung</span>
+          <span class="etag">Start-Stop-Automatik</span><span class="etag">Ambientbeleuchtung</span>
+          <span class="etag">Fahrprofilauswahl</span>
+        </div>
+      </div>
+    </div>
+    <div class="tblock">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Infotainment</span><span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="equip">
+          <span class="etag">Navigation Amundsen</span><span class="etag">Virtual Cockpit</span>
+          <span class="etag">Digitaler Tacho</span><span class="etag">Touchscreen</span>
+          <span class="etag">Bluetooth</span><span class="etag">USB</span>
+          <span class="etag">DAB+ Radio</span><span class="etag">Apple CarPlay</span>
+          <span class="etag">Android Auto</span><span class="etag">Sprachsteuerung</span>
+          <span class="etag">Freisprecheinrichtung</span><span class="etag">Bordcomputer</span>
+          <span class="etag">Smart Link</span>
+        </div>
+      </div>
+    </div>
+    <div class="tblock">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Allgemein</span><span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="equip">
+          <span class="etag">1. Hand</span><span class="etag">Unfallfrei</span>
+          <span class="etag">Scheckheft gepflegt</span><span class="etag">HU/AU neu</span>
+          <span class="etag">Fahrzeug-Garantie</span><span class="etag">Euro 6</span>
+          <span class="etag">Grüne Plakette</span><span class="etag">Elektronisches Traktionssystem</span>
+          <span class="etag">Leichtmetallfelgen 17″</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">Škoda Scala Monte Carlo · 2025</div>
+
+<script>
+const TKEY = 'scala_theme';
+let theme = localStorage.getItem(TKEY) || 'light';
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem(TKEY, theme);
+}
+applyTheme();
+document.getElementById('themeBtn').onclick = () => {
+  theme = theme === 'light' ? 'dark' : 'light';
+  applyTheme();
+};
+
+function toggle(hd) { hd.parentElement.classList.toggle('open'); }
+
+const track = document.getElementById('slTrack');
+const slides = track.querySelectorAll('.slide');
+const dotsEl = document.getElementById('slDots');
+const total = slides.length;
+let cur = 0;
+slides.forEach((_, i) => {
+  const d = document.createElement('button');
+  d.className = 'sl-dot' + (i === 0 ? ' on' : '');
+  d.setAttribute('aria-label', 'Bild ' + (i + 1));
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+function go(n) {
+  cur = (n + total) % total;
+  track.style.transform = 'translateX(-' + cur * 100 + '%)';
+  dotsEl.querySelectorAll('.sl-dot').forEach((d, i) => d.classList.toggle('on', i === cur));
+}
+document.getElementById('slPrev').onclick = () => go(cur - 1);
+document.getElementById('slNext').onclick = () => go(cur + 1);
+let sx = 0;
+const vp = document.getElementById('slVp');
+vp.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, {passive: true});
+vp.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (Math.abs(dx) > 40) go(dx < 0 ? cur + 1 : cur - 1);
+}, {passive: true});
+</script>
+</body>
+</html>
