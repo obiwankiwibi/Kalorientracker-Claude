@@ -266,6 +266,35 @@ html,body{
   transition:border-color .2s;
 }
 
+/* ── Werkstatt ── */
+.ws-card{
+  padding:20px;
+  border:1px solid var(--line);border-radius:12px;
+  background:var(--bg2);
+  margin-bottom:24px;
+}
+.ws-name{font-size:15px;font-weight:700;margin-bottom:4px;}
+.ws-addr{font-size:13px;color:var(--muted);margin-bottom:16px;}
+.ws-contacts{display:flex;flex-direction:column;gap:10px;}
+.ws-contact-link{
+  display:flex;align-items:center;gap:10px;
+  font-size:13px;color:var(--text);text-decoration:none;
+}
+.ws-contact-link:hover{color:var(--muted);}
+.ws-contact-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+.ws-hours{margin-bottom:24px;}
+.ws-hours-title{
+  font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:16px;
+}
+.ws-hours-group{margin-bottom:20px;}
+.ws-hours-label{
+  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:4px;
+}
+.ws-closed{color:#c0392b;font-weight:500;}
+[data-theme=dark] .ws-closed{color:#e57373;}
+
 /* ── Manual link card ── */
 .manual-link{
   display:flex;align-items:center;gap:16px;
@@ -330,6 +359,7 @@ html,body{
   <a href="#galerie">Galerie</a>
   <a href="#technik">Technik</a>
   <a href="#ausstattung">Ausstattung</a>
+  <a href="#werkstatt">Werkstatt</a>
   <a href="#anleitung">Bedienungsanleitung</a>
 </nav>
 
@@ -593,6 +623,68 @@ html,body{
     </div>
 
   </div>
+</div>
+
+<div class="band" style="margin-top:40px"></div>
+
+<!-- Werkstatt -->
+<div class="sec" id="werkstatt" style="padding-top:40px;padding-bottom:48px">
+  <div class="eyebrow">Händler</div>
+  <div class="sec-title">Werkstatt</div>
+
+  <!-- Adresse + Kontakt -->
+  <div class="ws-card">
+    <div class="ws-name">Walter Schneider GmbH &amp; Co. KG</div>
+    <div class="ws-addr">Zur Brüche 2 · 57223 Kreuztal-Ferndorf</div>
+    <div class="ws-contacts">
+      <a class="ws-contact-link" href="tel:+4927325836-0">
+        <span class="ws-contact-icon">📞</span>
+        <span>0 27 32 / 58 36-0</span>
+      </a>
+      <a class="ws-contact-link" href="fax:+4927322753-9">
+        <span class="ws-contact-icon">📠</span>
+        <span>0 27 32 / 27 53-9</span>
+      </a>
+      <a class="ws-contact-link" href="mailto:team-ferndorf@walter-schneider.de">
+        <span class="ws-contact-icon">✉</span>
+        <span>team-ferndorf@walter-schneider.de</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Öffnungszeiten -->
+  <div class="ws-hours">
+    <div class="ws-hours-title">Öffnungszeiten</div>
+
+    <div class="ws-hours-group">
+      <div class="ws-hours-label">Service (Werkstatt)</div>
+      <div class="trow"><span class="tlbl">Mo – Fr</span><span class="tval">07:00 – 17:00 Uhr</span></div>
+      <div class="trow"><span class="tlbl">Sa – So</span><span class="tval ws-closed">Geschlossen</span></div>
+    </div>
+
+    <div class="ws-hours-group">
+      <div class="ws-hours-label">Teiledienst</div>
+      <div class="trow"><span class="tlbl">Mo – Fr</span><span class="tval">07:30 – 16:30 Uhr</span></div>
+      <div class="trow"><span class="tlbl">Sa – So</span><span class="tval ws-closed">Geschlossen</span></div>
+    </div>
+
+    <div class="ws-hours-group">
+      <div class="ws-hours-label">Verkauf</div>
+      <div class="trow"><span class="tlbl">Mo – Fr</span><span class="tval">08:00 – 18:00 Uhr</span></div>
+      <div class="trow"><span class="tlbl">Samstag</span><span class="tval">09:00 – 12:00 Uhr</span></div>
+      <div class="trow"><span class="tlbl">Sonntag</span><span class="tval ws-closed">Geschlossen</span></div>
+    </div>
+  </div>
+
+  <!-- Link zur Seite -->
+  <a class="manual-link" href="https://www.walter-schneider.de/wir-fuer-sie/standorte-kontakt/team-kreuztal-ferndorf/" target="_blank" rel="noopener">
+    <div class="manual-link-icon">🔧</div>
+    <div class="manual-link-body">
+      <div class="manual-link-title">Walter Schneider – Kreuztal-Ferndorf</div>
+      <div class="manual-link-meta">Škoda Service · Zur Brüche 2, 57223 Kreuztal</div>
+    </div>
+    <div class="manual-link-arrow">→</div>
+  </a>
 </div>
 
 <div class="band" style="margin-top:40px"></div>
