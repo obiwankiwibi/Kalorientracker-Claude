@@ -143,6 +143,7 @@
     .fuel-name-sm    { font-size: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
     .fuel-meta-sm    { font-size: 9px; color: var(--muted); margin-top: 1px; position: relative; }
     .fuel-updated-sm { font-size: 8px; color: var(--muted); margin-top: 2px; position: relative; opacity: 0.6; }
+    .fuel-trend-sm   { font-size: 10px; font-weight: 700; margin-top: 2px; position: relative; }
     .fuel-fav-badge  {
       position: absolute; top: 12px; right: 12px;
       font-size: 9px; background: var(--teal-dim); color: var(--teal);
@@ -425,6 +426,7 @@
       <div class="fuel-name-sm" id="fuelName">Wird geladen…</div>
       <div class="fuel-meta-sm" id="fuelMeta"></div>
       <div class="fuel-updated-sm" id="fuelUpdated"></div>
+      <div class="fuel-trend-sm" id="fuelTrend" style="display:none"></div>
       <div class="fuel-fav-badge" id="fuelFavBadge" style="display:none">★ Favorit</div>
       <button class="fuel-setup-btn" id="fuelSetupBtn" onclick="openFuelSetup()">⚙ API-Key einrichten</button>
       <div class="fuel-actions">
@@ -714,9 +716,33 @@ function loadFuelPrice() {
   document.getElementById('fuelName').textContent = best.name || best.brand || best.id;
   const dist = best.dist ? Number(best.dist).toLocaleString('de-DE',{maximumFractionDigits:1})+' km' : '';
   const open = best.isOpen === true ? 'Geöffnet' : best.isOpen === false ? 'Geschlossen' : '';
-  document.getElementById('fuelMeta').textContent = [dist, open].filter(Boolean).join(' · ');
+  const numFavs = favStations.length;
+  const metaParts = [dist, open, numFavs > 1 ? numFavs + ' Favoriten' : ''].filter(Boolean);
+  document.getElementById('fuelMeta').textContent = metaParts.join(' · ');
   document.getElementById('fuelUpdated').textContent = ts ? 'Stand: ' + fmtTs(ts) : '';
+  document.getElementById('fuelFavBadge').textContent = '★ Günstigster Favorit';
   document.getElementById('fuelFavBadge').style.display = '';
+  // Trend: compare best current price to previous reading
+  const bestHist = (favPrices[best.id] || []).filter(h => h.fuel === 'e5');
+  const trendEl = document.getElementById('fuelTrend');
+  if(trendEl && bestHist.length >= 2) {
+    const prev = bestHist[bestHist.length - 2].v;
+    const diff = best.e5 - prev;
+    if(Math.abs(diff) >= 0.001) {
+      const sign = diff > 0 ? '+' : '';
+      const arrow = diff > 0 ? '▲' : '▼';
+      const color = diff > 0 ? '#b45309' : '#15803d';
+      trendEl.style.display = '';
+      trendEl.style.color = color;
+      trendEl.textContent = arrow + ' ' + sign + (diff * 100).toFixed(1) + ' ct vs. vorher';
+    } else {
+      trendEl.textContent = '→ Preis unverändert';
+      trendEl.style.color = 'var(--muted)';
+      trendEl.style.display = '';
+    }
+  } else if(trendEl) {
+    trendEl.style.display = 'none';
+  }
 }
 
 function openFuelSetup() {

@@ -51,6 +51,12 @@ header{display:flex;}.logo{font:700 19px/1.2 system-ui}.logo small{display:block
 @media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.grid .place{grid-column:1/-1}.layout{grid-template-columns:1fr}.chart-card{position:static}.topstats{grid-template-columns:1fr 1fr}}
 @media(max-width:430px){.grid{grid-template-columns:1fr}.grid .place{grid-column:auto}.station{grid-template-columns:1fr}.price{text-align:left}.subactions{flex-wrap:wrap}.status{width:100%;margin-left:0}}
 
+/* ── Preis-Alarm ── */
+.fav-alert-row{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--line);flex-wrap:wrap;}
+.fav-alert-input{width:60px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:4px 6px;font-size:11px;text-align:center;font:inherit;}
+.fav-alert-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(240,150,0,0.15);border:1px solid rgba(240,150,0,0.5);color:#854d0e;border-radius:99px;padding:3px 9px;font-size:11px;font-weight:700;margin-top:6px;width:100%;}
+.fav-card.alerted{border-color:rgba(240,150,0,0.55);box-shadow:0 0 0 2px rgba(240,150,0,0.15);}
+
 /* ── Visual improvements ── */
 header { border-bottom: 2px solid var(--brand); }
 .section-title { display:flex;align-items:center;gap:8px; }
@@ -97,7 +103,7 @@ const STORE='tankstellen_finder_v2';
 // Für eigenen Key bitte hier https://creativecommons.tankerkoenig.de registrieren.
 // Der Key wird nur lokal im Browser gespeichert und darf nicht im Code veröffentlicht werden.
 const TK_HOUR=3600000;
-const state=Object.assign({apiKey:'',fuel:'e5',theme:'light',history:{e10:[],e5:[],diesel:[]},stations:[],place:'57271 Hilchenbach-Dahlbruch',coords:null,lastRequest:0,favorites:{},favPrices:{}},JSON.parse(localStorage.getItem(STORE)||'{}'));
+const state=Object.assign({apiKey:'',fuel:'e5',theme:'light',history:{e10:[],e5:[],diesel:[]},stations:[],place:'57271 Hilchenbach-Dahlbruch',coords:null,lastRequest:0,favorites:{},favPrices:{},favAlerts:{}},JSON.parse(localStorage.getItem(STORE)||'{}'));
 const $=id=>document.getElementById(id), euro=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:3,maximumFractionDigits:3})+' €';
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){localStorage.setItem(STORE,JSON.stringify(state))}
@@ -221,7 +227,10 @@ function renderFavs(){
   const trend=hist.length>=2?hist.at(-1).v-hist.at(-2).v:null;
   const trendStr=trend===null?'':(trend>0?` ▲ +${(trend*100).toFixed(1)} ct`:(trend<0?` ▼ ${(trend*100).toFixed(1)} ct`:' ↔'));
   const trendColor=trend===null?'':(trend>0?`color:var(--warn)`:trend<0?`color:var(--brand)`:`color:var(--muted)`);
-  return `<div class="card fav-card"><div class="section-head" style="margin-bottom:4px"><div class="fav-name">${esc(fav.name)}</div><button class="fav-remove" data-favid="${esc(id)}" title="Entfernen">✕</button></div><div class="hint" style="font-size:11px">${esc(fav.address)}</div><div class="fav-price-big">${cur?euro(cur):'—'}<span style="font-size:13px;font-weight:600;${trendColor}">${esc(trendStr)}</span></div><div class="fav-chart"><canvas id="fc_${id.replace(/-/g,'_')}"></canvas></div></div>`;
+  const threshold=state.favAlerts[id]||null;
+  const alerted=cur!==null&&threshold!==null&&cur<=threshold;
+  const alertBadge=alerted?`<div class="fav-alert-badge">🔔 Preis ${euro(cur)} ≤ Ziel ${euro(threshold)}</div>`:'';
+  return `<div class="card fav-card${alerted?' alerted':''}"><div class="section-head" style="margin-bottom:4px"><div class="fav-name">${esc(fav.name)}</div><button class="fav-remove" data-favid="${esc(id)}" title="Entfernen">✕</button></div><div class="hint" style="font-size:11px">${esc(fav.address)}</div><div class="fav-price-big">${cur?euro(cur):'—'}<span style="font-size:13px;font-weight:600;${trendColor}">${esc(trendStr)}</span></div>${alertBadge}<div class="fav-chart"><canvas id="fc_${id.replace(/-/g,'_')}"></canvas></div><div class="fav-alert-row"><span>🔔</span><span>Alarm wenn ≤</span><input class="fav-alert-input" type="number" step="0.01" min="0" max="5" value="${threshold!==null?threshold.toFixed(3):''}" placeholder="1.900" data-alertid="${esc(id)}"><span>€/L</span></div></div>`;
  }).join('');
  ids.forEach(id=>{
   const c=document.getElementById('fc_'+id.replace(/-/g,'_'));if(!c)return;
@@ -333,6 +342,14 @@ $('stations').addEventListener('click',async e=>{
  }
 });
 $('favGrid').addEventListener('click',e=>{const btn=e.target.closest('.fav-remove');if(btn)toggleFav(btn.dataset.favid)});
+$('favGrid').addEventListener('change',e=>{
+ const inp=e.target.closest('.fav-alert-input');
+ if(!inp)return;
+ const id=inp.dataset.alertid;
+ const val=parseFloat(inp.value);
+ if(val>0)state.favAlerts[id]=val;else delete state.favAlerts[id];
+ persist();renderFavs();
+});
 persist()};
 window.onresize=()=>requestAnimationFrame(drawChart);$('place').value=state.place;setStatus(state.apiKey?'Bereit zur Suche':'API-Key in den Einstellungen hinterlegen');render();
 // Stündliche Auto-Abfrage; sofortige Abfrage falls Daten fehlen oder veraltet
