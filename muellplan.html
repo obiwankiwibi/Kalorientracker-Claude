@@ -18,16 +18,7 @@
   --border:  rgba(0,0,80,0.09);
   --shadow:  0 4px 18px rgba(0,0,80,0.07);
 }
-html[data-theme="dark"] {
-  --bg:      #0c0f1e;
-  --surface: rgba(18,24,52,0.90);
-  --card:    rgba(20,28,64,0.85);
-  --teal:    #1b4fd8;
-  --text:    #e8ecf8;
-  --muted:   #7a8aaa;
-  --border:  rgba(27,79,216,0.12);
-  --shadow:  0 4px 18px rgba(0,0,0,0.35);
-}
+
 
 html, body { height: 100%; }
 body {
@@ -41,8 +32,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-#page-bg { position: fixed; inset: 0; z-index: -1; background: url('images/circuit-bg.jpg') center/cover; will-change: transform; }
-[data-theme=light] #page-bg{background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%)}
+#page-bg { position: fixed; inset: 0; z-index: -1; background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%); will-change: transform; }
 
 /* ── Nav ── */
 .site-nav {
@@ -187,8 +177,7 @@ body {
   <a href="index.html" class="nav-back" title="Zurück">‹</a>
   <span class="nav-title">🗑️ Müllplan</span>
   <button class="icon-btn" onclick="doQuickBackup()" title="Backup">💾</button>
-  <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Theme">🌙</button>
-</nav>
+  </nav>
 
 <!-- Plan validity banner -->
 <div class="plan-banner">
@@ -423,17 +412,9 @@ function render() {
 }
 
 // ── Theme ──
-function toggleTheme() {
-  const cur = document.documentElement.getAttribute('data-theme') || 'light';
-  const next = cur === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('hub_theme', next);
-  document.getElementById('themeBtn').textContent = next === 'dark' ? '🌙' : '☀️';
-}
 (function() {
   const t = document.documentElement.getAttribute('data-theme') || 'light';
-  document.getElementById('themeBtn').textContent = t === 'dark' ? '🌙' : '☀️';
-})();
+  })();
 
 // ── Backup ──
 function doQuickBackup() {

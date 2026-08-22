@@ -21,26 +21,8 @@
       --radius: 13px;
       --mono: 'Courier New','Menlo','Monaco',monospace;
     }
-    @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) {
-        --bg:#0c0f1e; --card:rgba(20,16,10,0.82); --card2:#1C2B3A;
-        --ink:#DDE4EF; --muted:#7A90A8; --line:#243044;
-        --shadow: none;
-        --pos:#2ADB8A; --pos-bg:rgba(42,219,138,.12);
-        --neg:#F07060; --neg-bg:rgba(240,112,96,.12);
-        --warn:#FCD34D; --warn-bg:rgba(252,211,77,.07); --warn-line:rgba(252,211,77,.22);
-        --brand:#1b4fd8; --brand-bg:rgba(232,99,10,.13);
-      }
-    }
-    :root[data-theme="dark"] {
-      --bg:#0c0f1e; --card:rgba(20,16,10,0.82); --card2:#1C2B3A;
-      --ink:#DDE4EF; --muted:#7A90A8; --line:#243044;
-      --shadow: none;
-      --pos:#2ADB8A; --pos-bg:rgba(42,219,138,.12);
-      --neg:#F07060; --neg-bg:rgba(240,112,96,.12);
-      --warn:#FCD34D; --warn-bg:rgba(252,211,77,.07); --warn-line:rgba(252,211,77,.22);
-      --brand:#1b4fd8; --brand-bg:rgba(232,99,10,.13);
-    }
+    
+    
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
@@ -255,9 +237,8 @@
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
 
     /* ── Circuit background ── */
-    #page-bg { position: fixed; inset: 0; z-index: -1; background: url('images/circuit-bg.jpg') center/cover; }
-    [data-theme=light] #page-bg{background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%)}
-  </style>
+    #page-bg { position: fixed; inset: 0; z-index: -1; background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%); }
+      </style>
 </head>
 <body>
 <div id="page-bg" aria-hidden="true"></div>
@@ -277,10 +258,7 @@
     <button class="hbtn" id="importBtn" title="Importieren">
       <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     </button>
-    <button class="hbtn" id="themeBtn" title="Design">
-      <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
-    <input type="file" id="importFile" accept=".json" style="display:none">
+        <input type="file" id="importFile" accept=".json" style="display:none">
   </div>
 </header>
 
@@ -803,7 +781,7 @@ function buildTableRows(wd,cfg){
 
 // ── Chart ──────────────────────────────────────────────────────────────────
 
-function isDark(){const t=document.documentElement.getAttribute('data-theme');if(t==='dark')return true;if(t==='light')return false;return window.matchMedia('(prefers-color-scheme:dark)').matches;}
+function isDark(){return false;}
 
 function drawChart(key){
   const canvas=document.getElementById('chartCanvas'); if(!canvas) return;
@@ -947,7 +925,6 @@ document.getElementById('settingsBtn').addEventListener('click',()=>{
   document.getElementById('settingsWrap')?.classList.toggle('open',cfgOpen);
 });
 
-document.getElementById('themeBtn').addEventListener('click',()=>{
   const cur=document.documentElement.getAttribute('data-theme');
   const next=cur==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',next);

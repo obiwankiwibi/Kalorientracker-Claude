@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Einkaufsliste</title>
 
-  <script>(function(){var t=localStorage.getItem('einkaufsliste_theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
-  <!-- Firebase SDK (nur geladen wenn konfiguriert) -->
+    <!-- Firebase SDK (nur geladen wenn konfiguriert) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -28,29 +27,7 @@
       --red:      #C84B32;
       --shadow:   0 4px 18px rgba(0,0,80,0.08);
     }
-
-    html[data-theme="dark"] {
-      --bg:       #0c0f1e;
-      --surface:  rgba(18,24,52,0.85);
-      --card:     rgba(24,32,74,0.80);
-      --teal:     #1b4fd8;
-      --teal-dim: rgba(27,79,216,0.5);
-      --salmon:   #F87171;
-      --text:     #e8ecf8;
-      --muted:    #7a8aaa;
-      --border:   rgba(27,79,216,0.12);
-      --green:    #4ADE80;
-      --red:      #F87171;
-      --shadow:   0 4px 18px rgba(0,0,0,0.35);
-    }
-
-    html[data-theme="dark"] .tile:not(.active):not(.done):not(.sug) {
-      background: rgba(20,28,64,0.82);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-    }
-
-    html, body {
+html, body {
       height: 100%;
     }
 
@@ -112,9 +89,8 @@
     }
 
     /* ── Page background (circuit board) ── */
-    #page-bg{position:fixed;inset:0;z-index:-1;background:url('images/circuit-bg.jpg') center/cover;will-change:transform}
-    [data-theme=light] #page-bg{background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%)}
-
+    #page-bg{position:fixed;inset:0;z-index:-1;background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%);will-change:transform}
+    
     /* ── Header ── */
     .header {
       position: sticky;
@@ -899,8 +875,7 @@
   <div class="header-title" id="listTitle">Zuhause</div>
   <a href="index.html" class="icon-btn" style="text-decoration:none;font-size:17px" title="Startseite">⌂</a>
   <button class="icon-btn" onclick="doQuickBackup()" title="Backup erstellen">💾</button>
-  <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Design wechseln">🌙</button>
-  <button class="icon-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
+    <button class="icon-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
   <button class="icon-btn" onclick="shareList()" title="Teilen">⎘</button>
   <button class="icon-btn" onclick="clearDone()" title="Erledigte löschen">✓</button>
 </header>
@@ -2897,23 +2872,13 @@ async function saveSettings() {
 // ═══════════════════════════════════════════════
 //  THEME
 // ═══════════════════════════════════════════════
-function toggleTheme() {
-  const cur = document.documentElement.getAttribute('data-theme') || 'light';
-  const next = cur === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('einkaufsliste_theme', next);
-  document.getElementById('themeToggle').textContent = next === 'dark' ? '☀️' : '🌙';
-}
 
 function initTheme() {
-  const t = localStorage.getItem('einkaufsliste_theme') || 'light';
-  document.getElementById('themeToggle').textContent = t === 'dark' ? '☀️' : '🌙';
-}
+    }
 
 // ═══════════════════════════════════════════════
 //  START
 // ═══════════════════════════════════════════════
-initTheme();
 loadOffers();
 initApp();
 autoLoadOffersJson();

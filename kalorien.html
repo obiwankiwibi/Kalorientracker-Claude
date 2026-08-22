@@ -31,29 +31,7 @@
     --bg-elev:var(--card);
     --bg-elev2:var(--card-elev);
   }
-  html[data-theme="dark"]{
-    --bg:#0c0f1e;
-    --card:rgba(18,24,52,0.85);
-    --card-elev:rgba(34,26,16,0.85);
-    --text:#e8ecf8;
-    --text-soft:#9a8470;
-    --text-faint:#7a6550;
-    --line:rgba(27,79,216,0.12);
-    --mint:#34D399;
-    --mint-deep:#059669;
-    --coral:#F87171;
-    --coral-deep:#EF4444;
-    --amber:#FBBF24;
-    --blue:#38BDF8;
-    --blue-deep:#0EA5E9;
-    --protein:#4ADE80;
-    --carbs-c:#FBBF24;
-    --fat-c:#F87171;
-    --shadow:0 4px 18px rgba(0,0,0,0.45);
-    --shadow-lg:0 12px 40px rgba(0,0,0,0.6);
-    --bg-elev:var(--card);
-    --bg-elev2:var(--card-elev);
-  }
+  
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
   body{
@@ -367,49 +345,7 @@
   .product-card .pname{font-weight:700;font-size:14.5px;}
   .product-card .pkcal{font-size:12.5px;color:var(--mint);margin-top:3px;font-weight:600;}
   /* dark theme overrides for hardcoded light-only colors */
-  #page-bg{position:fixed;inset:0;z-index:-1;background:url('images/circuit-bg.jpg') center/cover;will-change:transform}
-  [data-theme=light] #page-bg{background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%)}
-  html[data-theme="dark"] body{background:var(--bg);}
-  html[data-theme="dark"] .hero::before{background:radial-gradient(ellipse 80% 60% at 50% -15%,rgba(52,211,153,0.09),transparent);}
-  html[data-theme="dark"] .hero-bar-track{background:rgba(255,255,255,0.08);}
-  html[data-theme="dark"] .hero-pct-badge{background:rgba(52,211,153,0.15);}
-  html[data-theme="dark"] .hero-pct-badge.over{background:rgba(248,113,113,0.15);}
-  html[data-theme="dark"] .goal-edit input{background:rgba(255,255,255,0.06);}
-  html[data-theme="dark"] .water-card::before{background:radial-gradient(ellipse 70% 50% at 0% 110%,rgba(56,189,248,0.08),transparent);}
-  html[data-theme="dark"] .water-progress-wrap{background:rgba(56,189,248,0.12);}
-  html[data-theme="dark"] .water-btn{border-color:rgba(56,189,248,0.2);background:rgba(56,189,248,0.08);}
-  html[data-theme="dark"] .water-btn:hover{background:rgba(56,189,248,0.15);border-color:rgba(56,189,248,0.35);}
-  html[data-theme="dark"] .water-goal-row input{background:rgba(255,255,255,0.06);}
-  html[data-theme="dark"] .weather-pill{background:rgba(255,255,255,0.07);}
-  html[data-theme="dark"] .weather-pill:hover{background:rgba(255,255,255,0.12);}
-  html[data-theme="dark"] .settings-btn:hover{border-color:rgba(255,255,255,0.2);}
-  html[data-theme="dark"] .datebar button:hover{border-color:rgba(255,255,255,0.2);}
-  html[data-theme="dark"] .entry-card:hover{border-color:rgba(255,255,255,0.18);}
-  html[data-theme="dark"] .modal-handle{background:rgba(255,255,255,0.15);}
-  html[data-theme="dark"] .field>input,html[data-theme="dark"] .field>select{background:rgba(255,255,255,0.06);}
-  html[data-theme="dark"] .amount-input{background:rgba(255,255,255,0.06);}
-  html[data-theme="dark"] .unit-select{background:rgba(255,255,255,0.06);}
-  html[data-theme="dark"] .btn.ghost{background:rgba(255,255,255,0.1);}
-  html[data-theme="dark"] .fab-pill{background:rgba(17,24,39,0.92);border-color:rgba(255,255,255,0.12);box-shadow:0 8px 32px rgba(0,0,0,0.45);}
-  html[data-theme="dark"] .fab.manual{background:rgba(255,255,255,0.1);}
-  html[data-theme="dark"] .food-rank{background:rgba(255,255,255,0.08);}
-  html[data-theme="dark"] .backup-btn{background:rgba(255,255,255,0.05);}
-  html[data-theme="dark"] .backup-btn:hover{border-color:rgba(255,255,255,0.2);}
-  html[data-theme="dark"] .kw-year-btn{background:rgba(255,255,255,0.07);}
-  html[data-theme="dark"] .kw-item{background:rgba(255,255,255,0.05);}
-  html[data-theme="dark"] .cal-nav{background:rgba(255,255,255,0.07);}
-  html[data-theme="dark"] .cal-d:not(.cal-empty):not(.cal-sel):hover{background:rgba(255,255,255,0.1);}
-  html[data-theme="dark"] .nutri-toggle{background:rgba(255,255,255,0.05);}
-  html[data-theme="dark"] .nutri-toggle.open{border-color:rgba(255,255,255,0.2);}
-  html[data-theme="dark"] .nutri-panel{background:rgba(255,255,255,0.03);}
-  html[data-theme="dark"] .history-item{background:rgba(255,255,255,0.03);}
-  html[data-theme="dark"] .history-item:hover{border-color:rgba(255,255,255,0.15);}
-  html[data-theme="dark"] .hi-add{background:rgba(52,211,153,0.1);}
-  html[data-theme="dark"] .hi-add:active{background:rgba(52,211,153,0.2);}
-  html[data-theme="dark"] .product-card{background:rgba(255,255,255,0.05);}
-  html[data-theme="dark"] .bar.today{box-shadow:0 0 0 2px var(--card),0 0 0 3.5px rgba(52,211,153,0.5);}
-  html[data-theme="dark"] .ns-btn.selected{box-shadow:0 0 0 2.5px rgba(255,255,255,0.25);}
-  html[data-theme="dark"] .ns-none{background:rgba(255,255,255,0.1);}
+  #page-bg{position:fixed;inset:0;z-index:-1;background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%);will-change:transform}
   /* ---- Favoriten ---- */
   .fav-section{margin-top:4px;}
   .fav-item{display:flex;align-items:stretch;background:rgba(184,118,14,0.06);border:1px solid rgba(184,118,14,0.2);border-radius:18px;overflow:hidden;transition:border-color .15s;margin-bottom:5px;}
@@ -436,10 +372,6 @@
   .fav-from-scan.saved{color:var(--amber);border-color:rgba(184,118,14,0.5);}
   .fav-from-scan:disabled{cursor:default;}
   /* dark overrides */
-  html[data-theme="dark"] .fav-item{background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.14);}
-  html[data-theme="dark"] .fav-item:hover{border-color:rgba(251,191,36,0.28);}
-  html[data-theme="dark"] .fav-star{background:rgba(251,191,36,0.1);}
-  html[data-theme="dark"] .fav-add{background:rgba(52,211,153,0.08);}
 </style>
 </head>
 <body>
@@ -448,8 +380,7 @@
 <header class="site-nav">
   <div class="site-nav-title">🥗 Kalorien</div>
   <button class="site-nav-btn" onclick="openBackup()" title="Backup erstellen">💾</button>
-  <button class="site-nav-btn" id="themeToggle" onclick="toggleTheme()" title="Design wechseln">🌙</button>
-  <a href="index.html" class="site-nav-btn" title="Startseite">⌂</a>
+    <a href="index.html" class="site-nav-btn" title="Startseite">⌂</a>
 </header>
 <div class="wrap">
   <div class="segwrap">
@@ -775,19 +706,7 @@
 <script>
 /* ---------- Theme Toggle ---------- */
 function initTheme(){
-  const t=localStorage.getItem('kalorientracker_theme')||'light';
-  document.documentElement.setAttribute('data-theme',t);
-  const btn=document.getElementById('themeToggle');
-  if(btn) btn.textContent=t==='dark'?'☀️':'🌙';
-}
-function toggleTheme(){
-  const cur=document.documentElement.getAttribute('data-theme')||'light';
-  const next=cur==='dark'?'light':'dark';
-  document.documentElement.setAttribute('data-theme',next);
-  localStorage.setItem('kalorientracker_theme',next);
-  const btn=document.getElementById('themeToggle');
-  if(btn) btn.textContent=next==='dark'?'☀️':'🌙';
-}
+    document.documentElement.setAttribute('data-theme',t);}
 
 /* ---------- Konstanten ---------- */
 const DEFAULT_GOAL    = 2000;
@@ -1910,7 +1829,6 @@ document.addEventListener('touchend',e=>{
 },{passive:true});
 
 /* ---------- Start ---------- */
-initTheme();
 render();
 fetchWeather();
 if (sessionStorage.getItem('autoScan') === '1') {
