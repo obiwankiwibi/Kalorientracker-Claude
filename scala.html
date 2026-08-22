@@ -63,6 +63,27 @@ html,body{
   width:36px;height:36px;display:flex;align-items:center;justify-content:center;
 }
 
+/* ── Page quick-nav ── */
+.page-nav{
+  display:flex;overflow-x:auto;gap:8px;
+  padding:14px 20px;
+  border-bottom:1px solid var(--line);
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.page-nav::-webkit-scrollbar{display:none;}
+.page-nav a{
+  flex-shrink:0;
+  padding:7px 16px;
+  border-radius:100px;
+  border:1px solid var(--line);
+  font-size:12px;letter-spacing:.04em;
+  color:var(--text);text-decoration:none;
+  white-space:nowrap;
+  transition:background .15s,border-color .15s;
+}
+.page-nav a:hover{background:var(--bg2);}
+
 /* ── Brand header ── */
 .brand{
   text-align:center;
@@ -287,6 +308,14 @@ html,body{
   <button class="app-nav-theme" id="themeBtn" aria-label="Design wechseln">◐</button>
 </nav>
 
+<!-- Quick-nav -->
+<nav class="page-nav" aria-label="Seitennavigation">
+  <a href="#galerie">Galerie</a>
+  <a href="#technik">Technik</a>
+  <a href="#ausstattung">Ausstattung</a>
+  <a href="#anleitung">Bedienungsanleitung</a>
+</nav>
+
 <!-- Brand -->
 <div class="brand">
   <!-- Škoda 2022 Logo (Emblem + Wordmark) -->
@@ -323,7 +352,7 @@ html,body{
 <div class="band"></div>
 
 <!-- Gallery -->
-<div class="slider-outer">
+<div class="slider-outer" id="galerie">
   <div class="sec">
     <div class="eyebrow">Galerie</div>
     <div class="sec-title">Fotos</div>
@@ -355,7 +384,7 @@ html,body{
 <div class="band" style="margin-top:40px"></div>
 
 <!-- Technical Data -->
-<div class="sec" style="padding-top:40px">
+<div class="sec" id="technik" style="padding-top:40px">
   <div class="eyebrow">Fahrzeugdaten</div>
   <div class="sec-title">Technische Daten</div>
 
@@ -417,7 +446,7 @@ html,body{
 <div class="band"></div>
 
 <!-- Equipment -->
-<div class="sec" style="padding-top:40px">
+<div class="sec" id="ausstattung" style="padding-top:40px">
   <div class="eyebrow">Serienausstattung</div>
   <div class="sec-title">Ausstattung</div>
 
@@ -552,7 +581,7 @@ html,body{
 <div class="band" style="margin-top:40px"></div>
 
 <!-- Bedienungsanleitung -->
-<div class="sec" style="padding-top:40px;padding-bottom:48px">
+<div class="sec" id="anleitung" style="padding-top:40px;padding-bottom:48px">
   <div class="eyebrow">Fahrzeug</div>
   <div class="sec-title">Bedienungsanleitung</div>
 
