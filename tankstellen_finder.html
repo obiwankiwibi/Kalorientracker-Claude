@@ -350,7 +350,7 @@ $('favGrid').addEventListener('change',e=>{
  if(val>0)state.favAlerts[id]=val;else delete state.favAlerts[id];
  persist();renderFavs();
 });
-persist()};
+persist();
 window.onresize=()=>requestAnimationFrame(drawChart);$('place').value=state.place;setStatus(state.apiKey?'Bereit zur Suche':'API-Key in den Einstellungen hinterlegen');render();
 // Stündliche Auto-Abfrage; sofortige Abfrage falls Daten fehlen oder veraltet
 if(state.apiKey&&(!state.stations.length||Date.now()-state.lastRequest>TK_HOUR))search();
