@@ -144,11 +144,7 @@
     .fuel-meta-sm    { font-size: 9px; color: var(--muted); margin-top: 1px; position: relative; }
     .fuel-updated-sm { font-size: 8px; color: var(--muted); margin-top: 2px; position: relative; opacity: 0.6; }
     .fuel-trend-sm   { font-size: 10px; font-weight: 700; margin-top: 2px; position: relative; }
-    .fuel-fav-badge  {
-      position: absolute; top: 12px; right: 12px;
-      font-size: 9px; background: var(--teal-dim); color: var(--teal);
-      padding: 2px 8px; border-radius: 99px; font-weight: 700;
-    }
+    .fuel-fav-badge  { display: none; }
     .fuel-actions {
       display: flex; align-items: center; justify-content: space-between;
       margin-top: auto; padding-top: 4px; position: relative;
@@ -156,10 +152,9 @@
     .fuel-refresh-btn {
       background: none; border: none; color: var(--muted);
       font-size: 16px; cursor: pointer; padding: 2px 4px;
-      line-height: 1; border-radius: 8px;
+      line-height: 1; border-radius: 8px; text-decoration: none; display: inline-block;
     }
     .fuel-refresh-btn:hover { color: var(--teal); }
-    .fuel-refresh-btn:disabled { opacity: 0.4; cursor: default; }
     .fuel-open-link { font-size: 11px; color: var(--teal); text-decoration: none; font-weight: 700; }
     .fuel-setup-btn {
       display: none; margin-top: 8px; width: 100%;
@@ -427,10 +422,10 @@
       <div class="fuel-meta-sm" id="fuelMeta"></div>
       <div class="fuel-updated-sm" id="fuelUpdated"></div>
       <div class="fuel-trend-sm" id="fuelTrend" style="display:none"></div>
-      <div class="fuel-fav-badge" id="fuelFavBadge" style="display:none">★ Favorit</div>
+      <div class="fuel-fav-badge" id="fuelFavBadge" style="display:none"></div>
       <button class="fuel-setup-btn" id="fuelSetupBtn" onclick="openFuelSetup()">⚙ API-Key einrichten</button>
       <div class="fuel-actions">
-        <button class="fuel-refresh-btn" id="fuelRefreshBtn" onclick="loadFuelPrice()" title="Aktualisieren">↻</button>
+        <a href="tankstellen_finder.html" class="fuel-refresh-btn" id="fuelRefreshBtn" title="Preise aktualisieren">↻</a>
         <a href="tankstellen_finder.html" class="fuel-open-link">Alle →</a>
       </div>
     </div>
@@ -720,8 +715,7 @@ function loadFuelPrice() {
   const metaParts = [dist, open, numFavs > 1 ? numFavs + ' Favoriten' : ''].filter(Boolean);
   document.getElementById('fuelMeta').textContent = metaParts.join(' · ');
   document.getElementById('fuelUpdated').textContent = ts ? 'Stand: ' + fmtTs(ts) : '';
-  document.getElementById('fuelFavBadge').textContent = '★ Günstigster Favorit';
-  document.getElementById('fuelFavBadge').style.display = '';
+  document.getElementById('fuelFavBadge').style.display = 'none';
   // Trend: compare best current price to previous reading
   const bestHist = (favPrices[best.id] || []).filter(h => h.fuel === 'e5');
   const trendEl = document.getElementById('fuelTrend');
