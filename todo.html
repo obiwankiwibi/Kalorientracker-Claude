@@ -1487,6 +1487,29 @@ function clearReminder(e) {
 // ═══════════════════════════════════════════════
 //  REMINDER SYSTEM (browser notifications)
 // ═══════════════════════════════════════════════
+function showReminderNotification(title) {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(reg => {
+      reg.showNotification('🔔 Erinnerung', {
+        body: title,
+        icon: './icon-192.png',
+        badge: './icon-192.png',
+        tag: 'todo-reminder',
+        renotify: true,
+        data: { url: './todo.html' }
+      });
+    }).catch(() => {
+      if ('Notification' in window && Notification.permission === 'granted')
+        new Notification('🔔 Erinnerung', { body: title });
+      else toast(`🔔 ${title}`);
+    });
+  } else if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('🔔 Erinnerung', { body: title });
+  } else {
+    toast(`🔔 ${title}`);
+  }
+}
+
 function checkReminders() {
   Object.entries(tasks).forEach(([id, t]) => {
     if (t.reminderAt && !t.completed) scheduleReminder(id, t.reminderAt);
@@ -1505,12 +1528,8 @@ function scheduleReminder(taskId, ts) {
     const t = tasks[taskId];
     if (!t || t.completed) return;
 
-    // Browser-Benachrichtigung
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('🔔 Erinnerung', { body: t.title, icon: '📅' });
-    } else {
-      toast(`🔔 ${t.title}`);
-    }
+    // Browser-Benachrichtigung (via Service Worker für persistente Anzeige)
+    showReminderNotification(t.title);
 
     // E-Mail an mich selbst
     const me = registeredUsers[MY_DEVICE_ID];
@@ -1695,6 +1714,10 @@ function doQuickBackup(){
   var a=document.createElement("a");a.href=URL.createObjectURL(bl);
   a.download="hub-backup-"+new Date().toISOString().slice(0,10)+".json";
   a.click();URL.revokeObjectURL(a.href);
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
 }
 </script>
 </body>

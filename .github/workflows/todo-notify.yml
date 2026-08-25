@@ -1,0 +1,25 @@
+name: To-Do Erinnerungen Push
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # alle 5 Minuten
+  workflow_dispatch:
+
+jobs:
+  check-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Abhängigkeiten installieren
+        run: npm install web-push node-fetch@2
+        working-directory: scripts
+      - name: Erinnerungen prüfen & Push senden
+        env:
+          VAPID_PUBLIC_KEY:  ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_EMAIL:       ${{ secrets.VAPID_EMAIL }}
+          FIREBASE_DB_URL:   ${{ secrets.FIREBASE_DB_URL }}
+        run: node scripts/check-todo.js
