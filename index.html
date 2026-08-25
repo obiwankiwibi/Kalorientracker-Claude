@@ -251,6 +251,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       gap: 7px;
       transition: transform 0.12s, opacity 0.12s;
       backdrop-filter: blur(4px);
@@ -324,8 +325,8 @@
     /* ── Kalorien card ── */
     .kal-card {
       background: var(--layer2); border: 1px solid var(--border); border-radius: 18px;
-      padding: 14px 14px 14px; text-decoration: none; color: var(--text);
-      display: flex; flex-direction: column; gap: 0;
+      padding: 12px 14px; text-decoration: none; color: var(--text);
+      display: flex; flex-direction: column; gap: 0; overflow: hidden;
       transition: transform 0.12s, opacity 0.12s;
       backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     }
@@ -354,8 +355,8 @@
     /* ── To-Do card ── */
     .todo-card {
       background: var(--layer2); border: 1px solid var(--border); border-radius: 18px;
-      padding: 14px 14px 14px; cursor: pointer; color: var(--text);
-      display: flex; flex-direction: column; gap: 0;
+      padding: 12px 14px; cursor: pointer; color: var(--text);
+      display: flex; flex-direction: column; gap: 0; overflow: hidden;
       transition: transform 0.12s, opacity 0.12s; -webkit-tap-highlight-color: transparent;
       backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     }
@@ -387,11 +388,12 @@
     #dashGrid {
       display: grid;
       grid-template-columns: 1fr 1fr;
+      grid-auto-rows: 175px;
       gap: 10px;
       width: 100%;
       max-width: 420px;
     }
-    #dashGrid > [data-tile-id] { position: relative; }
+    #dashGrid > [data-tile-id] { position: relative; overflow: hidden; }
     .tile-being-dragged { opacity: 0.25 !important; transition: opacity 0.1s; }
     .drag-ghost {
       position: fixed;
