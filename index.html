@@ -381,6 +381,36 @@
 
     /* ── Wetter clickable ── */
     .weather-card { cursor: pointer; }
+
+    /* ── Dashboard drag grid ── */
+    #dashGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      max-width: 420px;
+    }
+    #dashGrid > [data-tile-id] { position: relative; touch-action: pan-y; }
+    .tile-being-dragged { opacity: 0.25 !important; transition: opacity 0.1s; }
+    .drag-ghost {
+      position: fixed;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.92;
+      box-shadow: 0 18px 48px rgba(0,0,40,0.30);
+      border-radius: 18px;
+      transform: scale(1.06);
+    }
+    /* Subtle grip dot in corner */
+    #dashGrid > [data-tile-id]::after {
+      content: '⠿';
+      position: absolute;
+      top: 8px; right: 10px;
+      font-size: 11px;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
@@ -393,9 +423,9 @@
     </div>
   </div>
 
-  <!-- ══ WIDGETS ══ -->
-  <div class="widget-row">
-    <div class="weather-card" id="weatherCard" onclick="openWetter()" title="Wettervorhersage öffnen">
+  <!-- ══ DASHBOARD ══ -->
+  <div id="dashGrid">
+    <div class="weather-card" id="weatherCard" data-tile-id="weather" onclick="openWetter()" title="Wettervorhersage öffnen">
       <div class="weather-bg-emoji" id="weatherBgEmoji">☀️</div>
       <div class="weather-loading" id="weatherLoading">📍 Lädt…</div>
       <div class="weather-content" id="weatherContent" style="display:none">
@@ -413,7 +443,7 @@
         <span id="wMinMaxBox" style="display:none"></span>
       </div>
     </div>
-    <div class="fuel-widget">
+    <div class="fuel-widget" data-tile-id="fuel">
       <div class="fuel-widget-bg">⛽</div>
       <div class="fuel-widget-label">Super 95 · Favoriten</div>
       <div class="fuel-price-big" id="fuelPrice">–</div>
@@ -429,29 +459,7 @@
         <a href="tankstellen_finder.html" class="fuel-open-link">Alle →</a>
       </div>
     </div>
-  </div>
-
-  <!-- Fuel API key setup overlay -->
-  <div class="fuel-overlay" id="fuelOverlay" onclick="if(event.target===this)closeFuelSetup()">
-    <div class="fuel-overlay-box">
-      <div class="fuel-overlay-handle"></div>
-      <div class="fuel-overlay-title">⛽ Spritpreise einrichten</div>
-      <div class="fuel-overlay-sub">Kostenlosen API-Key unter <strong>tankerkoenig.de</strong> registrieren, dann hier eingeben.</div>
-      <input class="fuel-overlay-input" id="fuelKeyInput" type="text" placeholder="Tankerkoenig API-Key" autocomplete="off" spellcheck="false">
-      <div class="fuel-overlay-btns">
-        <button class="fuel-overlay-cancel" onclick="closeFuelSetup()">Abbrechen</button>
-        <button class="fuel-overlay-save" onclick="saveFuelKey()">Speichern &amp; laden</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ APPS ══ -->
-  <div class="section">
-    <div class="section-head">
-      <span class="section-title">Apps</span>
-    </div>
-    <div class="featured-row">
-      <div class="kal-card" onclick="location.href='kalorien.html'">
+    <div class="kal-card" data-tile-id="kalorien" onclick="location.href='kalorien.html'">
         <div class="kal-head">
           <div class="kal-head-left">
             <span class="kal-icon">🥗</span>
@@ -470,7 +478,7 @@
         </div>
         <div class="kal-water-bar-wrap"><div class="kal-water-bar" id="kalWaterBar" style="width:0%"></div></div>
       </div>
-      <div class="todo-card" onclick="location.href='todo.html'">
+      <div class="todo-card" data-tile-id="todo" onclick="location.href='todo.html'">
         <div class="todo-head">
           <span class="todo-icon">✅</span>
           <span class="todo-lbl">To-Do</span>
@@ -483,35 +491,47 @@
         </div>
       </div>
     </div>
-    <div class="app-grid-2">
-      <a class="app-card" href="einkaufsliste.html">
-        <div class="app-icon-wrap c-teal">🛒</div>
-        <div class="app-name">Einkaufs&shy;liste</div>
-      </a>
-      <a class="app-card" href="haushaltskosten_tracker.html">
-        <div class="app-icon-wrap c-green">🏠</div>
-        <div class="app-name">Haushalt</div>
-      </a>
-      <a class="app-card" href="tankstellen_finder.html">
-        <div class="app-icon-wrap c-amber">⛽</div>
-        <div class="app-name">Tankstellen</div>
-      </a>
-      <a class="app-card" href="zähler.html">
-        <div class="app-icon-wrap c-purple">🔢</div>
-        <div class="app-name">Zähler</div>
-      </a>
-      <a class="app-card" href="freizeit.html">
-        <div class="app-icon-wrap c-purple">🎡</div>
-        <div class="app-name">Freizeit</div>
-      </a>
-      <a class="app-card" href="scala.html">
-        <div class="app-icon-wrap c-red">🚗</div>
-        <div class="app-name">Mein Scala</div>
-      </a>
-      <a class="app-card" href="pflanzen.html">
-        <div class="app-icon-wrap c-green">🌿</div>
-        <div class="app-name">Pflanzen</div>
-      </a>
+    <a class="app-card" data-tile-id="einkauf" href="einkaufsliste.html">
+      <div class="app-icon-wrap c-teal">🛒</div>
+      <div class="app-name">Einkaufs&shy;liste</div>
+    </a>
+    <a class="app-card" data-tile-id="haushalt" href="haushaltskosten_tracker.html">
+      <div class="app-icon-wrap c-green">🏠</div>
+      <div class="app-name">Haushalt</div>
+    </a>
+    <a class="app-card" data-tile-id="tankstellen" href="tankstellen_finder.html">
+      <div class="app-icon-wrap c-amber">⛽</div>
+      <div class="app-name">Tankstellen</div>
+    </a>
+    <a class="app-card" data-tile-id="zaehler" href="zähler.html">
+      <div class="app-icon-wrap c-purple">🔢</div>
+      <div class="app-name">Zähler</div>
+    </a>
+    <a class="app-card" data-tile-id="freizeit" href="freizeit.html">
+      <div class="app-icon-wrap c-purple">🎡</div>
+      <div class="app-name">Freizeit</div>
+    </a>
+    <a class="app-card" data-tile-id="scala" href="scala.html">
+      <div class="app-icon-wrap c-red">🚗</div>
+      <div class="app-name">Mein Scala</div>
+    </a>
+    <a class="app-card" data-tile-id="pflanzen" href="pflanzen.html">
+      <div class="app-icon-wrap c-green">🌿</div>
+      <div class="app-name">Pflanzen</div>
+    </a>
+  </div>
+
+  <!-- Fuel API key setup overlay -->
+  <div class="fuel-overlay" id="fuelOverlay" onclick="if(event.target===this)closeFuelSetup()">
+    <div class="fuel-overlay-box">
+      <div class="fuel-overlay-handle"></div>
+      <div class="fuel-overlay-title">⛽ Spritpreise einrichten</div>
+      <div class="fuel-overlay-sub">Kostenlosen API-Key unter <strong>tankerkoenig.de</strong> registrieren, dann hier eingeben.</div>
+      <input class="fuel-overlay-input" id="fuelKeyInput" type="text" placeholder="Tankerkoenig API-Key" autocomplete="off" spellcheck="false">
+      <div class="fuel-overlay-btns">
+        <button class="fuel-overlay-cancel" onclick="closeFuelSetup()">Abbrechen</button>
+        <button class="fuel-overlay-save" onclick="saveFuelKey()">Speichern &amp; laden</button>
+      </div>
     </div>
   </div>
 
@@ -1256,6 +1276,91 @@ window.addEventListener('resize', () => { _lcSize = 0; });
   }
   tick();
   setInterval(tick, 1000);
+})();
+
+// ── Drag & Drop ──────────────────────────────────
+(function() {
+  const STORE_KEY = 'dashboard_order_v1';
+  let dragEl = null, ghost = null, sx = 0, sy = 0, lpTimer = null, dragging = false, justDragged = false;
+
+  function grid() { return document.getElementById('dashGrid'); }
+
+  function saveTileOrder() {
+    const order = [...grid().querySelectorAll('[data-tile-id]')].map(el => el.dataset.tileId);
+    localStorage.setItem(STORE_KEY, JSON.stringify(order));
+  }
+
+  function loadTileOrder() {
+    try {
+      const order = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+      if (!order.length) return;
+      const g = grid();
+      const map = {};
+      g.querySelectorAll('[data-tile-id]').forEach(el => { map[el.dataset.tileId] = el; });
+      order.forEach(id => { if (map[id]) g.appendChild(map[id]); });
+    } catch(e) {}
+  }
+
+  function onTouchStart(e) {
+    // Ignore touches on interactive child elements
+    if (e.target.closest('button, input, select, .kal-btn, .kal-water-plus, .todo-add-row, .fuel-actions, .fuel-setup-btn, .fuel-overlay')) return;
+    const tile = e.target.closest('#dashGrid > [data-tile-id]');
+    if (!tile) return;
+    lpTimer = setTimeout(() => {
+      dragging = true;
+      dragEl = tile;
+      if (navigator.vibrate) navigator.vibrate(35);
+      tile.classList.add('tile-being-dragged');
+      const r = tile.getBoundingClientRect();
+      sx = e.touches[0].clientX - r.left;
+      sy = e.touches[0].clientY - r.top;
+      ghost = tile.cloneNode(true);
+      ghost.classList.add('drag-ghost');
+      ghost.style.width = r.width + 'px';
+      ghost.style.height = r.height + 'px';
+      ghost.style.left = (e.touches[0].clientX - sx) + 'px';
+      ghost.style.top  = (e.touches[0].clientY - sy) + 'px';
+      document.body.appendChild(ghost);
+    }, 450);
+  }
+
+  function onTouchMove(e) {
+    if (!dragging) { clearTimeout(lpTimer); lpTimer = null; return; }
+    e.preventDefault();
+    const t = e.touches[0];
+    ghost.style.left = (t.clientX - sx) + 'px';
+    ghost.style.top  = (t.clientY - sy) + 'px';
+    ghost.style.visibility = 'hidden';
+    const over = document.elementFromPoint(t.clientX, t.clientY);
+    ghost.style.visibility = '';
+    const target = over?.closest('#dashGrid > [data-tile-id]');
+    if (target && target !== dragEl) {
+      const tr = target.getBoundingClientRect();
+      if (t.clientX < tr.left + tr.width / 2) grid().insertBefore(dragEl, target);
+      else grid().insertBefore(dragEl, target.nextSibling);
+    }
+  }
+
+  function onTouchEnd() {
+    clearTimeout(lpTimer); lpTimer = null;
+    if (dragging) { justDragged = true; setTimeout(() => { justDragged = false; }, 350); }
+    if (!dragging) return;
+    dragging = false;
+    if (dragEl) { dragEl.classList.remove('tile-being-dragged'); dragEl = null; }
+    if (ghost)  { ghost.remove(); ghost = null; }
+    saveTileOrder();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadTileOrder();
+    const g = grid();
+    if (!g) return;
+    g.addEventListener('touchstart', onTouchStart, {passive: true});
+    document.addEventListener('touchmove', onTouchMove, {passive: false});
+    document.addEventListener('touchend', onTouchEnd);
+    // Prevent navigation on app-card links after a drag
+    g.addEventListener('click', e => { if (justDragged) e.preventDefault(); }, true);
+  });
 })();
 
 </script>
