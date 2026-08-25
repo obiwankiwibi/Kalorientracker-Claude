@@ -1601,7 +1601,7 @@ function tile(type, it) {
   }
   if (type === 'active') {
     return `<div class="tile active"
-      ontouchstart="pressStart('${it.id}')" ontouchend="pressEnd('${it.id}')" ontouchcancel="pressCancel()"
+      ontouchstart="pressStart('${it.id}')" ontouchend="pressEnd('${it.id}');event.preventDefault()" ontouchcancel="pressCancel()"
       onmousedown="pressStart('${it.id}')" onmouseup="pressEnd('${it.id}')" onmouseleave="pressCancel()">
       <div class="tile-emoji">${it.emoji || '🛒'}</div>
       <div class="tile-name">${esc(it.name)}</div>
