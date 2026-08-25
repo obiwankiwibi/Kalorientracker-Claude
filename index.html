@@ -497,6 +497,7 @@
     <a class="app-card" data-tile-id="einkauf" href="einkaufsliste.html">
       <div class="app-icon-wrap c-teal">🛒</div>
       <div class="app-name">Einkaufs&shy;liste</div>
+      <div class="app-desc" id="einkaufCount" style="display:none"></div>
     </a>
     <a class="app-card" data-tile-id="haushalt" href="haushaltskosten_tracker.html">
       <div class="app-icon-wrap c-green">🏠</div>
@@ -986,6 +987,22 @@ function initTodoWidget() {
 }
 
 initTodoWidget();
+
+/* ── Einkaufsliste Anzahl ── */
+(function() {
+  try {
+    const listId = 'zuhause';
+    const items = JSON.parse(localStorage.getItem('list_' + listId) || '{}');
+    const total = Object.values(items).length;
+    const el = document.getElementById('einkaufCount');
+    if (!el) return;
+    if (total > 0) {
+      const done = Object.values(items).filter(it => it.checked).length;
+      el.textContent = done > 0 ? `${total - done} offen · ${done} erledigt` : `${total} Artikel`;
+      el.style.display = '';
+    }
+  } catch(e) {}
+})();
 
 /* ── Lebens-Uhr ── */
 let _lcSize = 0;
