@@ -1547,6 +1547,7 @@ function persist(id, data) {
 //  RENDER
 // ═══════════════════════════════════════════════
 function renderAll() {
+  try { localStorage.setItem('list_' + listId, JSON.stringify(items)); } catch(e) {}
   const active = [], done = [];
   Object.entries(items).forEach(([id, it]) => {
     (it.checked ? done : active).push({ id, ...it });
