@@ -1,0 +1,25 @@
+name: Spritpreise Benachrichtigung
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # jede Stunde
+  workflow_dispatch:        # manuell auslösbar
+
+jobs:
+  check-fuel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Abhängigkeiten installieren
+        run: npm install web-push node-fetch@2
+        working-directory: scripts
+      - name: Spritpreise prüfen & Push senden
+        env:
+          VAPID_PUBLIC_KEY:  ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_EMAIL:       ${{ secrets.VAPID_EMAIL }}
+          FIREBASE_DB_URL:   ${{ secrets.FIREBASE_DB_URL }}
+        run: node scripts/check-fuel.js

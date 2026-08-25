@@ -167,6 +167,12 @@
     }
     .fuel-refresh-btn:hover { color: var(--teal); }
     .fuel-open-link { font-size: 11px; color: var(--teal); text-decoration: none; font-weight: 700; }
+    .fuel-notify-btn {
+      background: none; border: none; color: var(--muted);
+      font-size: 15px; cursor: pointer; padding: 2px 4px;
+      line-height: 1; border-radius: 8px;
+    }
+    .fuel-notify-btn.active { color: #f59e0b; }
     .fuel-setup-btn {
       display: none; margin-top: 8px; width: 100%;
       background: var(--teal-dim); border: 1px solid rgba(61,189,181,0.3);
@@ -473,6 +479,7 @@
       <button class="fuel-setup-btn" id="fuelSetupBtn" onclick="openFuelSetup()">⚙ API-Key einrichten</button>
       <div class="fuel-actions">
         <a href="tankstellen_finder.html" class="fuel-refresh-btn" id="fuelRefreshBtn" title="Preise aktualisieren">↻</a>
+        <button class="fuel-notify-btn" id="fuelNotifyBtn" onclick="toggleFuelNotify()" title="Benachrichtigung bei Preis unter 2,10 €">🔔</button>
         <a href="tankstellen_finder.html" class="fuel-open-link">Alle →</a>
       </div>
     </div>
@@ -805,6 +812,85 @@ function saveFuelKey() {
   closeFuelSetup();
   loadFuelPrice();
 }
+
+// ── Push notifications for fuel prices ──
+const VAPID_PUBLIC_KEY = 'BAjD2XUMRrUN8gJ6jBMO0Vb4W6ky6BKkrt2-wgsq4Sug3RIGw5diKkBKmlCfF5iByLltBDLYVoqVO1LwxGgMN7k';
+const FB_DB = 'https://claude-code-34507-default-rtdb.europe-west1.firebasedatabase.app';
+
+function urlB64ToUint8(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+async function savePushSubToFirebase(sub) {
+  await fetch(FB_DB + '/push_sub.json', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(sub.toJSON())
+  });
+}
+
+async function saveFuelStationsToFirebase() {
+  const tk = JSON.parse(localStorage.getItem('tankstellen_finder_v2') || '{}');
+  const favIds = Object.keys(tk.favorites || {});
+  if (!favIds.length || !tk.apiKey) return;
+  await fetch(FB_DB + '/fuel_config.json', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ apiKey: tk.apiKey, stations: favIds })
+  });
+}
+
+async function toggleFuelNotify() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    alert('Dein Browser unterstützt keine Push-Benachrichtigungen.');
+    return;
+  }
+  const btn = document.getElementById('fuelNotifyBtn');
+  const reg = await navigator.serviceWorker.ready;
+  const existing = await reg.pushManager.getSubscription();
+
+  if (existing) {
+    await existing.unsubscribe();
+    await fetch(FB_DB + '/push_sub.json', { method: 'DELETE' });
+    btn.classList.remove('active');
+    btn.title = 'Benachrichtigung bei Preis unter 2,10 €';
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') {
+    alert('Benachrichtigungen wurden nicht erlaubt.');
+    return;
+  }
+
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlB64ToUint8(VAPID_PUBLIC_KEY)
+  });
+
+  await savePushSubToFirebase(sub);
+  await saveFuelStationsToFirebase();
+
+  btn.classList.add('active');
+  btn.title = 'Benachrichtigung aktiv – nochmal klicken zum Deaktivieren';
+  alert('Benachrichtigung aktiviert! Du wirst benachrichtigt, wenn Super 95 unter 2,10 € fällt.');
+}
+
+async function initFuelNotifyBtn() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  const reg = await navigator.serviceWorker.ready.catch(() => null);
+  if (!reg) return;
+  const sub = await reg.pushManager.getSubscription();
+  const btn = document.getElementById('fuelNotifyBtn');
+  if (sub) {
+    btn.classList.add('active');
+    btn.title = 'Benachrichtigung aktiv – nochmal klicken zum Deaktivieren';
+  }
+}
+initFuelNotifyBtn();
 
 loadFuelPrice();
 setInterval(loadFuelPrice, 5 * 60 * 1000);
