@@ -1304,6 +1304,8 @@ window.addEventListener('resize', () => { _lcSize = 0; });
   }
 
   function onTouchStart(e) {
+    // Clear any stale drag state from a previously cancelled gesture
+    if (ghost || dragEl) cleanup(false);
     touchOnTile = false;
     if (e.target.closest('button, input, select, .kal-btn, .kal-water-plus, .todo-add-row, .fuel-actions, .fuel-setup-btn, .fuel-overlay')) return;
     const tile = e.target.closest('#dashGrid > [data-tile-id]');
@@ -1355,16 +1357,22 @@ window.addEventListener('resize', () => { _lcSize = 0; });
     }
   }
 
-  function onTouchEnd() {
+  function cleanup(save) {
     clearTimeout(lpTimer); lpTimer = null;
     touchOnTile = false;
-    if (dragging) { justDragged = true; setTimeout(() => { justDragged = false; }, 350); }
-    if (!dragging) return;
+    if (dragging && save) { justDragged = true; setTimeout(() => { justDragged = false; }, 350); }
+    const wasDragging = dragging;
     dragging = false;
     if (dragEl) { dragEl.classList.remove('tile-being-dragged'); dragEl = null; }
     if (ghost)  { ghost.remove(); ghost = null; }
-    saveTileOrder();
+    // Also clean up any stale ghosts left from a cancelled drag
+    document.querySelectorAll('.drag-ghost').forEach(el => el.remove());
+    grid()?.querySelectorAll('.tile-being-dragged').forEach(el => el.classList.remove('tile-being-dragged'));
+    if (wasDragging && save) saveTileOrder();
   }
+
+  function onTouchEnd()    { cleanup(true);  }
+  function onTouchCancel() { cleanup(false); }
 
   document.addEventListener('DOMContentLoaded', () => {
     loadTileOrder();
@@ -1373,6 +1381,7 @@ window.addEventListener('resize', () => { _lcSize = 0; });
     g.addEventListener('touchstart', onTouchStart, {passive: true});
     document.addEventListener('touchmove', onTouchMove, {passive: false});
     document.addEventListener('touchend', onTouchEnd);
+    document.addEventListener('touchcancel', onTouchCancel);
     g.addEventListener('click', e => { if (justDragged) e.preventDefault(); }, true);
   });
 })();
