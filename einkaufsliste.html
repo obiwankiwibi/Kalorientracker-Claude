@@ -279,6 +279,9 @@ html { height: 100%; }
     .tile-price { font-size: 10px; font-weight: 600; opacity: 0.72; margin-top: 1px; }
     .tile-kcal-price { font-size: 8.5px; font-weight: 500; opacity: 0.68; margin-top: 0; }
     .tile-amount { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 700; opacity: 0.9; }
+    .tile-store  { font-size: 9.5px; color: var(--teal); background: rgba(0,80,200,0.10); border-radius: 10px; padding: 1px 6px; margin-top: 2px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .store-chip  { display: inline-block; padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface); font-size: 12px; font-weight: 600; margin-right: 6px; white-space: nowrap; cursor: pointer; transition: border-color .15s, background .15s; }
+    .store-chip.active { border-color: var(--teal); background: rgba(0,80,200,0.10); color: var(--teal); }
 
     /* Active items — salmon */
     .tile.active {
@@ -911,6 +914,9 @@ html { height: 100%; }
   <span id="priceTotal">0,00 €</span>
 </div>
 
+<!-- ══ STORE FILTER ══ -->
+<div id="storeFilterRow" style="display:none; overflow-x:auto; white-space:nowrap; padding:6px 12px 2px; scrollbar-width:none;"></div>
+
 <!-- ══ ACTIVE LIST ══ -->
 <div class="section" id="activeSection">
   <div class="grid" id="activeGrid"></div>
@@ -948,7 +954,9 @@ html { height: 100%; }
       <span id="sheetTitle"></span>
     </div>
     <div class="amount-chips" id="amtChips"></div>
-    <input class="sheet-input" id="sheetInput" placeholder="Eigene Menge oder Notiz…" oninput="onSheetInput(this.value)">
+    <input class="sheet-input" id="sheetInput" placeholder="Menge oder Notiz…" oninput="onSheetInput(this.value)">
+    <input class="sheet-input" id="sheetStore" list="storeList" placeholder="Wo kaufen? (z.B. REWE Petz)" oninput="onSheetStore(this.value)" style="margin-bottom:14px">
+    <datalist id="storeList"></datalist>
     <div class="sheet-btns">
       <button class="sh-btn danger" id="removeBtn" onclick="removePicked()">🗑</button>
       <button class="sh-btn secondary" onclick="closeSheet()">Abbrechen</button>
@@ -1444,7 +1452,8 @@ let scannedRef = null;         // Firebase ref für gescannte Vorschläge
 let scanStream2 = null, scanTrack2 = null;
 let scannerRunning2 = false, scanLoopId2 = null, scanTorchOn = false;
 
-let picker = { id: null, name: '', emoji: '', amount: '', isNew: true };
+let picker = { id: null, name: '', emoji: '', amount: '', store: '', isNew: true };
+let activeStoreFilter = '';
 let activeCat   = 'Alle';
 let activeSort  = '';    // 'az' | 'typ' | 'preis' | 'kg' | 'kcal'
 let sortDir     = 1;     // 1=aufsteigend, -1=absteigend
@@ -1555,12 +1564,32 @@ function renderAll() {
   active.sort((a,b) => (a.addedAt||0) - (b.addedAt||0));
   done.sort((a,b)   => (a.checkedAt||0) - (b.checkedAt||0));
 
+  // Store filter bar
+  const storeNames = [...new Set(active.map(i => i.store).filter(Boolean))].sort();
+  const filterRow = document.getElementById('storeFilterRow');
+  if (storeNames.length > 0) {
+    filterRow.style.display = '';
+    if (!storeNames.includes(activeStoreFilter)) activeStoreFilter = '';
+    const chips = [{ label: 'Alle', val: '' }, ...storeNames.map(s => ({ label: s, val: s }))];
+    filterRow.innerHTML = chips.map(c =>
+      `<span class="store-chip${c.val === activeStoreFilter ? ' active' : ''}" onclick="setStoreFilter('${esc(c.val)}')">${esc(c.label)}</span>`
+    ).join('');
+  } else {
+    filterRow.style.display = 'none';
+    activeStoreFilter = '';
+  }
+
   // Active grid
+  const visibleActive = activeStoreFilter
+    ? active.filter(i => i.store === activeStoreFilter)
+    : active;
   const ag = document.getElementById('activeGrid');
   if (active.length === 0) {
     ag.innerHTML = '<div class="empty">Keine Artikel in der Liste.<br>Tippe unten auf einen Vorschlag!</div>';
+  } else if (visibleActive.length === 0) {
+    ag.innerHTML = `<div class="empty">Keine Artikel für „${esc(activeStoreFilter)}".</div>`;
   } else {
-    ag.innerHTML = active.map(it => tile('active', it)).join('');
+    ag.innerHTML = visibleActive.map(it => tile('active', it)).join('');
   }
 
   // Done grid
@@ -1586,6 +1615,11 @@ function renderAll() {
   renderSuggestions();
 }
 
+function setStoreFilter(val) {
+  activeStoreFilter = val;
+  renderAll();
+}
+
 function tile(type, it) {
   const sug = getSug(it.name);
   let priceHtml = '';
@@ -1600,12 +1634,14 @@ function tile(type, it) {
       priceHtml = sugPriceHtml(sug);
     }
   }
+  const storeBadge = it.store ? `<div class="tile-store">${esc(it.store)}</div>` : '';
   if (type === 'active') {
     return `<div class="tile active"
       ontouchstart="pressStart('${it.id}')" ontouchend="pressEnd('${it.id}');event.preventDefault()" ontouchcancel="pressCancel()"
       onmousedown="pressStart('${it.id}')" onmouseup="pressEnd('${it.id}')" onmouseleave="pressCancel()">
       <div class="tile-emoji">${it.emoji || '🛒'}</div>
       <div class="tile-name">${esc(it.name)}</div>
+      ${storeBadge}
       ${priceHtml}
       ${it.amount ? `<div class="tile-amount">${esc(it.amount)}</div>` : ''}
     </div>`;
@@ -1613,6 +1649,7 @@ function tile(type, it) {
   return `<div class="tile done" onclick="uncheck('${it.id}')">
     <div class="tile-emoji">${it.emoji || '🛒'}</div>
     <div class="tile-name">${esc(it.name)}</div>
+    ${storeBadge}
     ${priceHtml}
   </div>`;
 }
@@ -1743,27 +1780,37 @@ function tapSuggestion(name, emoji) {
   toast(`${emoji} ${name} hinzugefügt`);
 }
 
+function buildStoreDatalist() {
+  const usedStores = [...new Set(Object.values(items).map(i => i.store).filter(Boolean))];
+  const allStores = [...new Set([...STORES.map(s => s.name), ...usedStores])];
+  document.getElementById('storeList').innerHTML = allStores.map(s => `<option value="${esc(s)}">`).join('');
+}
+
 function openPicker(id) {
   const it = items[id];
   if (!it) return;
-  picker = { id, name: it.name, emoji: it.emoji || '🛒', amount: it.amount || '', isNew: false };
+  picker = { id, name: it.name, emoji: it.emoji || '🛒', amount: it.amount || '', store: it.store || '', isNew: false };
 
   document.getElementById('sheetEmoji').textContent = picker.emoji;
   document.getElementById('sheetTitle').textContent = picker.name;
   document.getElementById('sheetInput').value = picker.amount;
+  document.getElementById('sheetStore').value = picker.store;
   document.getElementById('removeBtn').style.display = '';
 
   buildAmtChips(picker.amount);
+  buildStoreDatalist();
   document.getElementById('overlay').classList.add('open');
 }
 
 function openNewPicker(name, emoji) {
-  picker = { id: null, name, emoji: emoji || '🛒', amount: '', isNew: true };
+  picker = { id: null, name, emoji: emoji || '🛒', amount: '', store: '', isNew: true };
   document.getElementById('sheetEmoji').textContent = picker.emoji;
   document.getElementById('sheetTitle').textContent = picker.name;
   document.getElementById('sheetInput').value = '';
+  document.getElementById('sheetStore').value = '';
   document.getElementById('removeBtn').style.display = 'none';
   buildAmtChips('');
+  buildStoreDatalist();
   document.getElementById('overlay').classList.add('open');
 }
 
@@ -1792,13 +1839,19 @@ function onSheetInput(val) {
   document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('on'));
 }
 
+function onSheetStore(val) {
+  picker.store = val.trim();
+}
+
 function confirmPicker() {
+  const store = document.getElementById('sheetStore').value.trim();
+  picker.store = store;
   if (picker.isNew) {
     const id = 'i_' + Date.now();
-    persist(id, { name: picker.name, emoji: picker.emoji, amount: picker.amount, checked: false, addedAt: Date.now() });
+    persist(id, { name: picker.name, emoji: picker.emoji, amount: picker.amount, store: picker.store || null, checked: false, addedAt: Date.now() });
   } else {
     const it = items[picker.id];
-    if (it) persist(picker.id, { ...it, amount: picker.amount });
+    if (it) persist(picker.id, { ...it, amount: picker.amount, store: picker.store || null });
   }
   closeSheet();
 }
@@ -1810,7 +1863,7 @@ function removePicked() {
 
 function closeSheet() {
   document.getElementById('overlay').classList.remove('open');
-  picker = { id: null, name: '', emoji: '', amount: '', isNew: true };
+  picker = { id: null, name: '', emoji: '', amount: '', store: '', isNew: true };
 }
 
 function overlayClick(e) {
