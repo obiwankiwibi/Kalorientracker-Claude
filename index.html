@@ -390,7 +390,7 @@
       width: 100%;
       max-width: 420px;
     }
-    #dashGrid > [data-tile-id] { position: relative; touch-action: none; }
+    #dashGrid > [data-tile-id] { position: relative; }
     .tile-being-dragged { opacity: 0.25 !important; transition: opacity 0.1s; }
     .drag-ghost {
       position: fixed;
@@ -401,15 +401,18 @@
       border-radius: 18px;
       transform: scale(1.06);
     }
-    /* Subtle grip dot in corner */
-    #dashGrid > [data-tile-id]::after {
-      content: '⠿';
+    .drag-handle {
       position: absolute;
-      top: 8px; right: 10px;
-      font-size: 11px;
-      opacity: 0.15;
-      pointer-events: none;
-      z-index: 1;
+      top: 6px; right: 8px;
+      font-size: 13px;
+      opacity: 0.22;
+      touch-action: none;
+      z-index: 2;
+      padding: 5px;
+      line-height: 1;
+      cursor: grab;
+      -webkit-user-select: none;
+      user-select: none;
     }
   </style>
 </head>
@@ -1280,10 +1283,7 @@ window.addEventListener('resize', () => { _lcSize = 0; });
 // ── Drag & Drop ──────────────────────────────────
 (function() {
   const STORE_KEY = 'dashboard_order_v1';
-  const MOVE_THRESH = 10;
-  let dragEl = null, ghost = null, sx = 0, sy = 0;
-  let lpTimer = null, dragging = false, justDragged = false;
-  let touchOnTile = false, t0x = 0, t0y = 0, scrollY0 = 0;
+  let dragEl = null, ghost = null, sx = 0, sy = 0, dragging = false, justDragged = false;
 
   function grid() { return document.getElementById('dashGrid'); }
 
@@ -1304,46 +1304,30 @@ window.addEventListener('resize', () => { _lcSize = 0; });
   }
 
   function onTouchStart(e) {
-    // Clear any stale drag state from a previously cancelled gesture
-    if (ghost || dragEl) cleanup(false);
-    touchOnTile = false;
-    if (e.target.closest('button, input, select, .kal-btn, .kal-water-plus, .todo-add-row, .fuel-actions, .fuel-setup-btn, .fuel-overlay')) return;
+    // Only start drag when the grip handle is touched
+    if (!e.target.closest('.drag-handle')) return;
     const tile = e.target.closest('#dashGrid > [data-tile-id]');
     if (!tile) return;
-    touchOnTile = true;
-    t0x = e.touches[0].clientX;
-    t0y = e.touches[0].clientY;
-    scrollY0 = window.scrollY;
-    lpTimer = setTimeout(() => {
-      dragging = true;
-      dragEl = tile;
-      if (navigator.vibrate) navigator.vibrate(35);
-      tile.classList.add('tile-being-dragged');
-      const r = tile.getBoundingClientRect();
-      sx = t0x - r.left;
-      sy = t0y - r.top;
-      ghost = tile.cloneNode(true);
-      ghost.classList.add('drag-ghost');
-      ghost.style.width = r.width + 'px';
-      ghost.style.height = r.height + 'px';
-      ghost.style.left = (t0x - sx) + 'px';
-      ghost.style.top  = (t0y - sy) + 'px';
-      document.body.appendChild(ghost);
-    }, 450);
+    dragging = true;
+    dragEl = tile;
+    if (navigator.vibrate) navigator.vibrate(30);
+    tile.classList.add('tile-being-dragged');
+    const r = tile.getBoundingClientRect();
+    sx = e.touches[0].clientX - r.left;
+    sy = e.touches[0].clientY - r.top;
+    ghost = tile.cloneNode(true);
+    ghost.classList.add('drag-ghost');
+    ghost.style.width  = r.width  + 'px';
+    ghost.style.height = r.height + 'px';
+    ghost.style.left   = (e.touches[0].clientX - sx) + 'px';
+    ghost.style.top    = (e.touches[0].clientY - sy) + 'px';
+    document.body.appendChild(ghost);
   }
 
   function onTouchMove(e) {
-    const t = e.touches[0];
-    if (!dragging) {
-      if (touchOnTile) {
-        const moved = Math.hypot(t.clientX - t0x, t.clientY - t0y);
-        if (moved > MOVE_THRESH) { clearTimeout(lpTimer); lpTimer = null; }
-        // Manual scroll since touch-action:none blocks browser pan
-        window.scrollTo(0, scrollY0 + (t0y - t.clientY));
-      }
-      return;
-    }
+    if (!dragging) return;
     e.preventDefault();
+    const t = e.touches[0];
     ghost.style.left = (t.clientX - sx) + 'px';
     ghost.style.top  = (t.clientY - sy) + 'px';
     ghost.style.visibility = 'hidden';
@@ -1358,30 +1342,31 @@ window.addEventListener('resize', () => { _lcSize = 0; });
   }
 
   function cleanup(save) {
-    clearTimeout(lpTimer); lpTimer = null;
-    touchOnTile = false;
-    if (dragging && save) { justDragged = true; setTimeout(() => { justDragged = false; }, 350); }
-    const wasDragging = dragging;
+    const was = dragging;
     dragging = false;
     if (dragEl) { dragEl.classList.remove('tile-being-dragged'); dragEl = null; }
     if (ghost)  { ghost.remove(); ghost = null; }
-    // Also clean up any stale ghosts left from a cancelled drag
     document.querySelectorAll('.drag-ghost').forEach(el => el.remove());
     grid()?.querySelectorAll('.tile-being-dragged').forEach(el => el.classList.remove('tile-being-dragged'));
-    if (wasDragging && save) saveTileOrder();
+    if (was && save) { justDragged = true; setTimeout(() => { justDragged = false; }, 350); saveTileOrder(); }
   }
-
-  function onTouchEnd()    { cleanup(true);  }
-  function onTouchCancel() { cleanup(false); }
 
   document.addEventListener('DOMContentLoaded', () => {
     loadTileOrder();
     const g = grid();
     if (!g) return;
+    // Inject grip handles into every tile
+    g.querySelectorAll('[data-tile-id]').forEach(tile => {
+      const h = document.createElement('div');
+      h.className = 'drag-handle';
+      h.textContent = '⠿';
+      h.setAttribute('aria-hidden', 'true');
+      tile.appendChild(h);
+    });
     g.addEventListener('touchstart', onTouchStart, {passive: true});
     document.addEventListener('touchmove', onTouchMove, {passive: false});
-    document.addEventListener('touchend', onTouchEnd);
-    document.addEventListener('touchcancel', onTouchCancel);
+    document.addEventListener('touchend',    () => cleanup(true));
+    document.addEventListener('touchcancel', () => cleanup(false));
     g.addEventListener('click', e => { if (justDragged) e.preventDefault(); }, true);
   });
 })();
