@@ -861,7 +861,7 @@ async function requestNotifPerm() {
 
 let currentListId  = null;   // null = lists view
 let detailTaskId   = null;
-let doneOpen       = true;
+let doneOpen       = false;
 let ctxListId      = null;
 
 let newListColor = LIST_COLORS[0];
@@ -892,6 +892,7 @@ function initApp() {
     let _autoAddDone = false;
     tasksRef.on('value', snap => {
       tasks = snap.val() || {};
+      cleanupOldCompleted();
       renderAll();
       checkReminders();
       if (!_autoAddDone && sessionStorage.getItem('autoAddTask') === '1') {
@@ -922,6 +923,7 @@ function startOffline() {
   setConnected(false, true);
   try { tasks = JSON.parse(localStorage.getItem('todo_tasks') || '{}'); } catch { tasks = {}; }
   try { lists = JSON.parse(localStorage.getItem('todo_lists') || '{}'); } catch { lists = {}; }
+  cleanupOldCompleted();
   renderAll();
   checkReminders();
   if (sessionStorage.getItem('autoAddTask') === '1') {
@@ -1212,7 +1214,7 @@ function openList(lid) {
   document.getElementById('listsView').style.display = 'none';
   document.getElementById('tasksView').style.display = '';
   document.getElementById('addTaskInput').value = '';
-  doneOpen = true;
+  doneOpen = false;
   renderTasksView();
 }
 
@@ -1482,6 +1484,19 @@ function clearReminder(e) {
     delete reminderTimeouts[detailTaskId];
   }
   persistTask(detailTaskId, { ...t, reminderAt: null });
+}
+
+// ═══════════════════════════════════════════════
+//  AUTO-CLEANUP: erledigte Aufgaben nach 7 Tagen löschen
+// ═══════════════════════════════════════════════
+function cleanupOldCompleted() {
+  const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  Object.entries(tasks).forEach(([id, t]) => {
+    if (t.completed && t.completedAt && (now - t.completedAt) > SEVEN_DAYS) {
+      persistTask(id, null);
+    }
+  });
 }
 
 // ═══════════════════════════════════════════════
