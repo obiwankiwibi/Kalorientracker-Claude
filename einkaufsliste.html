@@ -1852,7 +1852,22 @@ function addCustom() {
   renderSuggestions();
 }
 
-function onSearch() { renderSuggestions(); }
+function onSearch() {
+  renderSuggestions();
+  const val = document.getElementById('searchInput').value.trim();
+  if (val) {
+    clearTimeout(onSearch._st);
+    onSearch._st = setTimeout(() => {
+      const sg = document.getElementById('sugSection');
+      if (!sg) return;
+      const hdrH = (document.querySelector('.header') || {}).offsetHeight || 55;
+      const rect = sg.getBoundingClientRect();
+      if (rect.top > hdrH + 40 || rect.top < 0) {
+        window.scrollTo({ top: sg.offsetTop - hdrH - 8, behavior: 'smooth' });
+      }
+    }, 150);
+  }
+}
 
 function onSearchKey(e) {
   if (e.key === 'Enter') addCustom();
