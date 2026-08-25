@@ -955,8 +955,9 @@ html { height: 100%; }
     </div>
     <div class="amount-chips" id="amtChips"></div>
     <input class="sheet-input" id="sheetInput" placeholder="Menge oder Notiz…" oninput="onSheetInput(this.value)">
-    <input class="sheet-input" id="sheetStore" list="storeList" placeholder="Wo kaufen? (z.B. REWE Petz)" oninput="onSheetStore(this.value)" style="margin-bottom:14px">
-    <datalist id="storeList"></datalist>
+    <div style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px">Wo kaufen?</div>
+    <div class="amount-chips" id="storeChips"></div>
+    <input class="sheet-input" id="sheetStore" placeholder="Oder eigener Markt…" oninput="onSheetStore(this.value)">
     <div class="sheet-btns">
       <button class="sh-btn danger" id="removeBtn" onclick="removePicked()">🗑</button>
       <button class="sh-btn secondary" onclick="closeSheet()">Abbrechen</button>
@@ -1780,10 +1781,17 @@ function tapSuggestion(name, emoji) {
   toast(`${emoji} ${name} hinzugefügt`);
 }
 
-function buildStoreDatalist() {
+function buildStoreChips(selected) {
   const usedStores = [...new Set(Object.values(items).map(i => i.store).filter(Boolean))];
   const allStores = [...new Set([...STORES.map(s => s.name), ...usedStores])];
-  document.getElementById('storeList').innerHTML = allStores.map(s => `<option value="${esc(s)}">`).join('');
+  const isCustom = selected && !allStores.includes(selected);
+  document.getElementById('storeChips').innerHTML = allStores.map(s =>
+    `<div class="amt-chip${s === selected ? ' on' : ''}" onclick="pickStore('${esc(s)}')">${esc(s)}</div>`
+  ).join('');
+  // If a custom value is set, show it in the text input but don't pre-clear chips
+  const inp = document.getElementById('sheetStore');
+  if (isCustom) inp.value = selected;
+  else inp.value = '';
 }
 
 function openPicker(id) {
@@ -1798,7 +1806,7 @@ function openPicker(id) {
   document.getElementById('removeBtn').style.display = '';
 
   buildAmtChips(picker.amount);
-  buildStoreDatalist();
+  buildStoreChips(picker.store);
   document.getElementById('overlay').classList.add('open');
 }
 
@@ -1810,7 +1818,7 @@ function openNewPicker(name, emoji) {
   document.getElementById('sheetStore').value = '';
   document.getElementById('removeBtn').style.display = 'none';
   buildAmtChips('');
-  buildStoreDatalist();
+  buildStoreChips('');
   document.getElementById('overlay').classList.add('open');
 }
 
@@ -1839,13 +1847,27 @@ function onSheetInput(val) {
   document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('on'));
 }
 
+function pickStore(s) {
+  if (picker.store === s) {
+    picker.store = '';
+    document.getElementById('sheetStore').value = '';
+  } else {
+    picker.store = s;
+    document.getElementById('sheetStore').value = '';
+  }
+  document.querySelectorAll('#storeChips .amt-chip').forEach(c =>
+    c.classList.toggle('on', c.textContent === picker.store)
+  );
+}
+
 function onSheetStore(val) {
   picker.store = val.trim();
+  document.querySelectorAll('#storeChips .amt-chip').forEach(c => c.classList.remove('on'));
 }
 
 function confirmPicker() {
-  const store = document.getElementById('sheetStore').value.trim();
-  picker.store = store;
+  const freeText = document.getElementById('sheetStore').value.trim();
+  if (freeText) picker.store = freeText;
   if (picker.isNew) {
     const id = 'i_' + Date.now();
     persist(id, { name: picker.name, emoji: picker.emoji, amount: picker.amount, store: picker.store || null, checked: false, addedAt: Date.now() });
