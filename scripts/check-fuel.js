@@ -2,7 +2,7 @@
 const webpush = require('web-push');
 const fetch   = require('node-fetch');
 
-const PRICE_THRESHOLD = 2.10;   // € – Benachrichtigung unter diesem Wert
+const PRICE_THRESHOLD = 2.20;   // € – TEST: danach zurück auf 2.10
 const MIN_NOTIFY_GAP  = 4 * 60 * 60 * 1000; // 4 Stunden Anti-Spam
 
 const {
