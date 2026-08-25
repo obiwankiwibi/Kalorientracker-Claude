@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Škoda Scala Monte Carlo</title>
-<!-- deploy: 2026-08-22 -->
+<!-- deploy: 2026-08-25 -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -200,6 +202,44 @@ html,body{
 }
 .sl-dot.on{opacity:1;width:20px;border-radius:3px;background:var(--text);}
 
+/* ── Gallery upload ── */
+.gal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.gal-upload-btn{
+  background:#111;border:none;color:#fff;cursor:pointer;
+  font-size:13px;font-weight:700;padding:6px 14px;border-radius:20px;
+  display:flex;align-items:center;gap:5px;font-family:inherit;
+}
+.upload-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:500;align-items:flex-end;justify-content:center;
+}
+.upload-overlay.open{display:flex;}
+.upload-box{
+  background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 36px;
+  width:100%;max-width:480px;
+}
+.upload-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 18px;}
+.upload-title{font-size:18px;font-weight:700;margin-bottom:6px;}
+.upload-sub{font-size:12px;color:#888;margin-bottom:16px;line-height:1.5;}
+.upload-input{
+  width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:12px;
+  font-size:14px;font-family:inherit;margin-bottom:10px;outline:none;
+}
+.upload-input:focus{border-color:#111;}
+.upload-btns{display:flex;gap:10px;margin-top:6px;}
+.upload-cancel{
+  flex:1;padding:12px;border:1.5px solid #e5e5e5;border-radius:12px;
+  font-size:14px;font-weight:600;font-family:inherit;background:#fff;cursor:pointer;
+}
+.upload-go{
+  flex:2;padding:12px;border:none;border-radius:12px;
+  background:#111;color:#fff;font-size:14px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+}
+.upload-progress{
+  margin-top:12px;font-size:12px;color:#888;text-align:center;min-height:18px;
+}
+
 /* ── Tech accordion ── */
 .tech-blocks{margin-top:0;}
 .tblock{border-top:1px solid var(--line);transition:border-color .2s;}
@@ -390,30 +430,38 @@ html,body{
 <!-- Gallery -->
 <div class="slider-outer" id="galerie">
   <div class="sec">
-    <div class="eyebrow">Galerie</div>
-    <div class="sec-title">Fotos</div>
+    <div class="gal-header">
+      <div>
+        <div class="eyebrow">Galerie</div>
+        <div class="sec-title">Fotos</div>
+      </div>
+      <button class="gal-upload-btn" onclick="openUpload()">📷 Hochladen</button>
+    </div>
   </div>
   <div class="slider-wrap">
     <div class="slider-vp" id="slVp">
-      <div class="slider-track" id="slTrack">
-        <div class="slide"><img src="images/scala/01-front.jpg"           alt="Frontansicht"     loading="lazy"><div class="slide-cap">Frontansicht</div></div>
-        <div class="slide"><img src="images/scala/02-seite.jpg"           alt="Seitenansicht"    loading="lazy"><div class="slide-cap">Seitenansicht</div></div>
-        <div class="slide"><img src="images/scala/03-heck.jpg"            alt="Heck"             loading="lazy"><div class="slide-cap">Heck</div></div>
-        <div class="slide"><img src="images/scala/04-frontgrill.jpg"      alt="Frontgrill"       loading="lazy"><div class="slide-cap">Frontgrill</div></div>
-        <div class="slide"><img src="images/scala/10-badge.jpg"           alt="Monte Carlo Badge" loading="lazy"><div class="slide-cap">Monte Carlo Badge</div></div>
-        <div class="slide"><img src="images/scala/09-armaturenbrett.jpg"  alt="Armaturenbrett"   loading="lazy"><div class="slide-cap">Armaturenbrett</div></div>
-        <div class="slide"><img src="images/scala/05-fahrersitz.jpg"      alt="Fahrersitz"       loading="lazy"><div class="slide-cap">Fahrersitz</div></div>
-        <div class="slide"><img src="images/scala/13-lenkrad.jpg"         alt="Lenkrad"          loading="lazy"><div class="slide-cap">Lenkrad</div></div>
-        <div class="slide"><img src="images/scala/11-panoramadach.jpg"    alt="Panoramadach"     loading="lazy"><div class="slide-cap">Panoramadach</div></div>
-        <div class="slide"><img src="images/scala/07-kofferraum.jpg"      alt="Kofferraum"       loading="lazy"><div class="slide-cap">Kofferraum · 467 L</div></div>
-        <div class="slide"><img src="images/scala/12-cockpit.jpg"         alt="Cockpit"          loading="lazy"><div class="slide-cap">Cockpit · Columbus Navi</div></div>
-        <div class="slide"><img src="images/scala/06-ruecksitze-aussen.jpg" alt="Rücksitze"      loading="lazy"><div class="slide-cap">Rücksitze</div></div>
-        <div class="slide"><img src="images/scala/08-ruecksitze.jpg"      alt="Rücksitze innen"  loading="lazy"><div class="slide-cap">Rücksitze innen</div></div>
-      </div>
+      <div class="slider-track" id="slTrack"></div>
       <button class="sl-btn sl-prev" id="slPrev" aria-label="Zurück">&#8249;</button>
       <button class="sl-btn sl-next" id="slNext" aria-label="Weiter">&#8250;</button>
     </div>
     <div class="sl-dots" id="slDots"></div>
+  </div>
+</div>
+
+<!-- Upload overlay -->
+<div class="upload-overlay" id="uploadOverlay" onclick="if(event.target===this)closeUpload()">
+  <div class="upload-box">
+    <div class="upload-handle"></div>
+    <div class="upload-title">📷 Foto hochladen</div>
+    <div class="upload-sub" id="uploadSub">GitHub Token einmalig eingeben (wird lokal gespeichert).</div>
+    <input class="upload-input" id="uploadToken" type="password" placeholder="GitHub Personal Access Token" autocomplete="off">
+    <input class="upload-input" id="uploadCaption" type="text" placeholder="Bildunterschrift (optional)" maxlength="80">
+    <input type="file" id="uploadFile" accept="image/*" style="display:none" onchange="onFileSelected()">
+    <div class="upload-btns">
+      <button class="upload-cancel" onclick="closeUpload()">Abbrechen</button>
+      <button class="upload-go" onclick="startUpload()">Foto wählen &amp; hochladen</button>
+    </div>
+    <div class="upload-progress" id="uploadProgress"></div>
   </div>
 </div>
 
@@ -714,37 +762,170 @@ function shareScala() {
 /* Accordion */
 function toggle(hd) { hd.parentElement.classList.toggle('open'); }
 
-/* Slider */
+/* ── Firebase + Gallery ── */
+const FB_CONFIG = {
+  apiKey:            'AIzaSyDzy2Y_UxOzLh2uVa3xpqZwl_52A-ULo_Y',
+  authDomain:        'claude-code-34507.firebaseapp.com',
+  databaseURL:       'https://claude-code-34507-default-rtdb.europe-west1.firebasedatabase.app',
+  projectId:         'claude-code-34507',
+  storageBucket:     'claude-code-34507.firebasestorage.app',
+  messagingSenderId: '560819187404',
+  appId:             '1:560819187404:web:394cee9f588237198bdc69'
+};
+firebase.initializeApp(FB_CONFIG);
+const db = firebase.database();
+
+const GH_OWNER  = 'obiwankiwibi';
+const GH_REPO   = 'Kalorientracker-Claude';
+const GH_BRANCH = 'main';
+const GH_FOLDER = 'images/scala-user';
+const FB_PATH   = 'scala_gallery';
+
+const STATIC_SLIDES = [
+  { url:'images/scala/01-front.jpg',            caption:'Frontansicht' },
+  { url:'images/scala/02-seite.jpg',            caption:'Seitenansicht' },
+  { url:'images/scala/03-heck.jpg',             caption:'Heck' },
+  { url:'images/scala/04-frontgrill.jpg',       caption:'Frontgrill' },
+  { url:'images/scala/10-badge.jpg',            caption:'Monte Carlo Badge' },
+  { url:'images/scala/09-armaturenbrett.jpg',   caption:'Armaturenbrett' },
+  { url:'images/scala/05-fahrersitz.jpg',       caption:'Fahrersitz' },
+  { url:'images/scala/13-lenkrad.jpg',          caption:'Lenkrad' },
+  { url:'images/scala/11-panoramadach.jpg',     caption:'Panoramadach' },
+  { url:'images/scala/07-kofferraum.jpg',       caption:'Kofferraum · 467 L' },
+  { url:'images/scala/12-cockpit.jpg',          caption:'Cockpit · Columbus Navi' },
+  { url:'images/scala/06-ruecksitze-aussen.jpg',caption:'Rücksitze' },
+  { url:'images/scala/08-ruecksitze.jpg',       caption:'Rücksitze innen' },
+];
+
 const track = document.getElementById('slTrack');
-const slides = track.querySelectorAll('.slide');
 const dotsEl = document.getElementById('slDots');
-const total = slides.length;
-let cur = 0;
+const vp     = document.getElementById('slVp');
+let cur = 0, sx = 0;
 
-slides.forEach((_, i) => {
-  const d = document.createElement('button');
-  d.className = 'sl-dot' + (i === 0 ? ' on' : '');
-  d.setAttribute('aria-label', 'Bild ' + (i + 1));
-  d.onclick = () => go(i);
-  dotsEl.appendChild(d);
-});
-
-function go(n) {
-  cur = (n + total) % total;
-  track.style.transform = 'translateX(-' + cur * 100 + '%)';
-  dotsEl.querySelectorAll('.sl-dot').forEach((d, i) => d.classList.toggle('on', i === cur));
+function renderSlider(extraImages) {
+  const all = [...STATIC_SLIDES, ...extraImages];
+  track.innerHTML = all.map((img, i) =>
+    `<div class="slide">
+      <img src="${img.url}" alt="${img.caption||''}" loading="${i===0?'eager':'lazy'}" style="width:100%;aspect-ratio:4/3;object-fit:cover">
+      <div class="slide-cap">${img.caption||''}</div>
+    </div>`
+  ).join('');
+  dotsEl.innerHTML = '';
+  all.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'sl-dot' + (i===0?' on':'');
+    d.setAttribute('aria-label','Bild '+(i+1));
+    d.onclick = () => go(i);
+    dotsEl.appendChild(d);
+  });
+  cur = 0;
+  track.style.transform = 'translateX(0)';
 }
 
-document.getElementById('slPrev').onclick = () => go(cur - 1);
-document.getElementById('slNext').onclick = () => go(cur + 1);
+function go(n) {
+  const total = track.querySelectorAll('.slide').length;
+  if (!total) return;
+  cur = (n + total) % total;
+  track.style.transform = 'translateX(-'+cur*100+'%)';
+  dotsEl.querySelectorAll('.sl-dot').forEach((d,i) => d.classList.toggle('on', i===cur));
+}
 
-let sx = 0;
-const vp = document.getElementById('slVp');
-vp.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, {passive: true});
-vp.addEventListener('touchend', e => {
+document.getElementById('slPrev').onclick = () => go(cur-1);
+document.getElementById('slNext').onclick = () => go(cur+1);
+vp.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, {passive:true});
+vp.addEventListener('touchend',   e => {
   const dx = e.changedTouches[0].clientX - sx;
-  if (Math.abs(dx) > 40) go(dx < 0 ? cur + 1 : cur - 1);
-}, {passive: true});
+  if (Math.abs(dx) > 40) go(dx < 0 ? cur+1 : cur-1);
+}, {passive:true});
+
+renderSlider([]);
+db.ref(FB_PATH).on('value', snap => {
+  const data = snap.val();
+  const extras = data
+    ? Object.entries(data).sort(([a],[b])=>parseInt(a)-parseInt(b)).map(([,v])=>v)
+    : [];
+  renderSlider(extras);
+});
+
+/* ── Upload ── */
+function openUpload() {
+  const tok = localStorage.getItem('gh_token_scala') || '';
+  document.getElementById('uploadToken').value = tok;
+  document.getElementById('uploadCaption').value = '';
+  document.getElementById('uploadProgress').textContent = '';
+  document.getElementById('uploadSub').textContent = tok
+    ? 'Token bereits gespeichert. Neues Foto wählen.'
+    : 'GitHub Personal Access Token einmalig eingeben (wird nur lokal gespeichert).';
+  document.getElementById('uploadOverlay').classList.add('open');
+}
+function closeUpload() {
+  document.getElementById('uploadOverlay').classList.remove('open');
+}
+
+function compressImage(file, maxPx=1920, quality=0.85) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const w = Math.round(img.width  * scale);
+      const h = Math.round(img.height * scale);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(c.toDataURL('image/jpeg', quality).split(',')[1]);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+async function startUpload() {
+  const tok = document.getElementById('uploadToken').value.trim();
+  if (!tok) { alert('Bitte GitHub Token eingeben.'); return; }
+  localStorage.setItem('gh_token_scala', tok);
+  document.getElementById('uploadFile').click();
+}
+
+async function onFileSelected() {
+  const file = document.getElementById('uploadFile').files[0];
+  if (!file) return;
+  const caption = document.getElementById('uploadCaption').value.trim();
+  const prog    = document.getElementById('uploadProgress');
+  const tok     = localStorage.getItem('gh_token_scala');
+
+  prog.textContent = '⏳ Bild wird komprimiert…';
+  let b64;
+  try { b64 = await compressImage(file); }
+  catch(e) { prog.textContent = '❌ Fehler beim Komprimieren.'; return; }
+
+  const ts  = Date.now();
+  const filename = `photo_${ts}.jpg`;
+  const path = `${GH_FOLDER}/${filename}`;
+
+  prog.textContent = '⏳ Wird hochgeladen…';
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: `Scala Galerie: ${caption || filename}`, content: b64, branch: GH_BRANCH })
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(()=>({}));
+      prog.textContent = '❌ GitHub Fehler: ' + (err.message || r.status);
+      return;
+    }
+  } catch(e) {
+    prog.textContent = '❌ Netzwerkfehler: ' + e.message;
+    return;
+  }
+
+  const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${path}`;
+  await db.ref(FB_PATH + '/' + ts).set({ url, caption, uploaded: ts });
+
+  prog.textContent = '✅ Hochgeladen!';
+  document.getElementById('uploadCaption').value = '';
+  document.getElementById('uploadFile').value = '';
+  setTimeout(closeUpload, 1200);
+}
 </script>
 </body>
 </html>
