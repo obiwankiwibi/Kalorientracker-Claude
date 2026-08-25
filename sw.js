@@ -1,3 +1,4 @@
+/* cache: 20260825T171727 */
 const CACHE = 'kt-v1';
 const PRECACHE = [
   './',
