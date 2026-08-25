@@ -356,28 +356,23 @@
     /* ── To-Do card ── */
     .todo-card {
       background: var(--layer2); border: 1px solid var(--border); border-radius: 18px;
-      padding: 12px 14px; cursor: pointer; color: var(--text);
-      display: flex; flex-direction: column; gap: 0; overflow: hidden;
+      padding: 12px 12px 10px; cursor: pointer; color: var(--text);
+      display: flex; flex-direction: column; gap: 6px; overflow: hidden;
       transition: transform 0.12s, opacity 0.12s; -webkit-tap-highlight-color: transparent;
       backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     }
     .todo-card:active { transform: scale(0.97); opacity: 0.88; }
-    .todo-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-    .todo-icon  { font-size: 18px; line-height: 1; }
+    .todo-head { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .todo-icon  { font-size: 16px; line-height: 1; }
     .todo-lbl   { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; flex: 1; }
-    .todo-badge { font-size: 9px; font-weight: 700; background: rgba(74,158,255,0.15); color: #4a9eff; padding: 2px 7px; border-radius: 99px; white-space: nowrap; }
-    .todo-open-count { font-size: 42px; font-weight: 800; color: #4a9eff; line-height: 1; letter-spacing: -2px; font-variant-numeric: tabular-nums; margin-bottom: 2px; text-align: right; }
-    .todo-open-lbl { font-size: 10px; color: var(--muted); margin-bottom: 10px; text-align: right; }
-    .todo-add-row {
-      display: flex; align-items: center; gap: 8px; margin-top: auto;
-      background: rgba(74,158,255,0.12); border-radius: 11px; padding: 9px 12px;
-      color: #4a9eff; font-size: 12px; font-weight: 700; cursor: pointer;
+    .td-row {
+      flex: 1; display: flex; align-items: center; gap: 8px;
+      border-radius: 10px; padding: 0 10px;
+      text-decoration: none; cursor: pointer;
     }
-    .todo-add-row-plus {
-      width: 26px; height: 26px; background: rgba(74,158,255,0.2); border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; font-weight: 900; line-height: 1; flex-shrink: 0;
-    }
+    .td-row-emoji { font-size: 14px; line-height: 1; flex-shrink: 0; }
+    .td-row-label { font-size: 10.5px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .td-row-num   { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
 
     /* ── Small apps 2×2 ── */
     .app-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -487,17 +482,26 @@
         <div class="kal-water-bar-wrap"><div class="kal-water-bar" id="kalWaterBar" style="width:0%"></div></div>
     </div>
     <div class="todo-card" data-tile-id="todo" onclick="location.href='todo.html'">
-        <div class="todo-head">
-          <span class="todo-icon">✅</span>
-          <span class="todo-lbl">To-Do</span>
-        </div>
-        <div class="todo-open-count" id="todoNum">–</div>
-        <div class="todo-open-lbl">offen</div>
-        <div class="todo-add-row" onclick="event.stopPropagation(); sessionStorage.setItem('autoAddTask','1'); location.href='todo.html'">
-          <div class="todo-add-row-plus">+</div>
-          <span>Aufgabe hinzufügen</span>
-        </div>
+      <div class="todo-head">
+        <span class="todo-icon">✅</span>
+        <span class="todo-lbl">To-Do</span>
       </div>
+      <div class="td-row" style="background:rgba(255,140,0,0.13);color:#d97000" onclick="event.stopPropagation();sessionStorage.setItem('todoOpenList','myday');location.href='todo.html'">
+        <span class="td-row-emoji">🌤️</span>
+        <span class="td-row-label">Mein Tag</span>
+        <span class="td-row-num" id="tdMyDay">–</span>
+      </div>
+      <div class="td-row" style="background:rgba(217,119,6,0.13);color:#b45309" onclick="event.stopPropagation();sessionStorage.setItem('todoOpenList','important');location.href='todo.html'">
+        <span class="td-row-emoji">⭐</span>
+        <span class="td-row-label">Wichtig</span>
+        <span class="td-row-num" id="tdImportant">–</span>
+      </div>
+      <div class="td-row" style="background:rgba(74,158,255,0.13);color:#2478d4" onclick="event.stopPropagation();sessionStorage.setItem('todoOpenList','all');location.href='todo.html'">
+        <span class="td-row-emoji">📋</span>
+        <span class="td-row-label">Alle Aufgaben</span>
+        <span class="td-row-num" id="tdAll">–</span>
+      </div>
+    </div>
     <a class="app-card" data-tile-id="einkauf" href="einkaufsliste.html">
       <div class="app-icon-wrap c-teal">🛒</div>
       <div class="app-name">Einkaufs&shy;liste</div>
@@ -965,23 +969,25 @@ function openWetter() {
   window.open('https://www.wetter.com', '_blank');
 }
 
+function fillTodoWidget(tasks) {
+  const all = Object.values(tasks || {});
+  const open    = all.filter(t => !t.completed);
+  document.getElementById('tdMyDay').textContent    = open.filter(t => t.myDay).length;
+  document.getElementById('tdImportant').textContent = open.filter(t => t.important).length;
+  document.getElementById('tdAll').textContent       = open.length;
+}
+
 function initTodoWidget() {
   const dbUrl = localStorage.getItem('fb_db_url');
   if (dbUrl) {
-    // Ghost-Tasks aus localStorage entfernen (Firebase ist Quelle der Wahrheit)
     localStorage.removeItem('todo_tasks');
     fetch(dbUrl + '/todos/tasks.json')
       .then(r => r.json())
-      .then(data => {
-        const open = Object.values(data || {}).filter(t => !t.completed).length;
-        document.getElementById('todoNum').textContent = open;
-      })
+      .then(data => fillTodoWidget(data))
       .catch(() => {});
   } else {
     try {
-      const tasks = JSON.parse(localStorage.getItem('todo_tasks') || '{}');
-      const open = Object.values(tasks).filter(t => !t.completed).length;
-      document.getElementById('todoNum').textContent = open;
+      fillTodoWidget(JSON.parse(localStorage.getItem('todo_tasks') || '{}'));
     } catch(e) {}
   }
 }

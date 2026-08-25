@@ -899,6 +899,8 @@ function initApp() {
         sessionStorage.removeItem('autoAddTask');
         setTimeout(() => { openList('all'); document.getElementById('addTaskInput').focus(); }, 300);
       }
+      const deepList = sessionStorage.getItem('todoOpenList');
+      if (deepList) { sessionStorage.removeItem('todoOpenList'); setTimeout(() => openList(deepList), 300); }
     });
 
     listsRef = db.ref('todos/lists');
@@ -926,6 +928,8 @@ function startOffline() {
     sessionStorage.removeItem('autoAddTask');
     setTimeout(() => { openList('all'); document.getElementById('addTaskInput').focus(); }, 300);
   }
+  const deepList = sessionStorage.getItem('todoOpenList');
+  if (deepList) { sessionStorage.removeItem('todoOpenList'); setTimeout(() => openList(deepList), 300); }
 }
 
 function setConnected(on, isOffline = false) {
