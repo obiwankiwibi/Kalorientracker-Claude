@@ -101,8 +101,8 @@ async function main() {
   const payload = JSON.stringify({
     title: `⛽ Sprit günstig: ${best.price.toFixed(3).replace('.', ',')} €`,
     body:  `${best.fuel} unter ${PRICE_THRESHOLD.toFixed(2).replace('.', ',')} € — jetzt tanken!`,
-    icon:  'https://obiwankiwibi.github.io/kalorientracker-claude/icon-192.png',
-    url:   'https://obiwankiwibi.github.io/kalorientracker-claude/tankstellen_finder.html'
+    icon:  'https://obiwankiwibi.github.io/Kalorientracker-Claude/icon-192.png',
+    url:   'https://obiwankiwibi.github.io/Kalorientracker-Claude/tankstellen_finder.html'
   });
 
   try {

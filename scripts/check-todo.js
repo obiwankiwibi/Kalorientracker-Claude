@@ -73,8 +73,8 @@ async function main() {
     const payload = JSON.stringify({
       title: '🔔 Erinnerung',
       body:  task.title || 'To-Do fällig',
-      icon:  'https://obiwankiwibi.github.io/kalorientracker-claude/icon-192.png',
-      url:   'https://obiwankiwibi.github.io/kalorientracker-claude/todo.html'
+      icon:  'https://obiwankiwibi.github.io/Kalorientracker-Claude/icon-192.png',
+      url:   'https://obiwankiwibi.github.io/Kalorientracker-Claude/todo.html'
     });
 
     try {
