@@ -337,7 +337,9 @@ html,body{
 <nav class="app-nav">
   <a class="app-nav-back" href="index.html" aria-label="Zurück">←</a>
   <span class="app-nav-label">Mein Auto</span>
-  <a class="app-nav-theme" href="scala-share.html" target="_blank" rel="noopener" aria-label="Teilen" title="Öffentliche Ansicht">↗</a>
+  <button class="app-nav-theme" onclick="shareScala()" aria-label="Teilen" title="Teilen" style="background:none;border:none;cursor:pointer;font-size:inherit;padding:0">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+  </button>
 </nav>
 
 <!-- Quick-nav -->
@@ -347,7 +349,7 @@ html,body{
   <a href="#ausstattung">Ausstattung</a>
   <a href="#werkstatt">Werkstatt</a>
   <a href="#anleitung">Bedienungsanleitung</a>
-  <a href="scala-share.html" target="_blank" rel="noopener" style="border-color:var(--text);font-weight:600">↗ Teilen</a>
+  <a onclick="shareScala()" style="border-color:var(--text);font-weight:600;cursor:pointer">↑ Teilen</a>
 </nav>
 
 <!-- Brand -->
@@ -696,6 +698,19 @@ html,body{
 <div class="footer">Škoda Scala Monte Carlo · 2025</div>
 
 <script>
+/* Share */
+function shareScala() {
+  const url  = 'https://obiwankiwibi.github.io/Kalorientracker-Claude/scala-share.html';
+  const text = 'Škoda Scala Monte Carlo 1.0 TSI Automatik';
+  if (navigator.share) {
+    navigator.share({ title: text, url });
+  } else {
+    navigator.clipboard?.writeText(url).then(() => alert('Link kopiert!')).catch(() => {
+      window.open(url, '_blank');
+    });
+  }
+}
+
 /* Accordion */
 function toggle(hd) { hd.parentElement.classList.toggle('open'); }
 
