@@ -1,7 +1,7 @@
 {
-  "name": "Kalorientracker",
-  "short_name": "Tracker",
-  "description": "Dashboard · Kalorien · Einkauf · To-Do · Wetter",
+  "name": "YaPi Hub",
+  "short_name": "YaPiHub",
+  "description": "Der persönliche Hub für Yannick & Pia",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
