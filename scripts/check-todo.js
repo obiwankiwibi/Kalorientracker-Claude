@@ -2,8 +2,8 @@
 const webpush = require('web-push');
 const fetch   = require('node-fetch');
 
-// Zeitfenster: Erinnerungen die 0–10 Minuten überfällig sind (passt zu 5-Min-Cron)
-const WINDOW_MS = 10 * 60 * 1000;
+// Zeitfenster: Erinnerungen die 0–60 Minuten überfällig sind (puffert GitHub-Actions-Verzögerungen)
+const WINDOW_MS = 60 * 60 * 1000;
 
 const {
   VAPID_PUBLIC_KEY,
