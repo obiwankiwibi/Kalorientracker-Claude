@@ -99,19 +99,21 @@
     }
     .weather-bg-emoji {
       position: absolute;
-      top: -4px; right: -2px;
-      font-size: 52px;
-      opacity: 0.14;
+      top: -6px; right: -4px;
+      font-size: 72px;
+      opacity: 0.18;
       line-height: 1;
       pointer-events: none;
     }
-    .weather-content { position: relative; z-index: 1; }
-    .weather-main    { display: flex; align-items: center; gap: 3px; margin-bottom: 1px; }
-    .weather-emoji   { font-size: 18px; line-height: 1; }
-    .weather-temp    { font-size: 26px; font-weight: 800; line-height: 1; color: #fff; letter-spacing: -1px; }
-    .weather-desc    { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 1px; }
-    .weather-location{ font-size: 9px; color: rgba(255,255,255,0.7); }
-    .weather-minmax  { font-size: 9px; color: rgba(255,255,255,0.6); margin-top: 1px; }
+    .weather-content { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 3px; }
+    .weather-main    { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+    .weather-emoji   { font-size: 24px; line-height: 1; }
+    .weather-temp    { font-size: 40px; font-weight: 800; line-height: 1; color: #fff; letter-spacing: -2px; }
+    .weather-desc    { font-size: 12px; font-weight: 700; color: #fff; }
+    .weather-feels   { font-size: 10.5px; color: rgba(255,255,255,0.82); }
+    .weather-meta-row{ display: flex; gap: 10px; font-size: 10px; color: rgba(255,255,255,0.72); }
+    .weather-location{ font-size: 10px; color: rgba(255,255,255,0.75); }
+    .weather-minmax  { font-size: 10.5px; color: rgba(255,255,255,0.78); }
     .weather-loading {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
@@ -438,12 +440,14 @@
           <span class="weather-temp"><span id="wTemp">–</span>°</span>
         </div>
         <div class="weather-desc" id="wDesc">–</div>
-        <div class="weather-location">📍 <span id="wLocation">–</span></div>
+        <div class="weather-feels">Gefühlt <span id="wFeels">–</span>°</div>
+        <div class="weather-meta-row">
+          <span>💨 <span id="wWind">–</span> km/h</span>
+          <span>💧 <span id="wHumid">–</span>%</span>
+        </div>
         <div class="weather-minmax">↓<span id="wMin">–</span>° ↑<span id="wMax">–</span>°</div>
+        <div class="weather-location">📍 <span id="wLocation">–</span></div>
         <span id="wClock"    style="display:none"></span>
-        <span id="wFeels"   style="display:none"></span>
-        <span id="wWind"    style="display:none"></span>
-        <span id="wHumid"   style="display:none"></span>
         <span id="wMinMaxBox" style="display:none"></span>
       </div>
     </div>
