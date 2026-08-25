@@ -1,0 +1,48 @@
+name: Marktguru Angebote aktualisieren
+
+on:
+  schedule:
+    # Jeden Montag und Donnerstag um 06:00 UTC (neue Prospekte erscheinen meist Mo/Do)
+    - cron: '0 6 * * 1,4'
+  workflow_dispatch:
+    inputs:
+      zip_code:
+        description: 'PLZ für Angebote'
+        required: false
+        default: '57271'
+      retailers:
+        description: 'Händler-Filter (kommagetrennt, leer = alle)'
+        required: false
+        default: 'REWE,Lidl,ALDI,Kaufland,Penny,Netto,Edeka'
+
+jobs:
+  fetch-offers:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Angebote abrufen
+        run: |
+          ZIP="${{ github.event.inputs.zip_code || '57271' }}"
+          RETAILERS="${{ github.event.inputs.retailers || 'REWE,Lidl,ALDI,Kaufland,Penny,Netto,Edeka' }}"
+          node marktguru-import.js "$ZIP" "$RETAILERS"
+
+      - name: offers.json committen (falls geändert)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add offers.json
+          if git diff --cached --quiet; then
+            echo "Keine Änderungen in offers.json — kein Commit nötig."
+          else
+            COUNT=$(node -e "const d=require('./offers.json'); console.log(d.totalCount);")
+            git commit -m "chore: Angebote aktualisiert (${COUNT} Angebote) [skip ci]"
+            git push
+          fi

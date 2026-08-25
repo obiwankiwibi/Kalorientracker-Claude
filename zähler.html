@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zähler</title>
+  <style>
+    :root {
+      --bg:    #edf2f7;
+      --card:  #FFFFFF;
+      --card2: #F0F3F9;
+      --ink:   #151E2B;
+      --muted: #6B7A90;
+      --line:  #DDE2EC;
+      --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.05);
+      --pos:    #0F7A4C; --pos-bg:  rgba(15,122,76,.1);
+      --neg:    #B8351E; --neg-bg:  rgba(184,53,30,.1);
+      --warn:   #92400E; --warn-bg: rgba(217,119,6,.08); --warn-line: rgba(217,119,6,.28);
+      --brand:  #0050c8;
+      --brand-bg: rgba(200,88,0,.1);
+      --radius: 13px;
+      --mono: 'Courier New','Menlo','Monaco',monospace;
+    }
+    
+    
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+      background: var(--bg); color: var(--ink); min-height: 100vh;
+      font-size: 14px; line-height: 1.5; -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      background: var(--bg); border-bottom: 1px solid var(--line);
+      height: 52px; padding: 0 12px;
+      display: flex; align-items: center; gap: 4px;
+      position: sticky; top: 0; z-index: 200;
+      backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+    }
+    .wordmark {
+      flex: 1; font-family: var(--mono); font-size: 15px; font-weight: 700;
+      letter-spacing: .04em; color: var(--ink);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .wm-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); flex-shrink: 0; }
+    .hctrl { display: flex; gap: 4px; align-items: center; }
+    .hbtn {
+      width: 36px; height: 36px; background: none; border: none;
+      border-radius: 50%; cursor: pointer; color: var(--muted); font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .12s; position: relative; text-decoration: none;
+    }
+    .hbtn:active { background: var(--card); }
+    .hbtn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .backup-dot { position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); border: 2px solid var(--card); display: none; }
+    .backup-dot.show { display: block; }
+
+    /* ── Tab bar ── */
+    .tab-bar {
+      background: var(--card); border-bottom: 1px solid var(--line);
+      display: flex; padding: 0 1.25rem; overflow-x: auto; scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab {
+      display: flex; align-items: center; gap: 6px; padding: 0 2px; height: 44px;
+      margin-right: 8px; flex-shrink: 0; background: none; border: none;
+      border-bottom: 2px solid transparent; cursor: pointer;
+      font-family: inherit; font-size: 13px; font-weight: 500; color: var(--muted);
+      transition: color .15s, border-color .15s; position: relative; bottom: -1px;
+    }
+    .tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+    .tab:not(.active):not(.tab-soon):hover { color: var(--ink); }
+    .tab-soon { opacity: .38; cursor: default; }
+    .tab-pill { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; background: var(--card2); color: var(--muted); border-radius: 99px; padding: 1px 5px; }
+
+    /* ── Layout ── */
+    .content { max-width: 1000px; margin: 0 auto; padding: 1.25rem; }
+
+    /* ── Banners ── */
+    .banner { border-radius: var(--radius); padding: .625rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: .625rem; font-size: 12px; }
+    .banner svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+    .banner-warn { background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn); }
+    .banner-link { margin-left: auto; background: none; border: none; cursor: pointer; color: inherit; font-weight: 600; font-size: 12px; text-decoration: underline; padding: 0; font-family: inherit; }
+
+    /* ── Settings panel ── */
+    .settings-wrap { display: none; margin-bottom: 1rem; }
+    .settings-wrap.open { display: block; }
+    .settings-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .settings-hdr { padding: .75rem 1.125rem; border-bottom: 1px solid var(--line); }
+    .settings-title { font-size: 13px; font-weight: 600; }
+    .section-eye { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
+    .settings-section { padding: .875rem 1.125rem; border-bottom: 1px solid var(--line); }
+    .settings-section:last-child { border-bottom: none; }
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .625rem; margin-top: .5rem; }
+    @media (max-width: 520px) { .settings-grid { grid-template-columns: 1fr; } }
+    .sfield { display: flex; flex-direction: column; gap: 3px; }
+    .sfield-label { font-size: 11px; color: var(--muted); font-weight: 500; }
+    .sfield-input { background: var(--card2); border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; font-family: var(--mono); font-size: 13px; color: var(--ink); width: 100%; transition: border-color .12s; }
+    .sfield-input.ti { font-family: inherit; }
+    .sfield-input:focus { outline: none; border-color: var(--brand); }
+    /* Boni */
+    .boni-list { margin-top: .5rem; display: flex; flex-direction: column; gap: .375rem; }
+    .bonus-row { display: grid; grid-template-columns: 1fr 90px 80px 28px; gap: .375rem; align-items: center; }
+    .bonus-del { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 4px; border-radius: 5px; transition: background .12s, color .12s; }
+    .bonus-del:hover { background: var(--neg-bg); color: var(--neg); }
+    .add-bonus-btn { margin-top: .5rem; background: none; border: 1px dashed var(--line); color: var(--muted); border-radius: 7px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; width: 100%; transition: border-color .12s, color .12s; font-family: inherit; }
+    .add-bonus-btn:hover { border-color: var(--brand); color: var(--brand); }
+    /* Meter rows in settings */
+    .meter-list { margin-top: .5rem; display: flex; flex-direction: column; gap: .375rem; }
+    .meter-row { display: flex; align-items: center; gap: .375rem; }
+    .meter-aktiv-btn { flex-shrink: 0; background: var(--card2); border: 1px solid var(--line); border-radius: 7px; padding: 5px 9px; font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer; white-space: nowrap; transition: all .12s; font-family: inherit; }
+    .meter-aktiv-btn.active { background: var(--brand-bg); border-color: var(--brand); color: var(--brand); cursor: default; }
+    .meter-del-btn { flex-shrink: 0; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 5px 6px; border-radius: 5px; transition: background .12s, color .12s; line-height: 1; }
+    .meter-del-btn:hover { background: var(--neg-bg); color: var(--neg); }
+    .add-meter-btn { margin-top: .5rem; background: none; border: 1px dashed var(--line); color: var(--muted); border-radius: 7px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; width: 100%; transition: border-color .12s, color .12s; font-family: inherit; }
+    .add-meter-btn:hover { border-color: var(--brand); color: var(--brand); }
+    /* Modal meter select */
+    .finput-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7A90' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; cursor: pointer; }
+
+    /* ── Stats ── */
+    .stats-grid  { display: grid; grid-template-columns: repeat(4,1fr); gap: .875rem; margin-bottom: .875rem; }
+    .stats-row2  { display: grid; grid-template-columns: repeat(3,1fr); gap: .875rem; margin-bottom: .875rem; }
+    @media (max-width: 680px) { .stats-grid { grid-template-columns: 1fr 1fr; } .stats-row2 { grid-template-columns: 1fr 1fr 1fr; } }
+    @media (max-width: 420px) { .stats-row2 { grid-template-columns: 1fr 1fr; } }
+    .stat-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: .875rem 1.125rem; box-shadow: var(--shadow); }
+    .stat-card.dim { background: var(--card2); box-shadow: none; border-color: transparent; }
+    .eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 5px; }
+    .big { font-family: var(--mono); font-size: 24px; font-weight: bold; color: var(--ink); line-height: 1.1; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+    .big.sm { font-size: 19px; }
+    .big-unit { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: 2px; }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .trend { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; border-radius: 99px; padding: 2px 7px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .trend-up   { background: var(--neg-bg); color: var(--neg); }
+    .trend-down { background: var(--pos-bg); color: var(--pos); }
+    .trend-neu  { background: var(--card2);  color: var(--muted); }
+
+    /* ── Contract strip ── */
+    .contract-strip { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: .75rem 1.125rem; margin-bottom: .875rem; display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1.25rem; }
+    .cs-item { display: flex; flex-direction: column; gap: 1px; }
+    .cs-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .cs-value { font-size: 13px; font-weight: 600; color: var(--ink); }
+    .cs-value.warn { color: var(--warn); }
+    .cs-sep { width: 1px; height: 28px; background: var(--line); flex-shrink: 0; }
+
+    /* ── Boni chips ── */
+    .boni-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .875rem; }
+    .boni-chip { display: flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 99px; padding: 4px 10px 4px 8px; font-size: 12px; box-shadow: var(--shadow); }
+    .chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pos); }
+    .chip-dot.off { background: var(--muted); }
+    .chip-lbl { color: var(--muted); }
+    .chip-amt { font-family: var(--mono); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .chip-status { font-size: 10px; color: var(--muted); }
+
+    /* ── Chart ── */
+    .chart-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.125rem; margin-bottom: .875rem; }
+    .chart-hdr { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .875rem; flex-wrap: wrap; }
+    .chart-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
+    .seg { display: flex; gap: 4px; flex-wrap: wrap; }
+    .seg-btn { background: var(--card2); border: 1px solid var(--line); border-radius: 7px; padding: 4px 10px; font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .12s; font-family: var(--mono); letter-spacing: .03em; }
+    .seg-btn.active { background: var(--brand-bg); border-color: var(--brand); color: var(--brand); }
+    #chartCanvas { width: 100%; display: block; }
+
+    /* ── Table ── */
+    .table-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 5rem; }
+    .table-hdr-bar { padding: .75rem 1.125rem; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+    .table-hdr-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
+    .count-badge { font-size: 11px; font-weight: 700; background: var(--card2); color: var(--muted); border-radius: 99px; padding: 1px 8px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { padding: 7px 14px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); background: var(--card2); border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .th-r { text-align: right; }
+    tbody td { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--ink); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:not(.neg-row):not(.mdiv-row):hover td { background: var(--card2); }
+    .neg-row td { background: var(--warn-bg) !important; }
+    .td-r { text-align: right; font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .td-date { font-size: 13px; }
+    .td-msub { font-size: 10px; color: var(--muted); font-family: var(--mono); letter-spacing: .04em; margin-top: 1px; }
+    .td-note { font-size: 12px; color: var(--muted); font-style: italic; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .first-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; background: var(--card2); color: var(--muted); border-radius: 4px; padding: 2px 6px; }
+    .warn-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line); border-radius: 4px; padding: 2px 5px; display: inline-block; margin-left: 5px; }
+    .mdiv-row td { background: var(--card2) !important; padding: 5px 14px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .mdiv-inner { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+    .mdiv-inner::before, .mdiv-inner::after { content:''; flex:1; height:1px; background: var(--line); }
+    .mnr-badge { font-family: var(--mono); font-size: 10px; font-weight: 700; background: var(--card); border: 1px solid var(--line); color: var(--muted); border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+    .td-actions { text-align: right; white-space: nowrap; display: flex; gap: 2px; justify-content: flex-end; align-items: center; }
+    .row-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 13px; padding: 5px 7px; border-radius: 5px; transition: background .12s, color .12s; line-height: 1; min-width: 30px; min-height: 30px; display: flex; align-items: center; justify-content: center; }
+    .edit-btn:hover { background: var(--card2); color: var(--ink); }
+    .del-btn:hover  { background: var(--neg-bg); color: var(--neg); }
+    @media (max-width: 580px) { .row-btn { min-width: 38px; min-height: 38px; } }
+
+    /* ── Empty ── */
+    .empty { padding: 3rem 1.5rem; text-align: center; }
+    .empty-icon { font-size: 2rem; margin-bottom: .625rem; opacity: .3; }
+    .empty-head { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .empty-sub  { font-size: 13px; color: var(--muted); }
+
+    /* ── FAB ── */
+    #fab { position: fixed; bottom: 1.5rem; right: 1.5rem; width: 56px; height: 56px; border-radius: 50%; background: var(--brand); color: #fff; border: none; cursor: pointer; font-size: 24px; box-shadow: 0 4px 18px rgba(0,0,0,.22); display: flex; align-items: center; justify-content: center; transition: transform .15s, box-shadow .15s; z-index: 80; }
+    #fab:hover { transform: scale(1.07); box-shadow: 0 6px 24px rgba(0,0,0,.3); }
+
+    /* ── Modal ── */
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(10,18,28,.55); z-index: 100; align-items: flex-end; justify-content: center; }
+    .overlay.open { display: flex; }
+    @media (min-width: 520px) { .overlay { align-items: center; padding: 1rem; } }
+    .modal { background: var(--card); border: 1px solid var(--line); border-bottom: none; border-radius: var(--radius) var(--radius) 0 0; width: 100%; max-width: 420px; overflow: hidden; }
+    @media (min-width: 520px) { .modal { border-radius: var(--radius); border-bottom: 1px solid var(--line); } }
+    .modal-drag { width: 36px; height: 4px; background: var(--line); border-radius: 99px; margin: 10px auto 0; }
+    @media (min-width: 520px) { .modal-drag { display: none; } }
+    .modal-hdr { padding: 1rem 1.125rem; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+    .modal-title { font-size: 14px; font-weight: 600; }
+    .modal-x { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 16px; padding: 2px 5px; border-radius: 5px; line-height: 1; }
+    .modal-x:hover { color: var(--ink); background: var(--card2); }
+    .modal-body { padding: 1.125rem; display: flex; flex-direction: column; gap: .875rem; }
+    .fgroup { display: flex; flex-direction: column; gap: 4px; }
+    .flabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .finput { background: var(--card2); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; font-size: 14px; color: var(--ink); font-family: inherit; width: 100%; transition: border-color .12s; }
+    .finput.mono { font-family: var(--mono); }
+    .finput:focus { outline: none; border-color: var(--brand); }
+    .finput.err { border-color: var(--neg) !important; }
+    .ferr { font-size: 11px; color: var(--neg); min-height: 14px; display: block; line-height: 1.3; }
+    .meter-indicator { display: flex; align-items: center; justify-content: space-between; background: var(--card2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; gap: 8px; }
+    .mi-left { display: flex; flex-direction: column; gap: 1px; }
+    .mi-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+    .mi-value { font-family: var(--mono); font-size: 13px; color: var(--ink); letter-spacing: .04em; }
+    .meter-sw-btn { background: none; border: none; cursor: pointer; font-size: 11px; font-weight: 600; color: var(--brand); padding: 2px 0; text-decoration: underline; white-space: nowrap; font-family: inherit; }
+    .new-meter-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .modal-ftr { padding: .875rem 1.125rem; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 7px; }
+    .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; border: none; cursor: pointer; font-family: inherit; transition: all .12s; }
+    .btn-ghost { background: none; border: 1px solid var(--line); color: var(--muted); }
+    .btn-ghost:hover { background: var(--card2); color: var(--ink); }
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.1); }
+
+    @media (max-width: 580px) { .hide-sm { display: none !important; } .content { padding: .875rem; } .big { font-size: 20px; } .big.sm { font-size: 16px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+
+    /* ── Circuit background ── */
+    #page-bg { position: fixed; inset: 0; z-index: -1; background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%); }
+      </style>
+</head>
+<body>
+<div id="page-bg" aria-hidden="true"></div>
+
+<header class="app-header">
+  <div class="wordmark"><span class="wm-dot" id="wm-dot"></span>ZÄHLER</div>
+  <div class="hctrl">
+    <button class="hbtn" onclick="doQuickBackup()" title="Backup erstellen" style="font-size:17px">💾</button>
+    <a href="index.html" class="hbtn" title="Startseite" style="text-decoration:none;font-size:17px;display:flex;align-items:center;justify-content:center;">⌂</a>
+    <button class="hbtn" id="settingsBtn" title="Einstellungen">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    <button class="hbtn" id="exportBtn" title="Exportieren">
+      <span class="backup-dot" id="backupDot"></span>
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    </button>
+    <button class="hbtn" id="importBtn" title="Importieren">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
+        <input type="file" id="importFile" accept=".json" style="display:none">
+  </div>
+</header>
+
+<nav class="tab-bar" id="tabBar"></nav>
+<div class="content" id="content"></div>
+<button id="fab">+</button>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-hdr">
+      <span class="modal-title" id="modalTitle">Ablesung</span>
+      <button class="modal-x" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="fMeterSection"></div>
+      <div class="fgroup">
+        <label class="flabel" for="fDate">Datum</label>
+        <input class="finput" type="date" id="fDate">
+        <span class="ferr" id="fDateErr"></span>
+      </div>
+      <div class="fgroup">
+        <label class="flabel" for="fValue" id="fValueLabel">Zählerstand</label>
+        <input class="finput mono" type="number" id="fValue" step="0.01" min="0" placeholder="z.B. 12345.67">
+        <span class="ferr" id="fValueErr"></span>
+      </div>
+      <div class="fgroup">
+        <label class="flabel" for="fNote">Notiz (optional)</label>
+        <input class="finput" type="text" id="fNote" placeholder="z.B. nach Urlaub abgelesen">
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-ghost" id="modalCancel">Abbrechen</button>
+      <button class="btn btn-primary" id="modalSave">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ─────────────────────────────────────────────────────────────────
+
+const TABS = {
+  strom:    { label:'Strom',    icon:'⚡', unit:'kWh', color:'#C47F17', priceUnit:'€/kWh', enabled:true  },
+  wasser:   { label:'Wasser',   icon:'💧', unit:'m³',  color:'#0272C0', priceUnit:'€/m³',  enabled:true  },
+  gas:      { label:'Gas',      icon:'🔥', unit:'m³',  color:'#EA580C', priceUnit:'€/m³',  enabled:false },
+  heizoel:  { label:'Heizöl',   icon:'🛢️', unit:'L',   color:'#92400E', priceUnit:'€/L',   enabled:false },
+  internet: { label:'Internet', icon:'🌐', unit:'GB',  color:'#7C3AED', priceUnit:'€/GB',  enabled:false },
+  pv:       { label:'PV',       icon:'☀️', unit:'kWh', color:'#0E7490', priceUnit:'€/kWh', enabled:false },
+};
+
+const PRICE_DEFAULTS = { strom:0.30, wasser:2.00, gas:0.12, heizoel:1.10, internet:0, pv:0.08 };
+
+function defaultTabSettings(key) {
+  return {
+    tarifName:'', grundpreis:0, verbrauchspreis:PRICE_DEFAULTS[key]||0,
+    preisgarantie:'', mindestvertragslaufzeit:'', kuendigungsfrist:'',
+    vertragsverlaengerung:'', naechstKuendigung:'', boni:[]
+  };
+}
+
+// ── DB helpers ─────────────────────────────────────────────────────────────
+
+const genId = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+function makeDefaultDb() {
+  const d={ settings:{ lastExport:null } };
+  Object.keys(TABS).forEach(k=>{ d.settings[k]=defaultTabSettings(k); d[k]={ meters:[], readings:[] }; });
+  return d;
+}
+
+function ensureTabFormat(key) {
+  if(!db[key]){ db[key]={ meters:[], readings:[] }; return; }
+  if(Array.isArray(db[key])){
+    if(!db[key].length){ db[key]={ meters:[], readings:[] }; return; }
+    const mid=genId();
+    db[key]={ meters:[{id:mid,number:''}], readings:db[key].map(r=>({...r,meterId:mid})) };
+  } else {
+    if(!db[key].meters)   db[key].meters=[];
+    if(!db[key].readings) db[key].readings=[];
+  }
+}
+
+function migrateSettings() {
+  const s=db.settings;
+  if(s.lastExport===undefined) s.lastExport=null;
+  const oldMap={ strom:'strompreis', wasser:'wasserpreis', gas:'gaspreis', heizoel:'heizoelpreis', internet:'internetpreis', pv:'pvpreis' };
+  Object.keys(TABS).forEach(key=>{
+    if(!s[key]||typeof s[key]!=='object'||Array.isArray(s[key])){
+      s[key]=defaultTabSettings(key);
+      if(s[oldMap[key]]!=null){ s[key].verbrauchspreis=s[oldMap[key]]; }
+    }
+    if(!s[key].boni) s[key].boni=[];
+  });
+  Object.values(oldMap).forEach(k=>{ delete s[k]; });
+}
+
+function loadDb() {
+  try {
+    const raw=JSON.parse(localStorage.getItem('zaehler')||'null');
+    if(raw){
+      const def=makeDefaultDb();
+      const merged={...def,...raw,settings:{...def.settings,...(raw.settings||{})}};
+      Object.keys(TABS).forEach(k=>{ if(!merged.settings[k]) merged.settings[k]=defaultTabSettings(k); if(!merged[k]) merged[k]={ meters:[], readings:[] }; });
+      return merged;
+    }
+  } catch(_){}
+  return makeDefaultDb();
+}
+
+function saveDb(){ localStorage.setItem('zaehler',JSON.stringify(db)); }
+
+// ── State ──────────────────────────────────────────────────────────────────
+
+let db           = loadDb();
+Object.keys(TABS).forEach(k=>ensureTabFormat(k));
+migrateSettings();
+
+let tab          = Object.keys(TABS).find(k=>TABS[k].enabled)||'strom';
+let cfgOpen   = false;
+let editingId = null;
+let chartMid  = '__active__'; // '__active__' | 'all' | specific meter id
+
+// ── Meter helpers ──────────────────────────────────────────────────────────
+
+function getMeters(key)    { return db[key].meters||[]; }
+function getMeter(key,mid) { return getMeters(key).find(m=>m.id===mid)||null; }
+function meterLabel(key,mid) {
+  const m=getMeter(key,mid); if(!m) return '?';
+  if(m.number) return m.number;
+  return 'Zähler '+(getMeters(key).findIndex(x=>x.id===mid)+1);
+}
+function activeMeter(key) {
+  const ms=getMeters(key); if(!ms.length) return null;
+  // Explicit activeMid takes priority
+  if(db[key].activeMid) { const m=getMeter(key,db[key].activeMid); if(m) return m; }
+  // Fall back to meter of most recent reading
+  const rs=sortedReadings(key); if(!rs.length) return ms[ms.length-1];
+  return getMeter(key,rs[rs.length-1].meterId)||ms[ms.length-1];
+}
+
+// ── Reading helpers ────────────────────────────────────────────────────────
+
+function sortedReadings(key){ return [...(db[key].readings||[])].sort((a,b)=>a.date<b.date?-1:1); }
+function meterReadings(key,mid){ return sortedReadings(key).filter(r=>r.meterId===mid); }
+
+function addDeltas(readings){
+  return readings.map((r,i)=>({
+    ...r, delta: i===0||readings[i-1].meterId!==r.meterId ? null : r.value-readings[i-1].value
+  }));
+}
+
+function monthBarsFor(key, filterMid) {
+  const all=sortedReadings(key);
+  let wd;
+  if(filterMid){
+    const mr=all.filter(r=>r.meterId===filterMid);
+    wd=mr.map((r,i)=>({...r,delta:i===0?null:r.value-mr[i-1].value}));
+  } else {
+    wd=addDeltas(all);
+  }
+  const map={};
+  wd.forEach(r=>{ if(r.delta==null) return; const k=r.date.slice(0,7); map[k]=(map[k]||0)+r.delta; });
+  const out=[]; const now=new Date();
+  for(let i=11;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const lbl=d.toLocaleDateString('de-DE',{month:'short'})+' \''+String(d.getFullYear()).slice(2);
+    out.push({k,lbl,v:map[k]||0});
+  }
+  return out;
+}
+
+function resolvedChartMid(key){
+  if(chartMid==='all')      return null;
+  if(chartMid==='__active__') return activeMeter(key)?.id||null;
+  return chartMid;
+}
+
+function calcStats(key) {
+  const readings=sortedReadings(key), wd=addDeltas(readings);
+  const ts=db.settings[key];
+  const bars=monthBarsFor(key,null);
+  const vp=ts.verbrauchspreis||0, gp=ts.grundpreis||0;
+  const thisMonth=bars[bars.length-1].v, lastMonth=bars[bars.length-2].v;
+  let rate=null;
+  if(readings.length>=2){
+    const days=(new Date(readings[readings.length-1].date+'T00:00:00')-new Date(readings[0].date+'T00:00:00'))/86400000;
+    const tc=wd.filter(r=>r.delta!=null).reduce((a,r)=>a+r.delta,0);
+    if(days>0) rate=tc/days;
+  }
+  const latest=readings[readings.length-1]||null;
+  const daySpan=readings.length>=2
+    ? Math.round((new Date(readings[readings.length-1].date+'T00:00:00')-new Date(readings[0].date+'T00:00:00'))/86400000) : 0;
+  return {
+    latest, latestMid:latest?.meterId,
+    thisMonth, lastMonth,
+    monthAvg:  rate!=null?rate*30.44:null,
+    dayAvg:    rate,
+    yearFcast: rate!=null?rate*365.25:null,
+    trend:     lastMonth>0?(thisMonth-lastMonth)/lastMonth*100:null,
+    cost:      thisMonth*vp+gp,
+    yearCost:  rate!=null?rate*365.25*vp+gp*12:null,
+    vp, gp, daySpan,
+  };
+}
+
+// ── Validation ─────────────────────────────────────────────────────────────
+
+function validateReading(date,value,excludeId,targetMid){
+  const mr=meterReadings(tab,targetMid).filter(r=>!excludeId||r.id!==excludeId);
+  const errors=[];
+  if(!excludeId){
+    const last=mr[mr.length-1];
+    if(last){
+      if(date<last.date)        errors.push({field:'date',msg:`Muss nach ${fDate(last.date)} liegen.`});
+      else if(date===last.date) errors.push({field:'date',msg:'Datum bereits vorhanden für diesen Zähler.'});
+      else if(value<last.value) errors.push({field:'value',msg:`Muss ≥ ${fNum(last.value,2)} ${TABS[tab].unit} sein.`});
+    }
+  } else {
+    const bf=mr.filter(r=>r.date<date), af=mr.filter(r=>r.date>date);
+    const before=bf.length?bf[bf.length-1]:null, after=af.length?af[0]:null;
+    if(mr.some(r=>r.date===date)) errors.push({field:'date',msg:'Datum bereits vorhanden.'});
+    if(before&&value<before.value) errors.push({field:'value',msg:`Muss ≥ ${fNum(before.value,2)} ${TABS[tab].unit} sein.`});
+    if(after&&value>after.value)   errors.push({field:'value',msg:`Muss ≤ ${fNum(after.value,2)} ${TABS[tab].unit} sein.`});
+  }
+  return errors;
+}
+
+// ── Formatting ─────────────────────────────────────────────────────────────
+
+const fDate=d=>d?new Date(d+'T00:00:00').toLocaleDateString('de-DE'):'—';
+const fNum=(n,d=2)=>n==null?'—':n.toLocaleString('de-DE',{minimumFractionDigits:0,maximumFractionDigits:d});
+const fEUR=n=>n==null?'—':n.toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function backupAge(){ const le=db.settings.lastExport; if(!le) return null; return Math.floor((Date.now()-new Date(le).getTime())/86400000); }
+function daysUntil(ds){ if(!ds) return null; return Math.ceil((new Date(ds+'T00:00:00')-new Date().setHours(0,0,0,0))/86400000); }
+
+// ── Tab bar ────────────────────────────────────────────────────────────────
+
+function buildTabBar(){
+  const bar=document.getElementById('tabBar');
+  bar.innerHTML=Object.entries(TABS).map(([key,cfg])=>
+    cfg.enabled
+      ? `<button class="tab${key===tab?' active':''}" data-tab="${key}">${cfg.icon} ${cfg.label}</button>`
+      : `<button class="tab tab-soon">${cfg.icon} ${cfg.label} <span class="tab-pill">bald</span></button>`
+  ).join('');
+  bar.querySelectorAll('.tab[data-tab]').forEach(btn=>
+    btn.addEventListener('click',()=>{ tab=btn.dataset.tab; chartMid='__active__'; render(); }));
+}
+
+function setAccent(key){
+  const c=TABS[key].color, h=c.slice(1);
+  const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+  document.documentElement.style.setProperty('--brand',c);
+  document.documentElement.style.setProperty('--brand-bg',`rgba(${r},${g},${b},0.1)`);
+  document.getElementById('wm-dot').style.background=c;
+  document.getElementById('fab').style.background=c;
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+
+function render(){
+  setAccent(tab); buildTabBar();
+  const cfg=TABS[tab], s=calcStats(tab), ts=db.settings[tab];
+  const readings=sortedReadings(tab), wd=addDeltas(readings).reverse();
+  const meters=getMeters(tab), age=backupAge();
+
+  const backupHtml=(age===null||age>90)?`
+    <div class="banner banner-warn">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      ${age===null?'Noch kein Backup erstellt.':'Letztes Backup vor '+age+' Tagen.'}
+      <button class="banner-link" id="bannerExport">Jetzt exportieren</button>
+    </div>`:'';
+
+  const kuendDays=daysUntil(ts.naechstKuendigung);
+  const kuendHtml=kuendDays!=null&&kuendDays>=0&&kuendDays<=60?`
+    <div class="banner banner-warn">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Kündigungstermin${ts.tarifName?' ('+esc(ts.tarifName)+')':''} in <strong>&nbsp;${kuendDays}&nbsp;</strong> ${kuendDays===1?'Tag':'Tagen'} — ${fDate(ts.naechstKuendigung)}
+    </div>`:'';
+
+  let trendHtml='';
+  if(s.trend!==null){const up=s.trend>0;trendHtml=`<span class="trend ${up?'trend-up':'trend-down'}">${up?'↑':'↓'} ${Math.abs(s.trend).toFixed(1)} %</span>`;}
+  else if(readings.length>1){trendHtml=`<span class="trend trend-neu">Kein Vormonat</span>`;}
+
+  const latestSub=s.latest?`${fDate(s.latest.date)}${meters.length>1?` · ${esc(meterLabel(tab,s.latest.meterId))}`:''}` : 'Noch keine Ablesung';
+  const costSub=ts.grundpreis>0?`${(ts.verbrauchspreis).toLocaleString('de-DE',{minimumFractionDigits:3,maximumFractionDigits:4})} ${cfg.priceUnit} + ${fEUR(ts.grundpreis)}/Mo`:`${(ts.verbrauchspreis||0).toLocaleString('de-DE',{minimumFractionDigits:3,maximumFractionDigits:4})} ${cfg.priceUnit}`;
+
+  const contractHtml=buildContractStrip(ts,kuendDays);
+  const boniHtml=buildBoniChips(ts);
+  const settingsHtml=buildSettingsPanel(cfg,ts,meters);
+  const segHtml=buildChartSeg(tab);
+  const tableRows=buildTableRows(wd,cfg);
+
+  document.getElementById('content').innerHTML=`
+    ${backupHtml}${kuendHtml}
+    <div class="settings-wrap${cfgOpen?' open':''}" id="settingsWrap">${settingsHtml}</div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="eyebrow">Letzter Stand</div><div class="big">${s.latest?fNum(s.latest.value,1):'—'}<span class="big-unit">${cfg.unit}</span></div><div class="stat-sub">${latestSub}</div></div>
+      <div class="stat-card"><div class="eyebrow">Dieser Monat</div><div class="big">${fNum(s.thisMonth,1)}<span class="big-unit">${cfg.unit}</span></div>${trendHtml}</div>
+      <div class="stat-card"><div class="eyebrow">Kosten Monat</div><div class="big sm">${fEUR(s.cost)}</div><div class="stat-sub">${costSub}</div></div>
+      <div class="stat-card"><div class="eyebrow">Ø Monat (zeitgewichtet)</div><div class="big">${fNum(s.monthAvg,1)}<span class="big-unit">${cfg.unit}</span></div><div class="stat-sub">${s.daySpan>0?'über '+s.daySpan+' Tage':'2+ Ablesungen nötig'}</div></div>
+    </div>
+
+    <div class="stats-row2">
+      <div class="stat-card dim"><div class="eyebrow">Ø pro Tag</div><div class="big sm">${fNum(s.dayAvg,2)}<span class="big-unit">${cfg.unit}</span></div><div class="stat-sub">Tagesdurchschnitt</div></div>
+      <div class="stat-card dim"><div class="eyebrow">Prognose Jahr</div><div class="big sm">${fNum(s.yearFcast,0)}<span class="big-unit">${cfg.unit}</span></div><div class="stat-sub">Hochrechnung</div></div>
+      <div class="stat-card dim"><div class="eyebrow">Prognose Jahreskosten</div><div class="big sm">${fEUR(s.yearCost)}</div><div class="stat-sub">${ts.grundpreis>0?'inkl. '+fEUR(ts.grundpreis*12)+' Grundpreis':'nur Arbeitspreis'}</div></div>
+    </div>
+
+    ${contractHtml}${boniHtml}
+
+    <div class="chart-card">
+      <div class="chart-hdr">
+        <span class="chart-title">Monatsverbrauch — letzte 12 Monate</span>
+        ${segHtml}
+      </div>
+      <canvas id="chartCanvas" height="150"></canvas>
+    </div>
+
+    <div class="table-card">
+      <div class="table-hdr-bar"><span class="table-hdr-title">Ablesungen</span><span class="count-badge">${readings.length}</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Datum</th><th class="th-r">Zählerstand</th><th class="th-r">Verbrauch</th><th class="th-r hide-sm">Kosten</th><th class="hide-sm">Notiz</th><th></th></tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  // Bind
+  document.getElementById('bannerExport')?.addEventListener('click',doExport);
+
+  document.querySelectorAll('[data-sv]').forEach(el=>el.addEventListener('change',()=>{
+    const [tk,fk]=el.dataset.sv.split('.');
+    db.settings[tk][fk]=el.type==='number'?(parseFloat(el.value)||0):el.value;
+    saveDb(); cfgOpen=true; render();
+  }));
+  document.querySelectorAll('[data-bf]').forEach(el=>el.addEventListener('change',()=>{
+    const b=db.settings[tab].boni.find(x=>x.id===el.dataset.bid);
+    if(b){ b[el.dataset.bf]=el.dataset.bf==='betrag'?(parseFloat(el.value)||0):el.value; saveDb(); cfgOpen=true; }
+  }));
+  document.querySelectorAll('.del-bonus').forEach(btn=>btn.addEventListener('click',()=>{
+    db.settings[tab].boni=db.settings[tab].boni.filter(b=>b.id!==btn.dataset.bid);
+    saveDb(); cfgOpen=true; render();
+  }));
+  document.querySelector('.add-bonus')?.addEventListener('click',()=>{
+    db.settings[tab].boni.push({id:genId(),label:'',betrag:0,status:'Offen'});
+    saveDb(); cfgOpen=true; render();
+  });
+  document.querySelectorAll('[data-mk]').forEach(el=>el.addEventListener('change',()=>{
+    const m=getMeter(el.dataset.mk,el.dataset.mi); if(m){m.number=el.value.trim();saveDb();cfgOpen=true;render();}
+  }));
+  document.querySelectorAll('[data-set-active]').forEach(btn=>btn.addEventListener('click',()=>{
+    const [k,mid]=btn.dataset.setActive.split(':');
+    db[k].activeMid=mid; saveDb(); cfgOpen=true; render();
+  }));
+  document.querySelectorAll('[data-del-meter]').forEach(btn=>btn.addEventListener('click',()=>{
+    const [k,mid]=btn.dataset.delMeter.split(':');
+    const hasReadings=db[k].readings.some(r=>r.meterId===mid);
+    if(hasReadings&&!confirm('Dieser Zähler hat Ablesungen. Trotzdem löschen?\n(Ablesungen bleiben erhalten, sind aber ohne Zähler.)')) return;
+    db[k].meters=db[k].meters.filter(m=>m.id!==mid);
+    if(db[k].activeMid===mid) delete db[k].activeMid;
+    saveDb(); cfgOpen=true; render();
+  }));
+  document.querySelectorAll('[data-add-meter]').forEach(btn=>btn.addEventListener('click',()=>{
+    const k=btn.dataset.addMeter;
+    const nm={id:genId(),number:''};
+    db[k].meters.push(nm); db[k].activeMid=nm.id;
+    saveDb(); cfgOpen=true; render();
+    // Focus the new meter's number input after render
+    setTimeout(()=>{
+      const inputs=document.querySelectorAll('[data-mk="'+k+'"]');
+      if(inputs.length) inputs[inputs.length-1].focus();
+    },50);
+  }));
+  document.querySelectorAll('.edit-btn').forEach(btn=>btn.addEventListener('click',()=>openModal(btn.dataset.id)));
+  document.querySelectorAll('.del-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    if(!confirm('Ablesung löschen?')) return;
+    db[tab].readings=db[tab].readings.filter(r=>r.id!==btn.dataset.id); saveDb(); render();
+  }));
+  document.querySelectorAll('.seg-btn[data-mid]').forEach(btn=>btn.addEventListener('click',()=>{
+    chartMid=btn.dataset.mid;
+    document.querySelectorAll('.seg-btn[data-mid]').forEach(b=>b.classList.toggle('active',b.dataset.mid===chartMid));
+    requestAnimationFrame(()=>drawChart(tab));
+  }));
+  document.getElementById('backupDot').classList.toggle('show',age===null||age>90);
+  requestAnimationFrame(()=>drawChart(tab));
+}
+
+// ── Settings panel ─────────────────────────────────────────────────────────
+
+function buildSettingsPanel(cfg,ts,meters){
+  const activeMid=activeMeter(tab)?.id;
+  const sf=(label,sk,val,type='number',step='0.0001',ph='')=>`
+    <div class="sfield"><span class="sfield-label">${label}</span>
+    <input class="sfield-input${type==='text'||type==='date'?' ti':''}" type="${type}" ${step?`step="${step}"`:''}
+      data-sv="${tab}.${sk}" value="${esc(val!=null?String(val):'')}" placeholder="${esc(ph)}"></div>`;
+
+  const boniRows=(ts.boni||[]).map(b=>`
+    <div class="bonus-row">
+      <input class="sfield-input ti" placeholder="Bezeichnung" value="${esc(b.label)}" data-bf="label" data-bid="${b.id}">
+      <input class="sfield-input" type="number" step="0.01" min="0" placeholder="0,00" value="${b.betrag||''}" data-bf="betrag" data-bid="${b.id}">
+      <input class="sfield-input ti" placeholder="Status" value="${esc(b.status)}" data-bf="status" data-bid="${b.id}">
+      <button class="bonus-del del-bonus" data-bid="${b.id}">✕</button>
+    </div>`).join('');
+
+  const meterSection=`<div class="settings-section">
+    <span class="section-eye">Zähler</span>
+    <div class="meter-list">${meters.map((m,i)=>`
+      <div class="meter-row">
+        <button class="meter-aktiv-btn${m.id===activeMid?' active':''}" data-set-active="${tab}:${m.id}" ${m.id===activeMid?'disabled':''}>
+          ${m.id===activeMid?'✓ Aktiv':'Aktiv setzen'}
+        </button>
+        <input class="sfield-input" style="flex:1;font-family:var(--mono)" placeholder="Zählernummer (z.B. AE1234567)" value="${esc(m.number||'')}" data-mk="${tab}" data-mi="${m.id}">
+        <button class="meter-del-btn" data-del-meter="${tab}:${m.id}" title="Zähler entfernen">✕</button>
+      </div>`).join('')}
+    </div>
+    <button class="add-meter-btn" data-add-meter="${tab}">+ Zähler hinzufügen</button>
+  </div>`
+
+  return `<div class="settings-card">
+    <div class="settings-hdr"><span class="settings-title">Einstellungen — ${cfg.icon} ${cfg.label}</span></div>
+    <div class="settings-section">
+      <span class="section-eye">Tarifdetails</span>
+      <div class="settings-grid">
+        ${sf('Tarifname','tarifName',ts.tarifName,'text','','z.B. ÖkoStrom12')}
+        ${sf(`Arbeitspreis (${cfg.priceUnit})`,'verbrauchspreis',ts.verbrauchspreis,'number','0.0001','')}
+        ${sf('Grundpreis (€/Monat)','grundpreis',ts.grundpreis,'number','0.01','')}
+        ${sf('Preisgarantie bis','preisgarantie',ts.preisgarantie,'date','','')}
+      </div>
+    </div>
+    <div class="settings-section">
+      <span class="section-eye">Vertragskonditionen</span>
+      <div class="settings-grid">
+        ${sf('Mindestvertragslaufzeit','mindestvertragslaufzeit',ts.mindestvertragslaufzeit,'text','','z.B. 12 Monate')}
+        ${sf('Kündigungsfrist','kuendigungsfrist',ts.kuendigungsfrist,'text','','z.B. 1 Monat')}
+        ${sf('Vertragsverlängerung','vertragsverlaengerung',ts.vertragsverlaengerung,'text','','z.B. auf unbestimmte Zeit')}
+        ${sf('Nächster Kündigungstermin','naechstKuendigung',ts.naechstKuendigung,'date','','')}
+      </div>
+    </div>
+    <div class="settings-section">
+      <span class="section-eye">Boni</span>
+      <div class="boni-list">${boniRows}</div>
+      <button class="add-bonus">+ Bonus hinzufügen</button>
+    </div>
+    ${meterSection}
+  </div>`;
+}
+
+// ── Contract strip ─────────────────────────────────────────────────────────
+
+function buildContractStrip(ts,kuendDays){
+  const items=[];
+  if(ts.tarifName)              items.push({l:'Tarif',               v:esc(ts.tarifName),                    warn:false});
+  if(ts.grundpreis>0)           items.push({l:'Grundpreis',          v:fEUR(ts.grundpreis)+'/Mo',             warn:false});
+  if(ts.preisgarantie)          items.push({l:'Preisgarantie',       v:'bis '+fDate(ts.preisgarantie),        warn:false});
+  if(ts.mindestvertragslaufzeit)items.push({l:'Mindestlaufzeit',     v:esc(ts.mindestvertragslaufzeit),       warn:false});
+  if(ts.kuendigungsfrist)       items.push({l:'Kündigungsfrist',     v:esc(ts.kuendigungsfrist),              warn:false});
+  if(ts.naechstKuendigung)      items.push({l:'Kündigung möglich',   v:fDate(ts.naechstKuendigung),           warn:kuendDays!=null&&kuendDays<=60});
+  if(!items.length) return '';
+  return `<div class="contract-strip">${items.map((it,i)=>
+    `${i>0?'<span class="cs-sep"></span>':''}<div class="cs-item"><span class="cs-label">${it.l}</span><span class="cs-value${it.warn?' warn':''}">${it.v}</span></div>`
+  ).join('')}</div>`;
+}
+
+// ── Boni chips ─────────────────────────────────────────────────────────────
+
+function buildBoniChips(ts){
+  if(!ts.boni||!ts.boni.length) return '';
+  return `<div class="boni-chips">${ts.boni.map(b=>`
+    <div class="boni-chip">
+      <span class="chip-dot${b.status&&b.status.toLowerCase()!=='offen'?' off':''}"></span>
+      ${b.label?`<span class="chip-lbl">${esc(b.label)}</span>`:''}
+      <span class="chip-amt">${fEUR(b.betrag)}</span>
+      ${b.status?`<span class="chip-status">${esc(b.status)}</span>`:''}
+    </div>`).join('')}</div>`;
+}
+
+// ── Chart segment ──────────────────────────────────────────────────────────
+
+function buildChartSeg(key){
+  const ms=getMeters(key); if(ms.length<=1) return '';
+  const opts=[{mid:'__active__',lbl:'Aktuell'},{mid:'all',lbl:'Alle'},...ms.map((m,i)=>({mid:m.id,lbl:m.number||'Zähler '+(i+1)}))];
+  return `<div class="seg">${opts.map(o=>`<button class="seg-btn${chartMid===o.mid?' active':''}" data-mid="${o.mid}">${esc(o.lbl)}</button>`).join('')}</div>`;
+}
+
+// ── Table rows ─────────────────────────────────────────────────────────────
+
+function buildTableRows(wd,cfg){
+  if(!wd.length) return `<tr><td colspan="6"><div class="empty"><div class="empty-icon">${cfg.icon}</div><div class="empty-head">Noch keine Ablesungen</div><div class="empty-sub">+ drücken und ersten Zählerstand eintragen.</div></div></td></tr>`;
+  const ms=getMeters(tab), vp=db.settings[tab].verbrauchspreis||0;
+  let rows='';
+  wd.forEach((row,i)=>{
+    const isNeg=row.delta!==null&&row.delta<0, next=wd[i+1];
+    if(next&&next.meterId!==row.meterId) rows+=`<tr class="mdiv-row"><td colspan="6"><div class="mdiv-inner">Zählerwechsel<span class="mnr-badge">⇡ ${esc(meterLabel(tab,row.meterId))}</span><span class="mnr-badge">⇣ ${esc(meterLabel(tab,next.meterId))}</span></div></td></tr>`;
+    let conCell;
+    if(row.delta===null){
+      const isFirst=meterReadings(tab,row.meterId)[0]?.id===row.id;
+      conCell=`<span class="first-badge">${ms.length>1&&isFirst?'Erstablesung Zähler':'Erstablesung'}</span>`;
+    } else {
+      conCell=`<span style="font-family:var(--mono);font-variant-numeric:tabular-nums${isNeg?';color:var(--warn)':''}">${fNum(row.delta,2)} ${cfg.unit}</span>${isNeg?'<span class="warn-badge">⚠ Wert prüfen</span>':''}`;
+    }
+    rows+=`<tr${isNeg?' class="neg-row"':''}>
+      <td><div class="td-date">${fDate(row.date)}</div>${ms.length>1?`<div class="td-msub">${esc(meterLabel(tab,row.meterId))}</div>`:''}</td>
+      <td class="td-r">${fNum(row.value,2)} ${cfg.unit}</td>
+      <td class="td-r">${conCell}</td>
+      <td class="td-r hide-sm">${row.delta!=null&&!isNeg?fEUR(row.delta*vp):'—'}</td>
+      <td class="td-note hide-sm">${row.note?esc(row.note):''}</td>
+      <td><div class="td-actions">
+        <button class="row-btn edit-btn" data-id="${row.id}">✏</button>
+        <button class="row-btn del-btn"  data-id="${row.id}">✕</button>
+      </div></td>
+    </tr>`;
+  });
+  return rows;
+}
+
+// ── Chart ──────────────────────────────────────────────────────────────────
+
+function isDark(){return false;}
+
+function drawChart(key){
+  const canvas=document.getElementById('chartCanvas'); if(!canvas) return;
+  const bars=monthBarsFor(key,resolvedChartMid(key));
+  const color=TABS[key].color, dark=isDark();
+  const grid=dark?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)';
+  const txt=dark?'#7A90A8':'#6B7A90', dim=dark?'rgba(255,255,255,.08)':'rgba(0,0,0,.07)';
+  const dpr=window.devicePixelRatio||1, W=canvas.offsetWidth, H=150;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  const P={t:10,r:8,b:30,l:44}, cW=W-P.l-P.r, cH=H-P.t-P.b;
+  const vals=bars.map(b=>Math.max(0,b.v)), mx=Math.max(...vals,1);
+  const step=cW/bars.length, bW=step*.56;
+  ctx.clearRect(0,0,W,H);
+  for(let i=0;i<=4;i++){
+    const y=P.t+cH-(i/4)*cH;
+    ctx.beginPath();ctx.setLineDash([3,5]);ctx.strokeStyle=grid;ctx.lineWidth=1;
+    ctx.moveTo(P.l,y);ctx.lineTo(W-P.r,y);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=txt;ctx.font=`10px 'Courier New',monospace`;ctx.textAlign='right';
+    ctx.fillText(fNum(mx*i/4,0),P.l-5,y+3.5);
+  }
+  const nowKey=new Date().toISOString().slice(0,7);
+  bars.forEach((b,i)=>{
+    const x=P.l+i*step+(step-bW)/2, bH=vals[i]>0?(vals[i]/mx)*cH:0, y=P.t+cH-bH, cur=b.k===nowKey;
+    if(bH>0){
+      if(cur){const g=ctx.createLinearGradient(x,y,x,y+bH);g.addColorStop(0,color);g.addColorStop(1,color+'77');ctx.fillStyle=g;}
+      else ctx.fillStyle=dim;
+      const r=Math.min(4,bH/2);
+      ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+bW-r,y);ctx.arcTo(x+bW,y,x+bW,y+r,r);
+      ctx.lineTo(x+bW,y+bH);ctx.lineTo(x,y+bH);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();ctx.fill();
+    }
+    ctx.fillStyle=cur?color:txt;ctx.font=cur?`bold 9px system-ui,sans-serif`:`9px system-ui,sans-serif`;
+    ctx.textAlign='center';ctx.fillText(b.lbl,x+bW/2,H-4);
+  });
+}
+
+// ── Modal ──────────────────────────────────────────────────────────────────
+
+function buildMeterSection(){
+  const section=document.getElementById('fMeterSection');
+  const ms=getMeters(tab);
+  if(!ms.length){
+    // No meters configured yet — show info nudge
+    section.innerHTML=`<div class="fgroup"><div style="background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:12px;color:var(--muted)">Zähler in den Einstellungen anlegen (⚙️), dann hier auswählen.</div></div>`;
+    return;
+  }
+  if(editingId){
+    // Edit: show which meter this reading belongs to (read-only)
+    const entry=db[tab].readings.find(r=>r.id===editingId);
+    const ml=entry?meterLabel(tab,entry.meterId):'—';
+    section.innerHTML=`<div class="fgroup"><span class="flabel">Zähler</span><div class="meter-indicator"><div class="mi-left"><span class="mi-label">Zähler (nicht änderbar)</span><span class="mi-value">${esc(ml)}</span></div></div></div>`;
+    return;
+  }
+  // Add mode: select dropdown, active meter pre-selected
+  const activeMid=activeMeter(tab)?.id||ms[0].id;
+  section.innerHTML=`<div class="fgroup">
+    <label class="flabel" for="fMeter">Zähler</label>
+    <select class="finput finput-select" id="fMeter">
+      ${ms.map((m,i)=>`<option value="${m.id}"${m.id===activeMid?' selected':''}>${esc(m.number||'Zähler '+(i+1))}${m.id===activeMid?' (aktiv)':''}</option>`).join('')}
+    </select>
+  </div>`;
+}
+
+function openModal(id){
+  editingId=id||null;
+  const cfg=TABS[tab];
+  if(editingId){
+    const e=db[tab].readings.find(r=>r.id===editingId); if(!e) return;
+    document.getElementById('fDate').value=e.date;
+    document.getElementById('fValue').value=e.value;
+    document.getElementById('fNote').value=e.note||'';
+    document.getElementById('modalTitle').textContent=`${cfg.icon} ${cfg.label} bearbeiten`;
+  } else {
+    document.getElementById('fDate').value=new Date().toISOString().slice(0,10);
+    document.getElementById('fValue').value='';
+    document.getElementById('fNote').value='';
+    document.getElementById('modalTitle').textContent=`${cfg.icon} ${cfg.label} — Ablesung`;
+  }
+  document.getElementById('fValueLabel').textContent=`Zählerstand (${cfg.unit})`;
+  ['fDate','fValue'].forEach(id=>document.getElementById(id).classList.remove('err'));
+  ['fDateErr','fValueErr'].forEach(id=>{document.getElementById(id).textContent='';});
+  buildMeterSection();
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('fValue').focus(),80);
+}
+
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); editingId=null; }
+
+document.getElementById('modalSave').addEventListener('click',()=>{
+  const date=document.getElementById('fDate').value;
+  const value=parseFloat(document.getElementById('fValue').value);
+  const note=document.getElementById('fNote').value.trim();
+  ['fDate','fValue'].forEach(id=>document.getElementById(id).classList.remove('err'));
+  ['fDateErr','fValueErr'].forEach(id=>{document.getElementById(id).textContent='';});
+  if(!date){document.getElementById('fDate').classList.add('err');document.getElementById('fDateErr').textContent='Bitte ein Datum angeben.';return;}
+  if(isNaN(value)){document.getElementById('fValue').classList.add('err');document.getElementById('fValueErr').textContent='Bitte gültigen Zählerstand eingeben.';return;}
+
+  if(editingId){
+    const entry=db[tab].readings.find(r=>r.id===editingId); if(!entry) return;
+    const errs=validateReading(date,value,editingId,entry.meterId);
+    if(errs.length){applyErr(errs);return;}
+    entry.date=date; entry.value=value; entry.note=note;
+  } else {
+    const meterSel=document.getElementById('fMeter');
+    if(!meterSel){ return; } // no meters configured
+    const targetMid=meterSel.value;
+    const errs=validateReading(date,value,null,targetMid);
+    if(errs.length){applyErr(errs);return;}
+    db[tab].readings.push({id:genId(),date,value,note,meterId:targetMid});
+  }
+  saveDb(); closeModal(); render();
+});
+
+function applyErr(errs){
+  errs.forEach(e=>{
+    document.getElementById(e.field==='date'?'fDate':'fValue').classList.add('err');
+    document.getElementById(e.field==='date'?'fDateErr':'fValueErr').textContent=e.msg;
+  });
+}
+
+// ── Export / Import ────────────────────────────────────────────────────────
+
+function doExport(){
+  db.settings.lastExport=new Date().toISOString(); saveDb();
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  Object.assign(document.createElement('a'),{href:url,download:`zaehler-${new Date().toISOString().slice(0,10)}.json`}).click();
+  URL.revokeObjectURL(url); render();
+}
+
+// ── Events ─────────────────────────────────────────────────────────────────
+
+document.getElementById('fab').addEventListener('click',()=>openModal(null));
+document.getElementById('modalClose').addEventListener('click',closeModal);
+document.getElementById('modalCancel').addEventListener('click',closeModal);
+document.getElementById('overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+document.getElementById('settingsBtn').addEventListener('click',()=>{
+  cfgOpen=!cfgOpen;
+  document.getElementById('settingsWrap')?.classList.toggle('open',cfgOpen);
+});
+
+  const cur=document.documentElement.getAttribute('data-theme');
+  const next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('zaehler-theme',next);
+  requestAnimationFrame(()=>drawChart(tab));
+});
+
+document.getElementById('exportBtn').addEventListener('click',doExport);
+document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change',e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const imp=JSON.parse(ev.target.result);
+      if(!confirm('Daten importieren? Bestehende Daten werden überschrieben.')) return;
+      const def=makeDefaultDb();
+      db={...def,...imp,settings:{...def.settings,...(imp.settings||{})}};
+      Object.keys(TABS).forEach(k=>{ ensureTabFormat(k); if(!db.settings[k]) db.settings[k]=defaultTabSettings(k); });
+      migrateSettings(); saveDb(); render();
+    }catch(_){alert('Ungültige Datei.');}
+  };
+  reader.readAsText(file); e.target.value='';
+});
+
+window.addEventListener('resize',()=>requestAnimationFrame(()=>drawChart(tab)));
+
+let swX=0,swY=0;
+document.addEventListener('touchstart',e=>{swX=e.touches[0].clientX;swY=e.touches[0].clientY;},{passive:true});
+document.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-swX, dy=e.changedTouches[0].clientY-swY;
+  if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.5) return;
+  const keys=Object.keys(TABS).filter(k=>TABS[k].enabled), idx=keys.indexOf(tab);
+  if(dx<0&&idx<keys.length-1){tab=keys[idx+1];chartMid='__active__';render();}
+  if(dx>0&&idx>0){tab=keys[idx-1];chartMid='__active__';render();}
+},{passive:true});
+
+// ── Init ───────────────────────────────────────────────────────────────────
+
+const savedTheme=localStorage.getItem('zaehler-theme')||'light';
+document.documentElement.setAttribute('data-theme',savedTheme);
+render();
+
+function doQuickBackup(){
+  var d={};
+  for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);try{d[k]=JSON.parse(localStorage.getItem(k));}catch(e){d[k]=localStorage.getItem(k);}}
+  d._backup={created:new Date().toISOString()};
+  var bl=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(bl);
+  a.download="hub-backup-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Freizeitaktivitäten</title>
+<style>
+:root{--bg:#edf2f7;--card:#fff;--ink:#17202a;--muted:#718096;--line:#dce2e8;--brand:#0050c8;--soft:rgba(200,88,0,0.1);--warn:#a66016;--radius:13px;--shadow:0 10px 30px rgba(23,32,42,.07)}
+
+
+#page-bg{position:fixed;inset:0;z-index:-1;background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%);will-change:transform}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.app{max-width:1050px;margin:auto;padding:0 18px 80px}
+.site-nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);margin-bottom:20px;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.site-nav-title{flex:1;font-size:17px;font-weight:700;padding:0 4px;color:var(--ink)}
+.site-nav-btn{width:36px;height:36px;border-radius:50%;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none;flex-shrink:0;font-family:inherit;transition:background .15s}
+.site-nav-btn:active{background:var(--card)}
+.topstats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.stat{background:var(--card);padding:14px 16px;border-right:1px solid var(--line)}.stat:last-child{border-right:none}
+.eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.big{font-size:25px;font-weight:750;margin-top:3px;color:var(--brand)}.hint{font-size:12px;color:var(--muted)}
+
+/* ── Search card ── */
+.search-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:18px}
+.sc-grid{display:grid;grid-template-columns:1fr .6fr auto auto;gap:10px;align-items:end}
+.sc-status{font-size:12px;color:var(--muted);margin-top:8px;min-height:18px}
+.result-cat-bar{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+
+/* ── Filter bar (saved activities) ── */
+.filter-bar{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:18px}
+.filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.filter-input{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:9px 12px;font:inherit;flex:1;min-width:120px}
+.filter-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:99px;padding:6px 13px;cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap;font-family:inherit;transition:background .15s,color .15s,border-color .15s}
+.chip.active{background:var(--soft);border-color:var(--brand);color:var(--brand)}
+
+/* ── Buttons ── */
+.primary{border:0;background:var(--brand);color:#fff;border-radius:9px;padding:10px 16px;font:700 14px/1 inherit;cursor:pointer;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:6px}
+.primary:active{opacity:.85}
+.secondary{border:1px solid var(--brand);background:none;color:var(--brand);border-radius:9px;padding:9px 15px;font:700 14px/1 inherit;cursor:pointer;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:6px}
+.secondary:active{opacity:.8}
+.icon-btn{width:42px;height:42px;border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:9px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit;transition:border-color .15s,color .15s}
+.icon-btn:hover{border-color:var(--brand);color:var(--brand)}
+
+/* ── Section heading ── */
+.section-head{display:flex;justify-content:space-between;align-items:center;margin:0 0 12px}
+.section-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:750;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';display:block;width:3px;height:14px;border-radius:2px;background:var(--brand);flex-shrink:0}
+.count{font-size:11px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:2px 8px;color:var(--muted)}
+.results-section{margin-bottom:24px}
+
+/* ── Activity cards ── */
+.activities-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.act-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:8px}
+.act-card.is-fav{border-color:var(--brand)}
+.act-header{display:flex;gap:10px;align-items:flex-start}
+.cat-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:var(--soft)}
+.act-name{font-weight:750;font-size:15px;line-height:1.3;flex:1}
+.act-cat{font-size:11px;color:var(--brand);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.act-address{font-size:12px;color:var(--muted);display:flex;gap:5px;align-items:flex-start}
+.act-note{font-size:13px;color:var(--ink);background:var(--bg);border-radius:8px;padding:8px 10px;line-height:1.4}
+.act-footer{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.act-rating{display:flex;gap:2px;font-size:17px;line-height:1}
+.star-btn{border:0;background:none;padding:0;font-size:17px;line-height:1;color:var(--line)}
+.star-btn.on{color:#f6c000}
+.fav-btn{border:0;background:none;padding:2px 4px;cursor:pointer;font-size:20px;line-height:1;color:var(--line);margin-left:auto;transition:color .15s}
+.fav-btn.active{color:var(--brand)}
+.visit-badge{font-size:11px;border-radius:99px;padding:3px 9px;background:var(--soft);color:var(--brand);font-weight:700}
+.act-actions{display:flex;gap:6px;margin-top:2px;flex-wrap:wrap}
+.act-btn{border:1px solid var(--line);background:none;color:var(--ink);border-radius:8px;padding:6px 11px;font:600 12px/1 inherit;cursor:pointer;transition:background .12s;text-decoration:none;display:inline-flex;align-items:center}
+.act-btn:hover{background:var(--bg)}
+.act-btn.danger{color:var(--warn);border-color:var(--warn)}
+.route-btn{color:var(--brand);border-color:var(--brand)}
+.empty{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:44px 24px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--ink);font-size:16px;margin-bottom:6px}
+.fav-section{margin-top:26px}
+
+/* ── Fields (shared: search card + modal) ── */
+.field{margin-bottom:0}.field label{display:block;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:10px 11px;font:inherit;resize:vertical}
+.field textarea{min-height:72px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── Overlays ── */
+.overlay{position:fixed;inset:0;background:rgba(9,15,18,.65);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}
+.overlay.open{display:flex}
+.modal{width:min(500px,100%);background:var(--card);border:1px solid var(--line);border-radius:15px;padding:24px;max-height:90vh;overflow-y:auto}
+.modal h2{margin:0 0 18px;font-size:20px}
+.modal .field{margin-bottom:14px}
+.modal .field input,.modal .field select,.modal .field textarea{width:100%}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.ghost{border:1px solid var(--line);background:none;color:var(--ink);border-radius:9px;padding:9px 14px;cursor:pointer;font:inherit}
+.star-pick{display:flex;gap:4px;font-size:24px;padding-top:4px}
+.star-pick span{cursor:pointer;color:var(--line);transition:color .12s;user-select:none}
+.star-pick span.on{color:#f6c000}
+
+/* ── Scroll-to-top button ── */
+#scrollTopBtn{position:fixed;bottom:80px;right:16px;width:44px;height:44px;border-radius:50%;background:var(--brand);color:#fff;border:none;font-size:20px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.25);z-index:190;transition:opacity .2s,transform .2s}
+#scrollTopBtn.visible{display:flex;opacity:1;transform:scale(1)}
+
+/* ── Collapse toggle ── */
+#scResults.collapsed{display:none}
+.collapse-btn{border:1px solid var(--line);background:none;color:var(--muted);border-radius:8px;padding:4px 10px;font:700 13px/1 inherit;cursor:pointer;transition:background .12s}
+.collapse-btn:hover{background:var(--bg)}
+
+@media(max-width:600px){
+  .topstats{grid-template-columns:1fr 1fr}
+  .sc-grid{grid-template-columns:1fr auto auto}
+  .sc-grid .field:first-child{grid-column:1/-1}
+  .sc-grid .field:nth-child(2){grid-column:1/2}
+  .field-row{grid-template-columns:1fr}
+}
+@media(max-width:400px){.activities-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="page-bg" aria-hidden="true"></div>
+<div class="app">
+<header class="site-nav">
+  <div class="site-nav-title">🎡 Freizeitaktivitäten</div>
+  <button class="site-nav-btn" onclick="doQuickBackup()" title="Backup erstellen">💾</button>
+    <a href="index.html" class="site-nav-btn" title="Startseite">⌂</a>
+</header>
+
+<div class="topstats">
+  <div class="stat"><div class="eyebrow">Aktivitäten</div><div class="big" id="statTotal">0</div><div class="hint">gesamt eingetragen</div></div>
+  <div class="stat"><div class="eyebrow">Besucht</div><div class="big" id="statVisited">0</div><div class="hint">mindestens einmal</div></div>
+  <div class="stat"><div class="eyebrow">Favoriten</div><div class="big" id="statFavs">0</div><div class="hint">auf Merkliste</div></div>
+  <div class="stat"><div class="eyebrow">Top-Kategorie</div><div class="big" id="statCat">—</div><div class="hint" id="statCatHint">meiste Einträge</div></div>
+</div>
+
+<!-- ── Aktivitäten in der Nähe suchen ── -->
+<div class="search-card">
+  <div class="sc-grid">
+    <div class="field">
+      <label>Ort / PLZ</label>
+      <input id="scOrt" placeholder="z. B. Siegen, 57072 …" autocomplete="off" autocorrect="off">
+    </div>
+    <div class="field">
+      <label>Umkreis</label>
+      <select id="scRadius">
+        <option value="2000">2 km</option>
+        <option value="5000" selected>5 km</option>
+        <option value="10000">10 km</option>
+        <option value="15000">15 km</option>
+        <option value="25000">25 km</option>
+        <option value="50000">50 km</option>
+      </select>
+    </div>
+    <button class="icon-btn" id="scGpsBtn" title="Meinen Standort verwenden">📍</button>
+    <button class="primary" id="scSearchBtn">Suchen</button>
+  </div>
+  <div class="sc-status" id="scStatus"></div>
+  <div class="result-cat-bar" id="resultCatBar" style="display:none"></div>
+</div>
+
+<!-- ── OSM Suchergebnisse ── -->
+<div class="results-section" id="scResultsSection" style="display:none">
+  <div class="section-head">
+    <div class="section-title">Aktivitäten in der Nähe</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="count" id="scResultsCount">0</span>
+      <button class="collapse-btn" id="scCollapseBtn" onclick="toggleScResults()" title="Liste ein-/ausklappen">▼</button>
+    </div>
+  </div>
+  <div class="activities-grid" id="scResults"></div>
+</div>
+
+<!-- ── Gespeicherte Aktivitäten ── -->
+<div class="filter-bar">
+  <div class="filter-row">
+    <input id="filterInput" class="filter-input" placeholder="In meiner Liste suchen …">
+    <button class="primary" id="addBtn">＋ Manuell</button>
+  </div>
+  <div class="filter-chips" id="catChips">
+    <button class="chip active" data-cat="">Alle</button>
+  </div>
+</div>
+
+<div class="section-head">
+  <div class="section-title">Meine Aktivitäten</div>
+  <span class="count" id="listCount">0</span>
+</div>
+<div class="activities-grid" id="actGrid"></div>
+
+<div class="fav-section" id="favSection" style="display:none">
+  <div class="section-head">
+    <div class="section-title">Favoriten</div>
+    <span class="count" id="favCount">0</span>
+  </div>
+  <div class="activities-grid" id="favGrid"></div>
+</div>
+</div>
+
+<button id="scrollTopBtn" onclick="scrollToTop()" aria-label="Nach oben">↑</button>
+
+<!-- ── Hinzufügen / Bearbeiten ── -->
+<div class="overlay" id="overlay">
+<div class="modal">
+  <h2 id="modalTitle">Aktivität hinzufügen</h2>
+  <input type="hidden" id="editId">
+  <div class="field"><label>Name *</label><input id="fName" placeholder="z. B. Freizeitbad Siegen"></div>
+  <div class="field-row">
+    <div class="field"><label>Kategorie *</label>
+      <select id="fCat">
+        <option value="">Wählen …</option>
+        <option>🏊 Schwimmbad</option>
+        <option>⛳ Minigolf</option>
+        <option>⛳ Golf</option>
+        <option>🥏 Disc Golf</option>
+        <option>🎬 Kino</option>
+        <option>🎭 Theater</option>
+        <option>🏛️ Museum</option>
+        <option>🏰 Schloss / Burg</option>
+        <option>🔭 Planetarium</option>
+        <option>📚 Bibliothek</option>
+        <option>🎳 Bowling</option>
+        <option>🧗 Klettern</option>
+        <option>🛼 Rollschuhlaufen</option>
+        <option>🎡 Freizeitpark</option>
+        <option>🏋️ Fitness</option>
+        <option>🏟️ Stadion</option>
+        <option>🏃 Sport / Outdoor</option>
+        <option>🎮 Gaming / Escape Room</option>
+        <option>🤸 Trampolin</option>
+        <option>🏎️ Kart / Fahrspaß</option>
+        <option>🐴 Reiten</option>
+        <option>🚴 Bike Park</option>
+        <option>🚴 Radfahren</option>
+        <option>🛹 Skatepark</option>
+        <option>🚲 Fahrradverleih</option>
+        <option>🍕 Restaurant</option>
+        <option>☕ Café</option>
+        <option>🍺 Bar / Pub</option>
+        <option>🍺 Biergarten</option>
+        <option>🎰 Casino</option>
+        <option>🌳 Natur / Wandern</option>
+        <option>🌸 Garten / Park</option>
+        <option>👁️ Aussichtspunkt</option>
+        <option>🏖️ Strand</option>
+        <option>⛺ Camping</option>
+        <option>🎨 Kunst / Ausstellung</option>
+        <option>🎵 Konzert / Event</option>
+        <option>🐾 Zoo / Tierpark</option>
+        <option>🐠 Aquarium</option>
+        <option>🧖 Wellness / Sauna</option>
+        <option>⛷️ Ski / Winter</option>
+        <option>🎯 Sonstiges</option>
+      </select>
+    </div>
+    <div class="field"><label>Bewertung</label>
+      <div class="star-pick" id="starPick">
+        <span data-s="1">★</span><span data-s="2">★</span><span data-s="3">★</span><span data-s="4">★</span><span data-s="5">★</span>
+      </div>
+    </div>
+  </div>
+  <div class="field"><label>Adresse / Ort</label><input id="fAddr" placeholder="z. B. Sandstraße 1, 57072 Siegen"></div>
+  <div class="field"><label>Website (optional)</label><input id="fUrl" type="url" placeholder="https://…"></div>
+  <div class="field"><label>Notizen</label><textarea id="fNote" placeholder="Öffnungszeiten, Preise, Tipps …"></textarea></div>
+  <div class="field-row">
+    <div class="field"><label>Zuletzt besucht</label><input id="fVisit" type="date"></div>
+    <div class="field"><label>Preis-Niveau</label>
+      <select id="fPrice">
+        <option value="">Unbekannt</option>
+        <option value="free">Kostenlos</option>
+        <option value="low">Günstig (€)</option>
+        <option value="mid">Mittel (€€)</option>
+        <option value="high">Teuer (€€€)</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="ghost" id="cancelBtn">Abbrechen</button>
+    <button class="primary" id="saveBtn">Speichern</button>
+  </div>
+</div>
+</div>
+
+<script>
+const STORE = 'freizeit_v1';
+let state = { activities: [], theme: 'light' };
+try { state = Object.assign(state, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch(e) {}
+if (!Array.isArray(state.activities)) state.activities = [];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function persist() { localStorage.setItem(STORE, JSON.stringify(state)); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+const PRICE_LABEL = { free:'Kostenlos', low:'€', mid:'€€', high:'€€€' };
+
+/* ── OSM category mapping ── */
+const OSM_CAT = {
+  // Wasser
+  swimming_pool:'🏊 Schwimmbad', water_park:'🏊 Schwimmbad', swimming_area:'🏊 Schwimmbad',
+  paddling_pool:'🏊 Schwimmbad', lido:'🏊 Schwimmbad',
+  swimming:'🏊 Schwimmbad',
+  // Golf
+  miniature_golf:'⛳ Minigolf', golf_course:'⛳ Golf', disc_golf_course:'🥏 Disc Golf',
+  // Kino / Theater
+  cinema:'🎬 Kino',
+  theatre:'🎭 Theater',
+  // Kultur
+  museum:'🏛️ Museum', archaeological_site:'🏛️ Museum', monument:'🏛️ Museum',
+  heritage:'🏛️ Museum', ruins:'🏰 Schloss / Burg', castle:'🏰 Schloss / Burg',
+  planetarium:'🔭 Planetarium', library:'📚 Bibliothek',
+  // Bowling
+  bowling_alley:'🎳 Bowling', bowling:'🎳 Bowling',
+  // Klettern
+  climbing:'🧗 Klettern', climbing_wall:'🧗 Klettern',
+  // Eislaufen
+  ice_rink:'🛼 Rollschuhlaufen',
+  // Freizeitpark
+  theme_park:'🎡 Freizeitpark', amusement_park:'🎡 Freizeitpark',
+  attraction:'🎡 Freizeitpark',
+  // Fitness / Sport
+  fitness_centre:'🏋️ Fitness', gym:'🏋️ Fitness', sports_centre:'🏋️ Fitness',
+  sports_hall:'🏋️ Fitness', stadium:'🏟️ Stadion',
+  pitch:'🏃 Sport / Outdoor', track:'🏃 Sport / Outdoor', recreation_ground:'🏃 Sport / Outdoor',
+  // Gaming / Escape
+  amusement_arcade:'🎮 Gaming / Escape Room', escape_game:'🎮 Gaming / Escape Room',
+  laser_tag:'🎮 Gaming / Escape Room', paintball:'🎮 Gaming / Escape Room',
+  // Trampolin / Kart
+  trampoline_park:'🤸 Trampolin',
+  go_kart:'🏎️ Kart / Fahrspaß', karting:'🏎️ Kart / Fahrspaß',
+  // Reiten
+  horse_riding:'🐴 Reiten', equestrian:'🐴 Reiten',
+  // Bike / Skate
+  bike_park:'🚴 Bike Park', pump_track:'🚴 Bike Park', bmx_track:'🚴 Bike Park',
+  cycling:'🚴 Radfahren',
+  bmx:'🛹 Skatepark', skateboard:'🛹 Skatepark', skatepark:'🛹 Skatepark',
+  bicycle_rental:'🚲 Fahrradverleih',
+  // Restaurant / Essen
+  restaurant:'🍕 Restaurant', fast_food:'🍕 Restaurant', food_court:'🍕 Restaurant',
+  cafe:'☕ Café', coffee_shop:'☕ Café',
+  // Bar / Nachtleben
+  bar:'🍺 Bar / Pub', pub:'🍺 Bar / Pub', biergarten:'🍺 Biergarten',
+  nightclub:'🎵 Konzert / Event', casino:'🎰 Casino',
+  // Natur
+  park:'🌳 Natur / Wandern', nature_reserve:'🌳 Natur / Wandern', forest:'🌳 Natur / Wandern',
+  garden:'🌸 Garten / Park', dog_park:'🌳 Natur / Wandern',
+  picnic_site:'🌳 Natur / Wandern', viewpoint:'👁️ Aussichtspunkt',
+  beach:'🏖️ Strand', beach_resort:'🏖️ Strand',
+  // Camping
+  camp_site:'⛺ Camping', caravan_site:'⛺ Camping',
+  // Kunst
+  gallery:'🎨 Kunst / Ausstellung', arts_centre:'🎨 Kunst / Ausstellung',
+  exhibition:'🎨 Kunst / Ausstellung', artwork:'🎨 Kunst / Ausstellung',
+  // Zoo / Tiere
+  zoo:'🐾 Zoo / Tierpark', animal_park:'🐾 Zoo / Tierpark', aquarium:'🐠 Aquarium',
+  // Wellness
+  sauna:'🧖 Wellness / Sauna', spa:'🧖 Wellness / Sauna',
+  // Konzert / Event
+  concert_hall:'🎵 Konzert / Event', events_venue:'🎵 Konzert / Event',
+  social_centre:'🎵 Konzert / Event', community_centre:'🎵 Konzert / Event',
+};
+
+function osmCat(r) {
+  const tags = r.tags || {};
+  for (const key of ['leisure','amenity','tourism','sport','natural']) {
+    const v = tags[key];
+    if (v && OSM_CAT[v]) return OSM_CAT[v];
+  }
+  return '🎯 Sonstiges';
+}
+
+function osmName(r) {
+  return (r.tags && (r.tags.name || r.tags['name:de'])) || r.display_name?.split(',')[0] || 'Unbekannt';
+}
+
+function osmAddress(r) {
+  if (r.address) {
+    const a = r.address;
+    const street = a.road ? a.road + (a.house_number ? ' ' + a.house_number : '') : '';
+    const city = a.city || a.town || a.village || a.municipality || '';
+    const parts = [street, (a.postcode ? a.postcode + ' ' : '') + city].filter(Boolean);
+    return parts.join(', ');
+  }
+  if (r.tags) {
+    const t = r.tags;
+    const street = t['addr:street'] ? t['addr:street'] + (t['addr:housenumber'] ? ' ' + t['addr:housenumber'] : '') : '';
+    const city = t['addr:city'] || t['addr:town'] || '';
+    const postcode = t['addr:postcode'] || '';
+    const parts = [street, (postcode ? postcode + ' ' : '') + city].filter(Boolean);
+    return parts.join(', ');
+  }
+  return '';
+}
+
+/* ── Geocode helpers ── */
+async function geocodeOrt(q) {
+  const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=de,at,ch&q=' + encodeURIComponent(q);
+  const res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+  const data = await res.json();
+  return data[0] || null;
+}
+
+/* ── Search card logic ── */
+function setScStatus(msg) { $('scStatus').textContent = msg; }
+
+async function doSearch() {
+  const q = $('scOrt').value.trim();
+  const r = +$('scRadius').value;
+  if (!q) { setScStatus('Bitte Ort oder PLZ eingeben.'); return; }
+  setScStatus('Standort wird gesucht …');
+  try {
+    const place = await geocodeOrt(q);
+    if (!place) { setScStatus('Ort nicht gefunden – anderen Suchbegriff versuchen.'); return; }
+    doOverpassNearby(+place.lat, +place.lon, r);
+  } catch(e) {
+    setScStatus('Suche fehlgeschlagen – Internetverbindung prüfen.');
+  }
+}
+
+$('scSearchBtn').onclick = doSearch;
+$('scOrt').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+$('scGpsBtn').onclick = () => {
+  if (!navigator.geolocation) { setScStatus('Geolocation nicht verfügbar.'); return; }
+  setScStatus('📍 Standort wird ermittelt …');
+  navigator.geolocation.getCurrentPosition(
+    pos => doOverpassNearby(pos.coords.latitude, pos.coords.longitude, +$('scRadius').value),
+    ()  => setScStatus('Standortzugriff verweigert.'),
+    { timeout: 8000 }
+  );
+};
+
+/* ── Overpass nearby ── */
+async function doOverpassNearby(lat, lon, radius) {
+  const kmStr = radius >= 1000 ? (radius/1000).toFixed(0) + ' km' : radius + ' m';
+  setScStatus(`🔍 Suche Freizeitaktivitäten im Umkreis von ${kmStr} …`);
+  $('scResultsSection').style.display = 'none';
+  $('resultCatBar').style.display = 'none';
+
+  const r = radius;
+  const L = `"leisure"~"swimming_pool|water_park|swimming_area|paddling_pool|lido|miniature_golf|golf_course|disc_golf_course|bowling_alley|fitness_centre|sports_centre|sports_hall|ice_rink|theme_park|amusement_park|climbing|climbing_wall|go_kart|karting|escape_game|laser_tag|paintball|trampoline_park|horse_riding|beach_resort|sauna|stadium|track|pitch|garden|dog_park|nature_reserve|bike_park|pump_track|bmx_track|bicycle_rental"`;
+  const A = `"amenity"~"cinema|theatre|arts_centre|nightclub|bar|pub|biergarten|planetarium|library|bowling_alley|casino|community_centre|social_centre"`;
+  const T = `"tourism"~"museum|zoo|gallery|theme_park|amusement_park|attraction|viewpoint|aquarium|artwork|castle|ruins|camp_site|caravan_site"`;
+  const N = `"natural"~"beach|peak"`;
+  const S = `"sport"~"swimming|cycling|bmx|skateboard|equestrian"`;
+
+  const query = `[out:json][timeout:40];(
+    node[${L}](around:${r},${lat},${lon});
+    way[${L}](around:${r},${lat},${lon});
+    node[${A}](around:${r},${lat},${lon});
+    way[${A}](around:${r},${lat},${lon});
+    node[${T}](around:${r},${lat},${lon});
+    way[${T}](around:${r},${lat},${lon});
+    node[${N}](around:${r},${lat},${lon});
+    way[${N}](around:${r},${lat},${lon});
+    node[${S}](around:${r},${lat},${lon});
+    way[${S}](around:${r},${lat},${lon});
+  );out center qt 200;`;
+
+  try {
+    const res = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: 'data=' + encodeURIComponent(query)
+    });
+    const data = await res.json();
+    showOverpassResults(data.elements || [], lat, lon, kmStr);
+  } catch(e) {
+    setScStatus('Abruf fehlgeschlagen – Internetverbindung prüfen.');
+  }
+}
+
+function dist(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function elCoords(e) {
+  return { lat: e.lat ?? e.center?.lat, lon: e.lon ?? e.center?.lon };
+}
+
+/* ── OSM results state ── */
+let scAllResults = [];
+let scUserLat = 0, scUserLon = 0;
+let scActiveCat = '';
+
+function showOverpassResults(elements, userLat, userLon, kmStr) {
+  scUserLat = userLat; scUserLon = userLon;
+  const named = elements.filter(e => e.tags && e.tags.name && (e.lat != null || e.center?.lat != null));
+  named.sort((a,b) => {
+    const ca = elCoords(a), cb = elCoords(b);
+    return dist(userLat,userLon,ca.lat,ca.lon) - dist(userLat,userLon,cb.lat,cb.lon);
+  });
+  scAllResults = named;
+  scActiveCat = '';
+  scResultsCollapsed = false;
+  const cb = document.getElementById('scCollapseBtn');
+  if (cb) cb.textContent = '▼';
+  document.getElementById('scResults').classList.remove('collapsed');
+
+  if (!named.length) {
+    setScStatus(`Keine Freizeitaktivitäten im Umkreis von ${kmStr} gefunden.`);
+    return;
+  }
+  setScStatus(`${named.length} Aktivität${named.length===1?'':'en'} im Umkreis von ${kmStr} gefunden`);
+  buildResultCatChips(named);
+  renderScResults();
+}
+
+function buildResultCatChips(items) {
+  const catCounts = {};
+  items.forEach(e => { const c = osmCat(e); catCounts[c] = (catCounts[c]||0) + 1; });
+  const cats = Object.keys(catCounts).sort();
+  const bar = $('resultCatBar');
+  if (cats.length < 2) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = `<button class="chip active" data-rcat="">Alle (${items.length})</button>` +
+    cats.map(c => `<button class="chip" data-rcat="${esc(c)}">${esc(c)} <span style="opacity:.65;font-size:11px">${catCounts[c]}</span></button>`).join('');
+  bar.querySelectorAll('.chip').forEach(b => {
+    b.onclick = () => {
+      scActiveCat = b.dataset.rcat;
+      bar.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.rcat === scActiveCat));
+      renderScResults();
+    };
+  });
+}
+
+function renderScResults() {
+  const filtered = scActiveCat ? scAllResults.filter(e => osmCat(e) === scActiveCat) : scAllResults;
+  $('scResultsCount').textContent = filtered.length;
+  $('scResultsSection').style.display = '';
+  $('scResults').innerHTML = filtered.map((e, fi) => {
+    const ridx = scAllResults.indexOf(e);
+    const cat = osmCat(e);
+    const icon = cat.split(' ')[0];
+    const catLabel = cat.replace(/^\S+\s/, '');
+    const name = e.tags.name;
+    const addr = osmAddress(e);
+    const c = elCoords(e);
+    const km = dist(scUserLat,scUserLon,c.lat,c.lon);
+    const distStr = km < 1 ? Math.round(km*1000) + ' m' : km.toFixed(1) + ' km';
+    const mapQ = encodeURIComponent(name + (addr ? ' ' + addr : ''));
+    const alreadySaved = state.activities.some(a => a.name === name);
+    return `<div class="act-card">
+      <div class="act-header">
+        <div class="cat-icon">${icon}</div>
+        <div style="flex:1;min-width:0">
+          <div class="act-name">${esc(name)}</div>
+          <div class="act-cat">${esc(catLabel)}</div>
+        </div>
+      </div>
+      ${addr ? `<div class="act-address">📍 <span>${esc(addr)}</span></div>` : ''}
+      <div class="act-footer">
+        <span class="visit-badge">${distStr}</span>
+      </div>
+      <div class="act-actions">
+        <a class="act-btn route-btn" href="https://www.google.com/maps/search/?api=1&query=${mapQ}" target="_blank" rel="noopener">🗺 Maps</a>
+        ${alreadySaved
+          ? `<button class="act-btn" disabled style="opacity:.5">✓ Gespeichert</button>`
+          : `<button class="act-btn route-btn" onclick="addFromResult(${ridx})">＋ Speichern</button>`}
+      </div>
+    </div>`;
+  }).join('') || `<div class="empty" style="grid-column:1/-1"><strong>Keine Ergebnisse in dieser Kategorie</strong></div>`;
+}
+
+function addFromResult(ridx) {
+  const e = scAllResults[ridx];
+  if (!e) return;
+  const name = e.tags.name || '';
+  const addr = osmAddress(e);
+  const cat = osmCat(e);
+  const website = e.tags.website || e.tags['contact:website'] || '';
+  openAddPrefilled(name, cat, addr, website);
+}
+
+/* ── Star picker ── */
+let pickRating = 0;
+function updateStarPick() {
+  document.querySelectorAll('#starPick span').forEach(s => s.classList.toggle('on', +s.dataset.s <= pickRating));
+}
+document.querySelectorAll('#starPick span').forEach(s => {
+  s.onclick = () => { pickRating = +s.dataset.s === pickRating ? 0 : +s.dataset.s; updateStarPick(); };
+});
+
+/* ── Category chips (saved activities) ── */
+let filterCat = '', filterSearch = '';
+function buildCatChips() {
+  const used = [...new Set(state.activities.map(a => a.cat).filter(Boolean))].sort();
+  const chips = $('catChips');
+  chips.innerHTML = '<button class="chip' + (!filterCat?' active':'') + '" data-cat="">Alle</button>' +
+    used.map(c => `<button class="chip${filterCat===c?' active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+  chips.querySelectorAll('.chip').forEach(b => {
+    b.onclick = () => { filterCat = b.dataset.cat; render(); };
+  });
+}
+
+/* ── Stats ── */
+function updateStats() {
+  const all = state.activities;
+  $('statTotal').textContent = all.length;
+  $('statVisited').textContent = all.filter(a => a.lastVisit).length;
+  $('statFavs').textContent = all.filter(a => a.fav).length;
+  if (!all.length) { $('statCat').textContent = '—'; $('statCatHint').textContent = 'meiste Einträge'; return; }
+  const freq = {};
+  all.forEach(a => { if (a.cat) freq[a.cat] = (freq[a.cat]||0) + 1; });
+  const top = Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];
+  if (top) { $('statCat').textContent = top[0].split(' ')[0]; $('statCatHint').textContent = top[0].replace(/^\S+\s/,''); }
+}
+
+/* ── Card HTML ── */
+function cardHtml(a) {
+  const stars = Array.from({length:5},(_,i)=>`<span class="star-btn${i<a.rating?' on':''}">★</span>`).join('');
+  const catIcon = (a.cat||'').split(' ')[0] || '🎯';
+  const catLabel = (a.cat||'').replace(/^\S+\s/,'') || a.cat || '';
+  const visitStr = a.lastVisit ? 'Besucht ' + new Date(a.lastVisit).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+  const priceStr = PRICE_LABEL[a.price] || '';
+  const mapHref = a.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(a.address) : '';
+  return `<div class="act-card${a.fav?' is-fav':''}" data-id="${esc(a.id)}">
+    <div class="act-header">
+      <div class="cat-icon">${catIcon}</div>
+      <div style="flex:1;min-width:0">
+        <div class="act-name">${esc(a.name)}</div>
+        <div class="act-cat">${esc(catLabel)}</div>
+      </div>
+      <button class="fav-btn${a.fav?' active':''}" data-fav="${esc(a.id)}" title="${a.fav?'Aus Favoriten entfernen':'Zu Favoriten'}">♥</button>
+    </div>
+    ${a.address?`<div class="act-address">📍 <span>${esc(a.address)}</span></div>`:''}
+    ${a.note?`<div class="act-note">${esc(a.note)}</div>`:''}
+    <div class="act-footer">
+      <div class="act-rating">${stars}</div>
+      ${visitStr?`<span class="visit-badge">${esc(visitStr)}</span>`:''}
+      ${priceStr?`<span class="visit-badge" style="background:var(--bg);color:var(--muted)">${esc(priceStr)}</span>`:''}
+    </div>
+    <div class="act-actions">
+      ${mapHref?`<a class="act-btn route-btn" href="${esc(mapHref)}" target="_blank" rel="noopener">🗺 Maps</a>`:''}
+      ${a.url?`<a class="act-btn route-btn" href="${esc(a.url)}" target="_blank" rel="noopener">🔗 Website</a>`:''}
+      <button class="act-btn" data-edit="${esc(a.id)}">✏️</button>
+      <button class="act-btn danger" data-del="${esc(a.id)}">✕</button>
+    </div>
+  </div>`;
+}
+
+/* ── Render saved activities ── */
+function render() {
+  buildCatChips(); updateStats();
+  const q = filterSearch.toLowerCase();
+  let list = state.activities.filter(a => {
+    if (filterCat && a.cat !== filterCat) return false;
+    if (q && !(a.name||'').toLowerCase().includes(q) && !(a.address||'').toLowerCase().includes(q) && !(a.cat||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  $('listCount').textContent = list.length;
+  $('actGrid').innerHTML = list.length
+    ? list.map(cardHtml).join('')
+    : `<div class="empty" style="grid-column:1/-1"><strong>Keine Aktivitäten gefunden</strong>${state.activities.length?'Passe die Filter an.':'Nutze die Suche oben oder „Manuell" zum Hinzufügen.'}</div>`;
+  const favs = state.activities.filter(a => a.fav);
+  $('favSection').style.display = favs.length ? '' : 'none';
+  $('favCount').textContent = favs.length;
+  $('favGrid').innerHTML = favs.map(cardHtml).join('');
+  bindCardEvents($('actGrid')); bindCardEvents($('favGrid'));
+  // refresh OSM result cards (saved status may have changed)
+  if (scAllResults.length) renderScResults();
+}
+
+function bindCardEvents(container) {
+  container.querySelectorAll('[data-fav]').forEach(b => b.onclick = () => toggleFav(b.dataset.fav));
+  container.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openEdit(b.dataset.edit));
+  container.querySelectorAll('[data-del]').forEach(b => b.onclick = () => deleteAct(b.dataset.del));
+}
+function toggleFav(id) { const a = state.activities.find(x=>x.id===id); if(a){a.fav=!a.fav;persist();render();} }
+function deleteAct(id) { if(!confirm('Aktivität wirklich löschen?'))return; state.activities=state.activities.filter(x=>x.id!==id); persist();render(); }
+
+/* ── Add / Edit modal ── */
+function openAdd() {
+  $('modalTitle').textContent='Aktivität hinzufügen'; $('editId').value='';
+  $('fName').value=''; $('fCat').value=''; $('fAddr').value='';
+  $('fUrl').value=''; $('fNote').value=''; $('fVisit').value=''; $('fPrice').value='';
+  pickRating=0; updateStarPick();
+  $('overlay').classList.add('open'); setTimeout(()=>$('fName').focus(),60);
+}
+function openEdit(id) {
+  const a=state.activities.find(x=>x.id===id); if(!a)return;
+  $('modalTitle').textContent='Aktivität bearbeiten'; $('editId').value=a.id;
+  $('fName').value=a.name||''; $('fCat').value=a.cat||''; $('fAddr').value=a.address||'';
+  $('fUrl').value=a.url||''; $('fNote').value=a.note||''; $('fVisit').value=a.lastVisit||''; $('fPrice').value=a.price||'';
+  pickRating=a.rating||0; updateStarPick();
+  $('overlay').classList.add('open'); setTimeout(()=>$('fName').focus(),60);
+}
+function openAddPrefilled(name, cat, addr, url) {
+  $('modalTitle').textContent = 'Aktivität hinzufügen';
+  $('editId').value = '';
+  $('fName').value = name;
+  $('fCat').value = cat;
+  $('fAddr').value = addr;
+  $('fUrl').value = url;
+  $('fNote').value = '';
+  $('fVisit').value = '';
+  $('fPrice').value = '';
+  pickRating = 0; updateStarPick();
+  $('overlay').classList.add('open');
+  setTimeout(() => $('fCat').focus(), 60);
+}
+function closeModal() { $('overlay').classList.remove('open'); }
+function saveActivity() {
+  const name=$('fName').value.trim(), cat=$('fCat').value.trim();
+  if(!name||!cat){alert('Name und Kategorie sind Pflichtfelder.');return;}
+  const id=$('editId').value;
+  if(id){
+    const a=state.activities.find(x=>x.id===id);
+    if(a){a.name=name;a.cat=cat;a.address=$('fAddr').value.trim();a.url=$('fUrl').value.trim();a.note=$('fNote').value.trim();a.lastVisit=$('fVisit').value;a.price=$('fPrice').value;a.rating=pickRating;}
+  } else {
+    state.activities.unshift({id:uid(),name,cat,address:$('fAddr').value.trim(),url:$('fUrl').value.trim(),note:$('fNote').value.trim(),lastVisit:$('fVisit').value,price:$('fPrice').value,rating:pickRating,fav:false});
+  }
+  persist(); closeModal(); render();
+}
+
+$('addBtn').onclick=openAdd;
+$('cancelBtn').onclick=closeModal;
+$('saveBtn').onclick=saveActivity;
+$('overlay').onclick=e=>{if(e.target===e.currentTarget)closeModal();};
+$('filterInput').oninput=()=>{filterSearch=$('filterInput').value;render();};
+
+/* ── Theme ── */
+persist();};
+
+/* ── Collapse results ── */
+let scResultsCollapsed = false;
+function toggleScResults() {
+  scResultsCollapsed = !scResultsCollapsed;
+  document.getElementById('scResults').classList.toggle('collapsed', scResultsCollapsed);
+  document.getElementById('scCollapseBtn').textContent = scResultsCollapsed ? '▲' : '▼';
+}
+
+/* ── Scroll to top ── */
+function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scrollTopBtn');
+  if (!btn) return;
+  btn.classList.toggle('visible', window.scrollY > 200);
+}, { passive: true });
+
+render();
+
+function doQuickBackup(){
+  var d={};
+  for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);try{d[k]=JSON.parse(localStorage.getItem(k));}catch(e){d[k]=localStorage.getItem(k);}}
+  d._backup={created:new Date().toISOString()};
+  var bl=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(bl);
+  a.download="hub-backup-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>

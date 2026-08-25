@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kawasaki Z900 2024</title>
+<!-- deploy: 2026-08-25 -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#ffffff;
+  --bg2:#f4f4f4;
+  --text:#111111;
+  --muted:#888888;
+  --line:#e5e5e5;
+  --kawa:#6DC228;
+  --btn-p:#111111;
+  --btn-p-t:#ffffff;
+  --btn-s:#ebebeb;
+  --btn-s-t:#111111;
+}
+
+html,body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  font-size:16px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+
+/* ── Nav ── */
+.app-nav{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;
+  background:var(--bg);
+  border-bottom:1px solid var(--line);
+  transition:background .2s,border-color .2s;
+}
+.app-nav-back{
+  font-size:22px;color:var(--text);text-decoration:none;
+  width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+}
+.app-nav-label{
+  font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+}
+.app-nav-theme{
+  background:none;border:none;cursor:pointer;
+  font-size:20px;color:var(--muted);
+  width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+}
+
+/* ── Page quick-nav ── */
+.page-nav{
+  display:flex;overflow-x:auto;gap:8px;
+  padding:14px 20px;
+  border-bottom:1px solid var(--line);
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.page-nav::-webkit-scrollbar{display:none;}
+.page-nav a{
+  flex-shrink:0;
+  padding:7px 16px;
+  border-radius:100px;
+  border:1px solid var(--line);
+  font-size:12px;letter-spacing:.04em;
+  color:var(--text);text-decoration:none;
+  white-space:nowrap;
+  transition:background .15s,border-color .15s;
+  cursor:pointer;
+}
+.page-nav a:hover{background:var(--bg2);}
+
+/* ── Brand header ── */
+.brand{
+  text-align:center;
+  padding:48px 20px 0;
+}
+.brand-wordmark{
+  font-size:13px;letter-spacing:.4em;text-transform:uppercase;
+  color:var(--kawa);font-weight:700;margin-bottom:16px;
+}
+.brand-name{
+  font-size:clamp(2.4rem,9vw,3.6rem);
+  font-weight:700;letter-spacing:-.02em;line-height:1;
+  margin-bottom:14px;
+}
+.brand-badge{
+  display:inline-block;
+  padding:6px 16px;
+  border-radius:100px;
+  border:1px solid var(--kawa);
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--kawa);
+}
+
+/* ── Hero image ── */
+.hero-img{
+  margin:32px auto 0;
+  max-width:100%;
+  overflow:hidden;
+  background:var(--bg2);
+  transition:background .2s;
+}
+.hero-img img{
+  width:100%;display:block;
+  aspect-ratio:16/9;object-fit:cover;
+}
+.hero-placeholder{
+  width:100%;aspect-ratio:16/9;
+  background:linear-gradient(160deg,#0d0d0d 0%,#1a1a1a 55%,#0d2010 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+}
+.hero-placeholder .hero-emoji{font-size:72px;line-height:1}
+.hero-placeholder .hero-lbl{color:var(--kawa);font-size:12px;letter-spacing:.15em;font-weight:700}
+
+/* ── Key stats ── */
+.stats{
+  padding:56px 20px;
+  display:flex;flex-direction:column;align-items:center;
+  gap:52px;
+}
+.stat{text-align:center;}
+.stat-num{
+  font-size:clamp(3rem,12vw,5rem);
+  font-weight:700;color:var(--text);
+  letter-spacing:-.03em;line-height:1;
+  display:flex;align-items:baseline;justify-content:center;gap:6px;
+}
+.stat-unit{
+  font-size:clamp(1.4rem,5vw,2.4rem);
+  font-weight:400;color:var(--muted);
+}
+.stat-word{
+  font-size:clamp(1.6rem,7vw,3rem);
+  font-weight:700;color:var(--text);
+  letter-spacing:-.01em;line-height:1;
+}
+.stat-lbl{
+  margin-top:10px;
+  font-size:14px;color:var(--muted);
+  letter-spacing:.02em;
+}
+
+/* ── Divider band ── */
+.band{height:8px;background:var(--bg2);margin:0;transition:background .2s;}
+
+/* ── Section wrapper ── */
+.sec{
+  padding:40px 20px 0;
+  max-width:640px;
+  margin:0 auto;
+}
+.eyebrow{
+  font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:6px;
+}
+.sec-title{
+  font-size:22px;font-weight:700;
+  margin-bottom:28px;
+}
+
+/* ── Slider ── */
+.slider-outer{margin-top:40px;}
+.slider-wrap{position:relative;}
+.slider-vp{overflow:hidden;}
+.slider-track{
+  display:flex;
+  transition:transform .35s cubic-bezier(.25,.46,.45,.94);
+  will-change:transform;
+}
+.slide{flex:0 0 100%;position:relative;}
+.slide img{
+  width:100%;aspect-ratio:4/3;object-fit:cover;display:block;
+}
+.slide-placeholder{
+  width:100%;aspect-ratio:4/3;
+  background:linear-gradient(160deg,#0d0d0d 0%,#1a1a1a 60%,#0d2010 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+}
+.slide-placeholder-emoji{font-size:52px;line-height:1}
+.slide-placeholder-lbl{color:var(--kawa);font-size:11px;letter-spacing:.12em;font-weight:600}
+.slide-cap{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:12px 16px;
+  background:linear-gradient(transparent,rgba(0,0,0,.6));
+  color:#fff;font-size:13px;letter-spacing:.02em;
+}
+.sl-btn{
+  position:absolute;top:50%;transform:translateY(-50%);
+  background:rgba(255,255,255,.88);border:none;cursor:pointer;
+  width:42px;height:42px;border-radius:50%;
+  font-size:24px;display:flex;align-items:center;justify-content:center;
+  color:#111;box-shadow:0 2px 10px rgba(0,0,0,.15);
+  transition:background .15s;
+}
+.sl-prev{left:12px;}
+.sl-next{right:12px;}
+.sl-dots{
+  display:flex;justify-content:center;align-items:center;gap:6px;
+  padding:18px 0;
+}
+.sl-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--muted);opacity:.35;
+  cursor:pointer;border:none;
+  transition:opacity .2s,width .2s,border-radius .2s;
+}
+.sl-dot.on{opacity:1;width:20px;border-radius:3px;background:var(--kawa);}
+
+/* ── Gallery upload ── */
+.gal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.gal-upload-btn{
+  background:var(--kawa);border:none;color:#fff;cursor:pointer;
+  font-size:13px;font-weight:700;padding:6px 14px;border-radius:20px;
+  display:flex;align-items:center;gap:5px;font-family:inherit;
+}
+.upload-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:500;align-items:flex-end;justify-content:center;
+}
+.upload-overlay.open{display:flex;}
+.upload-box{
+  background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 36px;
+  width:100%;max-width:480px;
+}
+.upload-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 18px;}
+.upload-title{font-size:18px;font-weight:700;margin-bottom:6px;}
+.upload-sub{font-size:12px;color:#888;margin-bottom:16px;line-height:1.5;}
+.upload-input{
+  width:100%;padding:10px 12px;border:1.5px solid #e5e5e5;border-radius:12px;
+  font-size:14px;font-family:inherit;margin-bottom:10px;outline:none;
+}
+.upload-input:focus{border-color:var(--kawa);}
+.upload-btns{display:flex;gap:10px;margin-top:6px;}
+.upload-cancel{
+  flex:1;padding:12px;border:1.5px solid #e5e5e5;border-radius:12px;
+  font-size:14px;font-weight:600;font-family:inherit;background:#fff;cursor:pointer;
+}
+.upload-go{
+  flex:2;padding:12px;border:none;border-radius:12px;
+  background:var(--kawa);color:#fff;font-size:14px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+}
+.upload-progress{
+  margin-top:12px;font-size:12px;color:#888;text-align:center;min-height:18px;
+}
+[data-theme=dark] .upload-box{background:#1a1a1a;}
+[data-theme=dark] .upload-cancel{background:#1a1a1a;border-color:#333;color:#fff;}
+[data-theme=dark] .upload-input{background:#111;border-color:#333;color:#fff;}
+
+/* ── Tech accordion ── */
+.tech-blocks{margin-top:0;}
+.tblock{border-top:1px solid var(--line);transition:border-color .2s;}
+.tblock:last-child{border-bottom:1px solid var(--line);margin-bottom:48px;}
+.tblock-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 0;cursor:pointer;user-select:none;
+}
+.tblock-title{
+  font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text);
+}
+.tblock-arrow{
+  font-size:12px;color:var(--muted);
+  transition:transform .25s;
+  border:1px solid var(--line);border-radius:50%;
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+}
+.tblock.open .tblock-arrow{transform:rotate(180deg);}
+.tblock-body{display:none;padding-bottom:20px;}
+.tblock.open .tblock-body{display:block;}
+
+.trow{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding:11px 0;border-top:1px solid var(--line);gap:16px;
+}
+.trow:first-child{border-top:none;}
+.tlbl{font-size:13px;color:var(--muted);flex-shrink:0;}
+.tval{font-size:15px;font-weight:600;color:var(--text);text-align:right;}
+.tval.mono{font-family:ui-monospace,monospace;font-size:13px;word-break:break-all;}
+
+/* ── Equipment tags ── */
+.equip{
+  display:flex;flex-wrap:wrap;gap:8px;
+  padding-top:4px;
+}
+.etag{
+  padding:6px 13px;
+  border-radius:100px;
+  border:1px solid var(--line);
+  font-size:12px;color:var(--text);
+  letter-spacing:.01em;
+  transition:border-color .2s,color .2s;
+}
+
+/* ── Footer ── */
+.footer{
+  text-align:center;padding:32px 20px;
+  font-size:12px;color:var(--muted);letter-spacing:.05em;
+  border-top:1px solid var(--line);
+  transition:border-color .2s;
+}
+
+/* ── Werkstatt ── */
+.ws-card{
+  padding:20px;
+  border:1px solid var(--line);border-radius:12px;
+  background:var(--bg2);
+  margin-bottom:24px;
+}
+.ws-name{font-size:15px;font-weight:700;margin-bottom:4px;}
+.ws-addr{font-size:13px;color:var(--muted);margin-bottom:16px;}
+.ws-contacts{display:flex;flex-direction:column;gap:10px;}
+.ws-contact-link{
+  display:flex;align-items:center;gap:10px;
+  font-size:13px;color:var(--text);text-decoration:none;
+}
+.ws-contact-link:hover{color:var(--muted);}
+.ws-contact-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+.ws-hours{margin-bottom:24px;}
+.ws-hours-title{
+  font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:16px;
+}
+.ws-hours-group{margin-bottom:20px;}
+.ws-hours-label{
+  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:4px;
+}
+.ws-closed{color:#c0392b;font-weight:500;}
+
+/* ── Manual link card ── */
+.manual-link{
+  display:flex;align-items:center;gap:16px;
+  margin-top:24px;margin-bottom:32px;
+  padding:18px 20px;
+  border:1px solid var(--line);border-radius:12px;
+  text-decoration:none;color:var(--text);
+  background:var(--bg2);
+  transition:border-color .2s,background .2s;
+}
+.manual-link:hover{border-color:var(--text);}
+.manual-link-icon{font-size:24px;flex-shrink:0;}
+.manual-link-body{flex:1;}
+.manual-link-title{font-size:14px;font-weight:600;margin-bottom:3px;}
+.manual-link-meta{font-size:12px;color:var(--muted);}
+.manual-link-arrow{font-size:18px;color:var(--muted);flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="app-nav">
+  <a class="app-nav-back" href="index.html" aria-label="Zurück">←</a>
+  <span class="app-nav-label">Mein Motorrad</span>
+  <button class="app-nav-theme" onclick="shareKawasaki()" aria-label="Teilen" title="Teilen" style="background:none;border:none;cursor:pointer;font-size:inherit;padding:0">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+  </button>
+</nav>
+
+<!-- Quick-nav -->
+<nav class="page-nav" aria-label="Seitennavigation">
+  <a href="#galerie">Galerie</a>
+  <a href="#technik">Technik</a>
+  <a href="#ausstattung">Ausstattung</a>
+  <a href="#werkstatt">Werkstatt</a>
+  <a href="#anleitung">Bedienungsanleitung</a>
+  <a onclick="shareKawasaki()" style="border-color:var(--text);font-weight:600">↑ Teilen</a>
+</nav>
+
+<!-- Brand -->
+<div class="brand">
+  <div class="brand-wordmark">KAWASAKI</div>
+  <div class="brand-name">Z900</div>
+  <span class="brand-badge">Baujahr 2024</span>
+</div>
+
+<!-- Hero image -->
+<div class="hero-img">
+  <div class="hero-placeholder">
+    <span class="hero-emoji">🏍️</span>
+    <span class="hero-lbl">KAWASAKI Z900 · 2024</span>
+  </div>
+</div>
+
+<!-- Key stats -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-num">125<span class="stat-unit">PS</span></div>
+    <div class="stat-lbl">Leistung · 92 kW · 948 cm³</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" id="statKm">–<span class="stat-unit">km</span></div>
+    <div class="stat-lbl">Kilometerstand</div>
+  </div>
+  <div class="stat">
+    <div class="stat-word">6-Gang</div>
+    <div class="stat-lbl">Getriebe</div>
+  </div>
+  <div class="stat">
+    <div class="stat-word" style="font-size:clamp(1.4rem,5vw,2.2rem)">2024</div>
+    <div class="stat-lbl">Baujahr</div>
+  </div>
+</div>
+
+<div class="band"></div>
+
+<!-- Gallery -->
+<div class="slider-outer" id="galerie">
+  <div class="sec">
+    <div class="gal-header">
+      <div>
+        <div class="eyebrow">Galerie</div>
+        <div class="sec-title">Fotos</div>
+      </div>
+      <button class="gal-upload-btn" onclick="openUpload()">📷 Hochladen</button>
+    </div>
+  </div>
+  <div class="slider-wrap">
+    <div class="slider-vp" id="slVp">
+      <div class="slider-track" id="slTrack"></div>
+      <button class="sl-btn sl-prev" id="slPrev" aria-label="Zurück">&#8249;</button>
+      <button class="sl-btn sl-next" id="slNext" aria-label="Weiter">&#8250;</button>
+    </div>
+    <div class="sl-dots" id="slDots"></div>
+  </div>
+</div>
+
+<!-- Upload overlay -->
+<div class="upload-overlay" id="uploadOverlay" onclick="if(event.target===this)closeUpload()">
+  <div class="upload-box">
+    <div class="upload-handle"></div>
+    <div class="upload-title">📷 Foto hochladen</div>
+    <div class="upload-sub" id="uploadSub">GitHub Token einmalig eingeben (wird lokal gespeichert).</div>
+    <input class="upload-input" id="uploadToken" type="password" placeholder="GitHub Personal Access Token" autocomplete="off">
+    <input class="upload-input" id="uploadCaption" type="text" placeholder="Bildunterschrift (optional)" maxlength="80">
+    <input type="file" id="uploadFile" accept="image/*" style="display:none" onchange="onFileSelected()">
+    <div class="upload-btns">
+      <button class="upload-cancel" onclick="closeUpload()">Abbrechen</button>
+      <button class="upload-go" onclick="startUpload()">Foto wählen &amp; hochladen</button>
+    </div>
+    <div class="upload-progress" id="uploadProgress"></div>
+  </div>
+</div>
+
+<div class="band" style="margin-top:40px"></div>
+
+<!-- Technical Data -->
+<div class="sec" id="technik" style="padding-top:40px">
+  <div class="eyebrow">Fahrzeugdaten</div>
+  <div class="sec-title">Technische Daten</div>
+
+  <div class="tech-blocks">
+
+    <div class="tblock open">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Fahrzeug</span>
+        <span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="trow"><span class="tlbl">Marke</span><span class="tval">Kawasaki</span></div>
+        <div class="trow"><span class="tlbl">Modell</span><span class="tval">Z900</span></div>
+        <div class="trow"><span class="tlbl">Typ</span><span class="tval">Naked Bike</span></div>
+        <div class="trow"><span class="tlbl">Baujahr</span><span class="tval">2024</span></div>
+        <div class="trow"><span class="tlbl">Farbe</span><span class="tval">Metallic Spark Black</span></div>
+        <div class="trow"><span class="tlbl">Rahmen &amp; Felgen</span><span class="tval">Lime Green</span></div>
+        <div class="trow"><span class="tlbl">Kilometerstand</span><span class="tval" id="tdKm">–</span></div>
+      </div>
+    </div>
+
+    <div class="tblock">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Motor &amp; Antrieb</span>
+        <span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="trow"><span class="tlbl">Motor</span><span class="tval">948 cm³ Reihen-Vierzylinder</span></div>
+        <div class="trow"><span class="tlbl">Hubraum</span><span class="tval">948 cm³</span></div>
+        <div class="trow"><span class="tlbl">Zylinder</span><span class="tval">4 (Reihe)</span></div>
+        <div class="trow"><span class="tlbl">Leistung</span><span class="tval">92 kW / 125 PS bei 9.500 rpm</span></div>
+        <div class="trow"><span class="tlbl">Drehmoment</span><span class="tval">98,6 Nm bei 7.700 rpm</span></div>
+        <div class="trow"><span class="tlbl">Kraftstoff</span><span class="tval">Super (Benzin)</span></div>
+        <div class="trow"><span class="tlbl">Tankinhalt</span><span class="tval">17 L</span></div>
+        <div class="trow"><span class="tlbl">Getriebe</span><span class="tval">6-Gang</span></div>
+        <div class="trow"><span class="tlbl">Antrieb</span><span class="tval">Kettenantrieb</span></div>
+      </div>
+    </div>
+
+    <div class="tblock">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Fahrwerk &amp; Maße</span>
+        <span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="trow"><span class="tlbl">Rahmen</span><span class="tval">Gitterrohrrahmen · hochfester Stahl</span></div>
+        <div class="trow"><span class="tlbl">Gabel vorne</span><span class="tval">Invertierte USD-Gabel · 41 mm</span></div>
+        <div class="trow"><span class="tlbl">Federbein hinten</span><span class="tval">Monoshock · einstellbar</span></div>
+        <div class="trow"><span class="tlbl">Radstand</span><span class="tval">1.450 mm</span></div>
+        <div class="trow"><span class="tlbl">Sitzhöhe</span><span class="tval">795 mm</span></div>
+        <div class="trow"><span class="tlbl">Leergewicht</span><span class="tval">214 kg</span></div>
+        <div class="trow"><span class="tlbl">Reifen vorne</span><span class="tval">120/70 ZR17</span></div>
+        <div class="trow"><span class="tlbl">Reifen hinten</span><span class="tval">180/55 ZR17</span></div>
+        <div class="trow"><span class="tlbl">Bremsen vorne</span><span class="tval">2 × 300 mm · radial 4-Kolben</span></div>
+        <div class="trow"><span class="tlbl">Bremsen hinten</span><span class="tval">1 × 250 mm · 1-Kolben</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="band"></div>
+
+<!-- Equipment -->
+<div class="sec" id="ausstattung" style="padding-top:40px">
+  <div class="eyebrow">Serienausstattung</div>
+  <div class="sec-title">Ausstattung</div>
+
+  <div class="tech-blocks">
+
+    <div class="tblock open">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Sicherheit &amp; Elektronik</span>
+        <span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="equip">
+          <span class="etag">ABS</span>
+          <span class="etag">KTRC</span>
+          <span class="etag">Power-Modi (Full / Low)</span>
+          <span class="etag">LED-Scheinwerfer</span>
+          <span class="etag">LED-Rücklicht</span>
+          <span class="etag">LED-Blinker</span>
+          <span class="etag">Kurven-ABS</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tblock">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Cockpit &amp; Komfort</span>
+        <span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="equip">
+          <span class="etag">LCD-Rundinstrument</span>
+          <span class="etag">Traktionskontroll-Anzeige</span>
+          <span class="etag">Tankuhr</span>
+          <span class="etag">Schaltempfehlung</span>
+          <span class="etag">Tageskilometerzähler</span>
+          <span class="etag">Uhr</span>
+          <span class="etag">Unterlenker (Aggressive Ergonomie)</span>
+          <span class="etag">Fußrastenanlage einstellbar</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tblock">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Allgemein</span>
+        <span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="equip">
+          <span class="etag">Euro 5</span>
+          <span class="etag">Neufahrzeug</span>
+          <span class="etag">Lime Green Rahmen</span>
+          <span class="etag">Lime Green Felgen</span>
+          <span class="etag">Lime Green Motorabdeckungen</span>
+          <span class="etag">Sturzbügel</span>
+          <span class="etag">Kettenschutz</span>
+          <span class="etag">Seitenständer</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="band" style="margin-top:40px"></div>
+
+<!-- Werkstatt -->
+<div class="sec" id="werkstatt" style="padding-top:40px;padding-bottom:48px">
+  <div class="eyebrow">Händler</div>
+  <div class="sec-title">Werkstatt</div>
+
+  <div class="ws-card">
+    <div class="ws-name">Händler / Werkstatt</div>
+    <div class="ws-addr">Adresse folgt</div>
+    <div class="ws-contacts">
+      <span style="font-size:13px;color:var(--muted)">Hier kannst du deine Kawasaki-Werkstatt eintragen.</span>
+    </div>
+  </div>
+</div>
+
+<div class="band" style="margin-top:40px"></div>
+
+<!-- Bedienungsanleitung -->
+<div class="sec" id="anleitung" style="padding-top:40px;padding-bottom:48px">
+  <div class="eyebrow">Motorrad</div>
+  <div class="sec-title">Bedienungsanleitung</div>
+
+  <a class="manual-link" href="https://www.kawasaki.de/de-de/owner/service-manual.html" target="_blank" rel="noopener">
+    <div class="manual-link-icon">📖</div>
+    <div class="manual-link-body">
+      <div class="manual-link-title">Offizielle Bedienungsanleitung öffnen</div>
+      <div class="manual-link-meta">Kawasaki Digital · Z900 2024 · Sprache: Deutsch</div>
+    </div>
+    <div class="manual-link-arrow">→</div>
+  </a>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">Kawasaki Z900 · 2024</div>
+
+<script>
+/* Share */
+function shareKawasaki() {
+  const url  = 'https://obiwankiwibi.github.io/Kalorientracker-Claude/kawasaki-share.html';
+  const text = 'Kawasaki Z900 2024 · Metallic Spark Black / Lime Green';
+  if (navigator.share) {
+    navigator.share({ title: text, url });
+  } else {
+    navigator.clipboard?.writeText(url).then(() => alert('Link kopiert!')).catch(() => {
+      window.open(url, '_blank');
+    });
+  }
+}
+
+/* Accordion */
+function toggle(hd) { hd.parentElement.classList.toggle('open'); }
+
+/* ── Firebase + Gallery ── */
+const FB_CONFIG = {
+  apiKey:            'AIzaSyDzy2Y_UxOzLh2uVa3xpqZwl_52A-ULo_Y',
+  authDomain:        'claude-code-34507.firebaseapp.com',
+  databaseURL:       'https://claude-code-34507-default-rtdb.europe-west1.firebasedatabase.app',
+  projectId:         'claude-code-34507',
+  storageBucket:     'claude-code-34507.firebasestorage.app',
+  messagingSenderId: '560819187404',
+  appId:             '1:560819187404:web:394cee9f588237198bdc69'
+};
+firebase.initializeApp(FB_CONFIG);
+const db = firebase.database();
+
+const GH_OWNER  = 'obiwankiwibi';
+const GH_REPO   = 'Kalorientracker-Claude';
+const GH_BRANCH = 'main';
+const GH_FOLDER = 'images/kawasaki';
+const FB_PATH   = 'kawasaki_gallery';
+
+const PLACEHOLDER_HTML = `
+  <div class="slide"><div class="slide-placeholder">
+    <span class="slide-placeholder-emoji">🏍️</span>
+    <span class="slide-placeholder-lbl">Z900 · METALLIC SPARK BLACK</span>
+  </div><div class="slide-cap">Kawasaki Z900 2024</div></div>
+  <div class="slide"><div class="slide-placeholder">
+    <span class="slide-placeholder-emoji">📸</span>
+    <span class="slide-placeholder-lbl">FOTOS FOLGEN</span>
+  </div><div class="slide-cap">Eigene Fotos hier</div></div>`;
+
+const track = document.getElementById('slTrack');
+const dotsEl = document.getElementById('slDots');
+const vp     = document.getElementById('slVp');
+let cur = 0, sx = 0;
+
+function renderSlider(images) {
+  if (!images || !images.length) {
+    track.innerHTML = PLACEHOLDER_HTML;
+  } else {
+    track.innerHTML = images.map((img, i) =>
+      `<div class="slide">
+        <img src="${img.url}" alt="${img.caption||''}" loading="${i===0?'eager':'lazy'}" style="width:100%;aspect-ratio:4/3;object-fit:cover">
+        <div class="slide-cap">${img.caption||''}</div>
+      </div>`
+    ).join('');
+  }
+  dotsEl.innerHTML = '';
+  track.querySelectorAll('.slide').forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'sl-dot' + (i===0?' on':'');
+    d.setAttribute('aria-label','Bild '+(i+1));
+    d.onclick = () => go(i);
+    dotsEl.appendChild(d);
+  });
+  cur = 0;
+  track.style.transform = 'translateX(0)';
+}
+
+function go(n) {
+  const total = track.querySelectorAll('.slide').length;
+  if (!total) return;
+  cur = (n + total) % total;
+  track.style.transform = 'translateX(-'+cur*100+'%)';
+  dotsEl.querySelectorAll('.sl-dot').forEach((d,i) => d.classList.toggle('on', i===cur));
+}
+
+document.getElementById('slPrev').onclick = () => go(cur-1);
+document.getElementById('slNext').onclick = () => go(cur+1);
+vp.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, {passive:true});
+vp.addEventListener('touchend',   e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (Math.abs(dx) > 40) go(dx < 0 ? cur+1 : cur-1);
+}, {passive:true});
+
+// Load gallery from Firebase
+renderSlider([]);
+db.ref(FB_PATH).on('value', snap => {
+  const data = snap.val();
+  const imgs = data
+    ? Object.entries(data).sort(([a],[b])=>parseInt(a)-parseInt(b)).map(([,v])=>v)
+    : [];
+  renderSlider(imgs);
+});
+
+/* ── Upload ── */
+function openUpload() {
+  const tok = localStorage.getItem('gh_token_kawa') || '';
+  document.getElementById('uploadToken').value = tok;
+  document.getElementById('uploadCaption').value = '';
+  document.getElementById('uploadProgress').textContent = '';
+  document.getElementById('uploadSub').textContent = tok
+    ? 'Token bereits gespeichert. Neues Foto wählen.'
+    : 'GitHub Personal Access Token einmalig eingeben (wird nur lokal gespeichert).';
+  document.getElementById('uploadOverlay').classList.add('open');
+}
+function closeUpload() {
+  document.getElementById('uploadOverlay').classList.remove('open');
+}
+
+function compressImage(file, maxPx=1920, quality=0.85) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const w = Math.round(img.width  * scale);
+      const h = Math.round(img.height * scale);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(c.toDataURL('image/jpeg', quality).split(',')[1]);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+async function startUpload() {
+  const tok = document.getElementById('uploadToken').value.trim();
+  if (!tok) { alert('Bitte GitHub Token eingeben.'); return; }
+  localStorage.setItem('gh_token_kawa', tok);
+  document.getElementById('uploadFile').click();
+}
+
+async function onFileSelected() {
+  const file = document.getElementById('uploadFile').files[0];
+  if (!file) return;
+  const caption = document.getElementById('uploadCaption').value.trim();
+  const prog    = document.getElementById('uploadProgress');
+  const tok     = localStorage.getItem('gh_token_kawa');
+
+  prog.textContent = '⏳ Bild wird komprimiert…';
+  let b64;
+  try { b64 = await compressImage(file); }
+  catch(e) { prog.textContent = '❌ Fehler beim Komprimieren.'; return; }
+
+  const ts  = Date.now();
+  const ext = file.type === 'image/png' ? 'png' : 'jpg';
+  const filename = `photo_${ts}.${ext}`;
+  const path = `${GH_FOLDER}/${filename}`;
+
+  prog.textContent = '⏳ Wird hochgeladen…';
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${tok}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: `Galerie: ${caption || filename}`,
+        content: b64,
+        branch:  GH_BRANCH
+      })
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(()=>({}));
+      prog.textContent = '❌ GitHub Fehler: ' + (err.message || r.status);
+      return;
+    }
+  } catch(e) {
+    prog.textContent = '❌ Netzwerkfehler: ' + e.message;
+    return;
+  }
+
+  const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${path}`;
+  await db.ref(FB_PATH + '/' + ts).set({ url, caption, uploaded: ts });
+
+  prog.textContent = '✅ Hochgeladen!';
+  document.getElementById('uploadCaption').value = '';
+  document.getElementById('uploadFile').value = '';
+  setTimeout(closeUpload, 1200);
+}
+</script>
+</body>
+</html>

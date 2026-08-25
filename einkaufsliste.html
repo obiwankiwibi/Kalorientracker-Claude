@@ -1,0 +1,3032 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Einkaufsliste</title>
+
+    <!-- Firebase SDK (nur geladen wenn konfiguriert) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #edf2f7;
+      --surface:  #FFFFFF;
+      --card:     #eef4ff;
+      --teal:     #0050c8;
+      --teal-dim: rgba(27,79,216,0.5);
+      --salmon:   #C84B32;
+      --text:     #1a1a2e;
+      --muted:    #6b7a99;
+      --border:   rgba(0,0,80,0.10);
+      --green:    #2A8C54;
+      --red:      #C84B32;
+      --shadow:   0 4px 18px rgba(0,0,80,0.08);
+    }
+html { height: 100%; }
+
+    body {
+      background: transparent;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding-bottom: 220px;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+
+    /* ── Connection bar ── */
+    #connBar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 5px 12px;
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .dot.off { background: var(--red); }
+
+    /* ── Setup banner ── */
+    #setupBanner {
+      display: none;
+      background: #2d2510;
+      border: 1px solid #6b5a20;
+      border-radius: 18px;
+      margin: 12px;
+      padding: 14px;
+      font-size: 13px;
+      color: #e0c870;
+      line-height: 1.6;
+    }
+    #setupBanner h3 { margin-bottom: 6px; font-size: 14px; }
+    #setupBanner code {
+      background: #1a1507;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      display: block;
+      margin: 6px 0;
+      word-break: break-all;
+    }
+
+    /* ── Page background (circuit board) ── */
+    #page-bg{position:fixed;inset:0;z-index:-1;background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%);will-change:transform}
+    
+    /* ── Header ── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(7px);
+      -webkit-backdrop-filter: blur(7px);
+    }
+
+    .header-back {
+      color: var(--muted);
+      font-size: 15px;
+      cursor: pointer;
+      padding: 4px 2px;
+      white-space: nowrap;
+    }
+
+    .header-title {
+      flex: 1;
+      text-align: center;
+      font-size: 17px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .icon-btn {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .icon-btn:active { opacity: 0.7; }
+
+    /* ── Search bar (floating bottom) ── */
+    .search-wrap {
+      padding: 10px 12px;
+      position: fixed;
+      bottom: 86px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 48px);
+      max-width: 380px;
+      z-index: 199;
+      background: transparent;
+    }
+
+    /* ── Price bar ── */
+    #priceBar {
+      position: sticky;
+      top: 55px;
+      z-index: 98;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+      gap: 8px;
+    }
+    #priceTotal {
+      font-weight: 700;
+      color: var(--teal);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .search-inner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border-radius: 22px;
+      padding: 9px 14px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow, 0 4px 20px rgba(0,0,0,0.2));
+    }
+
+    .search-inner input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+    }
+    .search-inner input::placeholder { color: var(--muted); }
+
+    .add-fab {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--teal);
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 22px;
+      line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-weight: 300;
+    }
+    .add-fab:active { background: var(--teal-dim); }
+
+    /* ── Sections ── */
+    .section {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    #sugSection { padding-bottom: 80px; }
+    .section:last-of-type { border-bottom: none; }
+
+    .sec-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 8px 0 10px;
+      user-select: none;
+    }
+
+    .sec-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sec-title::before {
+      content: '';
+      width: 3px; height: 13px;
+      border-radius: 2px;
+      background: var(--teal);
+      flex-shrink: 0;
+    }
+
+    .sec-arrow { font-size: 10px; transition: transform 0.2s; }
+    .collapsed .sec-arrow { transform: rotate(-90deg); }
+
+    /* ── Tile grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+    }
+
+    .tile {
+      border-radius: 20px;
+      padding: 12px 8px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      position: relative;
+      min-height: 88px;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: transform 0.1s, opacity 0.15s;
+      animation: pop 0.15s ease-out;
+    }
+    .tile:active { transform: scale(0.93); }
+
+    @keyframes pop {
+      from { transform: scale(0.82); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    .tile-emoji { font-size: 26px; line-height: 1; }
+    .tile-name  { font-size: 11.5px; font-weight: 500; text-align: center; line-height: 1.25; word-break: break-word; }
+    .tile-price { font-size: 10px; font-weight: 600; opacity: 0.72; margin-top: 1px; }
+    .tile-kcal-price { font-size: 8.5px; font-weight: 500; opacity: 0.68; margin-top: 0; }
+    .tile-amount { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 700; opacity: 0.9; }
+    .tile-store  { font-size: 9.5px; color: rgba(255,255,255,0.95); background: rgba(255,255,255,0.22); border-radius: 10px; padding: 1px 6px; margin-top: 2px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+    .store-chip  { display: inline-block; padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface); font-size: 12px; font-weight: 600; margin-right: 6px; white-space: nowrap; cursor: pointer; transition: border-color .15s, background .15s; }
+    .store-chip.active { border-color: var(--teal); background: rgba(0,80,200,0.10); color: var(--teal); }
+
+    /* Active items — salmon */
+    .tile.active {
+      background: var(--salmon);
+      color: #fff;
+    }
+
+    /* Checked items — teal, dimmed */
+    .tile.done {
+      background: var(--teal);
+      color: #fff;
+      opacity: 0.55;
+    }
+    .tile.done .tile-emoji::after {
+      content: ' ✓';
+      font-size: 13px;
+    }
+
+    /* Suggestions */
+    .tile.sug {
+      background: linear-gradient(145deg, rgba(27,79,216,0.55), rgba(0,50,180,0.45));
+      color: #fff;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+
+    /* Light mode tiles — white card look */
+    html[data-theme="light"] .tile:not(.active):not(.done):not(.sug) {
+      background: #ffffff;
+      box-shadow: 0 2px 10px rgba(0,50,150,0.08);
+      color: var(--text);
+    }
+    .tile.sug.in-list { opacity: 0.45; filter: grayscale(30%); }
+
+    /* Empty state */
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 20px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--border); margin: 4px 12px; }
+
+    /* ── Category chips ── */
+    .cat-row {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      padding: 0 12px 10px;
+      scrollbar-width: none;
+    }
+    .cat-row::-webkit-scrollbar { display: none; }
+
+    .chip {
+      flex-shrink: 0;
+      padding: 5px 13px;
+      border-radius: 18px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 12.5px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .chip.on { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+    /* Split Händler chip: [Name | ★] */
+    .haendler-chip-wrap { display: inline-flex; flex-shrink: 0; }
+    .haendler-chip-wrap .chip { border-radius: 18px 0 0 18px; border-right: none; white-space: nowrap; }
+    .haendler-star-btn {
+      flex-shrink: 0; padding: 5px 8px;
+      border: 1px solid var(--border); border-left: none; border-radius: 0 18px 18px 0;
+      background: var(--surface); color: var(--muted); font-size: 11px; cursor: pointer;
+      transition: color 0.15s, background 0.15s;
+    }
+    .haendler-star-btn.on { color: #f5a623; background: rgba(245,166,35,0.1); border-color: rgba(245,166,35,0.4); }
+    .sort-row .chip { font-size: 11px; padding: 3px 10px; }
+    .sort-row .chip.on { background: var(--layer2); color: var(--teal); border-color: var(--teal); font-weight: 700; }
+
+    /* ── Bottom picker sheet ── */
+    .sheet-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 300;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .sheet-overlay.open { display: flex; }
+
+    .sheet {
+      background: var(--surface);
+      width: 100%;
+      max-width: 430px;
+      border-radius: 22px 22px 0 0;
+      padding: 20px 14px 36px;
+      border-top: 1px solid var(--border);
+    }
+
+    .sheet-handle {
+      width: 40px; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+
+    .sheet-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .amount-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .amt-chip {
+      padding: 8px 16px;
+      background: var(--card);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      border: 2px solid transparent;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .amt-chip.on { border-color: var(--teal); background: rgba(61,189,181,0.12); }
+
+    #storeChips .amt-chip {
+      border-color: var(--border);
+      border-width: 1.5px;
+      background: var(--bg);
+      font-weight: 600;
+      font-size: 12.5px;
+      color: var(--text);
+    }
+    #storeChips .amt-chip.on {
+      border-color: var(--teal);
+      background: var(--teal);
+      color: #fff;
+    }
+
+    .sheet-input {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 18px;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+    .sheet-input:focus { border-color: var(--teal); }
+
+    .sheet-btns { display: flex; gap: 9px; }
+
+    .sh-btn {
+      flex: 1;
+      padding: 13px;
+      border-radius: 18px;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+    .sh-btn:active { opacity: 0.8; }
+    .sh-btn.primary { background: var(--teal); color: #fff; }
+    .sh-btn.danger   { background: #4a2020; color: #ff7070; flex: 0 0 auto; padding: 13px 16px; }
+    .sh-btn.secondary { background: var(--card); color: var(--text); }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0 18px;
+      z-index: 200;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 4px 14px;
+      position: relative;
+    }
+    .nav-item.on { color: var(--teal); }
+    .nav-icon { font-size: 20px; }
+
+    .badge {
+      position: absolute;
+      top: 0; right: 6px;
+      background: var(--salmon);
+      color: #fff;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 5px;
+      min-width: 17px;
+      text-align: center;
+      display: none;
+    }
+    .badge.show { display: block; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 400;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── Store cards ── */
+    .store-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .store-card {
+      border-radius: 18px;
+      padding: 22px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      color: #fff;
+      transition: transform 0.12s, opacity 0.12s;
+      position: relative;
+      overflow: hidden;
+    }
+    .store-card:active { transform: scale(0.95); opacity: 0.85; }
+
+    .store-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.08);
+      border-radius: inherit;
+    }
+
+    .store-emoji { font-size: 32px; }
+    .store-name  { font-size: 15px; font-weight: 700; }
+    .store-label { font-size: 11px; opacity: 0.8; }
+    .store-addr  { font-size: 10px; opacity: 0.72; text-align: center; line-height: 1.35; margin-top: -4px; }
+    .store-open-badge   { display:inline-block; font-size:10px; font-weight:700; background:rgba(255,255,255,0.22); border-radius:99px; padding:2px 9px; margin-bottom:2px; }
+    .store-closed-badge { display:inline-block; font-size:10px; font-weight:700; background:rgba(0,0,0,0.20); border-radius:99px; padding:2px 9px; margin-bottom:2px; }
+
+    /* ── Restaurant cards ── */
+    .rest-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .rest-card {
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      color: #fff;
+      transition: transform 0.12s, opacity 0.12s;
+      position: relative;
+      overflow: hidden;
+    }
+    .rest-card:active { transform: scale(0.97); opacity: 0.85; }
+
+    .rest-emoji { font-size: 30px; flex-shrink: 0; }
+
+    .rest-info { flex: 1; min-width: 0; }
+    .rest-name  { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .rest-hours { font-size: 11px; opacity: 0.8; line-height: 1.4; }
+
+    .rest-arrow { font-size: 18px; opacity: 0.7; flex-shrink: 0; }
+
+    /* ── Scan button ── */
+    .scan-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .scan-btn:active { background: var(--card); }
+
+    /* ── Scanner overlay ── */
+    #scanOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 600;
+      flex-direction: column;
+    }
+    #scanOverlay.open { display: flex; }
+
+    #scanVideo {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    .scan-reticle {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -60%);
+      width: 260px; height: 160px;
+      border: 2px solid #fff;
+      border-radius: 18px;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
+      pointer-events: none;
+    }
+    .scan-reticle::before, .scan-reticle::after {
+      content: '';
+      position: absolute;
+      width: 24px; height: 24px;
+      border-color: var(--teal);
+      border-style: solid;
+    }
+    .scan-reticle::before {
+      top: -2px; left: -2px;
+      border-width: 3px 0 0 3px;
+      border-radius: 10px 0 0 0;
+    }
+    .scan-reticle::after {
+      bottom: -2px; right: -2px;
+      border-width: 0 3px 3px 0;
+      border-radius: 0 0 10px 0;
+    }
+
+    #scanStatus {
+      position: absolute;
+      bottom: 140px; left: 0; right: 0;
+      text-align: center;
+      color: #fff;
+      font-size: 14px;
+      padding: 10px 20px;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(4px);
+    }
+
+    .scan-close {
+      position: absolute;
+      top: 20px; right: 16px;
+      background: rgba(0,0,0,0.5);
+      border: none; color: #fff;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .scan-torch {
+      position: absolute;
+      bottom: 60px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: 14px;
+      cursor: pointer;
+      display: none;
+    }
+    .scan-torch.visible { display: block; }
+    .scan-torch.on { background: rgba(255,220,0,0.3); border-color: #ffd700; }
+
+    /* ── Gescannte Vorschläge ── */
+    .tile.sug.scanned { background: linear-gradient(135deg, #5a3d8a, #3d2060); }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── Angebote ── */
+    .offers-view { padding: 0 0 80px; }
+
+    .offers-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 14px 8px;
+    }
+    .offers-topbar-left { display: flex; align-items: baseline; gap: 8px; }
+    .offers-topbar h2 { font-size: 17px; font-weight: 700; }
+    #offersCount { font-size: 12px; color: var(--muted); }
+    .offers-topbar-actions { display: flex; gap: 6px; }
+    .offers-action-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .offers-search-wrap { padding: 0 12px 6px; }
+    .offers-search-inner {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 8px 14px;
+    }
+    .offers-search-inner input {
+      flex: 1; background: none; border: none;
+      color: var(--text); font-size: 14px; outline: none;
+    }
+    .offers-search-inner input::placeholder { color: var(--muted); }
+
+    .offers-fav-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 14px 10px;
+    }
+    .offers-fav-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--muted); cursor: pointer; user-select: none;
+    }
+    .offers-fav-label input { accent-color: var(--teal); width: 15px; height: 15px; }
+
+    .offers-import-note {
+      margin: 0 14px 10px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── Offer card grid ── */
+    .offers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 0 12px 12px;
+    }
+
+    .offer-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      transition: transform 0.1s;
+    }
+    .offer-card:active { transform: scale(0.97); }
+
+    .offer-card-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 8px 4px;
+    }
+    .offer-retailer-badge {
+      font-size: 9px; font-weight: 800; letter-spacing: 0.4px;
+      color: #fff; padding: 3px 7px; border-radius: 6px;
+      text-transform: uppercase;
+    }
+    .offer-fav-btn {
+      background: none; border: none; font-size: 18px; cursor: pointer;
+      padding: 0 2px; color: var(--muted); line-height: 1;
+      transition: color 0.15s, transform 0.15s;
+    }
+    .offer-fav-btn.on { color: #f5a623; transform: scale(1.15); }
+
+
+    .offer-info { padding: 8px 9px 6px; flex: 1; }
+    .offer-name {
+      font-size: 12px; font-weight: 600; line-height: 1.3;
+      margin-bottom: 3px; word-break: break-word;
+    }
+    .offer-cat { font-size: 10px; color: var(--muted); margin-bottom: 5px; }
+    .offer-price { display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap; }
+    .offer-price-val { font-size: 17px; font-weight: 800; color: var(--teal); }
+    .offer-grundpreis { font-size: 9.5px; color: var(--muted); }
+    .offer-valid { font-size: 10px; color: var(--muted); margin-top: 4px; }
+    .offer-valid.urgent { color: var(--salmon); font-weight: 700; }
+
+    .offer-add-btn {
+      margin: 0 8px 9px;
+      padding: 8px 0;
+      background: var(--teal);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: background 0.2s, opacity 0.15s;
+    }
+    .offer-add-btn:active { opacity: 0.75; }
+    .offer-add-btn.in-list {
+      background: var(--card);
+      color: var(--teal);
+      border: 1.5px solid var(--teal);
+      cursor: default;
+      opacity: 0.85;
+    }
+
+    .offer-link-btn {
+      display: block; text-align: center;
+      margin: 0 8px 9px;
+      padding: 7px 0;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: none; color: var(--accent);
+      font-size: 12px; font-weight: 600; text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+    .offer-link-btn:active { background: var(--accent); color: #fff; }
+
+    /* ── Collapsible offers list ── */
+    #offersGrid.collapsed { display: none; }
+
+    /* ── Scroll-to-top button ── */
+    #scrollTopBtn {
+      position: fixed; bottom: 80px; right: 16px;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--teal); color: #fff;
+      border: none; font-size: 20px; cursor: pointer;
+      display: none; align-items: center; justify-content: center;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.28);
+      z-index: 190; transition: opacity 0.2s, transform 0.2s;
+      opacity: 0; transform: scale(0.8);
+    }
+    #scrollTopBtn.visible {
+      display: flex; opacity: 1; transform: scale(1);
+    }
+
+    /* Offer badge on shopping list tile */
+    .tile-offer-badge {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.3px;
+      padding: 1px 5px; border-radius: 4px;
+      background: rgba(255,255,255,0.2); margin-top: 1px;
+    }
+
+    /* ── Offers store section ── */
+    .offers-divider {
+      height: 1px; background: var(--border); margin: 8px 12px;
+    }
+    .offers-section-label {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.7px;
+      padding: 4px 14px 10px;
+    }
+  </style>
+</head>
+<body>
+<div id="page-bg" aria-hidden="true"></div>
+
+<!-- ══ CONNECTION BAR ══ -->
+<div id="connBar">
+  <div class="dot off" id="dot"></div>
+  <span id="connText">Verbinde…</span>
+</div>
+
+<!-- ══ SETUP BANNER (shown when Firebase not configured) ══ -->
+<div id="setupBanner">
+  <h3>⚙️ Firebase noch nicht eingerichtet</h3>
+  Öffne die HTML-Datei im Texteditor und ersetze <code>YOUR_API_KEY</code> usw. mit deinen echten Firebase-Zugangsdaten.
+  (→ Anleitung unten in der Datei im Kommentar)
+  <br><br>
+  <strong>Jetzt läuft die App im Offline-Modus</strong> (nur auf diesem Gerät, kein Sync).
+</div>
+
+<!-- ══ HEADER ══ -->
+<header class="header">
+  <div class="header-back" onclick="switchList()">‹ Listen</div>
+  <div class="header-title" id="listTitle">Zuhause</div>
+  <a href="index.html" class="icon-btn" style="text-decoration:none;font-size:17px" title="Startseite">⌂</a>
+  <button class="icon-btn" onclick="doQuickBackup()" title="Backup erstellen">💾</button>
+    <button class="icon-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
+  <button class="icon-btn" onclick="shareList()" title="Teilen">⎘</button>
+  <button class="icon-btn" onclick="clearDone()" title="Erledigte löschen">✓</button>
+</header>
+
+<!-- ══ SEARCH ══ -->
+<div class="search-wrap">
+  <div class="search-inner">
+    <span style="color:var(--muted);font-size:15px">🔍</span>
+    <input id="searchInput" placeholder="Suchen oder hinzufügen…"
+           oninput="onSearch()" onkeydown="onSearchKey(event)">
+    <button class="scan-btn" onclick="openScanner()" title="Barcode scannen">📷</button>
+    <button class="add-fab" onclick="addCustom()" title="Hinzufügen">+</button>
+  </div>
+</div>
+
+<!-- ══ SCANNER OVERLAY ══ -->
+<div id="scanOverlay">
+  <video id="scanVideo" playsinline muted></video>
+  <div class="scan-reticle"></div>
+  <div id="scanStatus">Kamera wird gestartet…</div>
+  <button class="scan-close" onclick="stopScan()">✕</button>
+  <button class="scan-torch" id="scanTorch" onclick="toggleScanTorch()">🔦</button>
+</div>
+
+<!-- ══ PRICE BAR ══ -->
+<div id="priceBar">
+  <div style="display:flex;align-items:center;gap:6px">
+    <span>🛒</span>
+    <span id="priceCount"></span>
+  </div>
+  <span id="priceTotal">0,00 €</span>
+</div>
+
+<!-- ══ STORE FILTER ══ -->
+<div id="storeFilterRow" style="display:none; overflow-x:auto; white-space:nowrap; padding:6px 12px 2px; scrollbar-width:none;"></div>
+
+<!-- ══ ACTIVE LIST ══ -->
+<div class="section" id="activeSection">
+  <div class="grid" id="activeGrid"></div>
+</div>
+
+<!-- ══ DONE ITEMS ══ -->
+<div class="section" id="doneSection" style="display:none">
+  <div class="sec-header" onclick="toggleDone()">
+    <div class="sec-title" id="doneTitle">
+      <span class="sec-arrow" id="doneArrow">▼</span> Erledigt (0)
+    </div>
+  </div>
+  <div class="grid" id="doneGrid" style="display:none"></div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══ CATEGORY CHIPS ══ -->
+<div class="cat-row" id="catRow"></div>
+
+<!-- ══ SORT ROW ══ -->
+<div class="cat-row sort-row" id="sortRow" style="padding-top:0;padding-bottom:8px"></div>
+
+<!-- ══ SUGGESTIONS ══ -->
+<div class="section" id="sugSection">
+  <div class="grid" id="sugGrid"></div>
+</div>
+
+<!-- ══ PICKER SHEET ══ -->
+<div class="sheet-overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      <span id="sheetEmoji"></span>
+      <span id="sheetTitle"></span>
+    </div>
+    <div class="amount-chips" id="amtChips"></div>
+    <input class="sheet-input" id="sheetInput" placeholder="Menge oder Notiz…" oninput="onSheetInput(this.value)">
+    <div style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px">Wo kaufen?</div>
+    <div class="amount-chips" id="storeChips"></div>
+    <input class="sheet-input" id="sheetStore" placeholder="Oder eigener Markt…" oninput="onSheetStore(this.value)">
+    <div class="sheet-btns">
+      <button class="sh-btn danger" id="removeBtn" onclick="removePicked()">🗑</button>
+      <button class="sh-btn secondary" onclick="closeSheet()">Abbrechen</button>
+      <button class="sh-btn primary" onclick="confirmPicker()">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESTAURANTS VIEW ══ -->
+<div id="restaurantsView" style="display:none; padding: 16px 12px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+    <h2 style="font-size:17px; font-weight:700;">Restaurants</h2>
+    <button onclick="openRestForm()" style="
+      background:var(--teal); border:none; color:#fff;
+      width:34px; height:34px; border-radius:50%;
+      font-size:22px; cursor:pointer; display:flex;
+      align-items:center; justify-content:center;">+</button>
+  </div>
+  <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Lang drücken zum Löschen.</p>
+
+  <button onclick="findNearby()" style="
+    width:100%; padding:14px; margin-bottom:20px;
+    background: linear-gradient(135deg, #1a73e8, #0d47a1);
+    color:#fff; border:none; border-radius:16px;
+    font-size:15px; font-weight:600; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;">
+    📍 Restaurants in der Nähe
+  </button>
+
+  <div id="restaurantGrid"></div>
+</div>
+
+<!-- ══ RESTAURANT FORM SHEET ══ -->
+<div class="sheet-overlay" id="restOverlay" onclick="restOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🍽️ Restaurant hinzufügen</div>
+
+    <div style="display:flex; gap:8px; margin-bottom:10px;">
+      <input class="sheet-input" id="restEmoji" placeholder="Emoji 🍕" style="width:72px; flex:none; text-align:center; font-size:20px;">
+      <input class="sheet-input" id="restName" placeholder="Name *" style="flex:1; margin-bottom:0;">
+    </div>
+    <input class="sheet-input" id="restHours" placeholder="Öffnungszeiten (z.B. Mo–Sa 11–22 Uhr)">
+    <input class="sheet-input" id="restUrl"   placeholder="Website oder Google Maps Link (optional)">
+
+    <div style="display:flex; gap:8px; margin-top:4px;">
+      <button class="sh-btn secondary" onclick="closeRestForm()">Abbrechen</button>
+      <button class="sh-btn primary"   onclick="saveRestaurant()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ANGEBOTE VIEW ══ -->
+<div id="offersView" class="offers-view" style="display:none">
+
+  <div class="offers-topbar">
+    <div class="offers-topbar-left">
+      <h2>Angebote</h2>
+      <span id="offersCount"></span>
+    </div>
+    <div class="offers-topbar-actions">
+      <button class="offers-action-btn" onclick="refreshOffers()" title="Aktualisieren">↻</button>
+      <button class="offers-action-btn" onclick="openImportSheet()" title="Importieren">⊕</button>
+      <button class="offers-action-btn" id="offersCollapseBtn" onclick="toggleOffersList()" title="Liste ein-/ausklappen" style="font-size:14px">▼</button>
+    </div>
+  </div>
+
+  <div class="offers-search-wrap">
+    <div class="offers-search-inner">
+      <span style="color:var(--muted)">🔍</span>
+      <input id="offersSearch" placeholder="Produkt, Händler oder Kategorie…" oninput="renderOffers()">
+    </div>
+  </div>
+
+  <div class="cat-row" id="offersHaendlerRow"></div>
+
+
+
+  <div class="offers-grid" id="offersGrid"></div>
+
+  <div class="offers-divider"></div>
+  <div class="offers-section-label">Markt-Websites</div>
+  <div style="padding:0 12px 16px"><div id="storeGrid" class="store-grid"></div></div>
+</div>
+
+<!-- ══ IMPORT SHEET ══ -->
+<div class="sheet-overlay" id="importOverlay" onclick="importOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">⊕ Angebote</div>
+
+    <p style="font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Marktguru Live</p>
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      <input id="mgPlzInput" class="sheet-input" placeholder="PLZ (z.B. 57271)"
+        style="margin:0;flex:1;font-size:15px"
+        maxlength="5" pattern="\d{5}" inputmode="numeric"
+        onchange="setMgPlz(this.value)">
+      <button class="sh-btn primary" style="white-space:nowrap;margin:0"
+        onclick="setMgPlz(document.getElementById('mgPlzInput').value);closeImportSheet();fetchMarktguruLive()">
+        Jetzt laden
+      </button>
+    </div>
+
+    <p style="font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">JSON-Import (manuell)</p>
+    <textarea id="importJson" class="sheet-input"
+      style="height:90px;resize:none;font-size:12px;font-family:monospace;margin-bottom:10px"
+      placeholder='{"offers":[{"id":"1","name":"Butter","haendler":"Lidl","preis":2.19,"gueltigVon":"2026-08-17","gueltigBis":"2026-08-22","kategorie":"Milchprodukte","bild":null,"url":null}]}'></textarea>
+    <div class="sheet-btns" style="flex-wrap:wrap;gap:8px">
+      <button class="sh-btn secondary" onclick="closeImportSheet()">Abbrechen</button>
+      <button class="sh-btn secondary" onclick="loadDemoOffers()">Demo-Daten</button>
+      <button class="sh-btn primary" onclick="importFromJson()">JSON importieren</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SETTINGS SHEET ══ -->
+<div class="sheet-overlay" id="settingsOverlay" onclick="settingsOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="padding:0 14px 36px">
+      <div style="font-size:18px;font-weight:700;margin-bottom:20px">⚙️ Einstellungen</div>
+
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Mein Profil</div>
+      <input class="sheet-input" id="settingName"  placeholder="Dein Name (z.B. Yannick)">
+      <input class="sheet-input" id="settingEmail" type="email" placeholder="Deine E-Mail-Adresse" style="margin-top:-6px">
+
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 6px">E-Mail-Benachrichtigungen (EmailJS)</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+        1. Kostenlosen Account auf <strong>emailjs.com</strong> erstellen<br>
+        2. E-Mail-Dienst hinzufügen (z.B. Gmail)<br>
+        3. Template erstellen (Variablen: <code style="background:rgba(0,0,0,.2);padding:1px 4px;border-radius:3px">{{to_email}}</code>, <code style="background:rgba(0,0,0,.2);padding:1px 4px;border-radius:3px">{{to_name}}</code>, <code style="background:rgba(0,0,0,.2);padding:1px 4px;border-radius:3px">{{subject}}</code>, <code style="background:rgba(0,0,0,.2);padding:1px 4px;border-radius:3px">{{message}}</code>)<br>
+        4. IDs unten eintragen
+      </div>
+      <input class="sheet-input" id="settingEjsService"  placeholder="Service ID (z.B. service_abc123)">
+      <input class="sheet-input" id="settingEjsTemplate" placeholder="Template ID (z.B. template_xyz)" style="margin-top:-6px">
+      <input class="sheet-input" id="settingEjsKey"      placeholder="Public Key (Account → API Keys)" style="margin-top:-6px">
+
+      <div style="font-size:11px;color:var(--muted);margin:10px 0 16px;line-height:1.5">
+        🔔 <strong>Einkaufsliste:</strong> 10 Min. nach letzter Änderung → Mail an die andere Person<br>
+        📅 <strong>Erinnerungen:</strong> Mail an dich selbst wenn Fälligkeit erreicht
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="sh-btn secondary" onclick="closeSettings()">Abbrechen</button>
+        <button class="sh-btn primary"   onclick="saveSettings()">Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LISTEN SHEET ══ -->
+<div class="sheet-overlay" id="listSheetOverlay" onclick="listSheetOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📋 Listen</div>
+    <div id="listSheetSaved" style="margin-bottom:12px;"></div>
+    <div style="display:flex; gap:8px;">
+      <input class="sheet-input" id="newListInput" placeholder="Neue Liste…"
+             style="margin-bottom:0; flex:1;"
+             onkeydown="if(event.key==='Enter') createNewList()">
+      <button class="sh-btn primary" onclick="createNewList()"
+              style="flex:none; padding:11px 16px;">+</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCROLL TO TOP ══ -->
+<button id="scrollTopBtn" onclick="scrollToTop()" aria-label="Nach oben">↑</button>
+
+<!-- ══ BOTTOM NAV ══ -->
+<nav class="bottom-nav">
+  <div class="nav-item on" id="navListe" onclick="showTab('liste')">
+    <div class="nav-icon">≡</div>
+    <div>Liste</div>
+    <div class="badge" id="badge">0</div>
+  </div>
+  <div class="nav-item" id="navAngebote" onclick="showTab('angebote')">
+    <div class="nav-icon">🏷️</div>
+    <div>Angebote</div>
+  </div>
+  <div class="nav-item" id="navRestaurants" onclick="showTab('restaurants')">
+    <div class="nav-icon">🍽️</div>
+    <div>Restaurants</div>
+  </div>
+  <div class="nav-item" onclick="switchList()">
+    <div class="nav-icon">📋</div>
+    <div>Listen</div>
+  </div>
+</nav>
+
+<!-- ══ TOAST ══ -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  FIREBASE KONFIGURATION
+//  Ersetze die Platzhalter mit deinen echten Werten.
+//  Firebase Console: https://console.firebase.google.com
+//  Projekt erstellen → Realtime Database aktivieren
+//  → Projekteinstellungen → Deine Apps → Web-App hinzufügen
+// ═══════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDzy2Y_UxOzLh2uVa3xpqZwl_52A-ULo_Y",
+  authDomain:        "claude-code-34507.firebaseapp.com",
+  databaseURL:       "https://claude-code-34507-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "claude-code-34507",
+  storageBucket:     "claude-code-34507.firebasestorage.app",
+  messagingSenderId: "560819187404",
+  appId:             "1:560819187404:web:394cee9f588237198bdc69"
+};
+
+// Firebase Database Rules (einmalig in der Firebase Console setzen):
+/*
+{
+  "rules": {
+    "lists": {
+      "$listId": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}
+*/
+
+// ═══════════════════════════════════════════════
+//  ARTIKEL-DATEN
+// ═══════════════════════════════════════════════
+const SUGGESTIONS = [
+  // Gemüse                                                              kcal/100g
+  { name:'Zucchini',      emoji:'🥒', cat:'Gemüse',       price: 0.79, unit:'Stück',    kcal: 17  },
+  { name:'Möhren',        emoji:'🥕', cat:'Gemüse',       price: 0.89, unit:'500g',     kcal: 41  },
+  { name:'Paprika',       emoji:'🫑', cat:'Gemüse',       price: 1.29, unit:'Stück',    kcal: 27  },
+  { name:'Gurke',         emoji:'🥒', cat:'Gemüse',       price: 0.69, unit:'Stück',    kcal: 12  },
+  { name:'Tomaten',       emoji:'🍅', cat:'Gemüse',       price: 1.49, unit:'500g',     kcal: 18  },
+  { name:'Zwiebeln',      emoji:'🧅', cat:'Gemüse',       price: 0.89, unit:'1kg',      kcal: 38  },
+  { name:'Knoblauch',     emoji:'🧄', cat:'Gemüse',       price: 0.59, unit:'Stück',    kcal: 135 },
+  { name:'Spinat',        emoji:'🥬', cat:'Gemüse',       price: 1.29, unit:'300g',     kcal: 20  },
+  { name:'Brokkoli',      emoji:'🥦', cat:'Gemüse',       price: 0.99, unit:'Stück',    kcal: 34  },
+  { name:'Salat',         emoji:'🥗', cat:'Gemüse',       price: 0.89, unit:'Stück',    kcal: 14  },
+  { name:'Kartoffeln',    emoji:'🥔', cat:'Gemüse',       price: 1.99, unit:'1kg',      kcal: 76  },
+  { name:'Mais',          emoji:'🌽', cat:'Gemüse',       price: 0.89, unit:'Stück',    kcal: 86  },
+  { name:'Pilze',         emoji:'🍄', cat:'Gemüse',       price: 1.49, unit:'250g',     kcal: 22  },
+  { name:'Aubergine',     emoji:'🍆', cat:'Gemüse',       price: 0.99, unit:'Stück',    kcal: 25  },
+  { name:'Kohl',          emoji:'🥬', cat:'Gemüse',       price: 0.99, unit:'Stück',    kcal: 25  },
+  { name:'Lauch',         emoji:'🌿', cat:'Gemüse',       price: 0.89, unit:'Stück',    kcal: 31  },
+  { name:'Sellerie',      emoji:'🥬', cat:'Gemüse',       price: 0.99, unit:'Stück',    kcal: 13  },
+  // Obst
+  { name:'Äpfel',         emoji:'🍎', cat:'Obst',         price: 1.99, unit:'1kg',      kcal: 52  },
+  { name:'Bananen',       emoji:'🍌', cat:'Obst',         price: 1.49, unit:'1kg',      kcal: 89  },
+  { name:'Zitrone',       emoji:'🍋', cat:'Obst',         price: 0.39, unit:'Stück',    kcal: 29  },
+  { name:'Erdbeeren',     emoji:'🍓', cat:'Obst',         price: 2.99, unit:'500g',     kcal: 32  },
+  { name:'Trauben',       emoji:'🍇', cat:'Obst',         price: 2.49, unit:'500g',     kcal: 67  },
+  { name:'Orangen',       emoji:'🍊', cat:'Obst',         price: 1.99, unit:'1kg',      kcal: 47  },
+  { name:'Avocado',       emoji:'🥑', cat:'Obst',         price: 0.99, unit:'Stück',    kcal: 160 },
+  { name:'Wassermelone',  emoji:'🍉', cat:'Obst',         price: 3.99, unit:'Stück',    kcal: 30  },
+  { name:'Himbeeren',     emoji:'🫐', cat:'Obst',         price: 1.99, unit:'150g',     kcal: 52  },
+  { name:'Mango',         emoji:'🥭', cat:'Obst',         price: 1.29, unit:'Stück',    kcal: 60  },
+  { name:'Kiwi',          emoji:'🥝', cat:'Obst',         price: 0.49, unit:'Stück',    kcal: 61  },
+  // Milch & Käse
+  { name:'Milch',         emoji:'🥛', cat:'Milch',        price: 1.09, unit:'1L',       kcal: 64  },
+  { name:'Joghurt',       emoji:'🍮', cat:'Milch',        price: 0.79, unit:'500g',     kcal: 59  },
+  { name:'Käse',          emoji:'🧀', cat:'Milch',        price: 1.99, unit:'200g',     kcal: 380 },
+  { name:'Butter',        emoji:'🧈', cat:'Milch',        price: 1.89, unit:'250g',     kcal: 740 },
+  { name:'Sahne',         emoji:'🥛', cat:'Milch',        price: 0.89, unit:'Packung',  kcal: 302 },
+  { name:'Quark',         emoji:'🍦', cat:'Milch',        price: 0.99, unit:'500g',     kcal: 67  },
+  { name:'Frischkäse',    emoji:'🧀', cat:'Milch',        price: 1.29, unit:'200g',     kcal: 244 },
+  { name:'Hafermilch',    emoji:'🥛', cat:'Milch',        price: 1.49, unit:'1L',       kcal: 45  },
+  // Brot & Backwaren
+  { name:'Toast',         emoji:'🍞', cat:'Brot',         price: 1.19, unit:'Packung',  kcal: 265 },
+  { name:'Brot',          emoji:'🥖', cat:'Brot',         price: 1.99, unit:'Stück',    kcal: 247 },
+  { name:'Brötchen',      emoji:'🥐', cat:'Brot',         price: 1.29, unit:'6 Stück',  kcal: 270 },
+  { name:'Croissant',     emoji:'🥐', cat:'Brot',         price: 1.49, unit:'Stück',    kcal: 406 },
+  // Getränke
+  { name:'Wasser',        emoji:'💧', cat:'Getränke',     price: 0.29, unit:'1,5L',     kcal: 0   },
+  { name:'Saft',          emoji:'🧃', cat:'Getränke',     price: 1.29, unit:'1L',       kcal: 45  },
+  { name:'Kaffee',        emoji:'☕', cat:'Getränke',     price: 4.99, unit:'500g',     kcal: 330 },
+  { name:'Tee',           emoji:'🍵', cat:'Getränke',     price: 1.49, unit:'Packung',  kcal: 2   },
+  { name:'Bier',          emoji:'🍺', cat:'Getränke',     price: 4.99, unit:'6er Pack', kcal: 43  },
+  { name:'Wein',          emoji:'🍷', cat:'Getränke',     price: 4.99, unit:'Flasche',  kcal: 85  },
+  { name:'Cola',          emoji:'🥤', cat:'Getränke',     price: 1.69, unit:'2L',       kcal: 42  },
+  // Grundnahrung
+  { name:'Eier',          emoji:'🥚', cat:'Grundnahrung', price: 2.19, unit:'10 St.',   kcal: 155 },
+  { name:'Nudeln',        emoji:'🍝', cat:'Grundnahrung', price: 1.09, unit:'500g',     kcal: 350 },
+  { name:'Reis',          emoji:'🍚', cat:'Grundnahrung', price: 1.49, unit:'1kg',      kcal: 360 },
+  { name:'Mehl',          emoji:'🌾', cat:'Grundnahrung', price: 0.89, unit:'1kg',      kcal: 342 },
+  { name:'Zucker',        emoji:'🍬', cat:'Grundnahrung', price: 0.99, unit:'1kg',      kcal: 397 },
+  { name:'Öl',            emoji:'🫙', cat:'Grundnahrung', price: 2.49, unit:'1L',       kcal: 882 },
+  { name:'Salz',          emoji:'🧂', cat:'Grundnahrung', price: 0.39, unit:'1kg',      kcal: 0   },
+  { name:'Pfeffer',       emoji:'🫙', cat:'Grundnahrung', price: 1.49, unit:'Packung',  kcal: 251 },
+  // Fleisch & Fisch
+  { name:'Hähnchen',      emoji:'🍗', cat:'Fleisch',      price: 4.99, unit:'1kg',      kcal: 165 },
+  { name:'Hackfleisch',   emoji:'🥩', cat:'Fleisch',      price: 3.49, unit:'500g',     kcal: 242 },
+  { name:'Lachs',         emoji:'🐟', cat:'Fleisch',      price: 4.99, unit:'300g',     kcal: 208 },
+  { name:'Würstchen',     emoji:'🌭', cat:'Fleisch',      price: 2.49, unit:'Packung',  kcal: 301 },
+  { name:'Thunfisch',     emoji:'🐠', cat:'Fleisch',      price: 1.49, unit:'Dose',     kcal: 116 },
+  { name:'Schinken',      emoji:'🥩', cat:'Fleisch',      price: 1.99, unit:'150g',     kcal: 145 },
+  // Haushalt
+  { name:'Toilettenpapier', emoji:'🧻', cat:'Haushalt',   price: 2.99, unit:'8 Rollen' },
+  { name:'Spülmittel',    emoji:'🧴', cat:'Haushalt',     price: 1.19, unit:'Flasche'  },
+  { name:'Waschmittel',   emoji:'🧺', cat:'Haushalt',     price: 5.99, unit:'Packung'  },
+  { name:'Müllbeutel',    emoji:'🗑️', cat:'Haushalt',    price: 1.99, unit:'Packung'  },
+  { name:'Shampoo',       emoji:'🧴', cat:'Haushalt',     price: 2.49, unit:'Flasche'  },
+  { name:'Zahnpasta',     emoji:'🪥', cat:'Haushalt',     price: 1.49, unit:'Packung'  },
+  { name:'Seife',         emoji:'🧼', cat:'Haushalt',     price: 0.99, unit:'Stück'    },
+  { name:'Taschentücher', emoji:'🤧', cat:'Haushalt',     price: 1.29, unit:'Packung'  },
+];
+
+const AMOUNTS = ['1','2','3','4','5','6','300g','500g','750g','1kg','2kg','1L','1,5L','2L'];
+const CATS = ['Alle', ...new Set(SUGGESTIONS.map(s => s.cat))];
+
+// Preis-Lookup
+const SUG_MAP = {};
+SUGGESTIONS.forEach(s => { SUG_MAP[s.name.toLowerCase()] = s; });
+function getSug(name) {
+  const key = name.toLowerCase();
+  return SUG_MAP[key]
+    ?? Object.values(scannedSuggestions).find(s => s.name?.toLowerCase() === key)
+    ?? null;
+}
+function getItemPrice(name){ return getSug(name)?.price ?? null; }
+function fmtPrice(p)       { return p.toFixed(2).replace('.', ',') + ' €'; }
+
+// Einheit → Gramm (1L ≈ 1000g für Vergleichszwecke)
+function parseWeightG(unit) {
+  if (!unit) return null;
+  const u = unit.trim();
+  let m;
+  m = u.match(/^([\d,]+)\s*g$/i);  if (m) return parseFloat(m[1].replace(',','.'));
+  m = u.match(/^([\d,]+)\s*kg$/i); if (m) return parseFloat(m[1].replace(',','.')) * 1000;
+  m = u.match(/^([\d,]+)\s*[Ll]$/);if (m) return parseFloat(m[1].replace(',','.')) * 1000;
+  return null;
+}
+// Preis normiert auf 1 kg (Supermarkt-Grundpreis)
+function pricePerKg(sug) {
+  const g = parseWeightG(sug.unit);
+  if (!g) return null;
+  return sug.price / g * 1000;
+}
+// Preis pro 100 kcal
+function pricePerHundredKcal(sug) {
+  if (sug.kcal == null || sug.kcal <= 0) return null;
+  const g = parseWeightG(sug.unit);
+  if (!g) return null;
+  const totalKcal = sug.kcal / 100 * g;
+  return totalKcal > 0 ? sug.price / totalKcal * 100 : null;
+}
+// Preis-HTML für ein SUGGESTIONS-Objekt (Tile-Kachel)
+function sugPriceHtml(sug) {
+  if (sug?.price == null) return '';
+  const ppkg   = pricePerKg(sug);
+  const ppkcal = pricePerHundredKcal(sug);
+  // Zeile 1: Original-Preis (für Einkaufszettel-Summe)
+  const origLine = `<div class="tile-price">${fmtPrice(sug.price)}/${sug.unit}</div>`;
+  if (ppkg != null) {
+    // Zeile 2: €/kg + optional €/100 kcal
+    const cmp = ppkcal != null
+      ? `${fmtPrice(ppkg)}/kg · ${fmtPrice(ppkcal)}/100 kcal`
+      : `${fmtPrice(ppkg)}/kg`;
+    return origLine + `<div class="tile-kcal-price">${cmp}</div>`;
+  }
+  return origLine;
+}
+
+// Mengen-Multiplikator berechnen
+function parseGrams(s) {
+  if (!s) return null;
+  const m = s.trim().match(/^([\d,]+)\s*(g|kg)$/i);
+  if (!m) return null;
+  const v = parseFloat(m[1].replace(',', '.'));
+  return m[2].toLowerCase() === 'kg' ? v * 1000 : v;
+}
+function parseLiters(s) {
+  if (!s) return null;
+  const m = s.trim().match(/^([\d,]+)\s*[Ll]$/);
+  if (!m) return null;
+  return parseFloat(m[1].replace(',', '.'));
+}
+function calcMultiplier(amount, unit) {
+  if (!amount || amount === '' || amount === '1') return 1;
+  if (/^\d+$/.test(amount.trim())) return parseInt(amount, 10);
+  const aG = parseGrams(amount), uG = parseGrams(unit);
+  if (aG !== null && uG !== null) return aG / uG;
+  const aL = parseLiters(amount), uL = parseLiters(unit);
+  if (aL !== null && uL !== null) return aL / uL;
+  return 1;
+}
+
+function calcTotal() {
+  let total = 0, hasPrices = false;
+  const allItems = Object.values(items);
+  allItems.forEach(it => {
+    const sug = getSug(it.name);
+    if (sug?.price != null) {
+      total += sug.price * calcMultiplier(it.amount, sug.unit);
+      hasPrices = true;
+    }
+  });
+
+  const bar = document.getElementById('priceBar');
+  if (!bar) return;
+
+  if (allItems.length === 0) {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'flex';
+  const n = allItems.length;
+  document.getElementById('priceCount').textContent = n + ' Artikel';
+  document.getElementById('priceTotal').textContent = hasPrices ? ('~' + fmtPrice(total)) : '–';
+}
+
+// ═══════════════════════════════════════════════
+//  RESTAURANTS — hier beliebig ergänzen/entfernen
+//  url: Speisekarte / Website / Google Maps Link
+//  hours: Öffnungszeiten als kurzer Text
+// ═══════════════════════════════════════════════
+const RESTAURANTS = [
+  {
+    name:  "McDonald's Ferndorf",
+    emoji: '🍔',
+    bg:    '#da291c',
+    hours: 'Mo–Do & So 8–24 Uhr · Fr–Sa 8–2 Uhr',
+    url:   'https://www.mcdonalds.com/de/de-de/restaurant-suche.html/l/kreuztal/zitzenbachstrasse-2/1109&cid=listing_1109',
+  },
+  {
+    name:  'Firat Pizza',
+    emoji: '🍕',
+    bg:    '#b54a00',
+    hours: 'Mo–Do 11–22:45 · Fr–Sa 11–23:45 · So 12–22:45',
+    phone: '02732 763055',
+    url:   'https://www.google.com/maps/search/Firat+Pizza+Siegener+Str+11+Kreuztal',
+  },
+  {
+    name:  'Rojroni Döner',
+    emoji: '🌯',
+    bg:    '#5a7a00',
+    hours: 'Mo–Sa 11:30–22 Uhr · So 12–21 Uhr',
+    phone: '02732 7651233',
+    url:   'https://www.google.com/maps/search/Rojroni+D%C3%B6ner+Siegener+Str+275+Kreuztal',
+  },
+];
+
+// ═══════════════════════════════════════════════
+//  SUPERMÄRKTE — hier beliebig ergänzen/entfernen
+// ═══════════════════════════════════════════════
+const STORES = [
+  { name: 'REWE Petz',      emoji: '🛒', bg: '#cc0000', url: 'https://www.rewe.de/marktseite/kredenbach/8534525/petz-rewe-marburger-str-388?ecid=seo_localseo_8534525_g_nn_nn_nn_nn_nn#services-im-markt',
+    address: 'Marburger Str. 388, 57223 Kredenbach',
+    hours: { mo:'07:00–21:00', di:'07:00–21:00', mi:'07:00–21:00', do:'07:00–21:00', fr:'07:00–21:00', sa:'07:00–21:00', so:null } },
+  { name: 'Lidl',           emoji: '🏪', bg: '#0050aa', url: 'https://www.lidl.de/s/de-DE/filialen/hilchenbach/wittgensteiner-str-123/',
+    address: 'Wittgensteiner Str. 123, 57271 Hilchenbach',
+    hours: { mo:'07:00–21:00', di:'07:00–21:00', mi:'07:00–21:00', do:'07:00–21:00', fr:'07:00–21:00', sa:'07:00–21:00', so:null } },
+  { name: 'ALDI Nord',      emoji: '🏬', bg: '#004b8d', url: 'https://www.aldi-nord.de/angebote.html' },
+  { name: 'IKEA',           emoji: '🪑', bg: '#0058a3', url: 'https://www.ikea.com/de/de/offers/' },
+  { name: 'XXXLutz',        emoji: '🛋️', bg: '#c8002d', url: 'https://www.xxxlutz.de/angebote' },
+  { name: 'Blumenkremer',   emoji: '🌸', bg: '#c0006a', url: 'https://kremer-naturtalente.de/themen' },
+  { name: 'Blumen Risse',   emoji: '🌺', bg: '#a0003a', url: 'https://www.blumen-risse.de/' },
+  { name: 'Thomas Philipps', emoji: '🏷️', bg: '#e65c00', url: 'https://www.thomas-philipps.de/angebote' },
+];
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let items   = {};      // { id: { name, emoji, amount, checked } }
+let listRef = null;    // Firebase ref
+let offlineMode = false;
+
+// ── Geräte-ID (einmalig, persistent) ──
+const MY_DEVICE_ID = (() => {
+  let id = localStorage.getItem('haushalt_device_id');
+  if (!id) { id = 'd_' + Math.random().toString(36).slice(2,9) + '_' + Date.now(); localStorage.setItem('haushalt_device_id', id); }
+  return id;
+})();
+
+// ── Einstellungen & Benachrichtigungen ──
+let registeredUsers = {};   // { deviceId: { name, email } }
+let shoppingPing    = {};   // { changedAt, sentAt, firstChangedAt, changedBy }
+let usersRef        = null;
+let shoppingPingRef = null;
+
+let ejsServiceId  = localStorage.getItem('ejs_service')  || '';
+let ejsTemplateId = localStorage.getItem('ejs_template') || '';
+let ejsPublicKey  = localStorage.getItem('ejs_pubkey')   || '';
+let ejsInited     = false;
+
+let customRestaurants = {};    // { id: { name, emoji, bg, hours, url } }
+let restRef = null;            // Firebase ref für Restaurants
+
+let scannedSuggestions = {};   // { id: { name, emoji, cat:'Gescannt' } }
+let scannedRef = null;         // Firebase ref für gescannte Vorschläge
+
+let scanStream2 = null, scanTrack2 = null;
+let scannerRunning2 = false, scanLoopId2 = null, scanTorchOn = false;
+
+let picker = { id: null, name: '', emoji: '', amount: '', store: '', isNew: true };
+let activeStoreFilter = '';
+let activeCat   = 'Alle';
+let activeSort  = '';    // 'az' | 'typ' | 'preis' | 'kg' | 'kcal'
+let sortDir     = 1;     // 1=aufsteigend, -1=absteigend
+let doneOpen    = false;
+
+// List ID aus URL
+const params = new URLSearchParams(location.search);
+const listId = (params.get('list') || 'zuhause').toLowerCase();
+document.getElementById('listTitle').textContent =
+  listId.charAt(0).toUpperCase() + listId.slice(1);
+document.title = '🛒 ' + listId.charAt(0).toUpperCase() + listId.slice(1);
+
+// ═══════════════════════════════════════════════
+//  FIREBASE / STORAGE
+// ═══════════════════════════════════════════════
+function initApp() {
+  if (FIREBASE_CONFIG.apiKey === 'YOUR_API_KEY') {
+    startOffline();
+    return;
+  }
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.database();
+
+    db.ref('.info/connected').on('value', snap => {
+      setOnline(snap.val() === true);
+    });
+
+    listRef = db.ref('lists/' + listId + '/items');
+    listRef.on('value', snap => {
+      items = snap.val() || {};
+      autoClearOldDone(items);
+      renderAll();
+    });
+
+    restRef = db.ref('lists/' + listId + '/restaurants');
+    restRef.on('value', snap => {
+      customRestaurants = snap.val() || {};
+      if (activeTab === 'restaurants') renderRestaurants();
+    });
+
+    scannedRef = db.ref('lists/' + listId + '/scannedSuggestions');
+    scannedRef.on('value', snap => {
+      scannedSuggestions = snap.val() || {};
+      renderSuggestions();
+    });
+
+    usersRef = db.ref('settings/users');
+    usersRef.on('value', snap => { registeredUsers = snap.val() || {}; });
+
+    shoppingPingRef = db.ref('settings/shoppingPing');
+    shoppingPingRef.on('value', snap => { shoppingPing = snap.val() || {}; });
+  } catch(e) {
+    console.error('Firebase init failed:', e);
+    startOffline();
+  }
+}
+
+function startOffline() {
+  offlineMode = true;
+  document.getElementById('setupBanner').style.display = 'block';
+  setOnline(false, true);
+  try { items = JSON.parse(localStorage.getItem('list_' + listId) || '{}'); } catch { items = {}; }
+  try { customRestaurants  = JSON.parse(localStorage.getItem('restaurants')        || '{}'); } catch { customRestaurants = {}; }
+  try { scannedSuggestions = JSON.parse(localStorage.getItem('scannedSuggestions') || '{}'); } catch { scannedSuggestions = {}; }
+  autoClearOldDone(items);
+  renderAll();
+}
+
+function setOnline(on, isOfflineMode = false) {
+  const dot  = document.getElementById('dot');
+  const text = document.getElementById('connText');
+  if (isOfflineMode) {
+    dot.className = 'dot off';
+    text.textContent = 'Offline-Modus – kein Firebase';
+  } else if (on) {
+    dot.className = 'dot';
+    text.textContent = 'Synchronisiert · ' + listId;
+  } else {
+    dot.className = 'dot off';
+    text.textContent = 'Verbindung getrennt';
+  }
+}
+
+function persist(id, data) {
+  if (listRef) {
+    if (data === null) listRef.child(id).remove();
+    else listRef.child(id).set(data);
+    // Firebase listener updates `items` automatically
+    notifyChange();
+  } else {
+    if (data === null) delete items[id];
+    else items[id] = data;
+    localStorage.setItem('list_' + listId, JSON.stringify(items));
+    renderAll();
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════
+function renderAll() {
+  try { localStorage.setItem('list_' + listId, JSON.stringify(items)); } catch(e) {}
+  const active = [], done = [];
+  Object.entries(items).forEach(([id, it]) => {
+    (it.checked ? done : active).push({ id, ...it });
+  });
+  active.sort((a,b) => (a.addedAt||0) - (b.addedAt||0));
+  done.sort((a,b)   => (a.checkedAt||0) - (b.checkedAt||0));
+
+  // Store filter bar
+  const storeNames = [...new Set(active.map(i => i.store).filter(Boolean))].sort();
+  const filterRow = document.getElementById('storeFilterRow');
+  if (storeNames.length > 0) {
+    filterRow.style.display = '';
+    if (!storeNames.includes(activeStoreFilter)) activeStoreFilter = '';
+    const chips = [{ label: 'Alle', val: '' }, ...storeNames.map(s => ({ label: s, val: s }))];
+    filterRow.innerHTML = chips.map(c =>
+      `<span class="store-chip${c.val === activeStoreFilter ? ' active' : ''}" onclick="setStoreFilter('${esc(c.val)}')">${esc(c.label)}</span>`
+    ).join('');
+  } else {
+    filterRow.style.display = 'none';
+    activeStoreFilter = '';
+  }
+
+  // Active grid
+  const visibleActive = activeStoreFilter
+    ? active.filter(i => i.store === activeStoreFilter)
+    : active;
+  const ag = document.getElementById('activeGrid');
+  if (active.length === 0) {
+    ag.innerHTML = '<div class="empty">Keine Artikel in der Liste.<br>Tippe unten auf einen Vorschlag!</div>';
+  } else if (visibleActive.length === 0) {
+    ag.innerHTML = `<div class="empty">Keine Artikel für „${esc(activeStoreFilter)}".</div>`;
+  } else {
+    ag.innerHTML = visibleActive.map(it => tile('active', it)).join('');
+  }
+
+  // Done grid
+  const ds = document.getElementById('doneSection');
+  const dg = document.getElementById('doneGrid');
+  const dt = document.getElementById('doneTitle');
+  if (done.length > 0) {
+    ds.style.display = '';
+    dt.innerHTML = `<span class="sec-arrow" id="doneArrow">${doneOpen?'▼':'▶'}</span> Erledigt (${done.length})`;
+    dg.style.display = doneOpen ? 'grid' : 'none';
+    dg.innerHTML = done.map(it => tile('done', it)).join('');
+  } else {
+    ds.style.display = 'none';
+  }
+
+  // Badge
+  const b = document.getElementById('badge');
+  const cnt = active.length;
+  b.textContent = cnt;
+  b.classList.toggle('show', cnt > 0);
+
+  calcTotal();
+  renderSuggestions();
+}
+
+function setStoreFilter(val) {
+  activeStoreFilter = val;
+  renderAll();
+}
+
+function tile(type, it) {
+  const sug = getSug(it.name);
+  let priceHtml = '';
+  if (it.isOffer && it.offerPrice != null) {
+    const col = HAENDLER_COLORS[it.offerHaendler] || '#fff';
+    priceHtml = `<div class="tile-offer-badge">${esc(it.offerHaendler || '')} ${Number(it.offerPrice).toFixed(2).replace('.',',')} €</div>`;
+  } else if (sug?.price != null) {
+    const mult = calcMultiplier(it.amount, sug.unit);
+    if (mult > 1) {
+      priceHtml = `<div class="tile-price">${fmtPrice(sug.price * mult)}</div>`;
+    } else {
+      priceHtml = sugPriceHtml(sug);
+    }
+  }
+  const storeBadge = it.store ? `<div class="tile-store">${esc(it.store)}</div>` : '';
+  if (type === 'active') {
+    return `<div class="tile active"
+      ontouchstart="pressStart('${it.id}')" ontouchend="pressEnd('${it.id}');event.preventDefault()" ontouchcancel="pressCancel()"
+      onmousedown="pressStart('${it.id}')" onmouseup="pressEnd('${it.id}')" onmouseleave="pressCancel()">
+      <div class="tile-emoji">${it.emoji || '🛒'}</div>
+      <div class="tile-name">${esc(it.name)}</div>
+      ${storeBadge}
+      ${priceHtml}
+      ${it.amount ? `<div class="tile-amount">${esc(it.amount)}</div>` : ''}
+    </div>`;
+  }
+  return `<div class="tile done" onclick="uncheck('${it.id}')">
+    <div class="tile-emoji">${it.emoji || '🛒'}</div>
+    <div class="tile-name">${esc(it.name)}</div>
+    ${storeBadge}
+    ${priceHtml}
+  </div>`;
+}
+
+// ── Long-press Erkennung ──
+let _pt = null, _pid = null, _fired = false;
+
+function pressStart(id) {
+  _pid = id; _fired = false;
+  _pt = setTimeout(() => {
+    _fired = true;
+    openPicker(id);
+  }, 500);
+}
+
+function pressEnd(id) {
+  clearTimeout(_pt);
+  if (!_fired && _pid === id) toggleItem(id);
+  _pid = null;
+}
+
+function pressCancel() {
+  clearTimeout(_pt);
+  _pid = null; _fired = false;
+}
+
+function renderSuggestions() {
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const inListNames = new Set(Object.values(items).map(i => i.name.toLowerCase()));
+
+  // Gescannte Vorschläge zusammenführen
+  const scanned = Object.values(scannedSuggestions).map(s => ({ ...s, cat: 'Gescannt' }));
+  const allSuggestions = [...SUGGESTIONS, ...scanned];
+
+  let list = allSuggestions;
+  if (activeCat !== 'Alle') list = list.filter(s => s.cat === activeCat);
+  if (search)               list = list.filter(s => s.name.toLowerCase().includes(search));
+
+  // Sortierung
+  if (activeSort) {
+    list = [...list].sort((a, b) => {
+      let va, vb;
+      if (activeSort === 'az')    { va = a.name.toLowerCase(); vb = b.name.toLowerCase(); }
+      else if (activeSort === 'typ')   { va = a.cat + a.name; vb = b.cat + b.name; }
+      else if (activeSort === 'preis') { va = a.price ?? Infinity; vb = b.price ?? Infinity; }
+      else if (activeSort === 'kg')    { va = pricePerKg(a) ?? Infinity; vb = pricePerKg(b) ?? Infinity; }
+      else if (activeSort === 'kcal')  { va = pricePerHundredKcal(a) ?? Infinity; vb = pricePerHundredKcal(b) ?? Infinity; }
+      if (va < vb) return -sortDir;
+      if (va > vb) return  sortDir;
+      return 0;
+    });
+  }
+
+  const sg = document.getElementById('sugGrid');
+  if (list.length === 0) {
+    sg.innerHTML = `<div class="empty">Kein Vorschlag gefunden.<br>Drücke <strong>+</strong> um "${esc(document.getElementById('searchInput').value.trim())}" hinzuzufügen.</div>`;
+  } else {
+    sg.innerHTML = list.map(s => {
+      const inList = inListNames.has(s.name.toLowerCase());
+      const isScanned = s.cat === 'Gescannt';
+      const p = s.price ?? getItemPrice(s.name);
+      const priceHtml = p != null ? sugPriceHtml({...s, price: p}) : '';
+      return `<div class="tile sug ${isScanned ? 'scanned' : ''} ${inList ? 'in-list' : ''}"
+        onclick="tapSuggestion('${esc(s.name)}','${s.emoji}')">
+        <div class="tile-emoji">${s.emoji}</div>
+        <div class="tile-name">${esc(s.name)}</div>
+        ${priceHtml}
+      </div>`;
+    }).join('');
+  }
+
+  renderCats();
+  renderSort();
+}
+
+const SORT_OPTIONS = [
+  { id:'az',    label:'A–Z'        },
+  { id:'typ',   label:'Typ'        },
+  { id:'preis', label:'Preis'      },
+  { id:'kg',    label:'€/kg'       },
+  { id:'kcal',  label:'€/100 kcal' },
+];
+
+function renderSort() {
+  const sr = document.getElementById('sortRow');
+  if (!sr) return;
+  sr.innerHTML = '<span style="font-size:10px;color:var(--muted);flex-shrink:0;align-self:center;padding-right:2px">↕</span>'
+    + SORT_OPTIONS.map(o => {
+      const active = o.id === activeSort;
+      const arrow  = active ? (sortDir === 1 ? ' ↑' : ' ↓') : '';
+      return `<button class="chip ${active ? 'on' : ''}" onclick="setSort('${o.id}')">${o.label}${arrow}</button>`;
+    }).join('');
+}
+
+function setSort(id) {
+  if (activeSort === id) {
+    if (sortDir === 1) { sortDir = -1; }   // asc → desc
+    else { activeSort = ''; sortDir = 1; } // desc → aus
+  } else {
+    activeSort = id; sortDir = 1;
+  }
+  renderSuggestions();
+}
+
+function renderCats() {
+  const cr = document.getElementById('catRow');
+  const hasScanned = Object.keys(scannedSuggestions).length > 0;
+  const cats = ['Alle', ...new Set(SUGGESTIONS.map(s => s.cat)), ...(hasScanned ? ['Gescannt'] : [])];
+  cr.innerHTML = cats.map(c =>
+    `<button class="chip ${c === activeCat ? 'on' : ''}" onclick="setCat('${c}')">${c}</button>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════
+//  INTERACTIONS
+// ═══════════════════════════════════════════════
+function tapSuggestion(name, emoji) {
+  const existing = Object.entries(items).find(([,v]) => v.name.toLowerCase() === name.toLowerCase());
+  if (existing) {
+    // Bereits in der Liste → entfernen (Toggle)
+    persist(existing[0], null);
+    toast(`${name} entfernt`);
+    return;
+  }
+  // Noch nicht drin → hinzufügen
+  const id = 'i_' + Date.now();
+  persist(id, { name, emoji, amount: '', checked: false, addedAt: Date.now() });
+  toast(`${emoji} ${name} hinzugefügt`);
+}
+
+function buildStoreChips(selected) {
+  const usedStores = [...new Set(Object.values(items).map(i => i.store).filter(Boolean))];
+  const allStores = [...new Set([...STORES.map(s => s.name), ...usedStores])];
+  const isCustom = selected && !allStores.includes(selected);
+  document.getElementById('storeChips').innerHTML = allStores.map(s =>
+    `<div class="amt-chip${s === selected ? ' on' : ''}" onclick="pickStore('${esc(s)}')">${esc(s)}</div>`
+  ).join('');
+  // If a custom value is set, show it in the text input but don't pre-clear chips
+  const inp = document.getElementById('sheetStore');
+  if (isCustom) inp.value = selected;
+  else inp.value = '';
+}
+
+function openPicker(id) {
+  const it = items[id];
+  if (!it) return;
+  picker = { id, name: it.name, emoji: it.emoji || '🛒', amount: it.amount || '', store: it.store || '', isNew: false };
+
+  document.getElementById('sheetEmoji').textContent = picker.emoji;
+  document.getElementById('sheetTitle').textContent = picker.name;
+  document.getElementById('sheetInput').value = picker.amount;
+  document.getElementById('sheetStore').value = picker.store;
+  document.getElementById('removeBtn').style.display = '';
+
+  buildAmtChips(picker.amount);
+  buildStoreChips(picker.store);
+  document.getElementById('overlay').classList.add('open');
+}
+
+function openNewPicker(name, emoji) {
+  picker = { id: null, name, emoji: emoji || '🛒', amount: '', store: '', isNew: true };
+  document.getElementById('sheetEmoji').textContent = picker.emoji;
+  document.getElementById('sheetTitle').textContent = picker.name;
+  document.getElementById('sheetInput').value = '';
+  document.getElementById('sheetStore').value = '';
+  document.getElementById('removeBtn').style.display = 'none';
+  buildAmtChips('');
+  buildStoreChips('');
+  document.getElementById('overlay').classList.add('open');
+}
+
+function buildAmtChips(selected) {
+  const ac = document.getElementById('amtChips');
+  ac.innerHTML = AMOUNTS.map(a =>
+    `<div class="amt-chip ${a === selected ? 'on' : ''}" data-amt="${a}" onclick="pickAmt('${a}')">${a}</div>`
+  ).join('');
+}
+
+function pickAmt(a) {
+  if (picker.amount === a) {
+    picker.amount = '';
+    document.getElementById('sheetInput').value = '';
+  } else {
+    picker.amount = a;
+    document.getElementById('sheetInput').value = a;
+  }
+  document.querySelectorAll('.amt-chip').forEach(c =>
+    c.classList.toggle('on', c.dataset.amt === picker.amount)
+  );
+}
+
+function onSheetInput(val) {
+  picker.amount = val;
+  document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('on'));
+}
+
+function pickStore(s) {
+  if (picker.store === s) {
+    picker.store = '';
+    document.getElementById('sheetStore').value = '';
+  } else {
+    picker.store = s;
+    document.getElementById('sheetStore').value = '';
+  }
+  document.querySelectorAll('#storeChips .amt-chip').forEach(c =>
+    c.classList.toggle('on', c.textContent === picker.store)
+  );
+}
+
+function onSheetStore(val) {
+  picker.store = val.trim();
+  document.querySelectorAll('#storeChips .amt-chip').forEach(c => c.classList.remove('on'));
+}
+
+function confirmPicker() {
+  const freeText = document.getElementById('sheetStore').value.trim();
+  if (freeText) picker.store = freeText;
+  if (picker.isNew) {
+    const id = 'i_' + Date.now();
+    persist(id, { name: picker.name, emoji: picker.emoji, amount: picker.amount, store: picker.store || null, checked: false, addedAt: Date.now() });
+  } else {
+    const it = items[picker.id];
+    if (it) persist(picker.id, { ...it, amount: picker.amount, store: picker.store || null });
+  }
+  closeSheet();
+}
+
+function removePicked() {
+  if (picker.id) persist(picker.id, null);
+  closeSheet();
+}
+
+function closeSheet() {
+  document.getElementById('overlay').classList.remove('open');
+  picker = { id: null, name: '', emoji: '', amount: '', store: '', isNew: true };
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeSheet();
+}
+
+function toggleItem(id) {
+  const it = items[id];
+  if (!it) return;
+  persist(id, { ...it, checked: !it.checked, checkedAt: Date.now() });
+}
+
+function uncheck(id) {
+  const it = items[id];
+  if (!it) return;
+  persist(id, { ...it, checked: false, checkedAt: null });
+}
+
+function toggleDone() {
+  doneOpen = !doneOpen;
+  const dg = document.getElementById('doneGrid');
+  const arrow = document.getElementById('doneArrow');
+  dg.style.display = doneOpen ? 'grid' : 'none';
+  if (arrow) arrow.textContent = doneOpen ? '▼' : '▶';
+}
+
+function clearDone() {
+  const cnt = Object.values(items).filter(i => i.checked).length;
+  if (cnt === 0) { toast('Keine erledigten Artikel'); return; }
+  if (!confirm(`${cnt} erledigte Artikel entfernen?`)) return;
+  Object.entries(items).forEach(([id, it]) => { if (it.checked) persist(id, null); });
+}
+
+function addCustom() {
+  const inp = document.getElementById('searchInput');
+  const name = inp.value.trim();
+  if (!name) return;
+  const sug = SUGGESTIONS.find(s => s.name.toLowerCase() === name.toLowerCase());
+  openNewPicker(sug ? sug.name : name, sug ? sug.emoji : '🛒');
+  inp.value = '';
+  renderSuggestions();
+}
+
+function onSearch() {
+  renderSuggestions();
+  const val = document.getElementById('searchInput').value.trim();
+  if (val) {
+    clearTimeout(onSearch._st);
+    onSearch._st = setTimeout(() => {
+      const sg = document.getElementById('sugSection');
+      if (!sg) return;
+      const hdrH = (document.querySelector('.header') || {}).offsetHeight || 55;
+      const rect = sg.getBoundingClientRect();
+      if (rect.top > hdrH + 40 || rect.top < 0) {
+        window.scrollTo({ top: sg.offsetTop - hdrH - 8, behavior: 'smooth' });
+      }
+    }, 150);
+  }
+}
+
+function onSearchKey(e) {
+  if (e.key === 'Enter') addCustom();
+}
+
+function setCat(cat) {
+  activeCat = cat;
+  renderSuggestions();
+}
+
+// ═══════════════════════════════════════════════
+//  SHARE / SWITCH LIST
+// ═══════════════════════════════════════════════
+function shareList() {
+  const url = location.origin + location.pathname + '?list=' + encodeURIComponent(listId);
+  if (navigator.share) {
+    navigator.share({ title: 'Einkaufsliste: ' + listId, url });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => toast('Link kopiert!'));
+  } else {
+    prompt('Teile diesen Link:', url);
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  LISTEN-SHEET
+// ═══════════════════════════════════════════════
+const DEFAULT_LISTS = [
+  { name: 'Zuhause',     emoji: '🏠' },
+  { name: 'Wochenmarkt', emoji: '🛒' },
+  { name: 'Drogerie',    emoji: '🧴' },
+  { name: 'Baumarkt',    emoji: '🔨' },
+  { name: 'Urlaub',      emoji: '🏖️' },
+  { name: 'Party',       emoji: '🎉' },
+];
+
+function switchList() {
+  renderListSheet();
+  document.getElementById('listSheetOverlay').classList.add('open');
+}
+
+function closeListSheet() {
+  document.getElementById('listSheetOverlay').classList.remove('open');
+}
+
+function listSheetOverlayClick(e) {
+  if (e.target === document.getElementById('listSheetOverlay')) closeListSheet();
+}
+
+function renderListSheet() {
+  // Recent lists from localStorage
+  let recent = [];
+  try { recent = JSON.parse(localStorage.getItem('recentLists') || '[]'); } catch {}
+
+  const saved = document.getElementById('listSheetSaved');
+  const allLists = [...DEFAULT_LISTS];
+
+  // Add recent custom lists not already in defaults
+  recent.forEach(name => {
+    if (!allLists.find(l => l.name.toLowerCase() === name.toLowerCase())) {
+      allLists.push({ name, emoji: '📋' });
+    }
+  });
+
+  saved.innerHTML = allLists.map(l => `
+    <div onclick="goToList('${esc(l.name)}')" style="
+      display:flex; align-items:center; gap:12px;
+      padding:13px 14px; border-radius:20px;
+      background:${l.name.toLowerCase() === listId ? 'var(--teal)' : 'var(--card)'};
+      cursor:pointer; margin-bottom:8px;
+      border: 1px solid ${l.name.toLowerCase() === listId ? 'var(--teal)' : 'var(--border)'};
+      transition: background 0.15s;">
+      <span style="font-size:22px">${l.emoji}</span>
+      <span style="font-size:15px; font-weight:${l.name.toLowerCase() === listId ? '700' : '500'}">${esc(l.name)}</span>
+      ${l.name.toLowerCase() === listId ? '<span style="margin-left:auto;font-size:12px;opacity:0.8">Aktiv</span>' : ''}
+    </div>
+  `).join('');
+}
+
+function goToList(name) {
+  // Save to recent
+  let recent = [];
+  try { recent = JSON.parse(localStorage.getItem('recentLists') || '[]'); } catch {}
+  recent = [name, ...recent.filter(r => r.toLowerCase() !== name.toLowerCase())].slice(0, 10);
+  localStorage.setItem('recentLists', JSON.stringify(recent));
+
+  location.href = location.pathname + '?list=' + encodeURIComponent(name.toLowerCase().trim());
+}
+
+function createNewList() {
+  const input = document.getElementById('newListInput');
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  goToList(name);
+}
+
+// ═══════════════════════════════════════════════
+//  AUTO-CLEAR ERLEDIGT (nach 8 Stunden)
+// ═══════════════════════════════════════════════
+function autoClearOldDone(currentItems) {
+  const cutoff = Date.now() - (8 * 60 * 60 * 1000); // 8 Stunden
+  Object.entries(currentItems).forEach(([id, it]) => {
+    if (it.checked && it.checkedAt && it.checkedAt < cutoff) {
+      persist(id, null);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════
+let activeTab = 'liste';
+
+function showTab(tab) {
+  activeTab = tab;
+  const isListe      = tab === 'liste';
+  const isAngebote   = tab === 'angebote';
+  const isRestaurants = tab === 'restaurants';
+
+  // Liste-Elemente
+  ['connBar','activeSection','doneSection','sugSection'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isListe ? '' : 'none';
+  });
+  document.getElementById('setupBanner').style.display  = isListe && offlineMode ? 'block' : 'none';
+  document.querySelector('.search-wrap').style.display   = isListe ? '' : 'none';
+  document.querySelector('.divider').style.display       = isListe ? '' : 'none';
+  document.getElementById('catRow').style.display        = isListe ? '' : 'none';
+  document.getElementById('sortRow').style.display       = isListe ? '' : 'none';
+  if (!isListe) {
+    const pb = document.getElementById('priceBar');
+    if (pb) pb.style.display = 'none';
+  } else {
+    calcTotal();
+  }
+
+  // Andere Views
+  document.getElementById('offersView').style.display      = isAngebote    ? 'block' : 'none';
+  document.getElementById('restaurantsView').style.display = isRestaurants ? 'block' : 'none';
+  const stb = document.getElementById('scrollTopBtn');
+  if (stb && !isAngebote) stb.classList.remove('visible');
+
+  // Nav
+  document.getElementById('navListe').classList.toggle('on',       isListe);
+  document.getElementById('navAngebote').classList.toggle('on',    isAngebote);
+  document.getElementById('navRestaurants').classList.toggle('on', isRestaurants);
+
+  if (isAngebote)    { renderStores(); renderOffers(); }
+  if (isRestaurants) renderRestaurants();
+}
+
+function renderStores() {
+  const now = new Date();
+  const dayKeys = ['so','mo','di','mi','do','fr','sa'];
+  const todayKey = dayKeys[now.getDay()];
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  const grid = document.getElementById('storeGrid');
+  grid.className = 'store-grid';
+  grid.innerHTML = STORES.map(s => {
+    let extraHtml = '';
+    if (s.address) {
+      extraHtml += `<div class="store-addr">${s.address}</div>`;
+    }
+    if (s.hours) {
+      const todayH = s.hours[todayKey];
+      if (!todayH) {
+        extraHtml += `<span class="store-closed-badge">Heute geschlossen</span>`;
+      } else {
+        const parts = todayH.split('–');
+        const parseMin = t => { const [h,m] = t.trim().split(':').map(Number); return h*60+(m||0); };
+        const isOpen = nowMin >= parseMin(parts[0]) && nowMin < parseMin(parts[1]);
+        extraHtml += isOpen
+          ? `<span class="store-open-badge">Geöffnet · bis ${parts[1]}</span>`
+          : `<span class="store-closed-badge">Geschlossen · ${todayH}</span>`;
+      }
+    }
+    return `
+      <a class="store-card" href="${s.url}" target="_blank" rel="noopener"
+         style="background: linear-gradient(135deg, ${s.bg}dd, ${s.bg}99);">
+        <div class="store-emoji">${s.emoji}</div>
+        <div class="store-name">${s.name}</div>
+        ${extraHtml}
+        <div class="store-label">Angebote ansehen →</div>
+      </a>
+    `;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+//  RESTAURANTS — Hinzufügen / Löschen
+// ═══════════════════════════════════════════════
+const REST_COLORS = ['#b54a00','#5a7a00','#006a6a','#6a006a','#00456a','#6a3000','#1a5e20','#880e4f'];
+
+function persistRest(id, data) {
+  if (restRef) {
+    if (data === null) restRef.child(id).remove();
+    else restRef.child(id).set(data);
+  } else {
+    if (data === null) delete customRestaurants[id];
+    else customRestaurants[id] = data;
+    localStorage.setItem('restaurants', JSON.stringify(customRestaurants));
+    if (activeTab === 'restaurants') renderRestaurants();
+  }
+}
+
+function openRestForm() {
+  document.getElementById('restName').value  = '';
+  document.getElementById('restEmoji').value = '';
+  document.getElementById('restHours').value = '';
+  document.getElementById('restUrl').value   = '';
+  document.getElementById('restOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('restName').focus(), 100);
+}
+
+function closeRestForm() {
+  document.getElementById('restOverlay').classList.remove('open');
+}
+
+function restOverlayClick(e) {
+  if (e.target === document.getElementById('restOverlay')) closeRestForm();
+}
+
+function saveRestaurant() {
+  const name  = document.getElementById('restName').value.trim();
+  if (!name) { document.getElementById('restName').focus(); return; }
+  const emoji = document.getElementById('restEmoji').value.trim() || '🍽️';
+  const hours = document.getElementById('restHours').value.trim() || 'Öffnungszeiten unbekannt';
+  const url   = document.getElementById('restUrl').value.trim() ||
+                'https://www.google.com/maps/search/' + encodeURIComponent(name);
+  const bg    = REST_COLORS[Object.keys(customRestaurants).length % REST_COLORS.length];
+
+  const id = 'r_' + Date.now();
+  persistRest(id, { name, emoji, bg, hours, url, addedAt: Date.now() });
+  closeRestForm();
+  toast(`${emoji} ${name} hinzugefügt`);
+}
+
+// Long-press zum Löschen
+let _rpt = null, _rpid = null, _rpfired = false;
+function restPressStart(id) {
+  _rpid = id; _rpfired = false;
+  _rpt = setTimeout(() => {
+    _rpfired = true;
+    if (confirm('Restaurant entfernen?')) persistRest(id, null);
+  }, 600);
+}
+function restPressEnd(id) {
+  clearTimeout(_rpt);
+  if (!_rpfired && _rpid === id) {
+    // Kurzer Tap → Link öffnen (handled by <a>)
+  }
+  _rpid = null;
+}
+function restPressCancel() { clearTimeout(_rpt); _rpid = null; _rpfired = false; }
+
+// ═══════════════════════════════════════════════
+//  BARCODE SCANNER
+// ═══════════════════════════════════════════════
+async function openScanner() {
+  document.getElementById('scanOverlay').classList.add('open');
+  document.getElementById('scanStatus').textContent = 'Kamera wird gestartet…';
+  document.getElementById('scanTorch').classList.remove('visible','on');
+
+  if (!('BarcodeDetector' in window)) {
+    document.getElementById('scanStatus').textContent =
+      'Barcode-Scan wird auf diesem Gerät nicht unterstützt.\nBitte Artikelname manuell eingeben.';
+    return;
+  }
+
+  try {
+    scanStream2 = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+    });
+  } catch(e) {
+    document.getElementById('scanStatus').textContent = 'Kein Kamerazugriff – Berechtigung erlauben.';
+    return;
+  }
+
+  scanTrack2 = scanStream2.getVideoTracks()[0];
+
+  try {
+    const cap = scanTrack2.getCapabilities?.() || {};
+    if ((cap.focusMode||[]).includes('continuous'))
+      await scanTrack2.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+    if (cap.torch)
+      document.getElementById('scanTorch').classList.add('visible');
+  } catch(e) {}
+
+  const video = document.getElementById('scanVideo');
+  video.srcObject = scanStream2;
+  await video.play().catch(() => {});
+
+  let detector;
+  try { detector = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e'] }); }
+  catch(e) { return; }
+
+  scannerRunning2 = true;
+  document.getElementById('scanStatus').textContent = 'Barcode ins Bild halten…';
+
+  const loop = async () => {
+    if (!scannerRunning2) return;
+    try {
+      const cvs = document.createElement('canvas');
+      cvs.width = video.videoWidth || 640;
+      cvs.height = video.videoHeight || 480;
+      cvs.getContext('2d').drawImage(video, 0, 0, cvs.width, cvs.height);
+      const codes = await detector.detect(cvs);
+      if (codes.length) {
+        scannerRunning2 = false;
+        document.getElementById('scanStatus').textContent = 'Produkt wird gesucht…';
+        await lookupAndAdd(codes[0].rawValue);
+        return;
+      }
+    } catch(e) {}
+    scanLoopId2 = setTimeout(loop, 200);
+  };
+  loop();
+}
+
+function stopScan() {
+  scannerRunning2 = false;
+  if (scanLoopId2) { clearTimeout(scanLoopId2); scanLoopId2 = null; }
+  if (scanTrack2 && scanTorchOn) {
+    try { scanTrack2.applyConstraints({ advanced: [{ torch: false }] }); } catch(e) {}
+  }
+  if (scanStream2) { scanStream2.getTracks().forEach(t => t.stop()); scanStream2 = null; }
+  scanTrack2 = null; scanTorchOn = false;
+  const video = document.getElementById('scanVideo');
+  video.srcObject = null;
+  document.getElementById('scanOverlay').classList.remove('open');
+}
+
+async function toggleScanTorch() {
+  if (!scanTrack2) return;
+  scanTorchOn = !scanTorchOn;
+  try {
+    await scanTrack2.applyConstraints({ advanced: [{ torch: scanTorchOn }] });
+    document.getElementById('scanTorch').classList.toggle('on', scanTorchOn);
+  } catch(e) { scanTorchOn = false; }
+}
+
+async function lookupAndAdd(code) {
+  try {
+    const res  = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json`);
+    const data = await res.json();
+
+    if (data.status !== 1) {
+      document.getElementById('scanStatus').textContent = 'Produkt nicht gefunden.';
+      setTimeout(stopScan, 2200);
+      return;
+    }
+
+    const p     = data.product;
+    const name  = (p.product_name_de || p.product_name || '').trim() || 'Unbekanntes Produkt';
+    const emoji = emojiFromCategories(p.categories_tags || [], p.product_name || '');
+
+    // Preis ermitteln (Open Prices API → Kategorie-Schätzung)
+    document.getElementById('scanStatus').textContent = 'Preis wird gesucht…';
+    const { price, unit } = await fetchScannedPrice(code, p.categories_tags || []);
+
+    stopScan();
+
+    const id = 'i_' + Date.now();
+    persist(id, { name, emoji, amount: '', checked: false, addedAt: Date.now() });
+    persistScanned(name, emoji, price, unit);
+
+    const priceHint = price ? ` · ~${fmtPrice(price)}/${unit}` : '';
+    toast(`${emoji} ${name} hinzugefügt${priceHint}`);
+
+  } catch(e) {
+    document.getElementById('scanStatus').textContent = 'Fehler – bitte erneut versuchen.';
+    setTimeout(stopScan, 2200);
+  }
+}
+
+async function fetchScannedPrice(code, cats) {
+  // 1. Open Prices API (crowdsourced, Deutschland)
+  try {
+    const res = await fetch(
+      `https://prices.openfoodfacts.org/api/v1/prices?product_code=${code}&country=DE&page_size=20`,
+      { signal: AbortSignal.timeout(3000) }
+    );
+    const data = await res.json();
+    const prices = (data.items || [])
+      .map(i => i.price)
+      .filter(v => v > 0 && v < 100);
+    if (prices.length > 0) {
+      prices.sort((a, b) => a - b);
+      const median = prices[Math.floor(prices.length / 2)];
+      return { price: Math.round(median * 100) / 100, unit: 'Packung' };
+    }
+  } catch(e) {}
+
+  // 2. Kategorie-Schätzung
+  return estimatePriceFromCategories(cats);
+}
+
+function estimatePriceFromCategories(cats) {
+  const h = cats.join(' ').toLowerCase();
+  const rules = [
+    [['mineral-water','waters'],            0.29, '1,5L'   ],
+    [['carbonated','cola','soft-drink'],    1.69, '2L'     ],
+    [['fruit-juice','juices','nectar'],     1.29, '1L'     ],
+    [['beers','lager','pilsner'],           0.89, 'Flasche'],
+    [['wines'],                             4.99, 'Flasche'],
+    [['coffees','ground-coffee'],           4.99, '500g'   ],
+    [['teas'],                              1.49, 'Packung'],
+    [['plant-milks','oat-milk'],            1.49, '1L'     ],
+    [['milks'],                             1.09, '1L'     ],
+    [['cheeses'],                           1.99, '200g'   ],
+    [['yogurts','yoghurts'],               0.79, '500g'   ],
+    [['butters'],                           1.89, '250g'   ],
+    [['creams'],                            0.89, 'Packung'],
+    [['breads','toasts'],                   1.49, 'Packung'],
+    [['pastries','biscuits','cookies'],     1.49, 'Packung'],
+    [['cereals','mueslis'],                 2.99, 'Packung'],
+    [['chocolates'],                        1.29, 'Packung'],
+    [['chips','crisps','snacks'],           1.49, 'Packung'],
+    [['sweets','candies'],                  1.29, 'Packung'],
+    [['pastas','noodles'],                  1.09, '500g'   ],
+    [['rices'],                             1.49, '1kg'    ],
+    [['soups'],                             1.49, 'Dose'   ],
+    [['sauces','ketchups','mustards'],      1.49, 'Flasche'],
+    [['oils'],                              2.49, '1L'     ],
+    [['jams','honeys','spreads'],           2.49, 'Glas'   ],
+    [['chicken','poultry'],                 4.99, '1kg'    ],
+    [['beef','pork','meats'],               3.99, '500g'   ],
+    [['fishes','fish','salmon','tuna'],     2.49, 'Packung'],
+    [['frozen'],                            2.99, 'Packung'],
+    [['ice-cream'],                         2.99, 'Packung'],
+    [['shampoos','hair'],                   2.49, 'Flasche'],
+    [['soaps','body-wash'],                 1.49, 'Stück'  ],
+    [['toothpaste','dental'],               1.49, 'Packung'],
+    [['detergent','cleaning'],              3.99, 'Flasche'],
+  ];
+  for (const [keywords, price, unit] of rules) {
+    if (keywords.some(k => h.includes(k))) return { price, unit };
+  }
+  return { price: null, unit: 'Packung' };
+}
+
+function persistScanned(name, emoji, price = null, unit = 'Packung') {
+  const already = [...SUGGESTIONS, ...Object.values(scannedSuggestions)]
+    .some(s => s.name.toLowerCase() === name.toLowerCase());
+  if (already) return;
+
+  const id   = 'sc_' + Date.now();
+  const data = { name, emoji, cat: 'Gescannt', ...(price != null ? { price, unit } : {}) };
+
+  if (scannedRef) {
+    scannedRef.child(id).set(data);
+  } else {
+    scannedSuggestions[id] = data;
+    localStorage.setItem('scannedSuggestions', JSON.stringify(scannedSuggestions));
+    renderSuggestions();
+  }
+}
+
+function emojiFromCategories(cats, productName) {
+  const haystack = (cats.join(' ') + ' ' + productName).toLowerCase();
+  const map = [
+    ['water','💧'],['cola','🥤'],['juice','🧃'],['beer','🍺'],['wine','🍷'],
+    ['coffee','☕'],['tea','🍵'],['beverage','🥤'],['drink','🥤'],['milk','🥛'],
+    ['cheese','🧀'],['yogurt','🍮'],['butter','🧈'],['cream','🥛'],['dairy','🧀'],
+    ['chicken','🍗'],['beef','🥩'],['pork','🥩'],['meat','🥩'],['fish','🐟'],['seafood','🐟'],
+    ['bread','🍞'],['pasta','🍝'],['noodle','🍝'],['rice','🍚'],['cereal','🌾'],
+    ['apple','🍎'],['banana','🍌'],['orange','🍊'],['berry','🍓'],['fruit','🍎'],
+    ['vegetable','🥦'],['tomato','🍅'],['carrot','🥕'],['salad','🥗'],
+    ['egg','🥚'],['oil','🫙'],['sauce','🫙'],['soup','🍲'],
+    ['chocolate','🍫'],['sweet','🍬'],['candy','🍬'],['cookie','🍪'],['snack','🍪'],
+    ['frozen','🧊'],['ice cream','🍦'],
+    ['shampoo','🧴'],['soap','🧼'],['detergent','🧺'],['toilet','🧻'],
+  ];
+  for (const [kw, em] of map) {
+    if (haystack.includes(kw)) return em;
+  }
+  return '📦';
+}
+
+function findNearby() {
+  if (!navigator.geolocation) {
+    window.open('https://www.google.com/maps/search/Restaurants+in+der+Nähe', '_blank');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      window.open(`https://www.google.com/maps/search/Restaurants/@${lat},${lng},15z`, '_blank');
+    },
+    () => {
+      window.open('https://www.google.com/maps/search/Restaurants+in+der+Nähe', '_blank');
+    }
+  );
+}
+
+function renderRestaurants() {
+  const all = [
+    ...RESTAURANTS.map(r => ({ ...r, _fixed: true })),
+    ...Object.entries(customRestaurants).map(([id, r]) => ({ ...r, _id: id }))
+  ];
+
+  const rg = document.getElementById('restaurantGrid');
+  rg.className = 'rest-grid';
+  rg.innerHTML = all.map(r => {
+    const lp = r._fixed ? '' :
+      `ontouchstart="restPressStart('${r._id}')" ontouchend="restPressEnd('${r._id}')" ontouchcancel="restPressCancel()"
+       onmousedown="restPressStart('${r._id}')" onmouseup="restPressEnd('${r._id}')" onmouseleave="restPressCancel()"`;
+    return `<a class="rest-card" href="${r.url}" target="_blank" rel="noopener" ${lp}
+       style="background: linear-gradient(135deg, ${r.bg}ee, ${r.bg}99);">
+      <div class="rest-emoji">${r.emoji}</div>
+      <div class="rest-info">
+        <div class="rest-name">${esc(r.name)}</div>
+        <div class="rest-hours">🕐 ${esc(r.hours)}</div>
+        ${r.phone ? `<div class="rest-hours">📞 ${esc(r.phone)}</div>` : ''}
+      </div>
+      <div class="rest-arrow">›</div>
+    </a>`;
+  }).join('');
+
+  if (all.length === 0) {
+    rg.innerHTML = '<div class="empty" style="grid-column:1/-1">Noch keine Restaurants.<br>Tippe auf <strong>+</strong> um eines hinzuzufügen.</div>';
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ═══════════════════════════════════════════════
+//  ANGEBOTE
+// ═══════════════════════════════════════════════
+const HAENDLER_COLORS = {
+  'Lidl':'#0050aa','REWE':'#cc0000','REWE Petz':'#cc0000','ALDI':'#004b8d','ALDI Nord':'#004b8d',
+  'ALDI Süd':'#004b8d','Kaufland':'#e2001a','Penny':'#cc0000','Netto':'#e28000',
+  'Edeka':'#c8a400','Norma':'#003f8a','Rossmann':'#e2001a','dm':'#005ca9',
+};
+let allOffers = [];
+let activeHaendler = 'Alle';
+let favHaendler = new Set(JSON.parse(localStorage.getItem('einkauf_fav_haendler') || '[]'));
+
+function toggleFavHaendler(h, e) {
+  e.stopPropagation();
+  if (favHaendler.has(h)) favHaendler.delete(h);
+  else favHaendler.add(h);
+  localStorage.setItem('einkauf_fav_haendler', JSON.stringify([...favHaendler]));
+  // if we were filtering by fav and unfav'd the last one, reset
+  if (activeHaendler === '★FAV' && favHaendler.size === 0) activeHaendler = 'Alle';
+  renderOffers();
+}
+
+// ── Demo-Datensatz (realistische Beispiele Aug 2026) ──
+const DEMO_OFFERS = [
+  { id:'d1',  name:'Kerrygold Butter',          haendler:'Lidl',    preis:2.19, grundpreis:'8,76 €/kg',  gueltigVon:'2026-08-17',gueltigBis:'2026-08-22',kategorie:'Milchprodukte', bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d2',  name:'REWE Bio Vollmilch 1L',      haendler:'REWE',    preis:1.29, grundpreis:'1,29 €/L',   gueltigVon:'2026-08-17',gueltigBis:'2026-08-23',kategorie:'Milchprodukte', bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d3',  name:'Hähnchenbrust 600g',          haendler:'Netto',   preis:3.99, grundpreis:'6,65 €/kg',  gueltigVon:'2026-08-18',gueltigBis:'2026-08-23',kategorie:'Fleisch',       bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d4',  name:'Barilla Pasta 500g',           haendler:'ALDI',    preis:0.79, grundpreis:'1,58 €/kg',  gueltigVon:'2026-08-17',gueltigBis:'2026-08-22',kategorie:'Grundnahrung',  bild:null,favorit:true, importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d5',  name:'Coca-Cola 2L',                 haendler:'Penny',   preis:1.49, grundpreis:'0,75 €/L',   gueltigVon:'2026-08-18',gueltigBis:'2026-08-23',kategorie:'Getränke',      bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d6',  name:'Landkrone Äpfel 1kg',          haendler:'REWE',    preis:1.79, grundpreis:'1,79 €/kg',  gueltigVon:'2026-08-17',gueltigBis:'2026-08-23',kategorie:'Obst & Gemüse', bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d7',  name:'Thunfisch im Eigensaft 185g',  haendler:'ALDI',    preis:0.69, grundpreis:'3,73 €/kg',  gueltigVon:'2026-08-17',gueltigBis:'2026-08-22',kategorie:'Fisch',         bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d8',  name:'Dallmayr Prodomo 500g',         haendler:'Kaufland',preis:6.99, grundpreis:'13,98 €/kg', gueltigVon:'2026-08-17',gueltigBis:'2026-08-22',kategorie:'Getränke',      bild:null,favorit:true, importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d9',  name:'Heinz Ketchup 800ml',           haendler:'REWE',    preis:2.99, grundpreis:'3,74 €/L',   gueltigVon:'2026-08-17',gueltigBis:'2026-08-23',kategorie:'Saucen',        bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d10', name:'Persil Colorwaschmittel 1,5kg', haendler:'Lidl',    preis:4.99, grundpreis:'3,33 €/kg',  gueltigVon:'2026-08-17',gueltigBis:'2026-08-22',kategorie:'Haushalt',      bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d11', name:'Edeka Joghurt 500g',             haendler:'Edeka',   preis:0.69, grundpreis:'1,38 €/kg',  gueltigVon:'2026-08-18',gueltigBis:'2026-08-24',kategorie:'Milchprodukte', bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+  { id:'d12', name:'Hackfleisch gemischt 500g',      haendler:'Kaufland',preis:2.99, grundpreis:'5,98 €/kg',  gueltigVon:'2026-08-17',gueltigBis:'2026-08-19',kategorie:'Fleisch',       bild:null,favorit:false,importDatum:new Date().toISOString(),quelle:'Demo'},
+];
+
+// ── Storage ──
+function loadOffers() {
+  try {
+    const raw = localStorage.getItem('einkauf_offers');
+    if (raw) { const d = JSON.parse(raw); allOffers = d.offers || []; }
+  } catch(e) { allOffers = []; }
+  cleanupExpiredOffers();
+}
+
+function saveOffers() {
+  localStorage.setItem('einkauf_offers', JSON.stringify({
+    lastUpdate: new Date().toISOString(),
+    offers: allOffers
+  }));
+}
+
+function cleanupExpiredOffers() {
+  const today = todayStr();
+  const before = allOffers.length;
+  allOffers = allOffers.filter(o => !o.gueltigBis || o.gueltigBis >= today);
+  if (allOffers.length < before) saveOffers();
+}
+
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+// ── Import ──
+function mergeOffers(newOffers) {
+  let added = 0, updated = 0;
+  newOffers.forEach(o => {
+    if (!o.id) o.id = 'imp_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    if (!o.importDatum) o.importDatum = new Date().toISOString();
+    if (o.favorit === undefined) o.favorit = false;
+    const idx = allOffers.findIndex(ex => ex.id === o.id);
+    if (idx >= 0) { allOffers[idx] = { ...allOffers[idx], ...o }; updated++; }
+    else { allOffers.push(o); added++; }
+  });
+  cleanupExpiredOffers();
+  saveOffers();
+  return { added, updated };
+}
+
+function importFromJson() {
+  const raw = document.getElementById('importJson').value.trim();
+  if (!raw) { toast('Kein JSON eingegeben'); return; }
+  try {
+    const parsed = JSON.parse(raw);
+    const offers = Array.isArray(parsed) ? parsed : (parsed.offers || []);
+    if (!offers.length) { toast('Keine Angebote im JSON gefunden'); return; }
+    const { added, updated } = mergeOffers(offers);
+    closeImportSheet();
+    renderOffers();
+    toast(`✓ ${added} neu, ${updated} aktualisiert`);
+  } catch(e) {
+    toast('❌ Ungültiges JSON-Format');
+  }
+}
+
+async function autoLoadOffersJson() {
+  // Lädt offers.json aus dem selben Verzeichnis (GitHub Pages Deployment)
+  try {
+    const res = await fetch('offers.json', { cache: 'no-cache' });
+    if (!res.ok) return; // Datei nicht vorhanden — kein Fehler
+    const data = await res.json();
+    const offers = data.offers || [];
+    if (!offers.length) return;
+    const { added, updated } = mergeOffers(offers);
+    if (added + updated > 0) {
+      renderOffers();
+      console.log(`offers.json: ${added} neu, ${updated} aktualisiert`);
+    }
+  } catch (_) {}
+}
+
+function loadDemoOffers() {
+  const { added, updated } = mergeOffers(DEMO_OFFERS.map(o => ({ ...o, favorit: o.favorit ?? false })));
+  closeImportSheet();
+  renderOffers();
+  toast(`Demo-Daten geladen: ${added} neu, ${updated} aktualisiert`);
+}
+
+function refreshOffers() {
+  fetchMarktguruLive();
+}
+
+// ── Marktguru Live-Import ──
+const MG_API_KEY = '8Kk+pmbf7TgJ9nVj2cXeA7P5zBGv8iuutVVMRfOfvNE=';
+const MG_CDN     = 'https://cdn.marktguru.de';
+
+function getMgPlz() {
+  return localStorage.getItem('einkauf_mg_plz') || '57271';
+}
+function setMgPlz(v) {
+  if (v && /^\d{5}$/.test(v.trim())) localStorage.setItem('einkauf_mg_plz', v.trim());
+}
+
+function mgTransform(raw) {
+  const adv      = (raw.advertisers   || [])[0] || {};
+  const validity = (raw.validityDates || [])[0] || {};
+  const cat      = (raw.categories    || [])[0] || {};
+  const unit     = raw.unit?.shortName || 'Stk';
+  const ref      = raw.referencePrice;
+  const grundpreis = ref ? (ref.toFixed(2).replace('.', ',') + ' €/' + unit) : '';
+  // API returns no image URL — construct from CDN + offer ID; onerror shows fallback icon
+  const imgItems = Array.isArray(raw.images?.items) ? raw.images.items : [];
+  const bildUrl = imgItems.find(i => i.url)?.url
+    || raw.product?.imageUrl
+    || ((raw.images?.count || 0) > 0 ? `${MG_CDN}/offers/${raw.id}/0.jpg` : null);
+  return {
+    id:           'mg_' + raw.id,
+    name:         raw.product?.name || raw.description || 'Unbekannt',
+    beschreibung: raw.description || '',
+    haendler:     adv.name || '',
+    preis:        raw.price ?? null,
+    grundpreis,
+    einheit:      unit,
+    marke:        raw.brand?.name || '',
+    kategorie:    (cat.name || ''),
+    gueltigVon:   (validity.from || '').split('T')[0] || null,
+    gueltigBis:   (validity.to   || '').split('T')[0] || null,
+    bild:         bildUrl,
+    url:          adv.externalLink || null,
+    favorit:      false,
+    quelle:       'Marktguru',
+    importDatum:  new Date().toISOString(),
+  };
+}
+
+async function fetchMarktguruLive() {
+  const plz = getMgPlz();
+  const btn = document.querySelector('.offers-action-btn[title="Aktualisieren"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  toast(`Lade Angebote für PLZ ${plz}…`);
+
+  try {
+    const PAGE = 100, MAX_PAGES = 5;
+    let offset = 0, total = null, all = [];
+
+    for (let p = 0; p < MAX_PAGES; p++) {
+      const url = `https://api.marktguru.de/api/v1/offers?as=web&limit=${PAGE}&offset=${offset}&zipCode=${plz}`;
+      const res = await fetch(url, {
+        headers: { 'X-apikey': MG_API_KEY, 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (total === null) total = data.totalResults || 0;
+      const results = data.results || [];
+      if (!results.length) break;
+      if (all.length === 0 && results.length > 0) {
+        console.log('[MG] first offer raw:', JSON.stringify(results[0], null, 2));
+      }
+      all.push(...results);
+      offset += results.length;
+      if (offset >= total) break;
+    }
+
+    // Abgelaufene Demo-Daten entfernen bevor wir mergen
+    allOffers = allOffers.filter(o => o.quelle !== 'Demo');
+
+    const transformed = all.map(mgTransform);
+    const { added, updated } = mergeOffers(transformed);
+    renderOffers();
+    toast(`✓ ${added} neu, ${updated} aktualisiert · ${all.length} von ${total} geladen`);
+  } catch(e) {
+    toast('❌ Fehler: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '↻'; }
+  }
+}
+
+function openImportSheet() {
+  document.getElementById('importJson').value = '';
+  document.getElementById('mgPlzInput').value = getMgPlz();
+  document.getElementById('importOverlay').classList.add('open');
+}
+function closeImportSheet() { document.getElementById('importOverlay').classList.remove('open'); }
+function importOverlayClick(e) { if (e.target === document.getElementById('importOverlay')) closeImportSheet(); }
+
+// ── Render ──
+function renderOffers() {
+  const search = (document.getElementById('offersSearch')?.value || '').toLowerCase().trim();
+
+  let filtered = [...allOffers];
+  if (activeHaendler === '★FAV') filtered = filtered.filter(o => favHaendler.has(o.haendler));
+  else if (activeHaendler !== 'Alle') filtered = filtered.filter(o => o.haendler === activeHaendler);
+  if (search)   filtered = filtered.filter(o =>
+    o.name.toLowerCase().includes(search) ||
+    o.haendler.toLowerCase().includes(search) ||
+    (o.kategorie || '').toLowerCase().includes(search)
+  );
+
+  filtered.sort((a, b) => {
+    if (a.favorit !== b.favorit) return a.favorit ? -1 : 1;
+    if (a.gueltigBis && b.gueltigBis) return a.gueltigBis.localeCompare(b.gueltigBis);
+    return a.name.localeCompare(b.name);
+  });
+
+  const cnt = document.getElementById('offersCount');
+  if (cnt) cnt.textContent = filtered.length ? `${filtered.length} Angebote` : '';
+
+  const note = document.getElementById('offersImportNote');
+  if (note) note.style.display = allOffers.length === 0 ? '' : 'none';
+
+  const grid = document.getElementById('offersGrid');
+  if (!grid) return;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:24px">Keine Angebote gefunden.<br><small>Tippe ↻ um echte Angebote zu laden</small></div>';
+  } else {
+    grid.innerHTML = filtered.map(buildOfferCard).join('');
+  }
+
+  renderHaendlerChips();
+  if (activeHaendler !== 'Alle') renderStores();
+}
+
+function buildOfferCard(offer) {
+  const today     = todayStr();
+  const msLeft    = new Date(offer.gueltigBis || '9999-12-31') - new Date(today);
+  const daysLeft  = Math.ceil(msLeft / 86400000);
+  const urgentCls = daysLeft <= 2 ? 'urgent' : '';
+  const validTxt  = !offer.gueltigBis ? '' :
+    daysLeft <= 0 ? 'Heute letzter Tag!' :
+    daysLeft === 1 ? 'Morgen letzter Tag' :
+    `Noch ${daysLeft} Tage · bis ${fmtDate(offer.gueltigBis)}`;
+
+  const col = HAENDLER_COLORS[offer.haendler] || '#666';
+
+  const storeUrl = STORES.find(s => s.name === offer.haendler)?.url || null;
+  const linkUrl  = offer.url || storeUrl;
+  const linkHtml = linkUrl
+    ? `<a class="offer-link-btn" href="${esc(linkUrl)}" target="_blank" rel="noopener noreferrer">Zum Angebot →</a>`
+    : '';
+
+  return `<div class="offer-card">
+    <div class="offer-card-top">
+      <span class="offer-retailer-badge" style="background:${col}">${esc(offer.haendler)}</span>
+      <button class="offer-fav-btn ${offer.favorit ? 'on' : ''}" onclick="toggleOfferFav('${esc(offer.id)}')">${offer.favorit ? '★' : '☆'}</button>
+    </div>
+    <div class="offer-info">
+      <div class="offer-name">${esc(offer.name)}</div>
+      ${offer.kategorie ? `<div class="offer-cat">${esc(offer.kategorie)}</div>` : ''}
+      <div class="offer-price">
+        <span class="offer-price-val">${Number(offer.preis).toFixed(2).replace('.',',')} €</span>
+        ${offer.grundpreis ? `<span class="offer-grundpreis">${esc(offer.grundpreis)}</span>` : ''}
+      </div>
+      ${validTxt ? `<div class="offer-valid ${urgentCls}">${validTxt}</div>` : ''}
+    </div>
+    ${isOfferInList(offer.name)
+      ? `<button class="offer-add-btn in-list" disabled>✓ In der Liste</button>`
+      : `<button class="offer-add-btn" onclick="addOfferToList('${esc(offer.id)}')">+ Einkaufsliste</button>`
+    }
+    ${linkHtml}
+  </div>`;
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}.${m}.`;
+}
+
+function renderHaendlerChips() {
+  const row = document.getElementById('offersHaendlerRow');
+  if (!row) return;
+
+  // Stores sorted: favorites first, then alphabetical
+  const stores = [...new Set(allOffers.map(o => o.haendler).filter(Boolean))].sort((a, b) => {
+    const af = favHaendler.has(a), bf = favHaendler.has(b);
+    return af !== bf ? (af ? -1 : 1) : a.localeCompare(b);
+  });
+
+  const favChip = favHaendler.size > 0
+    ? `<button class="chip ${activeHaendler === '★FAV' ? 'on' : ''}" onclick="setOfferHaendler('★FAV')" style="flex-shrink:0">★ Favoriten</button>`
+    : '';
+
+  const allChip = `<button class="chip ${activeHaendler === 'Alle' ? 'on' : ''}" onclick="setOfferHaendler('Alle')" style="flex-shrink:0">Alle</button>`;
+
+  const storeChips = stores.map(h => {
+    const isFav = favHaendler.has(h);
+    const active = activeHaendler === h;
+    return `<span class="haendler-chip-wrap">
+      <button class="chip ${active ? 'on' : ''}" onclick="setOfferHaendler('${esc(h)}')">${esc(h)}</button>
+      <button class="haendler-star-btn ${isFav ? 'on' : ''}" onclick="toggleFavHaendler('${esc(h)}',event)" title="${isFav ? 'Favorit entfernen' : 'Als Favorit merken'}">${isFav ? '★' : '☆'}</button>
+    </span>`;
+  }).join('');
+
+  row.innerHTML = allChip + favChip + storeChips;
+}
+
+function setOfferHaendler(h) { activeHaendler = h; renderOffers(); }
+
+let offersListCollapsed = false;
+function toggleOffersList() {
+  offersListCollapsed = !offersListCollapsed;
+  document.getElementById('offersGrid').classList.toggle('collapsed', offersListCollapsed);
+  document.getElementById('offersCollapseBtn').textContent = offersListCollapsed ? '▲' : '▼';
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scrollTopBtn');
+  if (!btn) return;
+  const show = window.scrollY > 200 && activeTab === 'angebote';
+  btn.classList.toggle('visible', show);
+}, { passive: true });
+
+function toggleOfferFav(id) {
+  const o = allOffers.find(x => x.id === id);
+  if (!o) return;
+  o.favorit = !o.favorit;
+  saveOffers();
+  renderOffers();
+}
+
+function isOfferInList(name) {
+  return !!Object.values(items).find(it => it.name.toLowerCase() === name.toLowerCase());
+}
+
+function addOfferToList(id) {
+  const offer = allOffers.find(x => x.id === id);
+  if (!offer) return;
+  if (isOfferInList(offer.name)) { toast(`${offer.name} bereits in der Liste`); return; }
+  persist('i_' + Date.now(), {
+    name: offer.name,
+    emoji: '🏷️',
+    amount: '',
+    checked: false,
+    addedAt: Date.now(),
+    offerPrice: offer.preis,
+    offerHaendler: offer.haendler,
+    isOffer: true,
+  });
+  toast(`🏷️ ${offer.name} von ${offer.haendler} hinzugefügt`);
+  renderOffers();
+}
+
+// ═══════════════════════════════════════════════
+//  EMAILJS
+// ═══════════════════════════════════════════════
+function initEmailJS() {
+  if (ejsPublicKey && !ejsInited) {
+    emailjs.init(ejsPublicKey);
+    ejsInited = true;
+  }
+}
+
+async function sendEmail(toEmail, toName, subject, message) {
+  initEmailJS();
+  if (!ejsServiceId || !ejsTemplateId || !ejsPublicKey || !toEmail) return;
+  return emailjs.send(ejsServiceId, ejsTemplateId, {
+    to_email: toEmail,
+    to_name:  toName  || 'Du',
+    subject,
+    message,
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  EINKAUFSLISTEN-BENACHRICHTIGUNG (Debounce)
+// ═══════════════════════════════════════════════
+function notifyChange() {
+  if (!shoppingPingRef) return;
+  const now = Date.now();
+  const isNewBatch = (shoppingPing.sentAt || 0) >= (shoppingPing.changedAt || 1);
+  shoppingPingRef.set({
+    changedAt:      now,
+    changedBy:      MY_DEVICE_ID,
+    sentAt:         shoppingPing.sentAt || 0,
+    firstChangedAt: isNewBatch ? now : (shoppingPing.firstChangedAt || now),
+  });
+}
+
+let _notifLock = false;
+async function checkAndSendShoppingNotification() {
+  if (_notifLock || !shoppingPingRef) return;
+  const { changedAt = 0, sentAt = 0, firstChangedAt, changedBy } = shoppingPing;
+  if (!changedAt || changedAt <= sentAt) return;
+
+  const now               = Date.now();
+  const sinceLastChange   = now - changedAt;
+  const sinceFirstChange  = now - (firstChangedAt || changedAt);
+  const DEBOUNCE          = 10 * 60 * 1000;  // 10 Minuten
+  const MAX_WAIT          = 30 * 60 * 1000;  // 30 Minuten
+
+  // Veraltete Benachrichtigungen verwerfen (älter als 2 Std.)
+  if (sinceLastChange > 2 * 3600000) {
+    shoppingPingRef.update({ sentAt: now });
+    return;
+  }
+  // Noch nicht bereit
+  if (sinceLastChange < DEBOUNCE && sinceFirstChange < MAX_WAIT) return;
+
+  _notifLock = true;
+  try {
+    // Als gesendet markieren (verhindert Doppel-Sends von mehreren Geräten)
+    await shoppingPingRef.update({ sentAt: now });
+
+    const senderName = registeredUsers[changedBy]?.name || 'Jemand';
+    const listName   = listId.charAt(0).toUpperCase() + listId.slice(1);
+    const subject    = `🛒 Einkaufsliste "${listName}" aktualisiert`;
+    const message    = `${senderName} hat die Einkaufsliste "${listName}" aktualisiert.\n\nÖffne die App um die aktuellen Änderungen zu sehen.`;
+
+    for (const [deviceId, user] of Object.entries(registeredUsers)) {
+      if (deviceId !== changedBy && user?.email) {
+        try { await sendEmail(user.email, user.name, subject, message); }
+        catch(e) { console.warn('Mail fehlgeschlagen:', e); }
+      }
+    }
+  } finally {
+    _notifLock = false;
+  }
+}
+
+// Jede Minute prüfen ob eine Benachrichtigung fällig ist
+setInterval(checkAndSendShoppingNotification, 60000);
+
+// ═══════════════════════════════════════════════
+//  EINSTELLUNGEN
+// ═══════════════════════════════════════════════
+function openSettings() {
+  const me = registeredUsers[MY_DEVICE_ID] || {};
+  document.getElementById('settingName').value         = me.name  || '';
+  document.getElementById('settingEmail').value        = me.email || '';
+  document.getElementById('settingEjsService').value   = ejsServiceId;
+  document.getElementById('settingEjsTemplate').value  = ejsTemplateId;
+  document.getElementById('settingEjsKey').value       = ejsPublicKey;
+  document.getElementById('settingsOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('settingName').focus(), 200);
+}
+
+function closeSettings() {
+  document.getElementById('settingsOverlay').classList.remove('open');
+}
+
+function settingsOverlayClick(e) {
+  if (e.target === document.getElementById('settingsOverlay')) closeSettings();
+}
+
+async function saveSettings() {
+  const name  = document.getElementById('settingName').value.trim();
+  const email = document.getElementById('settingEmail').value.trim();
+  ejsServiceId  = document.getElementById('settingEjsService').value.trim();
+  ejsTemplateId = document.getElementById('settingEjsTemplate').value.trim();
+  ejsPublicKey  = document.getElementById('settingEjsKey').value.trim();
+
+  localStorage.setItem('ejs_service',  ejsServiceId);
+  localStorage.setItem('ejs_template', ejsTemplateId);
+  localStorage.setItem('ejs_pubkey',   ejsPublicKey);
+  ejsInited = false; // neu initialisieren
+
+  if (name || email) {
+    const userData = { name: name || 'Anonym', email: email || '', updatedAt: Date.now() };
+    if (usersRef) await usersRef.child(MY_DEVICE_ID).set(userData);
+  }
+
+  closeSettings();
+  toast('✓ Einstellungen gespeichert');
+}
+
+// ═══════════════════════════════════════════════
+//  THEME
+// ═══════════════════════════════════════════════
+
+function initTheme() {
+    }
+
+// ═══════════════════════════════════════════════
+//  START
+// ═══════════════════════════════════════════════
+loadOffers();
+initApp();
+autoLoadOffersJson();
+
+function doQuickBackup(){
+  var d={};
+  for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);try{d[k]=JSON.parse(localStorage.getItem(k));}catch(e){d[k]=localStorage.getItem(k);}}
+  d._backup={created:new Date().toISOString()};
+  var bl=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(bl);
+  a.download="hub-backup-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>
