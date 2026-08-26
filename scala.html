@@ -240,6 +240,48 @@ html,body{
   margin-top:12px;font-size:12px;color:#888;text-align:center;min-height:18px;
 }
 
+/* ── Gallery management overlay ── */
+.mgmt-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:500;align-items:flex-end;justify-content:center;
+}
+.mgmt-overlay.open{display:flex;}
+.mgmt-box{
+  background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 36px;
+  width:100%;max-width:480px;max-height:78vh;overflow-y:auto;
+}
+.mgmt-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 18px;}
+.mgmt-title{font-size:18px;font-weight:700;margin-bottom:4px;}
+.mgmt-sub{font-size:12px;color:#888;margin-bottom:16px;}
+.mgmt-list{display:flex;flex-direction:column;gap:10px;}
+.mgmt-card{
+  display:flex;align-items:center;gap:10px;
+  padding:10px;border:1.5px solid var(--line);border-radius:12px;
+  background:var(--bg);transition:border-color .2s;
+}
+.mgmt-card.is-hero{border-color:#111;}
+.mgmt-thumb{width:64px;height:48px;object-fit:cover;border-radius:7px;flex-shrink:0;}
+.mgmt-info{flex:1;min-width:0;}
+.mgmt-cap{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mgmt-badge{font-size:10px;color:#111;font-weight:700;letter-spacing:.06em;margin-top:2px;}
+.mgmt-actions{display:flex;gap:5px;flex-shrink:0;}
+.mgmt-btn{
+  background:var(--bg2);border:none;cursor:pointer;
+  width:32px;height:32px;border-radius:8px;font-size:14px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text);font-family:inherit;transition:opacity .15s;
+}
+.mgmt-btn:disabled{opacity:.25;cursor:default;}
+.mgmt-btn.hero-set{background:#f5f5f5;}
+.mgmt-btn.hero-active{background:#f5f5f5;opacity:.35;cursor:default;}
+.mgmt-btn.del{background:#fff0f0;color:#c0392b;}
+.mgmt-empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 0;}
+.mgmt-close-btn{
+  width:100%;padding:13px;border:1.5px solid var(--line);border-radius:12px;
+  background:var(--bg);color:var(--text);font-size:14px;font-weight:600;
+  font-family:inherit;cursor:pointer;margin-top:16px;
+}
+
 /* ── Tech accordion ── */
 .tech-blocks{margin-top:0;}
 .tblock{border-top:1px solid var(--line);transition:border-color .2s;}
@@ -401,7 +443,7 @@ html,body{
 </div>
 
 <!-- Hero image -->
-<div class="hero-img">
+<div class="hero-img" id="heroImg">
   <img src="images/scala/02-seite.jpg" alt="Škoda Scala Monte Carlo – Seitenansicht" loading="eager">
 </div>
 
@@ -435,7 +477,10 @@ html,body{
         <div class="eyebrow">Galerie</div>
         <div class="sec-title">Fotos</div>
       </div>
-      <button class="gal-upload-btn" onclick="openUpload()">📷 Hochladen</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="gal-upload-btn" onclick="openMgmt()" style="background:var(--bg2);color:var(--text);border:1.5px solid var(--line)">⚙️ Verwalten</button>
+        <button class="gal-upload-btn" onclick="openUpload()">📷 Hochladen</button>
+      </div>
     </div>
   </div>
   <div class="slider-wrap">
@@ -462,6 +507,17 @@ html,body{
       <button class="upload-go" onclick="startUpload()">Foto wählen &amp; hochladen</button>
     </div>
     <div class="upload-progress" id="uploadProgress"></div>
+  </div>
+</div>
+
+<!-- Gallery management overlay -->
+<div class="mgmt-overlay" id="mgmtOverlay" onclick="if(event.target===this)closeMgmt()">
+  <div class="mgmt-box">
+    <div class="mgmt-handle"></div>
+    <div class="mgmt-title">⚙️ Galerie verwalten</div>
+    <div class="mgmt-sub">Eigene Fotos verwalten: Reihenfolge, Hero-Bild oder löschen.</div>
+    <div class="mgmt-list" id="mgmtGrid"></div>
+    <button class="mgmt-close-btn" onclick="closeMgmt()">Schließen</button>
   </div>
 </div>
 
@@ -838,14 +894,97 @@ vp.addEventListener('touchend',   e => {
   if (Math.abs(dx) > 40) go(dx < 0 ? cur+1 : cur-1);
 }, {passive:true});
 
+/* ── Gallery state ── */
+let galleryData = {};
+let heroUrl = '';
+
+function getSortedUploads() {
+  return Object.entries(galleryData)
+    .map(([key, v]) => ({ key, ...v, _sortKey: v.order ?? v.uploaded ?? parseInt(key) }))
+    .sort((a, b) => a._sortKey - b._sortKey);
+}
+
+function refreshHeroDisplay() {
+  const hero = document.getElementById('heroImg');
+  if (heroUrl) {
+    hero.innerHTML = `<img src="${heroUrl}" alt="Škoda Scala Monte Carlo" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block">`;
+  } else {
+    hero.innerHTML = `<img src="images/scala/02-seite.jpg" alt="Škoda Scala Monte Carlo – Seitenansicht" loading="eager" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block">`;
+  }
+}
+
+db.ref('scala_hero').on('value', snap => {
+  heroUrl = snap.val() || '';
+  refreshHeroDisplay();
+  updateMgmtView();
+});
+
 renderSlider([]);
 db.ref(FB_PATH).on('value', snap => {
-  const data = snap.val();
-  const extras = data
-    ? Object.entries(data).sort(([a],[b])=>parseInt(a)-parseInt(b)).map(([,v])=>v)
-    : [];
-  renderSlider(extras);
+  galleryData = snap.val() || {};
+  renderSlider(getSortedUploads());
+  updateMgmtView();
 });
+
+/* ── Gallery management ── */
+function openMgmt() {
+  updateMgmtView();
+  document.getElementById('mgmtOverlay').classList.add('open');
+}
+function closeMgmt() {
+  document.getElementById('mgmtOverlay').classList.remove('open');
+}
+
+function updateMgmtView() {
+  const grid = document.getElementById('mgmtGrid');
+  if (!grid) return;
+  const imgs = getSortedUploads();
+  if (!imgs.length) {
+    grid.innerHTML = '<div class="mgmt-empty">Noch keine eigenen Fotos hochgeladen.</div>';
+    return;
+  }
+  grid.innerHTML = imgs.map((img, i) => {
+    const isHero = img.url === heroUrl;
+    const safeUrl = img.url.replace(/'/g, '%27');
+    return `<div class="mgmt-card${isHero ? ' is-hero' : ''}">
+      <img class="mgmt-thumb" src="${img.url}" alt="">
+      <div class="mgmt-info">
+        <div class="mgmt-cap">${img.caption || 'Kein Titel'}</div>
+        ${isHero ? '<div class="mgmt-badge">⭐ Hero-Bild</div>' : ''}
+      </div>
+      <div class="mgmt-actions">
+        <button class="mgmt-btn" onclick="mgmtMove('${img.key}',-1)" ${i===0?'disabled':''} title="Nach oben">↑</button>
+        <button class="mgmt-btn" onclick="mgmtMove('${img.key}',1)" ${i===imgs.length-1?'disabled':''} title="Nach unten">↓</button>
+        <button class="mgmt-btn ${isHero?'hero-active':'hero-set'}" onclick="mgmtSetHero('${safeUrl}')" ${isHero?'disabled':''} title="Als Hero setzen">⭐</button>
+        <button class="mgmt-btn del" onclick="mgmtDelete('${img.key}','${safeUrl}')" title="Löschen">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function mgmtMove(key, dir) {
+  const imgs = getSortedUploads();
+  const idx = imgs.findIndex(img => img.key === key);
+  if (idx < 0) return;
+  const targetIdx = idx + dir;
+  if (targetIdx < 0 || targetIdx >= imgs.length) return;
+  const a = imgs[idx], b = imgs[targetIdx];
+  const updates = {};
+  updates[`${FB_PATH}/${a.key}/order`] = b._sortKey;
+  updates[`${FB_PATH}/${b.key}/order`] = a._sortKey;
+  await db.ref().update(updates);
+}
+
+async function mgmtSetHero(url) {
+  await db.ref('scala_hero').set(decodeURIComponent(url));
+}
+
+async function mgmtDelete(key, safeUrl) {
+  if (!confirm('Foto aus der Galerie entfernen?')) return;
+  const url = decodeURIComponent(safeUrl);
+  if (url === heroUrl) await db.ref('scala_hero').remove();
+  await db.ref(`${FB_PATH}/${key}`).remove();
+}
 
 /* ── Upload ── */
 function openUpload() {
