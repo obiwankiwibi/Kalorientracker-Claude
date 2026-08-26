@@ -22,6 +22,8 @@
       --teal:     #0050c8;
       --teal-dim: rgba(27,79,216,0.5);
       --salmon:   #C84B32;
+      --active:   #1b6b3e;
+      --active-dim: rgba(27,107,62,0.65);
       --text:     #1a1a2e;
       --muted:    #6b7a99;
       --border:   rgba(0,0,80,0.10);
@@ -176,17 +178,17 @@ html { height: 100%; }
       display: none;
       align-items: center;
       justify-content: space-between;
-      padding: 7px 16px;
+      padding: 9px 16px;
       background: var(--surface);
-      border-bottom: 1px solid var(--border);
+      border-bottom: 2px solid var(--active);
       font-size: 13px;
       color: var(--muted);
       gap: 8px;
     }
     #priceTotal {
-      font-weight: 700;
-      color: var(--teal);
-      font-size: 14px;
+      font-weight: 800;
+      color: var(--active);
+      font-size: 17px;
       white-space: nowrap;
     }
 
@@ -220,7 +222,7 @@ html { height: 100%; }
     .add-fab {
       width: 32px; height: 32px;
       border-radius: 50%;
-      background: var(--teal);
+      background: var(--active);
       border: none;
       color: #fff;
       cursor: pointer;
@@ -230,7 +232,7 @@ html { height: 100%; }
       flex-shrink: 0;
       font-weight: 300;
     }
-    .add-fab:active { background: var(--teal-dim); }
+    .add-fab:active { background: var(--active-dim); }
 
     /* ── Sections ── */
     .section {
@@ -311,7 +313,7 @@ html { height: 100%; }
 
     /* Active items — forest green */
     .tile.active {
-      background: #1b6b3e;
+      background: linear-gradient(145deg, #216b42, #164f30);
       color: #fff;
       border: 1.5px solid rgba(255,255,255,0.20);
       box-shadow: 0 4px 14px rgba(27,107,62,0.28);
@@ -398,7 +400,7 @@ html { height: 100%; }
       white-space: nowrap;
       transition: background 0.15s, color 0.15s;
     }
-    .chip.on { background: var(--teal); color: #fff; border-color: var(--teal); }
+    .chip.on { background: var(--active); color: #fff; border-color: var(--active); }
 
     /* Split Händler chip: [Name | ★] */
     .haendler-chip-wrap { display: inline-flex; flex-shrink: 0; }
@@ -411,7 +413,7 @@ html { height: 100%; }
     }
     .haendler-star-btn.on { color: #f5a623; background: rgba(245,166,35,0.1); border-color: rgba(245,166,35,0.4); }
     .sort-row .chip { font-size: 11px; padding: 3px 10px; }
-    .sort-row .chip.on { background: var(--layer2); color: var(--teal); border-color: var(--teal); font-weight: 700; }
+    .sort-row .chip.on { background: rgba(27,107,62,0.12); color: var(--active); border-color: var(--active); font-weight: 700; }
 
     /* ── Bottom picker sheet ── */
     .sheet-overlay {
@@ -1125,6 +1127,9 @@ html { height: 100%; }
 
 <!-- ══ SUGGESTIONS ══ -->
 <div class="section" id="sugSection">
+  <div class="sec-header" style="cursor:default;pointer-events:none;padding-bottom:6px">
+    <span class="sec-title">Vorschläge</span>
+  </div>
   <div class="grid" id="sugGrid"></div>
 </div>
 
