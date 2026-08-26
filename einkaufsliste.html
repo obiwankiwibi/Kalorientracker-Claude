@@ -870,6 +870,32 @@ html { height: 100%; }
       text-transform: uppercase; letter-spacing: 0.7px;
       padding: 4px 14px 10px;
     }
+  /* ── Einkauf-erledigt Dialog ── */
+  .done-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.55); z-index: 700;
+    align-items: flex-end; justify-content: center;
+  }
+  .done-overlay.open { display: flex; }
+  .done-box {
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    padding: 28px 20px 40px; width: 100%; max-width: 430px;
+    text-align: center;
+  }
+  .done-emoji { font-size: 52px; line-height: 1; margin-bottom: 12px; }
+  .done-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .done-sub   { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+  .done-btns  { display: flex; flex-direction: column; gap: 10px; }
+  .done-yes {
+    padding: 14px; border: none; border-radius: 14px;
+    background: var(--green); color: #fff;
+    font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
+  }
+  .done-no {
+    padding: 14px; border: 1.5px solid var(--border); border-radius: 14px;
+    background: transparent; color: var(--text);
+    font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer;
+  }
   </style>
 </head>
 <body>
@@ -959,6 +985,19 @@ html { height: 100%; }
 <!-- ══ SUGGESTIONS ══ -->
 <div class="section" id="sugSection">
   <div class="grid" id="sugGrid"></div>
+</div>
+
+<!-- ══ EINKAUF ERLEDIGT DIALOG ══ -->
+<div class="done-overlay" id="donePromptOverlay">
+  <div class="done-box">
+    <div class="done-emoji">🛒</div>
+    <div class="done-title">Einkauf erledigt?</div>
+    <div class="done-sub">Alle Artikel sind im Korb.<br>Liste jetzt leeren?</div>
+    <div class="done-btns">
+      <button class="done-yes" onclick="confirmShoppingDone()">Ja, Liste leeren</button>
+      <button class="done-no"  onclick="closeShoppingDonePrompt()">Nein, weiter einkaufen</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══ PICKER SHEET ══ -->
@@ -1474,6 +1513,9 @@ let activeStoreFilter = '';
 let activeCat   = 'Alle';
 let activeSort  = '';    // 'az' | 'typ' | 'preis' | 'kg' | 'kcal'
 let sortDir     = 1;     // 1=aufsteigend, -1=absteigend
+let usageCounts = {};
+let usageRef    = null;
+let shoppingDoneShown = false;
 let doneOpen    = false;
 
 // List ID aus URL
@@ -1523,6 +1565,12 @@ function initApp() {
 
     shoppingPingRef = db.ref('settings/shoppingPing');
     shoppingPingRef.on('value', snap => { shoppingPing = snap.val() || {}; });
+
+    usageRef = db.ref('lists/' + listId + '/usage');
+    usageRef.on('value', snap => {
+      usageCounts = snap.val() || {};
+      renderSuggestions();
+    });
   } catch(e) {
     console.error('Firebase init failed:', e);
     startOffline();
@@ -1628,6 +1676,16 @@ function renderAll() {
   b.textContent = cnt;
   b.classList.toggle('show', cnt > 0);
 
+  // Einkauf-erledigt Dialog
+  if (active.length === 0 && done.length > 0) {
+    if (!shoppingDoneShown) {
+      shoppingDoneShown = true;
+      setTimeout(() => document.getElementById('donePromptOverlay').classList.add('open'), 400);
+    }
+  } else if (active.length > 0) {
+    shoppingDoneShown = false;
+  }
+
   calcTotal();
   renderSuggestions();
 }
@@ -1702,8 +1760,15 @@ function renderSuggestions() {
   const allSuggestions = [...SUGGESTIONS, ...scanned];
 
   let list = allSuggestions;
-  if (activeCat !== 'Alle') list = list.filter(s => s.cat === activeCat);
-  if (search)               list = list.filter(s => s.name.toLowerCase().includes(search));
+  if (activeCat === '⭐ Häufig') {
+    const usageKey = n => n.toLowerCase().replace(/[.#$[\]/]/g, '_');
+    list = list
+      .filter(s => (usageCounts[usageKey(s.name)] || 0) > 0)
+      .sort((a, b) => (usageCounts[usageKey(b.name)] || 0) - (usageCounts[usageKey(a.name)] || 0));
+  } else if (activeCat !== 'Alle') {
+    list = list.filter(s => s.cat === activeCat);
+  }
+  if (search) list = list.filter(s => s.name.toLowerCase().includes(search));
 
   // Sortierung
   if (activeSort) {
@@ -1774,9 +1839,15 @@ function setSort(id) {
 function renderCats() {
   const cr = document.getElementById('catRow');
   const hasScanned = Object.keys(scannedSuggestions).length > 0;
-  const cats = ['Alle', ...new Set(SUGGESTIONS.map(s => s.cat)), ...(hasScanned ? ['Gescannt'] : [])];
+  const hasUsage   = Object.keys(usageCounts).length > 0;
+  const cats = [
+    'Alle',
+    ...(hasUsage ? ['⭐ Häufig'] : []),
+    ...new Set(SUGGESTIONS.map(s => s.cat)),
+    ...(hasScanned ? ['Gescannt'] : [])
+  ];
   cr.innerHTML = cats.map(c =>
-    `<button class="chip ${c === activeCat ? 'on' : ''}" onclick="setCat('${c}')">${c}</button>`
+    `<button class="chip ${c === activeCat ? 'on' : ''}" onclick="setCat('${esc(c)}')">${esc(c)}</button>`
   ).join('');
 }
 
@@ -1794,6 +1865,7 @@ function tapSuggestion(name, emoji) {
   // Noch nicht drin → hinzufügen
   const id = 'i_' + Date.now();
   persist(id, { name, emoji, amount: '', checked: false, addedAt: Date.now() });
+  trackUsage(name);
   toast(`${emoji} ${name} hinzugefügt`);
 }
 
@@ -1887,6 +1959,7 @@ function confirmPicker() {
   if (picker.isNew) {
     const id = 'i_' + Date.now();
     persist(id, { name: picker.name, emoji: picker.emoji, amount: picker.amount, store: picker.store || null, checked: false, addedAt: Date.now() });
+    trackUsage(picker.name);
   } else {
     const it = items[picker.id];
     if (it) persist(picker.id, { ...it, amount: picker.amount, store: picker.store || null });
@@ -1933,6 +2006,23 @@ function clearDone() {
   if (cnt === 0) { toast('Keine erledigten Artikel'); return; }
   if (!confirm(`${cnt} erledigte Artikel entfernen?`)) return;
   Object.entries(items).forEach(([id, it]) => { if (it.checked) persist(id, null); });
+}
+
+/* ── Häufig-Tracking ── */
+function trackUsage(name) {
+  if (!usageRef) return;
+  const key = name.toLowerCase().replace(/[.#$[\]/]/g, '_');
+  usageRef.child(key).transaction(n => (n || 0) + 1);
+}
+
+/* ── Einkauf-erledigt Dialog ── */
+function closeShoppingDonePrompt() {
+  document.getElementById('donePromptOverlay').classList.remove('open');
+}
+function confirmShoppingDone() {
+  closeShoppingDonePrompt();
+  Object.keys(items).forEach(id => persist(id, null));
+  toast('✅ Einkauf erledigt – Liste geleert!');
 }
 
 function addCustom() {
