@@ -295,6 +295,8 @@ html { height: 100%; }
     .tile.active {
       background: var(--salmon);
       color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.22);
+      box-shadow: 0 3px 10px rgba(200,75,50,0.25);
     }
 
     /* Checked items — teal, dimmed */
@@ -302,6 +304,7 @@ html { height: 100%; }
       background: var(--teal);
       color: #fff;
       opacity: 0.55;
+      border: 1.5px solid rgba(255,255,255,0.18);
     }
     .tile.done .tile-emoji::after {
       content: ' ✓';
