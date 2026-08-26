@@ -343,6 +343,16 @@ html { height: 100%; }
     }
 
     /* Done list row */
+    .done-row-wrap {
+      position: relative; overflow: hidden; border-radius: 14px;
+    }
+    .done-row-delete-bg {
+      position: absolute; inset: 0; background: var(--red);
+      display: flex; align-items: center; justify-content: flex-end;
+      padding-right: 18px; color: #fff; font-size: 18px; border-radius: 14px;
+      opacity: 0; transition: opacity 0.1s;
+    }
+    .done-row-wrap.swiping .done-row-delete-bg { opacity: 1; }
     .done-row {
       display: flex; align-items: center; gap: 12px;
       padding: 11px 14px;
@@ -350,11 +360,12 @@ html { height: 100%; }
       border-radius: 14px;
       border: 1px solid var(--border);
       cursor: pointer;
-      touch-action: manipulation;
-      transition: opacity 0.15s, transform 0.1s;
+      touch-action: pan-y;
+      transition: transform 0.2s ease, opacity 0.15s;
       animation: pop 0.15s ease-out;
+      position: relative; z-index: 1;
     }
-    .done-row:active { opacity: 0.55; transform: scale(0.98); }
+    .done-row:active { opacity: 0.7; }
     .done-row-emoji { font-size: 22px; flex-shrink: 0; opacity: 0.6; }
     .done-row-info  { flex: 1; min-width: 0; }
     .done-row-name  { font-size: 14px; font-weight: 500; color: var(--muted);
@@ -995,7 +1006,11 @@ html { height: 100%; }
     background: linear-gradient(transparent, rgba(0,0,0,.78));
     border-radius: 0 0 20px 20px;
   }
-  .photo-tile-name  { font-size: 11px; font-weight: 700; color: #fff; text-align: center; line-height: 1.2; word-break: break-word; }
+  .photo-tile-name  {
+    font-size: 11px; font-weight: 700; color: #fff; text-align: center; line-height: 1.25;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; word-break: break-word;
+  }
   .photo-tile-store {
     display: inline-block; font-size: 9px; color: rgba(255,255,255,.8);
     background: rgba(255,255,255,.18); border-radius: 8px; padding: 1px 5px;
@@ -1842,7 +1857,7 @@ function renderAll() {
     : active;
   const ag = document.getElementById('activeGrid');
   if (active.length === 0) {
-    ag.innerHTML = '<div class="empty">Keine Artikel in der Liste.<br>Tippe unten auf einen Vorschlag!</div>';
+    ag.innerHTML = '<div class="empty" style="padding:32px 16px"><div style="font-size:44px;margin-bottom:12px">🛒</div><div style="font-weight:700;font-size:15px;margin-bottom:6px">Liste ist leer</div><div style="font-size:13px;opacity:.7">Tippe auf einen Vorschlag unten<br>oder nutze die Suche</div></div>';
   } else if (visibleActive.length === 0) {
     ag.innerHTML = `<div class="empty">Keine Artikel für „${esc(activeStoreFilter)}".</div>`;
   } else {
@@ -1887,13 +1902,19 @@ function setStoreFilter(val) {
   renderAll();
 }
 
+function fmtPhotoPrice(raw) {
+  if (!raw) return '';
+  const n = parseFloat(String(raw).replace(',', '.'));
+  return isNaN(n) ? raw + ' €' : n.toFixed(2).replace('.', ',') + ' €';
+}
+
 function tile(type, it) {
   // ── Foto-Angebot Kachel ──
   if (it.photo) {
     const overlay = `<div class="photo-tile-overlay">
       <div class="photo-tile-name">${esc(it.name || '')}</div>
       ${it.store ? `<div style="text-align:center"><span class="photo-tile-store">${esc(it.store)}</span></div>` : ''}
-      ${it.photoPrice ? `<div class="photo-tile-price">${esc(it.photoPrice)}</div>` : ''}
+      ${it.photoPrice ? `<div class="photo-tile-price">${esc(fmtPhotoPrice(it.photoPrice))}</div>` : ''}
     </div>`;
     const doneCheck = type === 'done' ? '<div class="photo-done-check">✓</div>' : '';
     if (type === 'active') {
@@ -1904,13 +1925,16 @@ function tile(type, it) {
         ${overlay}
       </div>`;
     }
-    return `<div class="done-row" onclick="uncheck('${it.id}')">
-      <img style="width:52px;height:52px;object-fit:cover;border-radius:10px;flex-shrink:0;opacity:0.6" src="${it.photo}" alt="${esc(it.name || '')}">
-      <div class="done-row-info">
-        <div class="done-row-name">${esc(it.name || 'Foto-Angebot')}</div>
-        ${it.store ? `<div class="done-row-price">${esc(it.store)}</div>` : ''}
+    return `<div class="done-row-wrap" data-id="${it.id}">
+      <div class="done-row-delete-bg">🗑</div>
+      <div class="done-row" onclick="uncheck('${it.id}')">
+        <img style="width:52px;height:52px;object-fit:cover;border-radius:10px;flex-shrink:0;opacity:0.6" src="${it.photo}" alt="${esc(it.name || '')}">
+        <div class="done-row-info">
+          <div class="done-row-name">${esc(it.name || 'Foto-Angebot')}</div>
+          ${it.store ? `<div class="done-row-price">${esc(it.store)}</div>` : ''}
+        </div>
+        <span class="done-row-check">✓</span>
       </div>
-      <span class="done-row-check">✓</span>
     </div>`;
   }
 
@@ -1948,14 +1972,17 @@ function tile(type, it) {
     }
     return '';
   })();
-  return `<div class="done-row" onclick="uncheck('${it.id}')">
-    <span class="done-row-emoji">${it.emoji || '🛒'}</span>
-    <div class="done-row-info">
-      <div class="done-row-name">${esc(it.name)}</div>
-      ${donePrice ? `<div class="done-row-price">${donePrice}</div>` : ''}
+  return `<div class="done-row-wrap" data-id="${it.id}">
+    <div class="done-row-delete-bg">🗑</div>
+    <div class="done-row" onclick="uncheck('${it.id}')">
+      <span class="done-row-emoji">${it.emoji || '🛒'}</span>
+      <div class="done-row-info">
+        <div class="done-row-name">${esc(it.name)}</div>
+        ${donePrice ? `<div class="done-row-price">${donePrice}</div>` : ''}
+      </div>
+      ${it.store ? `<span class="done-row-store">${esc(it.store)}</span>` : ''}
+      <span class="done-row-check">✓</span>
     </div>
-    ${it.store ? `<span class="done-row-store">${esc(it.store)}</span>` : ''}
-    <span class="done-row-check">✓</span>
   </div>`;
 }
 
@@ -3282,6 +3309,65 @@ function toggleOffersList() {
 function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// ── Swipe-to-delete on Done-Rows ──
+(function() {
+  const THRESHOLD = 80;  // px left-swipe to trigger delete
+  let startX, startY, el, row, wrap, axisLocked = null;
+
+  function onTouchStart(e) {
+    const w = e.target.closest('.done-row-wrap');
+    if (!w) return;
+    wrap = w; row = w.querySelector('.done-row');
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    axisLocked = null;
+    row.style.transition = 'none';
+  }
+
+  function onTouchMove(e) {
+    if (!wrap) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (!axisLocked) {
+      if (Math.abs(dy) > Math.abs(dx)) { axisLocked = 'y'; wrap = null; return; }
+      axisLocked = 'x';
+    }
+    if (axisLocked !== 'x') return;
+    if (dx > 0) { row.style.transform = ''; wrap.classList.remove('swiping'); return; }
+    e.preventDefault();
+    const x = Math.max(dx, -160);
+    row.style.transform = `translateX(${x}px)`;
+    wrap.classList.toggle('swiping', x < -30);
+  }
+
+  function onTouchEnd() {
+    if (!wrap || axisLocked !== 'x') { wrap = null; return; }
+    const m = (row.style.transform.match(/-?[\d.]+/) || [0]);
+    const x = parseFloat(m[0]);
+    row.style.transition = '';
+    if (x < -THRESHOLD) {
+      row.style.transform = `translateX(-110%)`;
+      wrap.style.height = wrap.offsetHeight + 'px';
+      setTimeout(() => {
+        wrap.style.transition = 'height 0.2s, opacity 0.2s';
+        wrap.style.height = '0';
+        wrap.style.opacity = '0';
+        wrap.style.overflow = 'hidden';
+        const id = wrap.dataset.id;
+        setTimeout(() => { if (id) persist(id, null); }, 200);
+      }, 160);
+    } else {
+      row.style.transform = '';
+      wrap.classList.remove('swiping');
+    }
+    wrap = null;
+  }
+
+  document.addEventListener('touchstart', onTouchStart, { passive: true });
+  document.addEventListener('touchmove',  onTouchMove,  { passive: false });
+  document.addEventListener('touchend',   onTouchEnd,   { passive: true });
+})();
 
 window.addEventListener('scroll', () => {
   const btn = document.getElementById('scrollTopBtn');
