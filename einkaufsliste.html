@@ -137,6 +137,24 @@ html { height: 100%; }
     }
     .icon-btn:active { opacity: 0.7; }
 
+    /* ── Header overflow menu ── */
+    .header-overflow-wrap { position: relative; }
+    .header-menu {
+      display: none; position: absolute; top: calc(100% + 6px); right: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 6px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.13); z-index: 500; min-width: 170px;
+    }
+    .header-menu.open { display: block; }
+    .header-menu-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; border-radius: 10px;
+      font-size: 14px; color: var(--text); text-decoration: none;
+      border: none; background: transparent; font-family: inherit;
+      cursor: pointer; width: 100%; text-align: left;
+    }
+    .header-menu-item:hover { background: var(--bg); }
+
     /* ── Search bar (floating bottom) ── */
     .search-wrap {
       padding: 10px 12px;
@@ -282,8 +300,8 @@ html { height: 100%; }
       to   { transform: scale(1);    opacity: 1; }
     }
 
-    .tile-emoji { font-size: 26px; line-height: 1; }
-    .tile-name  { font-size: 11.5px; font-weight: 500; text-align: center; line-height: 1.25; word-break: break-word; }
+    .tile-emoji { font-size: 28px; line-height: 1; }
+    .tile-name  { font-size: 13px; font-weight: 600; text-align: center; line-height: 1.25; word-break: break-word; }
     .tile-price { font-size: 10px; font-weight: 600; opacity: 0.72; margin-top: 1px; }
     .tile-kcal-price { font-size: 8.5px; font-weight: 500; opacity: 0.68; margin-top: 0; }
     .tile-amount { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 700; opacity: 0.9; }
@@ -291,25 +309,43 @@ html { height: 100%; }
     .store-chip  { display: inline-block; padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface); font-size: 12px; font-weight: 600; margin-right: 6px; white-space: nowrap; cursor: pointer; transition: border-color .15s, background .15s; }
     .store-chip.active { border-color: var(--teal); background: rgba(0,80,200,0.10); color: var(--teal); }
 
-    /* Active items — salmon */
+    /* Active items — forest green */
     .tile.active {
-      background: var(--salmon);
+      background: #1b6b3e;
       color: #fff;
-      border: 1.5px solid rgba(255,255,255,0.22);
-      box-shadow: 0 3px 10px rgba(200,75,50,0.25);
+      border: 1.5px solid rgba(255,255,255,0.20);
+      box-shadow: 0 4px 14px rgba(27,107,62,0.28);
     }
 
-    /* Checked items — teal, dimmed */
+    /* Done items — compact list row (tile.done only used for photo items now) */
     .tile.done {
       background: var(--teal);
       color: #fff;
       opacity: 0.55;
       border: 1.5px solid rgba(255,255,255,0.18);
     }
-    .tile.done .tile-emoji::after {
-      content: ' ✓';
-      font-size: 13px;
+
+    /* Done list row */
+    .done-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px;
+      background: var(--surface);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      animation: pop 0.15s ease-out;
     }
+    .done-row:active { opacity: 0.55; transform: scale(0.98); }
+    .done-row-emoji { font-size: 22px; flex-shrink: 0; opacity: 0.6; }
+    .done-row-info  { flex: 1; min-width: 0; }
+    .done-row-name  { font-size: 14px; font-weight: 500; color: var(--muted);
+                      text-decoration: line-through; white-space: nowrap;
+                      overflow: hidden; text-overflow: ellipsis; }
+    .done-row-price { font-size: 11px; color: var(--muted); opacity: 0.7; margin-top: 1px; }
+    .done-row-store { font-size: 11px; color: var(--muted); flex-shrink: 0; max-width: 80px;
+                      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .done-row-check { color: var(--green); font-size: 16px; font-weight: 700; flex-shrink: 0; }
 
     /* Suggestions */
     .tile.sug {
@@ -1017,11 +1053,16 @@ html { height: 100%; }
 <header class="header">
   <div class="header-back" onclick="switchList()">‹ Listen</div>
   <div class="header-title" id="listTitle">Zuhause</div>
-  <a href="index.html" class="icon-btn" style="text-decoration:none;font-size:17px" title="Startseite">⌂</a>
-  <button class="icon-btn" onclick="doQuickBackup()" title="Backup erstellen">💾</button>
-    <button class="icon-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
-  <button class="icon-btn" onclick="shareList()" title="Teilen">⎘</button>
+  <button class="icon-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
   <button class="icon-btn" onclick="clearDone()" title="Erledigte löschen">✓</button>
+  <div class="header-overflow-wrap">
+    <button class="icon-btn" onclick="toggleHeaderMenu(event)" title="Mehr">⋮</button>
+    <div class="header-menu" id="headerMenu">
+      <a href="index.html" class="header-menu-item">⌂ Startseite</a>
+      <button class="header-menu-item" onclick="doQuickBackup();closeHeaderMenu()">💾 Backup</button>
+      <button class="header-menu-item" onclick="shareList();closeHeaderMenu()">⎘ Teilen</button>
+    </div>
+  </div>
 </header>
 
 <!-- ══ SEARCH ══ -->
@@ -1071,7 +1112,7 @@ html { height: 100%; }
       <span class="sec-arrow" id="doneArrow">▼</span> Erledigt (0)
     </div>
   </div>
-  <div class="grid" id="doneGrid" style="display:none"></div>
+  <div id="doneGrid" style="display:none; flex-direction:column; gap:6px"></div>
 </div>
 
 <div class="divider"></div>
@@ -1786,7 +1827,7 @@ function renderAll() {
   if (done.length > 0) {
     ds.style.display = '';
     dt.innerHTML = `<span class="sec-arrow" id="doneArrow">${doneOpen?'▼':'▶'}</span> Erledigt (${done.length})`;
-    dg.style.display = doneOpen ? 'grid' : 'none';
+    dg.style.display = doneOpen ? 'flex' : 'none';
     dg.innerHTML = done.map(it => tile('done', it)).join('');
   } else {
     ds.style.display = 'none';
@@ -1834,10 +1875,13 @@ function tile(type, it) {
         ${overlay}
       </div>`;
     }
-    return `<div class="tile done photo" onclick="uncheck('${it.id}')">
-      <img class="photo-tile-img" src="${it.photo}" alt="${esc(it.name || '')}">
-      ${doneCheck}
-      ${overlay}
+    return `<div class="done-row" onclick="uncheck('${it.id}')">
+      <img style="width:52px;height:52px;object-fit:cover;border-radius:10px;flex-shrink:0;opacity:0.6" src="${it.photo}" alt="${esc(it.name || '')}">
+      <div class="done-row-info">
+        <div class="done-row-name">${esc(it.name || 'Foto-Angebot')}</div>
+        ${it.store ? `<div class="done-row-price">${esc(it.store)}</div>` : ''}
+      </div>
+      <span class="done-row-check">✓</span>
     </div>`;
   }
 
@@ -1867,11 +1911,22 @@ function tile(type, it) {
       ${it.amount ? `<div class="tile-amount">${esc(it.amount)}</div>` : ''}
     </div>`;
   }
-  return `<div class="tile done" onclick="uncheck('${it.id}')">
-    <div class="tile-emoji">${it.emoji || '🛒'}</div>
-    <div class="tile-name">${esc(it.name)}</div>
-    ${storeBadge}
-    ${priceHtml}
+  // done: compact list row
+  const donePrice = (() => {
+    if (sug?.price != null) {
+      const u = sug.unit ? ` €/${sug.unit}` : ' €';
+      return `${sug.price.toFixed(2).replace('.',',')}${u}`;
+    }
+    return '';
+  })();
+  return `<div class="done-row" onclick="uncheck('${it.id}')">
+    <span class="done-row-emoji">${it.emoji || '🛒'}</span>
+    <div class="done-row-info">
+      <div class="done-row-name">${esc(it.name)}</div>
+      ${donePrice ? `<div class="done-row-price">${donePrice}</div>` : ''}
+    </div>
+    ${it.store ? `<span class="done-row-store">${esc(it.store)}</span>` : ''}
+    <span class="done-row-check">✓</span>
   </div>`;
 }
 
@@ -2147,11 +2202,21 @@ function uncheck(id) {
   persist(id, { ...it, checked: false, checkedAt: null });
 }
 
+/* ── Header overflow menu ── */
+function toggleHeaderMenu(e) {
+  e.stopPropagation();
+  document.getElementById('headerMenu').classList.toggle('open');
+}
+function closeHeaderMenu() {
+  document.getElementById('headerMenu').classList.remove('open');
+}
+document.addEventListener('click', () => closeHeaderMenu());
+
 function toggleDone() {
   doneOpen = !doneOpen;
   const dg = document.getElementById('doneGrid');
   const arrow = document.getElementById('doneArrow');
-  dg.style.display = doneOpen ? 'grid' : 'none';
+  dg.style.display = doneOpen ? 'flex' : 'none';
   if (arrow) arrow.textContent = doneOpen ? '▼' : '▶';
 }
 
