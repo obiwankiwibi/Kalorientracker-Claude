@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Aufgaben</title>
+  <title>To Do's</title>
+  <link rel="manifest" href="manifest-todo.json">
+  <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');</script>
 
   <script>(function(){
     var t = localStorage.getItem('todo_theme') || 'light';

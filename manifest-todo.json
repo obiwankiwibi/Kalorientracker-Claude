@@ -1,0 +1,20 @@
+{
+  "id": "yapihub-todo",
+  "name": "To Do's",
+  "short_name": "To Do's",
+  "description": "Aufgaben und To-Do-Liste",
+  "start_url": "./todo.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#7c3aed",
+  "background_color": "#f5f3ff",
+  "icons": [
+    {
+      "src": "icon-todo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

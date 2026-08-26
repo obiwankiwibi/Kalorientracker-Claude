@@ -1,0 +1,20 @@
+{
+  "id": "yapihub-kawasaki",
+  "name": "Kawasaki Z900",
+  "short_name": "Z900",
+  "description": "Kawasaki Z900 2024 – Mein Motorrad",
+  "start_url": "./kawasaki.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#6DC228",
+  "background_color": "#111111",
+  "icons": [
+    {
+      "src": "icon-kawasaki.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

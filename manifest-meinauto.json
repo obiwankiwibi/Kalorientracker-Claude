@@ -1,0 +1,20 @@
+{
+  "id": "yapihub-meinauto",
+  "name": "Mein Auto",
+  "short_name": "Mein Auto",
+  "description": "Škoda Scala Monte Carlo",
+  "start_url": "./scala.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1a1a2e",
+  "background_color": "#f8f8f8",
+  "icons": [
+    {
+      "src": "icon-meinauto.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "yapihub-einkaufsliste",
+  "name": "Einkaufsliste",
+  "short_name": "Einkaufsliste",
+  "description": "Gemeinsame Einkaufsliste",
+  "start_url": "./einkaufsliste.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0050c8",
+  "background_color": "#edf2f7",
+  "icons": [
+    {
+      "src": "icon-einkaufsliste.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
