@@ -896,6 +896,25 @@ html { height: 100%; }
     background: transparent; color: var(--text);
     font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer;
   }
+  /* ── Häufig-Reset ── */
+  .tile.sug { position: relative; }
+  .usage-del {
+    position: absolute; top: 4px; right: 4px;
+    width: 20px; height: 20px; border-radius: 50%;
+    border: none; background: rgba(0,0,0,.35);
+    color: #fff; font-size: 11px; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    padding: 0; z-index: 2;
+  }
+  .usage-del:hover { background: rgba(220,40,40,.7); }
+  .haeufig-reset-btn {
+    margin-left: auto; flex-shrink: 0;
+    padding: 4px 10px; border-radius: 20px; border: 1.5px solid var(--border);
+    background: transparent; color: var(--muted);
+    font-size: 11px; font-family: inherit; cursor: pointer;
+    white-space: nowrap;
+  }
+  .haeufig-reset-btn:hover { border-color: #e55; color: #e55; }
   </style>
 </head>
 <body>
@@ -1794,8 +1813,12 @@ function renderSuggestions() {
       const isScanned = s.cat === 'Gescannt';
       const p = s.price ?? getItemPrice(s.name);
       const priceHtml = p != null ? sugPriceHtml({...s, price: p}) : '';
+      const delBtn = activeCat === '⭐ Häufig'
+        ? `<button class="usage-del" onclick="event.stopPropagation();resetUsage('${esc(s.name)}')" title="Aus Häufig entfernen">×</button>`
+        : '';
       return `<div class="tile sug ${isScanned ? 'scanned' : ''} ${inList ? 'in-list' : ''}"
         onclick="tapSuggestion('${esc(s.name)}','${s.emoji}')">
+        ${delBtn}
         <div class="tile-emoji">${s.emoji}</div>
         <div class="tile-name">${esc(s.name)}</div>
         ${priceHtml}
@@ -1818,12 +1841,16 @@ const SORT_OPTIONS = [
 function renderSort() {
   const sr = document.getElementById('sortRow');
   if (!sr) return;
+  const resetAll = activeCat === '⭐ Häufig'
+    ? `<button class="haeufig-reset-btn" onclick="resetAllUsage()">🗑 Alle zurücksetzen</button>`
+    : '';
   sr.innerHTML = '<span style="font-size:10px;color:var(--muted);flex-shrink:0;align-self:center;padding-right:2px">↕</span>'
     + SORT_OPTIONS.map(o => {
       const active = o.id === activeSort;
       const arrow  = active ? (sortDir === 1 ? ' ↑' : ' ↓') : '';
       return `<button class="chip ${active ? 'on' : ''}" onclick="setSort('${o.id}')">${o.label}${arrow}</button>`;
-    }).join('');
+    }).join('')
+    + resetAll;
 }
 
 function setSort(id) {
@@ -2013,6 +2040,18 @@ function trackUsage(name) {
   if (!usageRef) return;
   const key = name.toLowerCase().replace(/[.#$[\]/]/g, '_');
   usageRef.child(key).transaction(n => (n || 0) + 1);
+}
+
+function resetUsage(name) {
+  if (!usageRef) return;
+  const key = name.toLowerCase().replace(/[.#$[\]/]/g, '_');
+  usageRef.child(key).remove();
+}
+
+function resetAllUsage() {
+  if (!usageRef) return;
+  if (!confirm('Alle Häufig-Daten löschen?')) return;
+  usageRef.remove();
 }
 
 /* ── Einkauf-erledigt Dialog ── */
