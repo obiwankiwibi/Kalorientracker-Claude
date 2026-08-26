@@ -915,6 +915,75 @@ html { height: 100%; }
     white-space: nowrap;
   }
   .haeufig-reset-btn:hover { border-color: #e55; color: #e55; }
+
+  /* ── Foto-Angebot Kacheln ── */
+  .tile.photo {
+    padding: 0; overflow: hidden; background: #1a1a1a;
+    height: 130px; min-height: 130px;
+  }
+  .photo-tile-img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; border-radius: inherit;
+    transition: opacity 0.2s;
+  }
+  .tile.done.photo .photo-tile-img { opacity: 0.4; filter: grayscale(20%); }
+  .photo-tile-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 1;
+    padding: 22px 8px 8px;
+    background: linear-gradient(transparent, rgba(0,0,0,.78));
+    border-radius: 0 0 20px 20px;
+  }
+  .photo-tile-name  { font-size: 11px; font-weight: 700; color: #fff; text-align: center; line-height: 1.2; word-break: break-word; }
+  .photo-tile-store {
+    display: inline-block; font-size: 9px; color: rgba(255,255,255,.8);
+    background: rgba(255,255,255,.18); border-radius: 8px; padding: 1px 5px;
+    margin-top: 3px; text-align: center;
+  }
+  .photo-tile-price { font-size: 11px; font-weight: 700; color: #7dff7d; text-align: center; margin-top: 3px; }
+  .photo-done-check {
+    position: absolute; top: 7px; right: 9px; z-index: 2;
+    font-size: 15px; color: rgba(255,255,255,.9); font-weight: 700;
+  }
+
+  /* ── Foto-Picker Dialog ── */
+  .photo-picker-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.58); z-index: 800;
+    align-items: flex-end; justify-content: center;
+  }
+  .photo-picker-overlay.open { display: flex; }
+  .photo-picker-box {
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    padding: 20px 16px 44px; width: 100%; max-width: 430px;
+  }
+  .photo-picker-title { font-size: 17px; font-weight: 700; margin-bottom: 14px; text-align: center; }
+  .photo-drop-zone {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; border: 2px dashed var(--border); border-radius: 14px;
+    padding: 18px; cursor: pointer; margin-bottom: 12px;
+    font-size: 13px; color: var(--muted); min-height: 90px;
+    transition: border-color .2s; overflow: hidden;
+  }
+  .photo-drop-zone:hover { border-color: var(--teal); }
+  #photoPreview { width: 100%; max-height: 180px; object-fit: contain; border-radius: 10px; display: none; }
+  .photo-picker-input {
+    width: 100%; padding: 12px 14px; margin-bottom: 10px;
+    border: 1.5px solid var(--border); border-radius: 12px;
+    background: var(--bg); color: var(--text); font-size: 14px; font-family: inherit; outline: none;
+  }
+  .photo-picker-input:focus { border-color: var(--teal); }
+  .photo-picker-btns { display: flex; gap: 10px; margin-top: 4px; }
+  .photo-cancel-btn {
+    flex: 1; padding: 13px; border: 1.5px solid var(--border); border-radius: 12px;
+    background: transparent; color: var(--text); font-size: 14px; font-weight: 600;
+    font-family: inherit; cursor: pointer;
+  }
+  .photo-save-btn {
+    flex: 2; padding: 13px; border: none; border-radius: 12px;
+    background: var(--teal); color: #fff; font-size: 14px; font-weight: 700;
+    font-family: inherit; cursor: pointer;
+  }
+  .photo-save-btn:disabled { opacity: 0.4; cursor: default; }
   </style>
 </head>
 <body>
@@ -953,6 +1022,7 @@ html { height: 100%; }
     <input id="searchInput" placeholder="Suchen oder hinzufügen…"
            oninput="onSearch()" onkeydown="onSearchKey(event)">
     <button class="scan-btn" onclick="openScanner()" title="Barcode scannen">📷</button>
+    <button class="scan-btn" onclick="openPhotoAdder()" title="Foto-Angebot hinzufügen">🖼️</button>
     <button class="add-fab" onclick="addCustom()" title="Hinzufügen">+</button>
   </div>
 </div>
@@ -1004,6 +1074,28 @@ html { height: 100%; }
 <!-- ══ SUGGESTIONS ══ -->
 <div class="section" id="sugSection">
   <div class="grid" id="sugGrid"></div>
+</div>
+
+<!-- ══ FOTO-ANGEBOT PICKER ══ -->
+<div class="photo-picker-overlay" id="photoPickerOverlay" onclick="photoPickerBgClick(event)">
+  <div class="photo-picker-box" id="photoPickerBox">
+    <div class="photo-picker-title">📸 Foto-Angebot</div>
+    <label class="photo-drop-zone" for="photoFileInput">
+      <img id="photoPreview" alt="Vorschau">
+      <div id="photoDropLabel" style="text-align:center">
+        <div style="font-size:36px;margin-bottom:4px">📷</div>
+        <div>Foto aufnehmen oder auswählen</div>
+      </div>
+    </label>
+    <input type="file" id="photoFileInput" accept="image/*" capture="environment" style="display:none" onchange="photoFileSelected(this)">
+    <input class="photo-picker-input" id="photoItemName" placeholder="Bezeichnung (z.B. Hähnchen-Schenkel)">
+    <input class="photo-picker-input" id="photoItemStore" placeholder="Markt (z.B. Aldi, Lidl…)">
+    <input class="photo-picker-input" id="photoItemPrice" placeholder="Preis (z.B. 2,99 €) – optional" type="text">
+    <div class="photo-picker-btns">
+      <button class="photo-cancel-btn" onclick="closePhotoAdder()">Abbrechen</button>
+      <button class="photo-save-btn" id="photoSaveBtn" onclick="savePhotoItem()" disabled>Hinzufügen</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══ EINKAUF ERLEDIGT DIALOG ══ -->
@@ -1715,6 +1807,30 @@ function setStoreFilter(val) {
 }
 
 function tile(type, it) {
+  // ── Foto-Angebot Kachel ──
+  if (it.photo) {
+    const overlay = `<div class="photo-tile-overlay">
+      <div class="photo-tile-name">${esc(it.name || '')}</div>
+      ${it.store ? `<div style="text-align:center"><span class="photo-tile-store">${esc(it.store)}</span></div>` : ''}
+      ${it.photoPrice ? `<div class="photo-tile-price">${esc(it.photoPrice)}</div>` : ''}
+    </div>`;
+    const doneCheck = type === 'done' ? '<div class="photo-done-check">✓</div>' : '';
+    if (type === 'active') {
+      return `<div class="tile active photo"
+        ontouchstart="pressStart('${it.id}')" ontouchend="pressEnd('${it.id}');event.preventDefault()" ontouchcancel="pressCancel()"
+        onmousedown="pressStart('${it.id}')" onmouseup="pressEnd('${it.id}')" onmouseleave="pressCancel()">
+        <img class="photo-tile-img" src="${it.photo}" alt="${esc(it.name || '')}">
+        ${overlay}
+      </div>`;
+    }
+    return `<div class="tile done photo" onclick="uncheck('${it.id}')">
+      <img class="photo-tile-img" src="${it.photo}" alt="${esc(it.name || '')}">
+      ${doneCheck}
+      ${overlay}
+    </div>`;
+  }
+
+  // ── Normale Kachel ──
   const sug = getSug(it.name);
   let priceHtml = '';
   if (it.isOffer && it.offerPrice != null) {
@@ -2052,6 +2168,87 @@ function resetAllUsage() {
   if (!usageRef) return;
   if (!confirm('Alle Häufig-Daten löschen?')) return;
   usageRef.remove();
+}
+
+/* ── Foto-Angebot ── */
+let pendingPhotoData = null;
+
+function openPhotoAdder() {
+  pendingPhotoData = null;
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoDropLabel').style.display = '';
+  document.getElementById('photoFileInput').value = '';
+  document.getElementById('photoItemName').value = '';
+  document.getElementById('photoItemStore').value = '';
+  document.getElementById('photoItemPrice').value = '';
+  document.getElementById('photoSaveBtn').disabled = true;
+  document.getElementById('photoPickerOverlay').classList.add('open');
+}
+
+function closePhotoAdder() {
+  document.getElementById('photoPickerOverlay').classList.remove('open');
+  pendingPhotoData = null;
+}
+
+function photoPickerBgClick(e) {
+  if (e.target === document.getElementById('photoPickerOverlay')) closePhotoAdder();
+}
+
+function photoFileSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  compressImage(file, 800, 0.75).then(dataUrl => {
+    pendingPhotoData = dataUrl;
+    const preview = document.getElementById('photoPreview');
+    preview.src = dataUrl;
+    preview.style.display = 'block';
+    document.getElementById('photoDropLabel').style.display = 'none';
+    document.getElementById('photoSaveBtn').disabled = false;
+    // Pre-fill name from file name if empty
+    const nameInput = document.getElementById('photoItemName');
+    if (!nameInput.value) {
+      const base = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+      nameInput.value = base.charAt(0).toUpperCase() + base.slice(1);
+    }
+  });
+}
+
+function compressImage(file, maxPx, quality) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxPx || h > maxPx) {
+          if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+          else       { w = Math.round(w * maxPx / h); h = maxPx; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function savePhotoItem() {
+  if (!pendingPhotoData) return;
+  const name  = document.getElementById('photoItemName').value.trim() || 'Foto-Angebot';
+  const store = document.getElementById('photoItemStore').value.trim() || null;
+  const price = document.getElementById('photoItemPrice').value.trim() || null;
+  const id = 'i_' + Date.now();
+  persist(id, {
+    name, emoji: '📸', store,
+    photoPrice: price,
+    photo: pendingPhotoData,
+    checked: false, addedAt: Date.now()
+  });
+  closePhotoAdder();
+  toast(`📸 ${name} hinzugefügt`);
 }
 
 /* ── Einkauf-erledigt Dialog ── */
