@@ -383,7 +383,7 @@ html,body{
 </div>
 
 <!-- Hero image -->
-<div class="hero-img">
+<div class="hero-img" id="heroImg">
   <div class="hero-placeholder">
     <span class="hero-emoji">🏍️</span>
     <span class="hero-lbl">KAWASAKI Z900 · 2024</span>
@@ -717,8 +717,20 @@ vp.addEventListener('touchend',   e => {
   if (Math.abs(dx) > 40) go(dx < 0 ? cur+1 : cur-1);
 }, {passive:true});
 
+function setHero(url) {
+  const hero = document.getElementById('heroImg');
+  hero.innerHTML = `<img src="${url}" alt="Kawasaki Z900 2024" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block">`;
+}
+
 // Load gallery from Firebase
 renderSlider([]);
+db.ref(FB_PATH).orderByKey().limitToFirst(1).once('value', snap => {
+  const data = snap.val();
+  if (data) {
+    const first = Object.values(data)[0];
+    if (first && first.url) setHero(first.url);
+  }
+});
 db.ref(FB_PATH).on('value', snap => {
   const data = snap.val();
   const imgs = data
