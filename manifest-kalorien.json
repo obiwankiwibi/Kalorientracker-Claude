@@ -1,0 +1,20 @@
+{
+  "id": "yapihub-kalorien",
+  "name": "Kalorientracker",
+  "short_name": "Kalorien",
+  "description": "Kalorien & Makros tracken",
+  "start_url": "./kalorien.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#2A8C54",
+  "background_color": "#F4EEE2",
+  "icons": [
+    {
+      "src": "icon-kalorien.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

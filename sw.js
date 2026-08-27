@@ -1,12 +1,15 @@
-/* cache: 20260826T120000 */
+/* cache: 20260827T180000 */
 /* push: enabled */
-const CACHE = 'kt-v4';
+const CACHE = 'kt-v5';
 const PRECACHE = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './kalorien.html',
+  './manifest-kalorien.json',
+  './icon-kalorien.svg'
 ];
 
 self.addEventListener('install', e => {
