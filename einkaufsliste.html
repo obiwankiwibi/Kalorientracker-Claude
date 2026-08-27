@@ -3320,38 +3320,42 @@ function setOffersSort(id) {
   renderOffers();
 }
 
+// Keyword-Matching mit Wortgrenzen (\b) für kurze Begriffe
 const CAT_EMOJI_MAP = [
-  [['obst','gemüse','salat','gurke','tomate','apfel','banane'], '🥦'],
-  [['fleisch','wurst','schinken','salami','hack','steak','schnitzel','bratwurst'], '🥩'],
-  [['geflügel','hähnchen','pute','hühnchen'], '🍗'],
-  [['fisch','meeresfrüchte','lachs','thunfisch','garnelen'], '🐟'],
-  [['milch','joghurt','käse','quark','sahne','butter','milchprodukt','molkerei'], '🥛'],
-  [['ei','eier'], '🥚'],
-  [['brot','backware','brötchen','gebäck','croissant'], '🍞'],
-  [['tiefkühl','gefroren','eis','pizza'], '🧊'],
-  [['süß','schokolade','snack','chips','keks','kuchen','bonbon','gummibär'], '🍫'],
-  [['kaffee','tee','kakao'], '☕'],
-  [['bier','wein','sekt','spirituose','alkohol'], '🍺'],
-  [['getränk','wasser','saft','cola','limo','energy'], '🥤'],
-  [['nudel','pasta','reis','mehl','zucker','grundnahrung','cerealien','müsli'], '🌾'],
-  [['sauce','ketchup','senf','mayonnaise','essig','öl'], '🫙'],
-  [['konserv','dose','eingemacht'], '🥫'],
-  [['baby','windel','säugling'], '👶'],
-  [['tier','hund','katze','hundefutter','katzenfutter'], '🐾'],
-  [['drogerie','kosmetik','shampoo','duschgel','seife','zahnpasta','creme','pflege'], '🧴'],
-  [['reinigu','waschmittel','spülmittel','haushalt','putzmittel'], '🧹'],
-  [['garten','pflanze','blume','erde'], '🌱'],
-  [['elektronik','batterie','glühbirne','lampe'], '💡'],
-  [['textil','kleidung','socken','shirt','bekleidung'], '👕'],
-  [['möbel','einrichtung','deko'], '🛋️'],
-  [['bau','werkzeug'], '🔧'],
+  [/bier|wein|sekt|spirituose|alkohol|prosecco|champagner/, '🍺'],
+  [/geflügel|hähnchen|pute|hühnchen|chicken/, '🍗'],
+  [/fleisch|wurst|schinken|salami|hackfleisch|steak|schnitzel|bratwurst|aufschnitt|speck/, '🥩'],
+  [/fisch|meeresfrüchte|lachs|thunfisch|garnelen|shrimps/, '🐟'],
+  [/\beier\b|hühnerei/, '🥚'],
+  [/milch|joghurt|käse|quark|sahne|butter|milchprodukt|molkerei/, '🥛'],
+  [/obst|gemüse|salat|gurke|tomate|apfel|banane|karotte|paprika/, '🥦'],
+  [/brot|backware|brötchen|gebäck|croissant|toast/, '🍞'],
+  [/tiefkühl|gefroren|pizza/, '🧊'],
+  [/\beis\b|speiseeis|eiscreme/, '🍦'],
+  [/süß|schokolade|snack|chips|keks|kuchen|bonbon|gummibär|praline/, '🍫'],
+  [/kaffee|tee|kakao/, '☕'],
+  [/getränk|wasser|saft|cola|limo|energy|limonade/, '🥤'],
+  [/nudel|pasta|reis|mehl|zucker|grundnahrung|cerealien|müsli|grieß|linsen|bohnen/, '🌾'],
+  [/sauce|ketchup|senf|mayonnaise|essig|dressing/, '🫙'],
+  [/öl|fett|margarine/, '🫒'],
+  [/konserv|dose|eingemacht/, '🥫'],
+  [/baby|windel|säugling/, '👶'],
+  [/hund|katze|tiernahrung|hundefutter|katzenfutter|haustier/, '🐾'],
+  [/drogerie|kosmetik|shampoo|duschgel|seife|zahnpasta|creme|pflege|deodorant/, '🧴'],
+  [/reinigu|waschmittel|spülmittel|putzmittel|hygiene/, '🧹'],
+  [/haushalt|küche|geschirr|besteck/, '🏠'],
+  [/garten|pflanze|blume|erde|dünger/, '🌱'],
+  [/elektronik|batterie|glühbirne|lampe|kabel/, '💡'],
+  [/textil|kleidung|socken|shirt|bekleidung/, '👕'],
+  [/möbel|einrichtung|deko/, '🛋️'],
+  [/werkzeug|bau|schrauben/, '🔧'],
 ];
 
 function categoryEmoji(kat) {
   if (!kat) return '🏷️';
   const k = kat.toLowerCase();
-  for (const [keywords, emoji] of CAT_EMOJI_MAP) {
-    if (keywords.some(w => k.includes(w))) return emoji;
+  for (const [regex, emoji] of CAT_EMOJI_MAP) {
+    if (regex.test(k)) return emoji;
   }
   return '🏷️';
 }
