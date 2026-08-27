@@ -1096,7 +1096,7 @@ html { height: 100%; }
   <div class="header-back" onclick="switchList()">‹ Listen</div>
   <div class="header-title" id="listTitle">Zuhause</div>
   <button class="icon-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
-  <button class="icon-btn" onclick="clearDone()" title="Erledigte löschen">✓</button>
+  <button class="icon-btn" id="clearDoneBtn" onclick="clearDone()" title="Erledigte löschen">✓</button>
   <div class="header-overflow-wrap">
     <button class="icon-btn" onclick="toggleHeaderMenu(event)" title="Mehr">⋮</button>
     <div class="header-menu" id="headerMenu">
@@ -1281,10 +1281,6 @@ html { height: 100%; }
       <h2>Angebote</h2>
       <span id="offersCount"></span>
     </div>
-    <div class="offers-topbar-actions">
-      <button class="offers-action-btn" onclick="refreshOffers()" title="Aktualisieren" style="font-size:13px;gap:4px;width:auto;padding:0 10px;border-radius:16px">↻ Laden</button>
-      <button class="offers-action-btn" onclick="openImportSheet()" title="Importieren" style="font-size:13px;gap:4px;width:auto;padding:0 10px;border-radius:16px">⊕ Import</button>
-    </div>
   </div>
 
   <div class="offers-search-wrap">
@@ -1299,9 +1295,11 @@ html { height: 100%; }
   <div style="padding:0 12px 8px"><div id="storeGrid" class="store-grid"></div></div>
   <div class="offers-divider"></div>
 
-  <div style="display:flex;align-items:baseline;gap:6px;padding:8px 14px 2px">
-    <span class="offers-section-label" style="padding:0;margin:0">Aktuelle Angebote</span>
-    <span id="offersSectionCount" style="font-size:11px;color:var(--muted);font-weight:500"></span>
+  <div style="display:flex;align-items:center;gap:6px;padding:8px 14px 2px">
+    <span class="offers-section-label" style="padding:0;margin:0;flex:1">Aktuelle Angebote</span>
+    <span id="offersSectionCount" style="font-size:11px;color:var(--muted);font-weight:500;margin-right:4px"></span>
+    <button class="offers-action-btn" onclick="refreshOffers()" title="Aktualisieren" id="offersLadenBtn" style="font-size:12px;width:auto;padding:0 10px;border-radius:14px;height:28px">↻ Laden</button>
+    <button class="offers-action-btn" onclick="openImportSheet()" id="offersPlzBtn" style="font-size:12px;width:auto;padding:0 10px;border-radius:14px;height:28px">📍 PLZ</button>
   </div>
 
   <div class="cat-row" id="offersHaendlerRow" style="padding-top:4px"></div>
@@ -1314,9 +1312,9 @@ html { height: 100%; }
 <div class="sheet-overlay" id="importOverlay" onclick="importOverlayClick(event)">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">⊕ Angebote</div>
+    <div class="sheet-title">📍 Angebote-Quelle</div>
 
-    <p style="font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Marktguru Live</p>
+    <p style="font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">PLZ für Marktguru-Angebote</p>
     <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
       <input id="mgPlzInput" class="sheet-input" placeholder="PLZ (z.B. 57271)"
         style="margin:0;flex:1;font-size:15px"
@@ -1328,7 +1326,7 @@ html { height: 100%; }
       </button>
     </div>
 
-    <p style="font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">JSON-Import (manuell)</p>
+    <p style="font-size:12px;color:var(--muted);margin:12px 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Manuell (JSON-Format)</p>
     <textarea id="importJson" class="sheet-input"
       style="height:90px;resize:none;font-size:12px;font-family:monospace;margin-bottom:10px"
       placeholder='{"offers":[{"id":"1","name":"Butter","haendler":"Lidl","preis":2.19,"gueltigVon":"2026-08-17","gueltigBis":"2026-08-22","kategorie":"Milchprodukte","bild":null,"url":null}]}'></textarea>
@@ -2581,7 +2579,9 @@ function showTab(tab) {
   document.getElementById('navAngebote').classList.toggle('on',    isAngebote);
   document.getElementById('navRestaurants').classList.toggle('on', isRestaurants);
 
-  if (isAngebote)    { renderStores(); renderOffers(); }
+  const clearBtn = document.getElementById('clearDoneBtn');
+  if (clearBtn) clearBtn.style.display = isListe ? '' : 'none';
+  if (isAngebote)    { renderStores(); renderOffers(); updatePlzBtn(); }
   if (isRestaurants) renderRestaurants();
 }
 
@@ -3109,7 +3109,11 @@ function getMgPlz() {
   return localStorage.getItem('einkauf_mg_plz') || '57271';
 }
 function setMgPlz(v) {
-  if (v && /^\d{5}$/.test(v.trim())) localStorage.setItem('einkauf_mg_plz', v.trim());
+  if (v && /^\d{5}$/.test(v.trim())) { localStorage.setItem('einkauf_mg_plz', v.trim()); updatePlzBtn(); }
+}
+function updatePlzBtn() {
+  const btn = document.getElementById('offersPlzBtn');
+  if (btn) btn.textContent = '📍 ' + getMgPlz();
 }
 
 function mgTransform(raw) {
@@ -3146,7 +3150,7 @@ function mgTransform(raw) {
 
 async function fetchMarktguruLive() {
   const plz = getMgPlz();
-  const btn = document.querySelector('.offers-action-btn[title="Aktualisieren"]');
+  const btn = document.getElementById('offersLadenBtn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
   toast(`Lade Angebote für PLZ ${plz}…`);
 
@@ -3183,7 +3187,7 @@ async function fetchMarktguruLive() {
   } catch(e) {
     toast('❌ Fehler: ' + e.message);
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '↻'; }
+    if (btn) { btn.disabled = false; btn.textContent = '↻ Laden'; }
   }
 }
 
@@ -3192,7 +3196,7 @@ function openImportSheet() {
   document.getElementById('mgPlzInput').value = getMgPlz();
   document.getElementById('importOverlay').classList.add('open');
 }
-function closeImportSheet() { document.getElementById('importOverlay').classList.remove('open'); }
+function closeImportSheet() { document.getElementById('importOverlay').classList.remove('open'); updatePlzBtn(); }
 function importOverlayClick(e) { if (e.target === document.getElementById('importOverlay')) closeImportSheet(); }
 
 // ── Render ──
