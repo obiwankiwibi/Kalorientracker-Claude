@@ -37,7 +37,32 @@
     --bg-elev:var(--card);
     --bg-elev2:var(--card-elev);
   }
-  
+
+  /* ── Dark Mode ── */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0f1117;--card:#1a1e2b;--card-elev:#1e243a;
+      --text:#e8ecf4;--text-soft:#8892aa;--text-faint:#5a6478;
+      --line:rgba(255,255,255,0.09);
+      --shadow:0 4px 18px rgba(0,0,0,0.45);--shadow-lg:0 12px 40px rgba(0,0,0,0.55);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#0f1117;--card:#1a1e2b;--card-elev:#1e243a;
+    --text:#e8ecf4;--text-soft:#8892aa;--text-faint:#5a6478;
+    --line:rgba(255,255,255,0.09);
+    --shadow:0 4px 18px rgba(0,0,0,0.45);--shadow-lg:0 12px 40px rgba(0,0,0,0.55);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) body{background:radial-gradient(ellipse 65% 45% at 20% -5%,rgba(42,140,84,0.07),transparent),radial-gradient(ellipse 55% 35% at 92% 8%,rgba(200,75,50,0.04),transparent),var(--bg);}
+    :root:not([data-theme="light"]) #page-bg{display:none;}
+    :root:not([data-theme="light"]) .fab-pill{background:rgba(26,30,43,0.95);border-color:rgba(255,255,255,0.12);}
+    :root:not([data-theme="light"]) .seg{background:var(--card);}
+  }
+  :root[data-theme="dark"] body{background:radial-gradient(ellipse 65% 45% at 20% -5%,rgba(42,140,84,0.07),transparent),radial-gradient(ellipse 55% 35% at 92% 8%,rgba(200,75,50,0.04),transparent),var(--bg);}
+  :root[data-theme="dark"] #page-bg{display:none;}
+  :root[data-theme="dark"] .fab-pill{background:rgba(26,30,43,0.95);border-color:rgba(255,255,255,0.12);}
+
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
   body{
@@ -369,6 +394,39 @@
   /* star on history items */
   .hi-fav{border:none;border-left:1px solid var(--line);background:none;color:var(--text-faint);font-size:14px;padding:0 10px;cursor:pointer;flex:none;opacity:.45;transition:opacity .15s,color .15s;}
   .hi-fav:hover,.hi-fav.starred{opacity:1;color:var(--amber);}
+  /* ── Mahlzeit-Chips ── */
+  .meal-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}
+  .meal-chip{border:1px solid var(--line);background:rgba(0,0,0,0.03);border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--text-soft);transition:background .15s,border-color .15s,color .15s;font-family:inherit;}
+  .meal-chip.active{background:rgba(42,140,84,0.14);border-color:rgba(42,140,84,0.45);color:var(--mint);}
+  /* ── Mahlzeit-Gruppen ── */
+  .meal-group{margin-bottom:18px;}
+  .meal-group-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .meal-group-hdr::after{content:'';flex:1;height:1px;background:var(--line);}
+  .meal-group-label{font-size:10.5px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-faint);}
+  .meal-group-kcal{font-size:10.5px;font-weight:700;color:var(--text-faint);font-variant-numeric:tabular-nums;}
+  /* ── Makro-Fortschrittsbalken ── */
+  .mc-bar-track{width:100%;height:3px;background:rgba(0,0,0,0.08);border-radius:99px;overflow:hidden;margin-top:6px;}
+  .mc-bar-fill{height:100%;border-radius:99px;transition:width .4s cubic-bezier(.4,0,.2,1);}
+  .mc-bar-fill.p{background:var(--protein);}
+  .mc-bar-fill.k{background:var(--carbs-c);}
+  .mc-bar-fill.f{background:var(--fat-c);}
+  .mc-goal-txt{font-size:9px;color:var(--text-faint);margin-top:2px;font-variant-numeric:tabular-nums;}
+  /* ── Ziel-Badge im Hero ── */
+  .goal-badge{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text-faint);cursor:pointer;padding:3px 0;transition:color .15s;background:none;border:none;font-family:inherit;}
+  .goal-badge:hover{color:var(--text-soft);}
+  .goal-badge strong{color:var(--text-soft);}
+  /* ── Einstellungen Sheet ── */
+  .settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.28);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:none;align-items:flex-end;justify-content:center;z-index:150;}
+  .settings-overlay.open{display:flex;}
+  .settings-sheet{background:var(--card);width:100%;max-width:480px;border-radius:26px 26px 0 0;border:1px solid var(--line);border-bottom:none;padding:20px 20px 44px;animation:up .22s cubic-bezier(.3,0,.2,1);max-height:88dvh;overflow-y:auto;}
+  .sett-title{font-size:17px;font-weight:700;letter-spacing:-0.01em;margin:0 0 4px;}
+  .sett-sec{font-size:10.5px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-faint);margin:20px 0 8px;}
+  .sett-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);}
+  .sett-row:last-child{border-bottom:none;}
+  .sett-lbl{flex:1;font-size:14px;font-weight:600;}
+  .sett-inp{width:78px;background:rgba(0,0,0,0.04);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:7px 10px;font-size:14px;text-align:center;font-family:inherit;transition:border-color .15s;}
+  .sett-inp:focus{outline:none;border-color:var(--mint);}
+  .sett-unit{font-size:11.5px;color:var(--text-faint);min-width:24px;}
   /* star on entry cards */
   .entry-fav{background:none;border:none;font-size:14px;padding:5px 4px 5px 6px;cursor:pointer;transition:color .15s;flex:none;color:var(--text-faint);}
   .entry-fav:hover,.entry-fav.starred{color:var(--amber);}
@@ -398,8 +456,9 @@
 
 <header class="site-nav">
   <div class="site-nav-title">🥗 Kalorien</div>
+  <button class="site-nav-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
   <button class="site-nav-btn" onclick="openBackup()" title="Backup erstellen">💾</button>
-    <a href="index.html" class="site-nav-btn" title="Startseite">⌂</a>
+  <a href="index.html" class="site-nav-btn" title="Startseite">⌂</a>
 </header>
 <div class="wrap">
   <div class="segwrap">
@@ -447,11 +506,9 @@
       <div class="hero-bar-track">
         <div class="hero-bar-fill" id="heroBar" style="width:0%"></div>
       </div>
-      <div class="goal-edit">
-        <span>Tagesziel</span>
-        <input type="number" id="goalInput" placeholder="2000" oninput="saveGoal()">
-        <span>kcal</span>
-      </div>
+      <button class="goal-badge" onclick="openSettings()">
+        Tagesziel <strong id="goalBadgeNum">2000</strong> kcal <span style="font-size:10px;opacity:0.55">⚙</span>
+      </button>
     </div>
 
     <div id="streakBar" class="streak-bar"></div>
@@ -461,11 +518,15 @@
         <div class="mc-icon">💪</div>
         <div class="mc-val p" id="mProtein">0g</div>
         <div class="mc-label">Eiweiß</div>
+        <div class="mc-bar-track"><div class="mc-bar-fill p" id="mProteinBar" style="width:0%"></div></div>
+        <div class="mc-goal-txt" id="mProteinGoal"></div>
       </div>
       <div class="macro-card">
         <div class="mc-icon">🌾</div>
         <div class="mc-val k" id="mCarbs">0g</div>
         <div class="mc-label">Kohlenhydrate</div>
+        <div class="mc-bar-track"><div class="mc-bar-fill k" id="mCarbsBar" style="width:0%"></div></div>
+        <div class="mc-goal-txt" id="mCarbsGoal"></div>
         <div class="mi-sub" id="mSugarsRow" style="display:none;"><span>Zucker</span><span id="mSugars">0g</span></div>
         <div class="mi-sub" id="mFiberRow" style="display:none;"><span>Ballaststoffe</span><span id="mFiber">0g</span></div>
       </div>
@@ -473,6 +534,8 @@
         <div class="mc-icon">🥑</div>
         <div class="mc-val f" id="mFat">0g</div>
         <div class="mc-label">Fett</div>
+        <div class="mc-bar-track"><div class="mc-bar-fill f" id="mFatBar" style="width:0%"></div></div>
+        <div class="mc-goal-txt" id="mFatGoal"></div>
       </div>
     </div>
 
@@ -497,7 +560,7 @@
         <button class="water-btn" onclick="addWater(150)">+150 ml</button>
         <button class="water-btn" onclick="addWater(250)">+250 ml</button>
         <button class="water-btn" onclick="addWater(500)">+500 ml</button>
-        <button class="water-btn" onclick="addWater(1000)">+1 L</button>
+        <button class="water-btn" onclick="addWater(750)">+750 ml</button>
       </div>
       <div id="tempWaterHint" class="water-temp-hint" style="display:none;"></div>
       <div class="water-goal-row">
@@ -516,7 +579,7 @@
   <div id="weekView" style="display:none;">
     <div class="datebar">
       <button onclick="shiftWeek(-1)">‹</button>
-      <div class="day"><span class="main" id="weekLabel" onclick="openKWPicker()" style="cursor:pointer;" title="Kalenderwoche auswählen">KW –</span><span class="sub" id="weekRange">–</span></div>
+      <div class="day" onclick="openKWPicker()" style="cursor:pointer;" title="Kalenderwoche auswählen"><span class="main" id="weekLabel">KW – 📅</span><span class="sub" id="weekRange">–</span></div>
       <button onclick="shiftWeek(1)">›</button>
     </div>
     <div class="week-summary">
@@ -550,6 +613,15 @@
     <div class="modal-handle"></div>
     <h3 id="manModalTitle">Lebensmittel hinzufügen</h3>
 
+    <div class="field" style="margin-bottom:12px;">
+      <label>Mahlzeit</label>
+      <div class="meal-chips" id="mealChips">
+        <button type="button" class="meal-chip" data-meal="fruehstueck" onclick="selectMeal(this)">🌅 Frühstück</button>
+        <button type="button" class="meal-chip" data-meal="mittagessen" onclick="selectMeal(this)">🍽 Mittag</button>
+        <button type="button" class="meal-chip" data-meal="abendessen" onclick="selectMeal(this)">🌆 Abend</button>
+        <button type="button" class="meal-chip" data-meal="snack" onclick="selectMeal(this)">🍎 Snack</button>
+      </div>
+    </div>
     <div class="field">
       <label>Bezeichnung</label>
       <input id="manName" placeholder="z. B. Apfel">
@@ -729,6 +801,46 @@
 /* ---------- Theme Toggle ---------- */
 function initTheme(){
     document.documentElement.setAttribute('data-theme',t);}
+
+/* ---------- Mahlzeit-Auswahl ---------- */
+let selectedMeal = null;
+const MEAL_ORDER  = ['fruehstueck','mittagessen','abendessen','snack'];
+const MEAL_LABELS = {fruehstueck:'🌅 Frühstück',mittagessen:'🍽 Mittagessen',abendessen:'🌆 Abendessen',snack:'🍎 Snack'};
+
+function selectMeal(btn){
+  document.querySelectorAll('.meal-chip').forEach(b=>b.classList.remove('active'));
+  if(btn.dataset.meal===selectedMeal){selectedMeal=null;}
+  else{btn.classList.add('active');selectedMeal=btn.dataset.meal;}
+}
+
+/* ---------- Makro-Ziele ---------- */
+const MACRO_GOALS_KEY='kalorientracker_macro_goals';
+function getMacroGoals(){try{return JSON.parse(localStorage.getItem(MACRO_GOALS_KEY))||{};}catch(e){return{};}}
+function saveMacroGoal(key,val){const g=getMacroGoals();const n=parseFloat(val);if(n>0)g[key]=n;else delete g[key];localStorage.setItem(MACRO_GOALS_KEY,JSON.stringify(g));const day=getDay(fmtKey(currentDate));renderMacros(day.entries);}
+
+/* ---------- Einstellungen ---------- */
+function openSettings(){
+  const g=getMacroGoals();
+  const goalInp=document.getElementById('settGoal');
+  if(goalInp)goalInp.value=getGoalRaw();
+  const sP=document.getElementById('settProtein');if(sP)sP.value=g.protein||'';
+  const sC=document.getElementById('settCarbs');if(sC)sC.value=g.carbs||'';
+  const sF=document.getElementById('settFat');if(sF)sF.value=g.fat||'';
+  const sW=document.getElementById('settWater');
+  if(sW){const wg=getWaterGoal();sW.value=(wg/1000).toFixed(1);}
+  document.getElementById('settingsBg').classList.add('open');
+}
+function closeSettings(){document.getElementById('settingsBg').classList.remove('open');}
+function saveGoalFromSettings(){
+  const v=document.getElementById('settGoal').value;
+  localStorage.setItem('kalorientracker_goal',v||'');
+  render();
+}
+function saveWaterGoalFromSettings(){
+  const v=parseFloat(document.getElementById('settWater').value);
+  if(v>0) localStorage.setItem('kalorientracker_watergoal',String(Math.round(v*1000)));
+  renderWater();
+}
 
 /* ---------- Konstanten ---------- */
 const DEFAULT_GOAL    = 2000;
@@ -1144,9 +1256,17 @@ function renderMacros(entries){
     if(e.nutrients.sugars!=null){s+=e.nutrients.sugars;hasS=true;}
     if(e.nutrients.fiber!=null){fi+=e.nutrients.fiber;hasFi=true;}
   });
-  document.getElementById('mProtein').textContent=Math.round(p)+'g';
-  document.getElementById('mCarbs').textContent=Math.round(c)+'g';
-  document.getElementById('mFat').textContent=Math.round(f)+'g';
+  const goals=getMacroGoals();
+  function setMacro(valId,barId,goalId,val,gkey){
+    document.getElementById(valId).textContent=Math.round(val)+'g';
+    const bar=document.getElementById(barId),goalEl=document.getElementById(goalId);
+    const goal=goals[gkey];
+    if(bar){bar.style.width=goal?Math.min(100,(val/goal)*100)+'%':'0%';}
+    if(goalEl){goalEl.textContent=goal?Math.round(val)+' / '+Math.round(goal)+'g':'';}
+  }
+  setMacro('mProtein','mProteinBar','mProteinGoal',p,'protein');
+  setMacro('mCarbs','mCarbsBar','mCarbsGoal',c,'carbs');
+  setMacro('mFat','mFatBar','mFatGoal',f,'fat');
   const sRow=document.getElementById('mSugarsRow');
   const fRow=document.getElementById('mFiberRow');
   if(hasS){document.getElementById('mSugars').textContent=Math.round(s)+'g';sRow.style.display='flex';}else{sRow.style.display='none';}
@@ -1205,34 +1325,34 @@ function renderDay(){
   if(!day.entries.length){
     el.innerHTML='<div class="empty-state"><span class="empty-state-icon">🥗</span>Noch nichts erfasst.<br>Über die Buttons unten Lebensmittel hinzufügen.</div>';
   } else {
-    day.entries.forEach(e=>{
-      total+=e.kcal;
-      const hasN=!!e.nutrients;
-      const starred=isFavorite(e.name);
-      const row=document.createElement('div');
-      row.className='entry-card';
-      row.innerHTML=`
-        <div class="entry-main${hasN?' clickable':''}"${hasN?` onclick="toggleEntry('${e.id}')"`:''}>
-          <span class="entry-dot"></span>
-          <span class="entry-info">
-            <span class="entry-name-row">
-              <span class="entry-name">${escapeHtml(e.name)}</span>
-              <span class="entry-kcal">${Math.round(e.kcal)} kcal</span>
-            </span>
-            <span class="entry-meta">${e.meta?escapeHtml(e.meta):''}</span>
-          </span>
-          ${hasN?`<span class="entry-caret" id="caret-${e.id}">▾</span>`:''}
-          <button class="entry-edit" onclick="event.stopPropagation();editEntry('${key}','${e.id}')" title="Bearbeiten">✎</button>
-          <button class="entry-fav${starred?' starred':''}" onclick="event.stopPropagation();toggleEntryFav('${key}','${e.id}')" title="${starred?'Von Favoriten entfernen':'Als Favorit speichern'}">${starred?'★':'☆'}</button>
-          <button class="entry-del" onclick="event.stopPropagation();deleteEntry('${key}','${e.id}')">✕</button>
-        </div>
-        ${hasN?`<div class="entry-detail" id="detail-${e.id}">${renderNutrientPanel(e)}</div>`:''}
-      `;
-      el.appendChild(row);
-    });
+    const hasMeals=day.entries.some(e=>e.meal);
+    if(hasMeals){
+      const groups={};
+      day.entries.forEach(e=>{
+        total+=e.kcal;
+        const m=e.meal||'_other';
+        if(!groups[m])groups[m]={entries:[],kcal:0};
+        groups[m].entries.push(e);groups[m].kcal+=e.kcal;
+      });
+      [...MEAL_ORDER,'_other'].forEach(m=>{
+        if(!groups[m])return;
+        const g=groups[m];
+        const grpDiv=document.createElement('div');grpDiv.className='meal-group';
+        const lbl=MEAL_LABELS[m]||'Weitere';
+        const hdr=document.createElement('div');hdr.className='meal-group-hdr';
+        hdr.innerHTML=`<span class="meal-group-label">${lbl}</span><span class="meal-group-kcal">${Math.round(g.kcal)} kcal</span>`;
+        grpDiv.appendChild(hdr);
+        const entriesDiv=document.createElement('div');entriesDiv.className='entries';
+        g.entries.forEach(e=>entriesDiv.appendChild(makeEntryCard(e,key)));
+        grpDiv.appendChild(entriesDiv);
+        el.appendChild(grpDiv);
+      });
+    } else {
+      day.entries.forEach(e=>{total+=e.kcal;el.appendChild(makeEntryCard(e,key));});
+    }
   }
   document.getElementById('totalNum').textContent=Math.round(total);
-  document.getElementById('goalInput').value=getGoalRaw();
+  const badgeEl=document.getElementById('goalBadgeNum');if(badgeEl)badgeEl.textContent=Math.round(getGoal());
   const goal=getGoal();
   const pct=Math.min(100,(total/goal)*100);
   const remaining=Math.round(goal-total);
@@ -1258,7 +1378,7 @@ function renderWeek(){
   const weekDates=getWeekDates(currentDate);
   const first=weekDates[0],last=weekDates[6];
   const dailyGoal=getGoal(),weeklyGoal=dailyGoal*7;
-  document.getElementById('weekLabel').textContent='KW '+getISOWeek(first);
+  document.getElementById('weekLabel').textContent='KW '+getISOWeek(first)+' 📅';
   document.getElementById('weekRange').textContent=
     first.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+'–'+
     last.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
@@ -1330,6 +1450,29 @@ function renderWeek(){
   else{waterEl.style.display='none';}
 }
 
+function makeEntryCard(e,key){
+  const hasN=!!e.nutrients,starred=isFavorite(e.name);
+  const row=document.createElement('div');row.className='entry-card';
+  row.innerHTML=`
+    <div class="entry-main${hasN?' clickable':''}"${hasN?` onclick="toggleEntry('${e.id}')"`:''}>
+      <span class="entry-dot"></span>
+      <span class="entry-info">
+        <span class="entry-name-row">
+          <span class="entry-name">${escapeHtml(e.name)}</span>
+          <span class="entry-kcal">${Math.round(e.kcal)} kcal</span>
+        </span>
+        <span class="entry-meta">${e.meta?escapeHtml(e.meta):''}</span>
+      </span>
+      ${hasN?`<span class="entry-caret" id="caret-${e.id}">▾</span>`:''}
+      <button class="entry-edit" onclick="event.stopPropagation();editEntry('${key}','${e.id}')" title="Bearbeiten">✎</button>
+      <button class="entry-fav${starred?' starred':''}" onclick="event.stopPropagation();toggleEntryFav('${key}','${e.id}')" title="${starred?'Von Favoriten entfernen':'Als Favorit speichern'}">${starred?'★':'☆'}</button>
+      <button class="entry-del" onclick="event.stopPropagation();deleteEntry('${key}','${e.id}')">✕</button>
+    </div>
+    ${hasN?`<div class="entry-detail" id="detail-${e.id}">${renderNutrientPanel(e)}</div>`:''}
+  `;
+  return row;
+}
+
 function escapeHtml(s){ const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
 
 function deleteEntry(key,id){
@@ -1338,7 +1481,7 @@ function deleteEntry(key,id){
   setDay(key,day);render();
 }
 
-function addEntry(name,kcal,meta,nutrients,kcalPer100,unit,amount){
+function addEntry(name,kcal,meta,nutrients,kcalPer100,unit,amount,meal){
   const key=fmtKey(currentDate),day=getDay(key);
   day.entries.push({
     id:Date.now()+'-'+Math.random().toString(36).slice(2,7),
@@ -1347,6 +1490,7 @@ function addEntry(name,kcal,meta,nutrients,kcalPer100,unit,amount){
     kcalPer100:kcalPer100||null,
     unit:unit||'g',
     amount:amount||null,
+    meal:meal||null,
     time:new Date().toISOString()
   });
   setDay(key,day);
@@ -1385,7 +1529,8 @@ function openManual(){
   document.getElementById('manFat').value='';
   document.getElementById('manSugars').value='';
   document.getElementById('manFiber').value='';
-  editingEntry=null;
+  editingEntry=null;selectedMeal=null;
+  document.querySelectorAll('.meal-chip').forEach(b=>b.classList.remove('active'));
   document.getElementById('manModalTitle').textContent='Lebensmittel hinzufügen';
   document.getElementById('kcalPreview').style.display='none';
   document.getElementById('nutriPanel').style.display='none';
@@ -1428,13 +1573,13 @@ function submitManual(){
   if(editingEntry){
     const eday=getDay(editingEntry.key);
     const idx=eday.entries.findIndex(x=>x.id===editingEntry.id);
-    if(idx!==-1) eday.entries[idx]={...eday.entries[idx],name,kcal,meta,nutrients,kcalPer100:kp100,unit,amount};
+    if(idx!==-1) eday.entries[idx]={...eday.entries[idx],name,kcal,meta,nutrients,kcalPer100:kp100,unit,amount,meal:selectedMeal||eday.entries[idx].meal||null};
     setDay(editingEntry.key,eday);
     editingEntry=null;
     closeModal('manualBg');
     render();
   } else {
-    addEntry(name,kcal,meta,nutrients,kp100,unit,amount);
+    addEntry(name,kcal,meta,nutrients,kp100,unit,amount,selectedMeal);
     closeModal('manualBg');
   }
 }
@@ -1664,6 +1809,11 @@ function editEntry(key,id){
     const hasExtra=n.protein!=null||n.carbs!=null||n.fat!=null||n.sugars!=null||n.fiber!=null||n.nutriscore;
     if(hasExtra){document.getElementById('nutriPanel').style.display='block';document.getElementById('nutriToggle').classList.add('open');}
   }
+  if(e.meal){
+    selectedMeal=e.meal;
+    const chip=document.querySelector(`.meal-chip[data-meal="${e.meal}"]`);
+    if(chip)chip.classList.add('active');
+  } else { selectedMeal=null; }
 }
 
 /* ---------- Custom Kalender-Picker ---------- */
@@ -1749,7 +1899,7 @@ function renderKWPicker(){
 }
 
 /* ---------- Backup ---------- */
-const BACKUP_KEYS=['kalorientracker_v1','kalorientracker_goal','kalorientracker_watergoal','kalorientracker_history','kalorientracker_favorites'];
+const BACKUP_KEYS=['kalorientracker_v1','kalorientracker_goal','kalorientracker_watergoal','kalorientracker_history','kalorientracker_favorites','kalorientracker_macro_goals'];
 function openBackup(){openModal('backupBg');}
 function closeBackup(){closeModal('backupBg');}
 function exportData(){
@@ -1954,6 +2104,45 @@ if (sessionStorage.getItem('autoScan') === '1') {
     <div class="cal-days" id="calDays"></div>
     <div class="cal-foot">
       <button class="cal-today-btn" onclick="selectCalDay(new Date())">Heute</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="settings-overlay" id="settingsBg" onclick="if(event.target===this)closeSettings()">
+  <div class="settings-sheet">
+    <div class="modal-handle"></div>
+    <p class="sett-title">⚙️ Einstellungen</p>
+    <div class="sett-sec">Kalorienziel</div>
+    <div class="sett-row">
+      <span class="sett-lbl">Tagesziel</span>
+      <input class="sett-inp" id="settGoal" type="number" inputmode="decimal" placeholder="2000" oninput="saveGoalFromSettings()">
+      <span class="sett-unit">kcal</span>
+    </div>
+    <div class="sett-sec">Makro-Ziele (optional)</div>
+    <div class="sett-row">
+      <span class="sett-lbl">💪 Eiweiß</span>
+      <input class="sett-inp" id="settProtein" type="number" inputmode="decimal" placeholder="–" oninput="saveMacroGoal('protein',this.value)">
+      <span class="sett-unit">g</span>
+    </div>
+    <div class="sett-row">
+      <span class="sett-lbl">🌾 Kohlenhydrate</span>
+      <input class="sett-inp" id="settCarbs" type="number" inputmode="decimal" placeholder="–" oninput="saveMacroGoal('carbs',this.value)">
+      <span class="sett-unit">g</span>
+    </div>
+    <div class="sett-row">
+      <span class="sett-lbl">🥑 Fett</span>
+      <input class="sett-inp" id="settFat" type="number" inputmode="decimal" placeholder="–" oninput="saveMacroGoal('fat',this.value)">
+      <span class="sett-unit">g</span>
+    </div>
+    <div class="sett-sec">Wasser</div>
+    <div class="sett-row">
+      <span class="sett-lbl">💧 Tagesziel</span>
+      <input class="sett-inp" id="settWater" type="number" inputmode="decimal" step="0.1" placeholder="2.0" oninput="saveWaterGoalFromSettings()">
+      <span class="sett-unit">L</span>
+    </div>
+    <div style="margin-top:20px;">
+      <button class="btn ghost" style="width:100%" onclick="closeSettings()">Schließen</button>
     </div>
   </div>
 </div>
