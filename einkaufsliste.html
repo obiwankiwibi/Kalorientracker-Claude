@@ -2342,12 +2342,7 @@ function photoFileSelected(input) {
     preview.style.display = 'block';
     document.getElementById('photoDropLabel').style.display = 'none';
     document.getElementById('photoSaveBtn').disabled = false;
-    // Pre-fill name from file name if empty
-    const nameInput = document.getElementById('photoItemName');
-    if (!nameInput.value) {
-      const base = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-      nameInput.value = base.charAt(0).toUpperCase() + base.slice(1);
-    }
+    document.getElementById('photoItemName').focus();
   });
 }
 
