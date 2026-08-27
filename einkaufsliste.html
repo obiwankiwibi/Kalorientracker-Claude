@@ -1299,7 +1299,12 @@ html { height: 100%; }
   <div style="padding:0 12px 8px"><div id="storeGrid" class="store-grid"></div></div>
   <div class="offers-divider"></div>
 
-  <div class="cat-row" id="offersHaendlerRow" style="padding-top:8px"></div>
+  <div style="display:flex;align-items:baseline;gap:6px;padding:8px 14px 2px">
+    <span class="offers-section-label" style="padding:0;margin:0">Aktuelle Angebote</span>
+    <span id="offersSectionCount" style="font-size:11px;color:var(--muted);font-weight:500"></span>
+  </div>
+
+  <div class="cat-row" id="offersHaendlerRow" style="padding-top:4px"></div>
   <div class="sort-row" id="offersSortRow" style="padding:4px 12px 6px"></div>
 
   <div class="offers-grid" id="offersGrid"></div>
@@ -3220,6 +3225,8 @@ function renderOffers() {
 
   const cnt = document.getElementById('offersCount');
   if (cnt) cnt.textContent = filtered.length ? `${filtered.length} Angebote` : '';
+  const sectionCnt = document.getElementById('offersSectionCount');
+  if (sectionCnt) sectionCnt.textContent = filtered.length ? `· ${filtered.length}` : '';
 
   const note = document.getElementById('offersImportNote');
   if (note) note.style.display = allOffers.length === 0 ? '' : 'none';
