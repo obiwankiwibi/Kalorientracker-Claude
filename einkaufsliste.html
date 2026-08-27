@@ -20,8 +20,6 @@
       --bg:       #edf2f7;
       --surface:  #FFFFFF;
       --card:     #eef4ff;
-      --teal:     #0050c8;
-      --teal-dim: rgba(27,79,216,0.5);
       --salmon:   #C84B32;
       --active:   #1b6b3e;
       --active-dim: rgba(27,107,62,0.65);
@@ -31,11 +29,44 @@
       --green:    #2A8C54;
       --red:      #C84B32;
       --shadow:   0 4px 18px rgba(0,0,80,0.08);
+      --page-bg:  linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg:         #0f1117;
+        --surface:    #1c1e2b;
+        --card:       #1a2035;
+        --text:       #e8ecf4;
+        --muted:      #8892aa;
+        --border:     rgba(255,255,255,0.09);
+        --shadow:     0 4px 18px rgba(0,0,0,0.4);
+        --active:     #2e9960;
+        --active-dim: rgba(46,153,96,0.65);
+        --green:      #2e9960;
+        --salmon:     #e05a44;
+        --red:        #e05a44;
+        --page-bg:    linear-gradient(155deg,#0a0e18 0%,#111827 45%,#0f1520 100%);
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg:         #0f1117;
+      --surface:    #1c1e2b;
+      --card:       #1a2035;
+      --text:       #e8ecf4;
+      --muted:      #8892aa;
+      --border:     rgba(255,255,255,0.09);
+      --shadow:     0 4px 18px rgba(0,0,0,0.4);
+      --active:     #2e9960;
+      --active-dim: rgba(46,153,96,0.65);
+      --green:      #2e9960;
+      --salmon:     #e05a44;
+      --red:        #e05a44;
+      --page-bg:    linear-gradient(155deg,#0a0e18 0%,#111827 45%,#0f1520 100%);
     }
 html { height: 100%; }
 
     body {
-      background: transparent;
+      background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       max-width: 430px;
@@ -91,8 +122,17 @@ html { height: 100%; }
       word-break: break-all;
     }
 
-    /* ── Page background (circuit board) ── */
-    #page-bg{position:fixed;inset:0;z-index:-1;background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%);will-change:transform}
+    /* ── Page background ── */
+    #page-bg{position:fixed;inset:0;z-index:-1;background:var(--page-bg);will-change:transform}
+    /* Tiles ohne active/done/sug: transparent in Light (zeigt Gradient), surface in Dark */
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .tile:not(.active):not(.done):not(.sug) {
+        background: var(--surface); color: var(--text);
+      }
+    }
+    :root[data-theme="dark"] .tile:not(.active):not(.done):not(.sug) {
+      background: var(--surface); color: var(--text);
+    }
     
     /* ── Header ── */
     .header {
@@ -626,6 +666,19 @@ html { height: 100%; }
     }
     .store-grid::-webkit-scrollbar { display: none; }
 
+    /* Rechter Fade-Rand als Scroll-Hinweis */
+    .store-grid-outer { position: relative; }
+    .store-grid-outer::after {
+      content: '';
+      position: absolute;
+      right: 12px; top: 0; bottom: 0;
+      width: 44px;
+      background: linear-gradient(to right, transparent, var(--bg));
+      pointer-events: none;
+      border-radius: 0 16px 16px 0;
+      z-index: 1;
+    }
+
     .store-card {
       border-radius: 16px;
       padding: 14px 14px 12px;
@@ -1115,11 +1168,11 @@ html { height: 100%; }
   <div class="header-back" onclick="switchList()">‹ Listen</div>
   <div class="header-title" id="listTitle">Zuhause</div>
   <button class="icon-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
-  <button class="icon-btn" id="clearDoneBtn" onclick="clearDone()" title="Erledigte löschen">✓</button>
   <div class="header-overflow-wrap">
     <button class="icon-btn" onclick="toggleHeaderMenu(event)" title="Mehr">⋮</button>
     <div class="header-menu" id="headerMenu">
       <a href="index.html" class="header-menu-item">⌂ Startseite</a>
+      <button class="header-menu-item" id="clearDoneMenuItem" onclick="clearDone();closeHeaderMenu()">✓ Erledigte löschen</button>
       <button class="header-menu-item" onclick="doQuickBackup();closeHeaderMenu()">💾 Backup</button>
       <button class="header-menu-item" onclick="shareList();closeHeaderMenu()">⎘ Teilen</button>
     </div>
@@ -1312,7 +1365,7 @@ html { height: 100%; }
 
   <!-- Schnellzugriff auf Markt-Angebotsseiten -->
   <div class="offers-section-label" style="padding-bottom:4px">Direkt zu den Märkten</div>
-  <div style="padding:0 12px 8px"><div id="storeGrid" class="store-grid"></div></div>
+  <div style="padding:0 12px 8px" class="store-grid-outer"><div id="storeGrid" class="store-grid"></div></div>
   <div class="offers-divider"></div>
 
   <div style="display:flex;align-items:center;gap:6px;padding:8px 14px 2px">
@@ -1320,6 +1373,9 @@ html { height: 100%; }
     <span id="offersSectionCount" style="font-size:11px;color:var(--muted);font-weight:500;margin-right:4px"></span>
     <button class="offers-action-btn" onclick="refreshOffers()" id="offersLadenBtn">↻ Laden</button>
     <button class="offers-action-btn" onclick="openImportSheet()" id="offersPlzBtn">📍 PLZ eingeben</button>
+  </div>
+  <div id="offersPlzHint" style="display:none;font-size:11px;color:var(--muted);padding:0 14px 6px;text-align:right">
+    ① PLZ eingeben &nbsp;→&nbsp; ② Laden antippen
   </div>
 
   <div class="cat-row" id="offersHaendlerRow" style="padding-top:4px"></div>
@@ -1346,15 +1402,7 @@ html { height: 100%; }
       </button>
     </div>
 
-    <p style="font-size:12px;color:var(--muted);margin:12px 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Manuell (JSON-Format)</p>
-    <textarea id="importJson" class="sheet-input"
-      style="height:90px;resize:none;font-size:12px;font-family:monospace;margin-bottom:10px"
-      placeholder='{"offers":[{"id":"1","name":"Butter","haendler":"Lidl","preis":2.19,"gueltigVon":"2026-08-17","gueltigBis":"2026-08-22","kategorie":"Milchprodukte","bild":null,"url":null}]}'></textarea>
-    <div class="sheet-btns" style="flex-wrap:wrap;gap:8px">
-      <button class="sh-btn secondary" onclick="closeImportSheet()">Abbrechen</button>
-      <button class="sh-btn secondary" onclick="loadDemoOffers()">Demo-Daten</button>
-      <button class="sh-btn primary" onclick="importFromJson()">JSON importieren</button>
-    </div>
+    <button class="sh-btn secondary" style="width:100%;margin-top:4px" onclick="closeImportSheet()">Abbrechen</button>
   </div>
 </div>
 
@@ -2607,15 +2655,15 @@ function showTab(tab) {
   document.getElementById('offersView').style.display      = isAngebote    ? 'block' : 'none';
   document.getElementById('restaurantsView').style.display = isRestaurants ? 'block' : 'none';
   const stb = document.getElementById('scrollTopBtn');
-  if (stb && !isAngebote) stb.classList.remove('visible');
+  if (stb && !isAngebote && !isRestaurants) stb.classList.remove('visible');
 
   // Nav
   document.getElementById('navListe').classList.toggle('on',       isListe);
   document.getElementById('navAngebote').classList.toggle('on',    isAngebote);
   document.getElementById('navRestaurants').classList.toggle('on', isRestaurants);
 
-  const clearBtn = document.getElementById('clearDoneBtn');
-  if (clearBtn) clearBtn.style.display = isListe ? '' : 'none';
+  const clearMenuItem = document.getElementById('clearDoneMenuItem');
+  if (clearMenuItem) clearMenuItem.style.display = isListe ? '' : 'none';
   if (isAngebote)    { renderStores(); renderOffers(); updatePlzBtn(); }
   if (isRestaurants) renderRestaurants();
 }
@@ -3162,6 +3210,11 @@ function updatePlzBtn() {
   if (!btn) return;
   const plz = getMgPlz();
   btn.textContent = plz ? '📍 ' + plz : '📍 PLZ eingeben';
+  btn.style.background  = plz ? '' : 'var(--active)';
+  btn.style.color       = plz ? '' : '#fff';
+  btn.style.borderColor = plz ? '' : 'var(--active)';
+  const hint = document.getElementById('offersPlzHint');
+  if (hint) hint.style.display = plz ? 'none' : '';
 }
 
 function mgTransform(raw) {
@@ -3240,7 +3293,8 @@ async function fetchMarktguruLive() {
 }
 
 function openImportSheet() {
-  document.getElementById('importJson').value = '';
+  const jsonEl = document.getElementById('importJson');
+  if (jsonEl) jsonEl.value = '';
   document.getElementById('mgPlzInput').value = getMgPlzOrDefault();
   document.getElementById('importOverlay').classList.add('open');
 }
@@ -3520,7 +3574,7 @@ function scrollToTop() {
 window.addEventListener('scroll', () => {
   const btn = document.getElementById('scrollTopBtn');
   if (!btn) return;
-  const show = window.scrollY > 200 && activeTab === 'angebote';
+  const show = window.scrollY > 200 && (activeTab === 'angebote' || activeTab === 'restaurants');
   btn.classList.toggle('visible', show);
 }, { passive: true });
 
