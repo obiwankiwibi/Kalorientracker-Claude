@@ -427,6 +427,16 @@
   .sett-inp{width:78px;background:rgba(0,0,0,0.04);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:7px 10px;font-size:14px;text-align:center;font-family:inherit;transition:border-color .15s;}
   .sett-inp:focus{outline:none;border-color:var(--mint);}
   .sett-unit{font-size:11.5px;color:var(--text-faint);min-width:24px;}
+  /* food database suggestions */
+  .food-sug-wrap{position:relative;}
+  .food-suggestions{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--card);border:1.5px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);max-height:240px;overflow-y:auto;z-index:200;-webkit-overflow-scrolling:touch;}
+  .food-sug-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--line);transition:background .12s;}
+  .food-sug-item:last-child{border-bottom:none;}
+  .food-sug-item:active{background:var(--bg);}
+  .food-sug-emoji{font-size:20px;flex-shrink:0;line-height:1;}
+  .food-sug-info{flex:1;min-width:0;}
+  .food-sug-name{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .food-sug-macros{font-size:11px;color:var(--text-soft);margin-top:2px;}
   /* star on entry cards */
   .entry-fav{background:none;border:none;font-size:14px;padding:5px 4px 5px 6px;cursor:pointer;transition:color .15s;flex:none;color:var(--text-faint);}
   .entry-fav:hover,.entry-fav.starred{color:var(--amber);}
@@ -622,9 +632,10 @@
         <button type="button" class="meal-chip" data-meal="snack" onclick="selectMeal(this)">🍎 Snack</button>
       </div>
     </div>
-    <div class="field">
+    <div class="field food-sug-wrap">
       <label>Bezeichnung</label>
-      <input id="manName" placeholder="z. B. Apfel">
+      <input id="manName" placeholder="z. B. Apfel" oninput="suggestFoods(this.value)" autocomplete="off">
+      <div class="food-suggestions" id="foodSuggestions" style="display:none;"></div>
     </div>
     <div class="field">
       <label>Menge</label>
@@ -841,6 +852,123 @@ function saveWaterGoalFromSettings(){
   if(v>0) localStorage.setItem('kalorientracker_watergoal',String(Math.round(v*1000)));
   renderWater();
 }
+
+/* ---------- Lebensmittel-Datenbank ---------- */
+const FOOD_DB = [
+  // Gemüse (kcal/protein/carbs/fat pro 100g)
+  {name:'Zucchini',     emoji:'🥒', cat:'Gemüse',       kcal:17,  protein:1.2, carbs:3.1,  fat:0.3},
+  {name:'Möhren',       emoji:'🥕', cat:'Gemüse',       kcal:41,  protein:0.9, carbs:9.0,  fat:0.2},
+  {name:'Paprika',      emoji:'🫑', cat:'Gemüse',       kcal:27,  protein:1.0, carbs:5.9,  fat:0.3},
+  {name:'Gurke',        emoji:'🥒', cat:'Gemüse',       kcal:12,  protein:0.7, carbs:2.2,  fat:0.1},
+  {name:'Tomaten',      emoji:'🍅', cat:'Gemüse',       kcal:18,  protein:0.9, carbs:3.5,  fat:0.2},
+  {name:'Zwiebeln',     emoji:'🧅', cat:'Gemüse',       kcal:38,  protein:1.1, carbs:8.4,  fat:0.1},
+  {name:'Knoblauch',    emoji:'🧄', cat:'Gemüse',       kcal:135, protein:6.0, carbs:28,   fat:0.5},
+  {name:'Spinat',       emoji:'🥬', cat:'Gemüse',       kcal:20,  protein:2.9, carbs:1.4,  fat:0.4},
+  {name:'Brokkoli',     emoji:'🥦', cat:'Gemüse',       kcal:34,  protein:2.8, carbs:4.0,  fat:0.4},
+  {name:'Salat',        emoji:'🥗', cat:'Gemüse',       kcal:14,  protein:1.2, carbs:2.2,  fat:0.2},
+  {name:'Kartoffeln',   emoji:'🥔', cat:'Gemüse',       kcal:76,  protein:2.0, carbs:17,   fat:0.1},
+  {name:'Mais',         emoji:'🌽', cat:'Gemüse',       kcal:86,  protein:3.3, carbs:18,   fat:1.4},
+  {name:'Pilze',        emoji:'🍄', cat:'Gemüse',       kcal:22,  protein:2.5, carbs:2.2,  fat:0.3},
+  {name:'Aubergine',    emoji:'🍆', cat:'Gemüse',       kcal:25,  protein:1.0, carbs:5.0,  fat:0.2},
+  {name:'Kohl',         emoji:'🥬', cat:'Gemüse',       kcal:25,  protein:1.4, carbs:5.4,  fat:0.1},
+  {name:'Lauch',        emoji:'🌿', cat:'Gemüse',       kcal:31,  protein:1.8, carbs:6.2,  fat:0.3},
+  {name:'Sellerie',     emoji:'🥬', cat:'Gemüse',       kcal:13,  protein:0.7, carbs:2.5,  fat:0.1},
+  // Obst
+  {name:'Äpfel',        emoji:'🍎', cat:'Obst',         kcal:52,  protein:0.3, carbs:13,   fat:0.2},
+  {name:'Bananen',      emoji:'🍌', cat:'Obst',         kcal:89,  protein:1.1, carbs:23,   fat:0.2},
+  {name:'Zitrone',      emoji:'🍋', cat:'Obst',         kcal:29,  protein:0.9, carbs:6.5,  fat:0.3},
+  {name:'Erdbeeren',    emoji:'🍓', cat:'Obst',         kcal:32,  protein:0.7, carbs:7.6,  fat:0.3},
+  {name:'Trauben',      emoji:'🍇', cat:'Obst',         kcal:67,  protein:0.6, carbs:17,   fat:0.3},
+  {name:'Orangen',      emoji:'🍊', cat:'Obst',         kcal:47,  protein:0.9, carbs:10,   fat:0.2},
+  {name:'Avocado',      emoji:'🥑', cat:'Obst',         kcal:160, protein:2.0, carbs:1.8,  fat:15},
+  {name:'Wassermelone', emoji:'🍉', cat:'Obst',         kcal:30,  protein:0.6, carbs:7.0,  fat:0.2},
+  {name:'Himbeeren',    emoji:'🫐', cat:'Obst',         kcal:52,  protein:1.2, carbs:11,   fat:0.7},
+  {name:'Mango',        emoji:'🥭', cat:'Obst',         kcal:60,  protein:0.8, carbs:15,   fat:0.4},
+  {name:'Kiwi',         emoji:'🥝', cat:'Obst',         kcal:61,  protein:1.1, carbs:14,   fat:0.5},
+  // Milchprodukte
+  {name:'Milch',        emoji:'🥛', cat:'Milch',        kcal:64,  protein:3.4, carbs:4.7,  fat:3.5},
+  {name:'Joghurt',      emoji:'🍮', cat:'Milch',        kcal:59,  protein:3.5, carbs:4.7,  fat:3.6},
+  {name:'Käse',         emoji:'🧀', cat:'Milch',        kcal:380, protein:25,  carbs:0.5,  fat:31},
+  {name:'Butter',       emoji:'🧈', cat:'Milch',        kcal:740, protein:0.7, carbs:0.5,  fat:83},
+  {name:'Sahne',        emoji:'🥛', cat:'Milch',        kcal:302, protein:2.1, carbs:3.1,  fat:31},
+  {name:'Quark',        emoji:'🍦', cat:'Milch',        kcal:67,  protein:13,  carbs:3.2,  fat:0.2},
+  {name:'Frischkäse',   emoji:'🧀', cat:'Milch',        kcal:244, protein:7.0, carbs:3.8,  fat:24},
+  {name:'Hafermilch',   emoji:'🥛', cat:'Milch',        kcal:45,  protein:1.0, carbs:6.5,  fat:1.5},
+  // Brot & Backwaren
+  {name:'Toast',        emoji:'🍞', cat:'Brot',         kcal:265, protein:8.0, carbs:48,   fat:3.5},
+  {name:'Brot',         emoji:'🥖', cat:'Brot',         kcal:247, protein:7.5, carbs:46,   fat:1.3},
+  {name:'Brötchen',     emoji:'🥐', cat:'Brot',         kcal:270, protein:9.0, carbs:52,   fat:2.0},
+  {name:'Croissant',    emoji:'🥐', cat:'Brot',         kcal:406, protein:6.5, carbs:42,   fat:24},
+  // Getränke
+  {name:'Wasser',       emoji:'💧', cat:'Getränke',     kcal:0,   protein:0,   carbs:0,    fat:0},
+  {name:'Saft',         emoji:'🧃', cat:'Getränke',     kcal:45,  protein:0.4, carbs:11,   fat:0.1},
+  {name:'Kaffee',       emoji:'☕', cat:'Getränke',     kcal:330, protein:12,  carbs:26,   fat:2.0},
+  {name:'Tee',          emoji:'🍵', cat:'Getränke',     kcal:2,   protein:0,   carbs:0,    fat:0},
+  {name:'Bier',         emoji:'🍺', cat:'Getränke',     kcal:43,  protein:0.5, carbs:3.7,  fat:0},
+  {name:'Wein',         emoji:'🍷', cat:'Getränke',     kcal:85,  protein:0.1, carbs:2.6,  fat:0},
+  {name:'Cola',         emoji:'🥤', cat:'Getränke',     kcal:42,  protein:0,   carbs:11,   fat:0},
+  // Grundnahrungsmittel
+  {name:'Eier',         emoji:'🥚', cat:'Grundnahrung', kcal:155, protein:13,  carbs:0.7,  fat:11},
+  {name:'Nudeln',       emoji:'🍝', cat:'Grundnahrung', kcal:350, protein:12,  carbs:68,   fat:1.7},
+  {name:'Reis',         emoji:'🍚', cat:'Grundnahrung', kcal:360, protein:7.5, carbs:77,   fat:0.7},
+  {name:'Mehl',         emoji:'🌾', cat:'Grundnahrung', kcal:342, protein:10,  carbs:71,   fat:1.1},
+  {name:'Zucker',       emoji:'🍬', cat:'Grundnahrung', kcal:397, protein:0,   carbs:100,  fat:0},
+  {name:'Öl',           emoji:'🫙', cat:'Grundnahrung', kcal:882, protein:0,   carbs:0,    fat:100},
+  {name:'Salz',         emoji:'🧂', cat:'Grundnahrung', kcal:0,   protein:0,   carbs:0,    fat:0},
+  {name:'Pfeffer',      emoji:'🫙', cat:'Grundnahrung', kcal:251, protein:11,  carbs:39,   fat:3.4},
+  // Fleisch & Fisch
+  {name:'Hähnchen',     emoji:'🍗', cat:'Fleisch',      kcal:165, protein:31,  carbs:0,    fat:3.6},
+  {name:'Hackfleisch',  emoji:'🥩', cat:'Fleisch',      kcal:242, protein:20,  carbs:0,    fat:20},
+  {name:'Lachs',        emoji:'🐟', cat:'Fleisch',      kcal:208, protein:20,  carbs:0,    fat:13},
+  {name:'Würstchen',    emoji:'🌭', cat:'Fleisch',      kcal:301, protein:12,  carbs:2.4,  fat:28},
+  {name:'Thunfisch',    emoji:'🐠', cat:'Fleisch',      kcal:116, protein:25,  carbs:0,    fat:1.0},
+  {name:'Schinken',     emoji:'🥩', cat:'Fleisch',      kcal:145, protein:22,  carbs:0.5,  fat:6.5},
+];
+let foodSugResults = [];
+
+function suggestFoods(q) {
+  const box = document.getElementById('foodSuggestions');
+  const term = (q || '').trim().toLowerCase();
+  if (term.length < 1) { box.style.display = 'none'; return; }
+  foodSugResults = FOOD_DB.filter(f => f.name.toLowerCase().includes(term)).slice(0, 8);
+  if (!foodSugResults.length) { box.style.display = 'none'; return; }
+  box.innerHTML = foodSugResults.map((f, i) => `
+    <div class="food-sug-item" onclick="selectFoodDb(${i})">
+      <span class="food-sug-emoji">${f.emoji}</span>
+      <div class="food-sug-info">
+        <div class="food-sug-name">${escapeHtml(f.name)}</div>
+        <div class="food-sug-macros">${f.kcal} kcal · E ${f.protein}g · KH ${f.carbs}g · F ${f.fat}g</div>
+      </div>
+    </div>
+  `).join('');
+  box.style.display = 'block';
+}
+
+function selectFoodDb(i) {
+  const f = foodSugResults[i];
+  if (!f) return;
+  document.getElementById('manName').value = f.name;
+  document.getElementById('manKcalPer100').value = f.kcal;
+  document.getElementById('manUnit').value = 'g';
+  updateKcalLabel();
+  document.getElementById('manProtein').value = f.protein;
+  document.getElementById('manCarbs').value = f.carbs;
+  document.getElementById('manFat').value = f.fat;
+  document.getElementById('manSugars').value = '';
+  document.getElementById('manFiber').value = '';
+  document.getElementById('nutriPanel').style.display = 'block';
+  document.getElementById('nutriToggle').classList.add('open');
+  document.getElementById('foodSuggestions').style.display = 'none';
+  updateKcalPreview();
+  setTimeout(() => document.getElementById('manAmount').focus(), 50);
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#foodSuggestions') && e.target.id !== 'manName') {
+    const box = document.getElementById('foodSuggestions');
+    if (box) box.style.display = 'none';
+  }
+});
 
 /* ---------- Konstanten ---------- */
 const DEFAULT_GOAL    = 2000;
@@ -1530,6 +1658,7 @@ function openManual(){
   document.getElementById('manSugars').value='';
   document.getElementById('manFiber').value='';
   editingEntry=null;selectedMeal=null;
+  document.getElementById('foodSuggestions').style.display='none';
   document.querySelectorAll('.meal-chip').forEach(b=>b.classList.remove('active'));
   document.getElementById('manModalTitle').textContent='Lebensmittel hinzufügen';
   document.getElementById('kcalPreview').style.display='none';
