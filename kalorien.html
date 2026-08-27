@@ -428,7 +428,7 @@
   .sett-inp:focus{outline:none;border-color:var(--mint);}
   .sett-unit{font-size:11.5px;color:var(--text-faint);min-width:24px;}
   /* food database suggestions */
-  .food-suggestions{position:fixed;background:var(--card);border:1.5px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);max-height:240px;overflow-y:auto;z-index:1000;-webkit-overflow-scrolling:touch;}
+  .food-suggestions{display:none;margin-top:6px;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;}
   .food-sug-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--line);transition:background .12s;}
   .food-sug-item:last-child{border-bottom:none;}
   .food-sug-item:active{background:var(--bg);}
@@ -634,6 +634,7 @@
     <div class="field">
       <label>Bezeichnung</label>
       <input id="manName" placeholder="z. B. Apfel" oninput="suggestFoods(this.value)" autocomplete="off">
+      <div class="food-suggestions" id="foodSuggestions"></div>
     </div>
     <div class="field">
       <label>Menge</label>
@@ -939,11 +940,6 @@ function suggestFoods(q) {
       </div>
     </div>
   `).join('');
-  const inp = document.getElementById('manName');
-  const r = inp.getBoundingClientRect();
-  box.style.top  = (r.bottom + 4) + 'px';
-  box.style.left = r.left + 'px';
-  box.style.width = r.width + 'px';
   box.style.display = 'block';
 }
 
@@ -2291,6 +2287,5 @@ if (sessionStorage.getItem('autoScan') === '1') {
     <div class="kw-list" id="kwList"></div>
   </div>
 </div>
-<div class="food-suggestions" id="foodSuggestions" style="display:none;"></div>
 </body>
 </html>
