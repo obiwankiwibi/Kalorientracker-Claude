@@ -2982,9 +2982,9 @@ function renderRestaurants() {
       `ontouchstart="restPressStart('${r._id}')" ontouchend="restPressEnd('${r._id}')" ontouchcancel="restPressCancel()"
        onmousedown="restPressStart('${r._id}')" onmouseup="restPressEnd('${r._id}')" onmouseleave="restPressCancel()"`;
     const phoneHtml = r.phone
-      ? `<a class="rest-hours" href="tel:${r.phone.replace(/\s/g,'')}" onclick="event.stopPropagation()" style="color:inherit;text-decoration:none">📞 ${esc(r.phone)}</a>`
+      ? `<a class="rest-hours" href="tel:${r.phone.replace(/\s/g,'')}" onclick="event.stopPropagation()" style="color:inherit;text-decoration:none;display:block">📞 ${esc(r.phone)}</a>`
       : '';
-    return `<a class="rest-card" href="${r.url}" target="_blank" rel="noopener" ${lp}
+    return `<div class="rest-card" onclick="window.open('${r.url}','_blank')" ${lp}
        style="background: linear-gradient(135deg, ${r.bg}ee, ${r.bg}99);">
       <div class="rest-emoji">${r.emoji}</div>
       <div class="rest-info">
@@ -2993,7 +2993,7 @@ function renderRestaurants() {
         ${phoneHtml}
       </div>
       <div class="rest-arrow">›</div>
-    </a>`;
+    </div>`;
   }).join('');
 
   if (all.length === 0) {
