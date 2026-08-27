@@ -826,7 +826,7 @@ html { height: 100%; }
       display: flex; align-items: center; gap: 6px;
       font-size: 13px; color: var(--muted); cursor: pointer; user-select: none;
     }
-    .offers-fav-label input { accent-color: var(--teal); width: 15px; height: 15px; }
+    .offers-fav-label input { accent-color: var(--active); width: 15px; height: 15px; }
 
     .offers-import-note {
       margin: 0 14px 10px;
@@ -882,7 +882,7 @@ html { height: 100%; }
     }
     .offer-cat { font-size: 10px; color: var(--muted); margin-bottom: 5px; }
     .offer-price { display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap; }
-    .offer-price-val { font-size: 17px; font-weight: 800; color: var(--teal); }
+    .offer-price-val { font-size: 17px; font-weight: 800; color: var(--active); }
     .offer-grundpreis { font-size: 9.5px; color: var(--muted); }
     .offer-valid { font-size: 10px; color: var(--muted); margin-top: 4px; }
     .offer-valid.urgent { color: var(--salmon); font-weight: 700; }
@@ -890,16 +890,17 @@ html { height: 100%; }
     .offer-add-btn {
       margin: 0 8px 9px;
       padding: 8px 0;
-      background: var(--teal);
+      background: var(--active);
       color: #fff; border: none; border-radius: 10px;
       font-size: 12px; font-weight: 700; cursor: pointer;
+      touch-action: manipulation;
       transition: background 0.2s, opacity 0.15s;
     }
     .offer-add-btn:active { opacity: 0.75; }
     .offer-add-btn.in-list {
-      background: var(--card);
-      color: var(--teal);
-      border: 1.5px solid var(--teal);
+      background: rgba(27,107,62,0.10);
+      color: var(--active);
+      border: 1.5px solid var(--active);
       cursor: default;
       opacity: 0.85;
     }
@@ -922,7 +923,7 @@ html { height: 100%; }
     #scrollTopBtn {
       position: fixed; bottom: 80px; right: 16px;
       width: 44px; height: 44px; border-radius: 50%;
-      background: var(--teal); color: #fff;
+      background: var(--active); color: #fff;
       border: none; font-size: 20px; cursor: pointer;
       display: none; align-items: center; justify-content: center;
       box-shadow: 0 3px 14px rgba(0,0,0,0.28);
@@ -1278,9 +1279,8 @@ html { height: 100%; }
       <span id="offersCount"></span>
     </div>
     <div class="offers-topbar-actions">
-      <button class="offers-action-btn" onclick="refreshOffers()" title="Aktualisieren">↻</button>
-      <button class="offers-action-btn" onclick="openImportSheet()" title="Importieren">⊕</button>
-      <button class="offers-action-btn" id="offersCollapseBtn" onclick="toggleOffersList()" title="Liste ein-/ausklappen" style="font-size:14px">▼</button>
+      <button class="offers-action-btn" onclick="refreshOffers()" title="Aktualisieren" style="font-size:13px;gap:4px;width:auto;padding:0 10px;border-radius:16px">↻ Laden</button>
+      <button class="offers-action-btn" onclick="openImportSheet()" title="Importieren" style="font-size:13px;gap:4px;width:auto;padding:0 10px;border-radius:16px">⊕ Import</button>
     </div>
   </div>
 
@@ -1291,15 +1291,14 @@ html { height: 100%; }
     </div>
   </div>
 
-  <div class="cat-row" id="offersHaendlerRow"></div>
+  <!-- Markt-Websites direkt unter Suche als kompakte Scroll-Zeile -->
+  <div class="offers-section-label" style="padding-bottom:4px">Markt-Websites</div>
+  <div style="padding:0 12px 8px"><div id="storeGrid" class="store-grid"></div></div>
+  <div class="offers-divider"></div>
 
-
+  <div class="cat-row" id="offersHaendlerRow" style="padding-top:8px"></div>
 
   <div class="offers-grid" id="offersGrid"></div>
-
-  <div class="offers-divider"></div>
-  <div class="offers-section-label">Markt-Websites</div>
-  <div style="padding:0 12px 16px"><div id="storeGrid" class="store-grid"></div></div>
 </div>
 
 <!-- ══ IMPORT SHEET ══ -->
@@ -3215,7 +3214,7 @@ function renderOffers() {
   if (!grid) return;
 
   if (filtered.length === 0) {
-    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:24px">Keine Angebote gefunden.<br><small>Tippe ↻ um echte Angebote zu laden</small></div>';
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:32px 16px"><div style="font-size:40px;margin-bottom:10px">🏷️</div><div style="font-weight:700;font-size:15px;margin-bottom:6px">Noch keine Angebote</div><div style="font-size:13px;opacity:.7">Tippe <strong>↻ Laden</strong> und gib deine PLZ ein,<br>oder importiere Angebote mit <strong>⊕ Import</strong></div></div>';
   } else {
     grid.innerHTML = filtered.map(buildOfferCard).join('');
   }
