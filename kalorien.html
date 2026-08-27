@@ -1483,6 +1483,7 @@ function renderDay(){
   const badgeEl=document.getElementById('goalBadgeNum');if(badgeEl)badgeEl.textContent=Math.round(getGoal());
   const goal=getGoal();
   const pct=Math.min(100,(total/goal)*100);
+  const actualPct=(total/goal)*100;
   const remaining=Math.round(goal-total);
   const isOver=total>goal;
   // new hero elements
@@ -1490,7 +1491,7 @@ function renderDay(){
   document.getElementById('heroRemaining').textContent=isOver?(Math.round(total-goal)+' kcal über Ziel'):(remaining+' kcal übrig');
   document.getElementById('heroRemaining').style.color=isOver?'var(--coral)':'';
   const pctEl=document.getElementById('heroPct');
-  pctEl.textContent=Math.round(pct)+'%';
+  pctEl.textContent=Math.round(actualPct)+'%';
   pctEl.className='hero-pct-badge'+(isOver?' over':'');
   const barEl=document.getElementById('heroBar');
   barEl.style.width=pct+'%';
@@ -1918,8 +1919,8 @@ function editEntry(key,id){
   const day=getDay(key);
   const e=day.entries.find(x=>x.id===id);
   if(!e)return;
-  editingEntry={key,id};
   openManual();
+  editingEntry={key,id};
   document.getElementById('manModalTitle').textContent='Eintrag bearbeiten';
   document.getElementById('manName').value=e.name;
   document.getElementById('manUnit').value=e.unit||'g';
