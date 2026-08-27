@@ -808,11 +808,13 @@ html { height: 100%; }
     #offersCount { font-size: 12px; color: var(--muted); }
     .offers-topbar-actions { display: flex; gap: 6px; }
     .offers-action-btn {
-      width: 32px; height: 32px; border-radius: 50%;
+      height: 28px; border-radius: 14px; padding: 0 10px;
       background: var(--surface); border: 1px solid var(--border);
-      color: var(--text); font-size: 16px; cursor: pointer;
+      color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
+      white-space: nowrap; touch-action: manipulation;
     }
+    .offers-action-btn:active { opacity: 0.7; }
 
     .offers-search-wrap { padding: 0 12px 6px; }
     .offers-search-inner {
@@ -1306,8 +1308,8 @@ html { height: 100%; }
   <div style="display:flex;align-items:center;gap:6px;padding:8px 14px 2px">
     <span class="offers-section-label" style="padding:0;margin:0;flex:1">Aktuelle Angebote</span>
     <span id="offersSectionCount" style="font-size:11px;color:var(--muted);font-weight:500;margin-right:4px"></span>
-    <button class="offers-action-btn" onclick="refreshOffers()" title="Aktualisieren" id="offersLadenBtn" style="font-size:12px;width:auto;padding:0 10px;border-radius:14px;height:28px">↻ Laden</button>
-    <button class="offers-action-btn" onclick="openImportSheet()" id="offersPlzBtn" style="font-size:12px;width:auto;padding:0 10px;border-radius:14px;height:28px">📍 PLZ</button>
+    <button class="offers-action-btn" onclick="refreshOffers()" id="offersLadenBtn">↻ Laden</button>
+    <button class="offers-action-btn" onclick="openImportSheet()" id="offersPlzBtn">📍 PLZ eingeben</button>
   </div>
 
   <div class="cat-row" id="offersHaendlerRow" style="padding-top:4px"></div>
@@ -3121,6 +3123,7 @@ function loadDemoOffers() {
 }
 
 function refreshOffers() {
+  if (!getMgPlz()) { openImportSheet(); return; }
   fetchMarktguruLive();
 }
 
@@ -3129,14 +3132,19 @@ const MG_API_KEY = '8Kk+pmbf7TgJ9nVj2cXeA7P5zBGv8iuutVVMRfOfvNE=';
 const MG_CDN     = 'https://cdn.marktguru.de';
 
 function getMgPlz() {
-  return localStorage.getItem('einkauf_mg_plz') || '57271';
+  return localStorage.getItem('einkauf_mg_plz') || '';
+}
+function getMgPlzOrDefault() {
+  return getMgPlz() || '57271';
 }
 function setMgPlz(v) {
   if (v && /^\d{5}$/.test(v.trim())) { localStorage.setItem('einkauf_mg_plz', v.trim()); updatePlzBtn(); }
 }
 function updatePlzBtn() {
   const btn = document.getElementById('offersPlzBtn');
-  if (btn) btn.textContent = '📍 ' + getMgPlz();
+  if (!btn) return;
+  const plz = getMgPlz();
+  btn.textContent = plz ? '📍 ' + plz : '📍 PLZ eingeben';
 }
 
 function mgTransform(raw) {
@@ -3172,7 +3180,7 @@ function mgTransform(raw) {
 }
 
 async function fetchMarktguruLive() {
-  const plz = getMgPlz();
+  const plz = getMgPlzOrDefault();
   const btn = document.getElementById('offersLadenBtn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
   toast(`Lade Angebote für PLZ ${plz}…`);
@@ -3216,7 +3224,7 @@ async function fetchMarktguruLive() {
 
 function openImportSheet() {
   document.getElementById('importJson').value = '';
-  document.getElementById('mgPlzInput').value = getMgPlz();
+  document.getElementById('mgPlzInput').value = getMgPlzOrDefault();
   document.getElementById('importOverlay').classList.add('open');
 }
 function closeImportSheet() { document.getElementById('importOverlay').classList.remove('open'); updatePlzBtn(); }
@@ -3262,7 +3270,19 @@ function renderOffers() {
   if (!grid) return;
 
   if (filtered.length === 0) {
-    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:32px 16px"><div style="font-size:40px;margin-bottom:10px">🏷️</div><div style="font-weight:700;font-size:15px;margin-bottom:6px">Noch keine Angebote</div><div style="font-size:13px;opacity:.7">Tippe <strong>↻ Laden</strong> und gib deine PLZ ein,<br>oder importiere Angebote mit <strong>⊕ Import</strong></div></div>';
+    const plzSet = !!getMgPlz();
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:32px 16px 24px">
+      <div style="font-size:40px;margin-bottom:12px">🏷️</div>
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px">Noch keine Angebote geladen</div>
+      <div style="font-size:13px;opacity:.75;line-height:1.9;text-align:left;display:inline-block">
+        ${!plzSet
+          ? `<div>① Tippe <strong>📍 PLZ eingeben</strong> oben rechts</div>
+             <div>② Gib deine Postleitzahl ein &amp; bestätige</div>
+             <div>③ Tippe <strong>↻ Laden</strong> — fertig</div>`
+          : `<div>Tippe <strong>↻ Laden</strong> um Angebote für <strong>${getMgPlz()}</strong> zu laden</div>`
+        }
+      </div>
+    </div>`;
   } else {
     grid.innerHTML = filtered.map(buildOfferCard).join('');
   }
