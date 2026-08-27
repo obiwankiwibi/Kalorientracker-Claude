@@ -857,6 +857,14 @@ html { height: 100%; }
       padding: 0 12px 12px;
     }
 
+    .offer-img-area {
+      height: 72px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
     .offer-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -3312,6 +3320,42 @@ function setOffersSort(id) {
   renderOffers();
 }
 
+const CAT_EMOJI_MAP = [
+  [['obst','gemüse','salat','gurke','tomate','apfel','banane'], '🥦'],
+  [['fleisch','wurst','schinken','salami','hack','steak','schnitzel','bratwurst'], '🥩'],
+  [['geflügel','hähnchen','pute','hühnchen'], '🍗'],
+  [['fisch','meeresfrüchte','lachs','thunfisch','garnelen'], '🐟'],
+  [['milch','joghurt','käse','quark','sahne','butter','milchprodukt','molkerei'], '🥛'],
+  [['ei','eier'], '🥚'],
+  [['brot','backware','brötchen','gebäck','croissant'], '🍞'],
+  [['tiefkühl','gefroren','eis','pizza'], '🧊'],
+  [['süß','schokolade','snack','chips','keks','kuchen','bonbon','gummibär'], '🍫'],
+  [['kaffee','tee','kakao'], '☕'],
+  [['bier','wein','sekt','spirituose','alkohol'], '🍺'],
+  [['getränk','wasser','saft','cola','limo','energy'], '🥤'],
+  [['nudel','pasta','reis','mehl','zucker','grundnahrung','cerealien','müsli'], '🌾'],
+  [['sauce','ketchup','senf','mayonnaise','essig','öl'], '🫙'],
+  [['konserv','dose','eingemacht'], '🥫'],
+  [['baby','windel','säugling'], '👶'],
+  [['tier','hund','katze','hundefutter','katzenfutter'], '🐾'],
+  [['drogerie','kosmetik','shampoo','duschgel','seife','zahnpasta','creme','pflege'], '🧴'],
+  [['reinigu','waschmittel','spülmittel','haushalt','putzmittel'], '🧹'],
+  [['garten','pflanze','blume','erde'], '🌱'],
+  [['elektronik','batterie','glühbirne','lampe'], '💡'],
+  [['textil','kleidung','socken','shirt','bekleidung'], '👕'],
+  [['möbel','einrichtung','deko'], '🛋️'],
+  [['bau','werkzeug'], '🔧'],
+];
+
+function categoryEmoji(kat) {
+  if (!kat) return '🏷️';
+  const k = kat.toLowerCase();
+  for (const [keywords, emoji] of CAT_EMOJI_MAP) {
+    if (keywords.some(w => k.includes(w))) return emoji;
+  }
+  return '🏷️';
+}
+
 function buildOfferCard(offer) {
   const today     = todayStr();
   const msLeft    = new Date(offer.gueltigBis || '9999-12-31') - new Date(today);
@@ -3330,7 +3374,9 @@ function buildOfferCard(offer) {
     ? `<a class="offer-link-btn" href="${esc(linkUrl)}" target="_blank" rel="noopener noreferrer">Zum Angebot →</a>`
     : '';
 
+  const catIcon = categoryEmoji(offer.kategorie);
   return `<div class="offer-card">
+    <div class="offer-img-area">${catIcon}</div>
     <div class="offer-card-top">
       <span class="offer-retailer-badge" style="background:${col}">${esc(offer.haendler)}</span>
       <button class="offer-fav-btn ${offer.favorit ? 'on' : ''}" onclick="toggleOfferFav('${esc(offer.id)}')">${offer.favorit ? '★' : '☆'}</button>
