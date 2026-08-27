@@ -312,15 +312,21 @@ html { height: 100%; }
     .tile-kcal-price { font-size: 8.5px; font-weight: 500; opacity: 0.68; margin-top: 0; }
     .tile-macros {
       display: flex; gap: 4px; justify-content: center; align-items: center;
-      font-size: 8px; font-weight: 600; letter-spacing: 0.1px; margin-top: 1px; opacity: 0.78;
+      font-size: 9px; font-weight: 600; letter-spacing: 0.1px; margin-top: 2px;
     }
     .tile-macros .m-e { color: #5bbf7e; }
-    .tile-macros .m-k { color: #e8b840; }
+    .tile-macros .m-k { color: #d4a017; }
     .tile-macros .m-f { color: #e07060; }
-    .tile-macros .m-sep { opacity: 0.4; }
+    .tile-macros .m-sep { opacity: 0.35; color: inherit; }
+    /* Auf farbigen Kacheln (aktiv + Vorschlag) alles weiß */
     .tile.active .tile-macros .m-e,
     .tile.active .tile-macros .m-k,
-    .tile.active .tile-macros .m-f { color: rgba(255,255,255,0.82); }
+    .tile.active .tile-macros .m-f,
+    .tile.sug .tile-macros .m-e,
+    .tile.sug .tile-macros .m-k,
+    .tile.sug .tile-macros .m-f { color: rgba(255,255,255,0.90); }
+    .tile.sug .tile-macros .m-sep,
+    .tile.active .tile-macros .m-sep { opacity: 0.4; color: rgba(255,255,255,0.9); }
     .tile-amount { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 700; opacity: 0.9; }
     .tile-store  { font-size: 9.5px; color: rgba(255,255,255,0.95); background: rgba(255,255,255,0.22); border-radius: 10px; padding: 1px 6px; margin-top: 2px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
     .store-chip  { display: inline-block; padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface); font-size: 12px; font-weight: 600; margin-right: 6px; white-space: nowrap; cursor: pointer; transition: border-color .15s, background .15s; }
