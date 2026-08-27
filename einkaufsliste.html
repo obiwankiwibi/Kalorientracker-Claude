@@ -15,6 +15,33 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     button, a { touch-action: manipulation; }
+    html { overscroll-behavior: none; }
+
+    /* ── Pull-to-Refresh Indikator ── */
+    #ptrIndicator {
+      position: fixed;
+      top: 58px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-56px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      z-index: 150;
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+      box-shadow: var(--shadow);
+      transition: opacity 0.18s, transform 0.18s;
+    }
+    #ptrIndicator.ptr-show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    #ptrIndicator.ptr-ready { color: var(--active); }
 
     :root {
       --bg:       #edf2f7;
@@ -1147,6 +1174,7 @@ html { height: 100%; }
 </head>
 <body>
 <div id="page-bg" aria-hidden="true"></div>
+<div id="ptrIndicator">↓ Zum Aktualisieren ziehen</div>
 
 <!-- ══ CONNECTION BAR ══ -->
 <div id="connBar">
@@ -3281,9 +3309,11 @@ async function fetchMarktguruLive() {
     // Abgelaufene Demo-Daten entfernen bevor wir mergen
     allOffers = allOffers.filter(o => o.quelle !== 'Demo');
 
+    const savedY = window.scrollY;
     const transformed = all.map(mgTransform);
     const { added, updated } = mergeOffers(transformed);
     renderOffers();
+    if (savedY > 20) requestAnimationFrame(() => window.scrollTo(0, savedY));
     toast(`✓ ${added} neu, ${updated} aktualisiert · ${all.length} von ${total} geladen`);
   } catch(e) {
     toast('❌ Fehler: ' + e.message);
@@ -3744,6 +3774,74 @@ function initTheme() {
 loadOffers();
 initApp();
 autoLoadOffersJson();
+
+// ═══════════════════════════════════════════════
+//  PULL-TO-REFRESH
+// ═══════════════════════════════════════════════
+(function() {
+  const THRESHOLD = 72;
+  let startY = 0, curDY = 0, active = false, triggered = false;
+
+  function ind() { return document.getElementById('ptrIndicator'); }
+
+  function show(ready) {
+    const el = ind();
+    if (!el) return;
+    el.classList.add('ptr-show');
+    el.classList.toggle('ptr-ready', ready);
+    el.textContent = ready ? '↑ Loslassen zum Aktualisieren' : '↓ Zum Aktualisieren ziehen';
+  }
+
+  function hide() {
+    const el = ind();
+    if (!el) return;
+    el.classList.remove('ptr-show', 'ptr-ready');
+    el.textContent = '↓ Zum Aktualisieren ziehen';
+  }
+
+  function doRefresh() {
+    const el = ind();
+    if (el) { el.classList.add('ptr-show'); el.textContent = '↻ Wird aktualisiert…'; }
+
+    if (activeTab === 'angebote') {
+      if (getMgPlz()) {
+        fetchMarktguruLive().finally(hide);
+      } else {
+        openImportSheet();
+        hide();
+      }
+    } else if (activeTab === 'restaurants') {
+      renderRestaurants();
+      setTimeout(hide, 600);
+    } else {
+      hide();
+    }
+  }
+
+  document.addEventListener('touchstart', e => {
+    if (window.scrollY > 4) return;
+    startY = e.touches[0].clientY;
+    curDY = 0; active = true; triggered = false;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    if (!active) return;
+    curDY = e.touches[0].clientY - startY;
+    if (curDY <= 0) { active = false; hide(); return; }
+    show(curDY >= THRESHOLD);
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (!active) return;
+    active = false;
+    if (curDY >= THRESHOLD && !triggered) {
+      triggered = true;
+      doRefresh();
+    } else {
+      hide();
+    }
+  }, { passive: true });
+})();
 
 function doQuickBackup(){
   var d={};
