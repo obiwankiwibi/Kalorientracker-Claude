@@ -616,24 +616,32 @@ html { height: 100%; }
 
     /* ── Store cards ── */
     .store-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 2px;
     }
+    .store-grid::-webkit-scrollbar { display: none; }
 
     .store-card {
-      border-radius: 18px;
-      padding: 22px 16px;
+      border-radius: 16px;
+      padding: 14px 14px 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
       cursor: pointer;
       text-decoration: none;
       color: #fff;
       transition: transform 0.12s, opacity 0.12s;
       position: relative;
       overflow: hidden;
+      flex-shrink: 0;
+      min-width: 110px;
+      touch-action: manipulation;
     }
     .store-card:active { transform: scale(0.95); opacity: 0.85; }
 
@@ -645,12 +653,12 @@ html { height: 100%; }
       border-radius: inherit;
     }
 
-    .store-emoji { font-size: 32px; }
-    .store-name  { font-size: 15px; font-weight: 700; }
-    .store-label { font-size: 11px; opacity: 0.8; }
-    .store-addr  { font-size: 10px; opacity: 0.72; text-align: center; line-height: 1.35; margin-top: -4px; }
-    .store-open-badge   { display:inline-block; font-size:10px; font-weight:700; background:rgba(255,255,255,0.22); border-radius:99px; padding:2px 9px; margin-bottom:2px; }
-    .store-closed-badge { display:inline-block; font-size:10px; font-weight:700; background:rgba(0,0,0,0.20); border-radius:99px; padding:2px 9px; margin-bottom:2px; }
+    .store-emoji { font-size: 26px; }
+    .store-name  { font-size: 13px; font-weight: 700; text-align: center; line-height: 1.2; }
+    .store-label { font-size: 10px; opacity: 0.85; font-weight: 600; letter-spacing: 0.2px; }
+    .store-addr  { font-size: 9.5px; opacity: 0.72; text-align: center; line-height: 1.3; margin-top: -2px; }
+    .store-open-badge   { display:inline-block; font-size:9.5px; font-weight:700; background:rgba(255,255,255,0.22); border-radius:99px; padding:2px 8px; }
+    .store-closed-badge { display:inline-block; font-size:9.5px; font-weight:700; background:rgba(0,0,0,0.20); border-radius:99px; padding:2px 8px; }
 
     /* ── Restaurant cards ── */
     .rest-grid {
@@ -1290,8 +1298,8 @@ html { height: 100%; }
     </div>
   </div>
 
-  <!-- Markt-Websites direkt unter Suche als kompakte Scroll-Zeile -->
-  <div class="offers-section-label" style="padding-bottom:4px">Markt-Websites</div>
+  <!-- Schnellzugriff auf Markt-Angebotsseiten -->
+  <div class="offers-section-label" style="padding-bottom:4px">Direkt zu den Märkten</div>
   <div style="padding:0 12px 8px"><div id="storeGrid" class="store-grid"></div></div>
   <div class="offers-divider"></div>
 
@@ -2617,7 +2625,7 @@ function renderStores() {
         <div class="store-emoji">${s.emoji}</div>
         <div class="store-name">${s.name}</div>
         ${extraHtml}
-        <div class="store-label">Angebote ansehen →</div>
+        <div class="store-label">↗ Angebote ansehen</div>
       </a>
     `;
   }).join('');
