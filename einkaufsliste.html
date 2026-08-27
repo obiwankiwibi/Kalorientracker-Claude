@@ -268,7 +268,7 @@ html { height: 100%; }
       content: '';
       width: 3px; height: 13px;
       border-radius: 2px;
-      background: var(--teal);
+      background: var(--active);
       flex-shrink: 0;
     }
 
@@ -330,7 +330,7 @@ html { height: 100%; }
     .tile-amount { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 700; opacity: 0.9; }
     .tile-store  { font-size: 9.5px; color: rgba(255,255,255,0.95); background: rgba(255,255,255,0.22); border-radius: 10px; padding: 1px 6px; margin-top: 2px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
     .store-chip  { display: inline-block; padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface); font-size: 12px; font-weight: 600; margin-right: 6px; white-space: nowrap; cursor: pointer; transition: border-color .15s, background .15s; }
-    .store-chip.active { border-color: var(--teal); background: rgba(0,80,200,0.10); color: var(--teal); }
+    .store-chip.active { border-color: var(--active); background: rgba(27,107,62,0.10); color: var(--active); }
 
     /* Active items — forest green */
     .tile.active {
@@ -342,7 +342,7 @@ html { height: 100%; }
 
     /* Done items — compact list row (tile.done only used for photo items now) */
     .tile.done {
-      background: var(--teal);
+      background: var(--active);
       color: #fff;
       opacity: 0.55;
       border: 1.5px solid rgba(255,255,255,0.18);
@@ -500,7 +500,7 @@ html { height: 100%; }
       border: 2px solid transparent;
       transition: border-color 0.12s, background 0.12s;
     }
-    .amt-chip.on { border-color: var(--teal); background: rgba(61,189,181,0.12); }
+    .amt-chip.on { border-color: var(--active); background: rgba(27,107,62,0.12); }
 
     #storeChips .amt-chip {
       border-color: var(--border);
@@ -511,8 +511,8 @@ html { height: 100%; }
       color: var(--text);
     }
     #storeChips .amt-chip.on {
-      border-color: var(--teal);
-      background: var(--teal);
+      border-color: var(--active);
+      background: var(--active);
       color: #fff;
     }
 
@@ -527,7 +527,7 @@ html { height: 100%; }
       outline: none;
       margin-bottom: 14px;
     }
-    .sheet-input:focus { border-color: var(--teal); }
+    .sheet-input:focus { border-color: var(--active); }
 
     .sheet-btns { display: flex; gap: 9px; }
 
@@ -542,7 +542,7 @@ html { height: 100%; }
       transition: opacity 0.15s;
     }
     .sh-btn:active { opacity: 0.8; }
-    .sh-btn.primary { background: var(--teal); color: #fff; }
+    .sh-btn.primary { background: var(--active); color: #fff; }
     .sh-btn.danger   { background: #4a2020; color: #ff7070; flex: 0 0 auto; padding: 13px 16px; }
     .sh-btn.secondary { background: var(--card); color: var(--text); }
 
@@ -573,7 +573,7 @@ html { height: 100%; }
       padding: 4px 14px;
       position: relative;
     }
-    .nav-item.on { color: var(--teal); }
+    .nav-item.on { color: var(--active); }
     .nav-icon { font-size: 20px; }
 
     .badge {
@@ -679,6 +679,7 @@ html { height: 100%; }
       transition: transform 0.12s, opacity 0.12s;
       position: relative;
       overflow: hidden;
+      touch-action: manipulation;
     }
     .rest-card:active { transform: scale(0.97); opacity: 0.85; }
 
@@ -735,7 +736,7 @@ html { height: 100%; }
       content: '';
       position: absolute;
       width: 24px; height: 24px;
-      border-color: var(--teal);
+      border-color: var(--active);
       border-style: solid;
     }
     .scan-reticle::before {
@@ -1069,14 +1070,14 @@ html { height: 100%; }
     font-size: 13px; color: var(--muted); min-height: 90px;
     transition: border-color .2s; overflow: hidden;
   }
-  .photo-drop-zone:hover { border-color: var(--teal); }
+  .photo-drop-zone:hover { border-color: var(--active); }
   #photoPreview { width: 100%; max-height: 180px; object-fit: contain; border-radius: 10px; display: none; }
   .photo-picker-input {
     width: 100%; padding: 12px 14px; margin-bottom: 10px;
     border: 1.5px solid var(--border); border-radius: 12px;
     background: var(--bg); color: var(--text); font-size: 14px; font-family: inherit; outline: none;
   }
-  .photo-picker-input:focus { border-color: var(--teal); }
+  .photo-picker-input:focus { border-color: var(--active); }
   .photo-picker-btns { display: flex; gap: 10px; margin-top: 4px; }
   .photo-cancel-btn {
     flex: 1; padding: 13px; border: 1.5px solid var(--border); border-radius: 12px;
@@ -1085,7 +1086,7 @@ html { height: 100%; }
   }
   .photo-save-btn {
     flex: 2; padding: 13px; border: none; border-radius: 12px;
-    background: var(--teal); color: #fff; font-size: 14px; font-weight: 700;
+    background: var(--active); color: #fff; font-size: 14px; font-weight: 700;
     font-family: inherit; cursor: pointer;
   }
   .photo-save-btn:disabled { opacity: 0.4; cursor: default; }
@@ -1252,18 +1253,18 @@ html { height: 100%; }
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
     <h2 style="font-size:17px; font-weight:700;">Restaurants</h2>
     <button onclick="openRestForm()" style="
-      background:var(--teal); border:none; color:#fff;
+      background:var(--active); border:none; color:#fff;
       width:34px; height:34px; border-radius:50%;
       font-size:22px; cursor:pointer; display:flex;
       align-items:center; justify-content:center;">+</button>
   </div>
-  <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Lang drücken zum Löschen.</p>
+  <p id="restDeleteHint" style="font-size:13px; color:var(--muted); margin-bottom:16px; display:none;">Lang drücken zum Löschen.</p>
 
   <button onclick="findNearby()" style="
     width:100%; padding:14px; margin-bottom:20px;
-    background: linear-gradient(135deg, #1a73e8, #0d47a1);
+    background: linear-gradient(135deg, #1b6b3e, #164f30);
     color:#fff; border:none; border-radius:16px;
-    font-size:15px; font-weight:600; cursor:pointer;
+    font-size:15px; font-weight:600; cursor:pointer; touch-action:manipulation;
     display:flex; align-items:center; justify-content:center; gap:8px;">
     📍 Restaurants in der Nähe
   </button>
@@ -1282,6 +1283,7 @@ html { height: 100%; }
       <input class="sheet-input" id="restName" placeholder="Name *" style="flex:1; margin-bottom:0;">
     </div>
     <input class="sheet-input" id="restHours" placeholder="Öffnungszeiten (z.B. Mo–Sa 11–22 Uhr)">
+    <input class="sheet-input" id="restPhone" placeholder="Telefon (optional)" inputmode="tel">
     <input class="sheet-input" id="restUrl"   placeholder="Website oder Google Maps Link (optional)">
 
     <div style="display:flex; gap:8px; margin-top:4px;">
@@ -2533,9 +2535,9 @@ function renderListSheet() {
     <div onclick="goToList('${esc(l.name)}')" style="
       display:flex; align-items:center; gap:12px;
       padding:13px 14px; border-radius:20px;
-      background:${l.name.toLowerCase() === listId ? 'var(--teal)' : 'var(--card)'};
+      background:${l.name.toLowerCase() === listId ? 'var(--active)' : 'var(--card)'};
       cursor:pointer; margin-bottom:8px;
-      border: 1px solid ${l.name.toLowerCase() === listId ? 'var(--teal)' : 'var(--border)'};
+      border: 1px solid ${l.name.toLowerCase() === listId ? 'var(--active)' : 'var(--border)'};
       transition: background 0.15s;">
       <span style="font-size:22px">${l.emoji}</span>
       <span style="font-size:15px; font-weight:${l.name.toLowerCase() === listId ? '700' : '500'}">${esc(l.name)}</span>
@@ -2677,6 +2679,7 @@ function openRestForm() {
   document.getElementById('restName').value  = '';
   document.getElementById('restEmoji').value = '';
   document.getElementById('restHours').value = '';
+  document.getElementById('restPhone').value = '';
   document.getElementById('restUrl').value   = '';
   document.getElementById('restOverlay').classList.add('open');
   setTimeout(() => document.getElementById('restName').focus(), 100);
@@ -2695,12 +2698,13 @@ function saveRestaurant() {
   if (!name) { document.getElementById('restName').focus(); return; }
   const emoji = document.getElementById('restEmoji').value.trim() || '🍽️';
   const hours = document.getElementById('restHours').value.trim() || 'Öffnungszeiten unbekannt';
+  const phone = document.getElementById('restPhone').value.trim() || null;
   const url   = document.getElementById('restUrl').value.trim() ||
                 'https://www.google.com/maps/search/' + encodeURIComponent(name);
   const bg    = REST_COLORS[Object.keys(customRestaurants).length % REST_COLORS.length];
 
   const id = 'r_' + Date.now();
-  persistRest(id, { name, emoji, bg, hours, url, addedAt: Date.now() });
+  persistRest(id, { name, emoji, bg, hours, phone, url, addedAt: Date.now() });
   closeRestForm();
   toast(`${emoji} ${name} hinzugefügt`);
 }
@@ -2964,10 +2968,12 @@ function findNearby() {
 }
 
 function renderRestaurants() {
-  const all = [
-    ...RESTAURANTS.map(r => ({ ...r, _fixed: true })),
-    ...Object.entries(customRestaurants).map(([id, r]) => ({ ...r, _id: id }))
-  ];
+  const fixed  = RESTAURANTS.map(r => ({ ...r, _fixed: true }));
+  const custom = Object.entries(customRestaurants).map(([id, r]) => ({ ...r, _id: id }));
+  const all    = [...fixed, ...custom];
+
+  const hint = document.getElementById('restDeleteHint');
+  if (hint) hint.style.display = custom.length > 0 ? '' : 'none';
 
   const rg = document.getElementById('restaurantGrid');
   rg.className = 'rest-grid';
@@ -2975,20 +2981,23 @@ function renderRestaurants() {
     const lp = r._fixed ? '' :
       `ontouchstart="restPressStart('${r._id}')" ontouchend="restPressEnd('${r._id}')" ontouchcancel="restPressCancel()"
        onmousedown="restPressStart('${r._id}')" onmouseup="restPressEnd('${r._id}')" onmouseleave="restPressCancel()"`;
+    const phoneHtml = r.phone
+      ? `<a class="rest-hours" href="tel:${r.phone.replace(/\s/g,'')}" onclick="event.stopPropagation()" style="color:inherit;text-decoration:none">📞 ${esc(r.phone)}</a>`
+      : '';
     return `<a class="rest-card" href="${r.url}" target="_blank" rel="noopener" ${lp}
        style="background: linear-gradient(135deg, ${r.bg}ee, ${r.bg}99);">
       <div class="rest-emoji">${r.emoji}</div>
       <div class="rest-info">
         <div class="rest-name">${esc(r.name)}</div>
         <div class="rest-hours">🕐 ${esc(r.hours)}</div>
-        ${r.phone ? `<div class="rest-hours">📞 ${esc(r.phone)}</div>` : ''}
+        ${phoneHtml}
       </div>
       <div class="rest-arrow">›</div>
     </a>`;
   }).join('');
 
   if (all.length === 0) {
-    rg.innerHTML = '<div class="empty" style="grid-column:1/-1">Noch keine Restaurants.<br>Tippe auf <strong>+</strong> um eines hinzuzufügen.</div>';
+    rg.innerHTML = '<div class="empty">Noch keine Restaurants.<br>Tippe auf <strong>+</strong> um eines hinzuzufügen.</div>';
   }
 }
 
