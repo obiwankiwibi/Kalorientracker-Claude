@@ -2117,24 +2117,26 @@ async function exportExcel(btn) {
     const MEAL_NAMES = {fruehstueck:'Frühstück',mittagessen:'Mittagessen',abendessen:'Abendessen',snack:'Snack'};
 
     /* === Tage-Tabelle === */
-    const daysRows = [['Datum','Wochentag','Mahlzeit','Lebensmittel','Menge','Einheit','kcal','Eiweiß (g)','KH (g)','Fett (g)','Zucker (g)','Ballaststoffe (g)','Nutri-Score','Wasser (ml)']];
+    const daysRows = [['Datum','Mahlzeit','Lebensmittel','Menge','Einheit','kcal','Eiweiß (g)','KH (g)','Fett (g)','Zucker (g)','Ballaststoffe (g)','Nutri-Score','Wasser (ml)']];
     const sortedKeys = Object.keys(store).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
     sortedKeys.forEach(dateKey=>{
       const day=store[dateKey]||{entries:[],water:0};
       if(!day.entries.length&&!day.water)return;
       const d=new Date(dateKey+'T12:00:00');
-      const weekday=d.toLocaleDateString('de-DE',{weekday:'long'});
+      // Datum als lesbarer deutscher Text: "Mi. 27.08.2026"
+      const dateFmt=d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
       let dayKcal=0,dayP=0,dayC=0,dayF=0;
       day.entries.forEach(e=>{
         const n=e.nutrients||{};
-        const rnd=(v,d=1)=>v!=null?Math.round(v*10**d)/10**d:null;
-        const kcal=rnd(e.kcal,1);
+        const rnd=v=>v!=null?Math.round(v*10)/10:null;
+        const kcal=Math.round(e.kcal);
         const p=rnd(n.protein),c=rnd(n.carbs),f=rnd(n.fat),sg=rnd(n.sugars),fi=rnd(n.fiber);
         dayKcal+=kcal||0;if(p!=null)dayP+=p;if(c!=null)dayC+=c;if(f!=null)dayF+=f;
-        daysRows.push([dateKey,weekday,e.meal?(MEAL_NAMES[e.meal]||e.meal):'',e.name,e.amount??'',e.unit||'',kcal,p??'',c??'',f??'',sg??'',fi??'',n.nutriscore||'','']);
+        daysRows.push([dateFmt,e.meal?(MEAL_NAMES[e.meal]||e.meal):'',e.name,e.amount??'',e.unit||'',kcal,p??'',c??'',f??'',sg??'',fi??'',n.nutriscore||'','']);
       });
-      daysRows.push([dateKey,weekday,'','→ Tagesgesamt','','',Math.round(dayKcal),Math.round(dayP*10)/10||'',Math.round(dayC*10)/10||'',Math.round(dayF*10)/10||'','','','',day.water||0]);
-      daysRows.push([]);
+      // Tagesgesamt in Mahlzeit-Spalte, damit Datum-Spalte konsistent bleibt
+      daysRows.push([dateFmt,'→ Tagesgesamt','','','',Math.round(dayKcal),Math.round(dayP*10)/10||'',Math.round(dayC*10)/10||'',Math.round(dayF*10)/10||'','','','',day.water||0]);
+      daysRows.push([]); // Leerzeile als Trenner
     });
 
     /* === Wochen-Tabelle === */
@@ -2153,14 +2155,15 @@ async function exportExcel(btn) {
       weekMap[wkey].water+=(day.water||0);
       day.entries.forEach(e=>{if(!e.nutrients)return;weekMap[wkey].p+=e.nutrients.protein||0;weekMap[wkey].c+=e.nutrients.carbs||0;weekMap[wkey].f+=e.nutrients.fat||0;});
     });
+    const fmtDE=iso=>new Date(iso+'T12:00:00').toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
     Object.keys(weekMap).sort().forEach(wkey=>{
       const w=weekMap[wkey];w.dates.sort();
-      weeksRows.push([w.kw,w.year,w.dates[0],w.dates[w.dates.length-1],w.days,Math.round(w.kcal),w.days?Math.round(w.kcal/7):0,Math.round(goal),Math.round(w.p*10)/10,Math.round(w.c*10)/10,Math.round(w.f*10)/10,Math.round(w.water/100)/10]);
+      weeksRows.push([w.kw,w.year,fmtDE(w.dates[0]),fmtDE(w.dates[w.dates.length-1]),w.days,Math.round(w.kcal),w.days?Math.round(w.kcal/7):0,Math.round(goal),Math.round(w.p*10)/10,Math.round(w.c*10)/10,Math.round(w.f*10)/10,Math.round(w.water/100)/10]);
     });
 
     const wb=window.XLSX.utils.book_new();
     const wsDays=window.XLSX.utils.aoa_to_sheet(daysRows);
-    wsDays['!cols']=[{wch:12},{wch:12},{wch:14},{wch:28},{wch:8},{wch:7},{wch:7},{wch:11},{wch:8},{wch:8},{wch:9},{wch:15},{wch:12},{wch:11}];
+    wsDays['!cols']=[{wch:18},{wch:14},{wch:28},{wch:8},{wch:7},{wch:7},{wch:11},{wch:8},{wch:8},{wch:9},{wch:15},{wch:12},{wch:11}];
     window.XLSX.utils.book_append_sheet(wb,wsDays,'Tage');
     const wsWeeks=window.XLSX.utils.aoa_to_sheet(weeksRows);
     wsWeeks['!cols']=[{wch:6},{wch:6},{wch:12},{wch:12},{wch:18},{wch:12},{wch:12},{wch:14},{wch:11},{wch:8},{wch:8},{wch:10}];
