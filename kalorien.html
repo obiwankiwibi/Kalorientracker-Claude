@@ -931,17 +931,27 @@ function suggestFoods(q) {
   const box = document.getElementById('foodSuggestions');
   const term = normFood((q || '').trim());
   if (term.length < 1) { box.style.display = 'none'; return; }
-  foodSugResults = FOOD_DB.filter(f => normFood(f.name).includes(term)).slice(0, 8);
+  const scanMatches = getScanDb()
+    .filter(f => normFood(f.name).includes(term))
+    .map(f => ({...f, _src:'scan'}));
+  const scanNames = new Set(scanMatches.map(f => normFood(f.name)));
+  const dbMatches = FOOD_DB.filter(f => normFood(f.name).includes(term) && !scanNames.has(normFood(f.name)));
+  foodSugResults = [...scanMatches, ...dbMatches].slice(0, 8);
   if (!foodSugResults.length) { box.style.display = 'none'; return; }
-  box.innerHTML = foodSugResults.map((f, i) => `
-    <div class="food-sug-item" onclick="selectFoodDb(${i})">
-      <span class="food-sug-emoji">${f.emoji}</span>
+  box.innerHTML = foodSugResults.map((f, i) => {
+    const emoji = f._src === 'scan' ? '📷' : f.emoji;
+    const p = f._src === 'scan' ? (f.per100 || {}) : f;
+    const macros = (p.protein != null || p.carbs != null || p.fat != null)
+      ? `${f.kcal} kcal · E ${p.protein??0}g · KH ${p.carbs??0}g · F ${p.fat??0}g`
+      : `${f.kcal} kcal`;
+    return `<div class="food-sug-item" onclick="selectFoodDb(${i})">
+      <span class="food-sug-emoji">${emoji}</span>
       <div class="food-sug-info">
         <div class="food-sug-name">${escapeHtml(f.name)}</div>
-        <div class="food-sug-macros">${f.kcal} kcal · E ${f.protein}g · KH ${f.carbs}g · F ${f.fat}g</div>
+        <div class="food-sug-macros">${macros}</div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
   box.style.display = 'block';
 }
 
@@ -952,13 +962,17 @@ function selectFoodDb(i) {
   document.getElementById('manKcalPer100').value = f.kcal;
   document.getElementById('manUnit').value = 'g';
   updateKcalLabel();
-  document.getElementById('manProtein').value = f.protein;
-  document.getElementById('manCarbs').value = f.carbs;
-  document.getElementById('manFat').value = f.fat;
-  document.getElementById('manSugars').value = '';
-  document.getElementById('manFiber').value = '';
-  document.getElementById('nutriPanel').style.display = 'block';
-  document.getElementById('nutriToggle').classList.add('open');
+  const p = f._src === 'scan' ? (f.per100 || {}) : f;
+  document.getElementById('manProtein').value = p.protein ?? '';
+  document.getElementById('manCarbs').value   = p.carbs   ?? '';
+  document.getElementById('manFat').value     = p.fat     ?? '';
+  document.getElementById('manSugars').value  = p.sugars  ?? '';
+  document.getElementById('manFiber').value   = p.fiber   ?? '';
+  selectedNutriscore = p.nutriscore || null;
+  document.querySelectorAll('.ns-btn').forEach(b => b.classList.remove('selected'));
+  if (p.nutriscore) setNutriscore(p.nutriscore);
+  const hasMacros = p.protein != null || p.carbs != null || p.fat != null;
+  if (hasMacros) { document.getElementById('nutriPanel').style.display = 'block'; document.getElementById('nutriToggle').classList.add('open'); }
   document.getElementById('foodSuggestions').style.display = 'none';
   updateKcalPreview();
   setTimeout(() => document.getElementById('manAmount').focus(), 50);
@@ -976,8 +990,11 @@ const DEFAULT_GOAL    = 2000;
 const DEFAULT_WATER_GOAL = 2000; // ml
 const HISTORY_KEY     = 'kalorientracker_history';
 const FAV_KEY         = 'kalorientracker_favorites';
+const SCAN_DB_KEY     = 'kalorientracker_scan_db';
 const HISTORY_MAX     = 10;
 const STORE_KEY       = 'kalorientracker_v1';
+
+function getScanDb(){ try{return JSON.parse(localStorage.getItem(SCAN_DB_KEY))||[];}catch(e){return[];} }
 
 /* ---------- Einheiten ---------- */
 const VOLUME_UNITS = new Set(['ml','dl','L','cl']);
@@ -1122,6 +1139,12 @@ function addToFoodHistory(name,kcal,meta,kcalPer100,nutrients,unit,amount){
   hist.unshift({name:name.trim(),kcal,meta:meta||'',kcalPer100:kcalPer100||null,unit:unit||'g',amount:amount||null,nutrients:nutrients||null,per100});
   if(hist.length>HISTORY_MAX) hist=hist.slice(0,HISTORY_MAX);
   localStorage.setItem(HISTORY_KEY,JSON.stringify(hist));
+  if(kcalPer100){
+    const s=getScanDb(),nrm=name.trim().toLowerCase();
+    const upd=s.filter(x=>x.name.trim().toLowerCase()!==nrm);
+    upd.unshift({name:name.trim(),kcal:kcalPer100,per100});
+    localStorage.setItem(SCAN_DB_KEY,JSON.stringify(upd.slice(0,200)));
+  }
 }
 
 function renderFoodHistory(){
@@ -2030,7 +2053,7 @@ function renderKWPicker(){
 }
 
 /* ---------- Backup ---------- */
-const BACKUP_KEYS=['kalorientracker_v1','kalorientracker_goal','kalorientracker_watergoal','kalorientracker_history','kalorientracker_favorites','kalorientracker_macro_goals'];
+const BACKUP_KEYS=['kalorientracker_v1','kalorientracker_goal','kalorientracker_watergoal','kalorientracker_history','kalorientracker_favorites','kalorientracker_macro_goals','kalorientracker_scan_db'];
 function openBackup(){openModal('backupBg');}
 function closeBackup(){closeModal('backupBg');}
 function exportData(){
