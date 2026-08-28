@@ -3,14 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0050c8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a3a8a" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Tanken">
 <title>Tankstellenvergleich</title>
 <link rel="manifest" href="manifest-tankstellen.json">
-<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');</script>
+<link rel="apple-touch-icon" href="icon-tankstellen.svg">
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});</script>
 <style>
-:root{--bg:#edf2f7;--card:#fff;--ink:#17202a;--muted:#718096;--line:#dce2e8;--brand:#0050c8;--soft:rgba(27,79,216,0.10);--warn:#a66016;--radius:13px;--shadow:0 10px 30px rgba(23,32,42,.07)}
+:root{--bg:#edf2f7;--card:#fff;--ink:#17202a;--muted:#718096;--line:#dce2e8;--brand:#0050c8;--soft:rgba(27,79,216,0.10);--warn:#a66016;--radius:13px;--shadow:0 10px 30px rgba(23,32,42,.07);--grad-a:#b8d4f0;--grad-b:#dce8f5;--grad-c:#e8f2fc}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b24;--ink:#dde4f5;--muted:#7a8aaa;--line:rgba(100,140,255,0.14);--brand:#5580f0;--soft:rgba(85,128,240,0.12);--warn:#d4800a;--shadow:0 10px 30px rgba(0,0,0,0.45);--grad-a:#0a1020;--grad-b:#0d1525;--grad-c:#0f1a2e}}
 
 
-*{box-sizing:border-box}body{margin:0;background:transparent;color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}.app{max-width:1050px;margin:auto;padding:0 18px 70px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}.app{max-width:1050px;margin:auto;padding:0 18px 28px}
 header{display:flex;}.logo{font:700 19px/1.2 system-ui}.logo small{display:block;color:var(--muted);font-size:11px;font-weight:500;margin-top:3px}
 .site-nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;gap:4px;padding:0 12px;height:52px;background:var(--bg);border-bottom:1px solid var(--line);margin-bottom:20px;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);}
 .site-nav-title{flex:1;font-size:17px;font-weight:700;padding:0 4px;color:var(--ink);}
@@ -35,8 +42,8 @@ header{display:flex;}.logo{font:700 19px/1.2 system-ui}.logo small{display:block
 .attribution{text-align:center;font-size:11px;color:var(--muted);padding:22px 0 4px;border-top:1px solid var(--line);margin-top:28px}.attribution a{color:var(--brand);text-decoration:none}
 .station-left{display:flex;gap:10px;align-items:flex-start}
 
-/* ── Circuit background ── */
-#page-bg{position:fixed;inset:0;z-index:-1;background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%);;will-change:transform}
+/* ── Background ── */
+#page-bg{position:fixed;inset:0;z-index:-1;background:linear-gradient(155deg,var(--grad-a) 0%,var(--grad-b) 45%,var(--grad-c) 100%)}
 .brand-badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;font-size:11px;font-weight:900;letter-spacing:-.5px;flex-shrink:0;margin-top:2px}
 .hours-btn{cursor:pointer;border:0;font:10px/1.6 inherit;padding:2px 8px;border-radius:99px;letter-spacing:inherit}
 .hours-btn.open{background:var(--soft);color:var(--brand)}
@@ -53,6 +60,15 @@ header{display:flex;}.logo{font:700 19px/1.2 system-ui}.logo small{display:block
 @media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.grid .place{grid-column:1/-1}.layout{grid-template-columns:1fr}.chart-card{position:static}.topstats{grid-template-columns:1fr 1fr}}
 @media(max-width:430px){.grid{grid-template-columns:1fr}.grid .place{grid-column:auto}.station{grid-template-columns:1fr}.price{text-align:left}.subactions{flex-wrap:wrap}.status{width:100%;margin-left:0}}
 
+/* ── Toast ── */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;z-index:999;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+.toast.show{opacity:1}
+/* ── Lade-Skeleton ── */
+.station-skeleton{display:grid;gap:9px}
+.skel-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;opacity:.6;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:.35}}
+.skel-line{height:12px;border-radius:6px;background:var(--line);margin-bottom:8px}
+.skel-line.w60{width:60%}.skel-line.w40{width:40%}.skel-line.w80{width:80%}
 /* ── Preis-Alarm ── */
 .fav-alert-row{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--line);flex-wrap:wrap;}
 .fav-alert-input{width:60px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:4px 6px;font-size:11px;text-align:center;font:inherit;}
@@ -74,6 +90,7 @@ header { border-bottom: 2px solid var(--brand); }
 </head>
 <body>
 <div id="page-bg" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="app">
 <header class="site-nav"><div class="site-nav-title">⛽ Tankstellen</div><button class="site-nav-btn" id="settingsBtn" title="API-Einstellungen">⚙</button><button class="site-nav-btn" onclick="doQuickBackup()" title="Backup erstellen">💾</button><a href="index.html" class="site-nav-btn" title="Startseite">⌂</a></header>
 <section class="search-card"><div class="grid"><div class="field place"><label>Ort oder Postleitzahl</label><div style="display:flex;gap:6px"><input id="place" value="Hilchenbach" placeholder="z. B. Hilchenbach" style="flex:1"><button id="gpsBtn" class="icon" title="Aktuellen Standort ermitteln" style="flex-shrink:0;font-size:15px">📍</button></div></div><div class="field"><label>Umkreis</label><select id="radius"><option value="3">3 km</option><option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="25">25 km</option></select></div><div class="field"><label>Sortierung</label><select id="sorting"><option value="price">Preis</option><option value="dist">Entfernung</option></select></div><button class="primary" id="searchBtn">Tankstellen suchen</button></div><div class="subactions"><span class="status" id="status">API-Key in den Einstellungen hinterlegen</span></div>
@@ -106,10 +123,13 @@ const STORE='tankstellen_finder_v2';
 // Der Key wird nur lokal im Browser gespeichert und darf nicht im Code veröffentlicht werden.
 const TK_HOUR=3600000;
 const state=Object.assign({apiKey:'',fuel:'e5',theme:'light',history:{e10:[],e5:[],diesel:[]},stations:[],place:'57271 Hilchenbach-Dahlbruch',coords:null,lastRequest:0,favorites:{},favPrices:{},favAlerts:{}},JSON.parse(localStorage.getItem(STORE)||'{}'));
-const $=id=>document.getElementById(id), euro=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:3,maximumFractionDigits:3})+' €';
+const $=id=>document.getElementById(id), euro=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){localStorage.setItem(STORE,JSON.stringify(state))}
 function setStatus(msg){$('status').textContent=msg}
+let _toastTimer=null;
+function showToast(msg,ms=3200){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>t.classList.remove('show'),ms)}
+function skeletonHtml(n=4){return`<div class="station-skeleton">${Array.from({length:n},()=>`<div class="skel-card"><div class="skel-line w80"></div><div class="skel-line w60"></div><div class="skel-line w40"></div></div>`).join('')}</div>`}
 
 function fuelLabel(f){return{e10:'Super E10',e5:'Super 95 (E5)',diesel:'Diesel'}[f]||f}
 
@@ -130,11 +150,10 @@ async function search(){
  if(!state.apiKey){openSettings();setStatus('Bitte zuerst API-Key speichern');return}
  const elapsed=Date.now()-state.lastRequest;
  if(elapsed<60000){startCooldown();return}
- $('searchBtn').disabled=true;setStatus('Suche läuft …');
+ $('searchBtn').disabled=true;setStatus('Suche läuft …');$('stations').innerHTML=skeletonHtml();
  try{
   let coords=state.coords;
   if(!coords||state.place!==$('place').value.trim()){coords=await geocode($('place').value.trim());state.coords=coords;state.place=$('place').value.trim()}
-  // Zufällige Verzögerung (2–8 s) gem. Tankerkönig-Nutzungsbedingungen, um Lastspitzen zu vermeiden
   const jitter=2000+Math.random()*6000;setStatus(`Verbinde … (${Math.round(jitter/1000)} s)`);await new Promise(r=>setTimeout(r,jitter));
   // Korrekter Endpunkt gem. Doku: /json/list.php — type=all liefert alle Kraftstoffpreise in einem Aufruf
   const p=new URLSearchParams({lat:coords.lat,lng:coords.lng,rad:$('radius').value,type:'all',sort:'dist',apikey:state.apiKey});
@@ -209,7 +228,7 @@ function render(){
  }
  const vals=list.map(s=>s[state.fuel]),avg=vals.reduce((a,b)=>a+b,0)/vals.length,min=Math.min(...vals),max=Math.max(...vals),cheap=list.find(s=>s[state.fuel]===min);
  $('minPrice').textContent=euro(min);$('minName').textContent=cheap.name;$('avgPrice').textContent=euro(avg);
- $('spread').textContent=(max-min).toLocaleString('de-DE',{minimumFractionDigits:3,maximumFractionDigits:3})+' €';
+ $('spread').textContent=(max-min).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
  const saving=(avg-min)*50;$('savings').textContent=saving>0?saving.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €':'—';
  $('stations').innerHTML=list.map(s=>{
   const isFav=!!state.favorites[s.id];
@@ -232,7 +251,7 @@ function renderFavs(){
   const threshold=state.favAlerts[id]||null;
   const alerted=cur!==null&&threshold!==null&&cur<=threshold;
   const alertBadge=alerted?`<div class="fav-alert-badge">🔔 Preis ${euro(cur)} ≤ Ziel ${euro(threshold)}</div>`:'';
-  return `<div class="card fav-card${alerted?' alerted':''}"><div class="section-head" style="margin-bottom:4px"><div class="fav-name">${esc(fav.name)}</div><button class="fav-remove" data-favid="${esc(id)}" title="Entfernen">✕</button></div><div class="hint" style="font-size:11px">${esc(fav.address)}</div><div class="fav-price-big">${cur?euro(cur):'—'}<span style="font-size:13px;font-weight:600;${trendColor}">${esc(trendStr)}</span></div>${alertBadge}<div class="fav-chart"><canvas id="fc_${id.replace(/-/g,'_')}"></canvas></div><div class="fav-alert-row"><span>🔔</span><span>Alarm wenn ≤</span><input class="fav-alert-input" type="number" step="0.01" min="0" max="5" value="${threshold!==null?threshold.toFixed(3):''}" placeholder="1.900" data-alertid="${esc(id)}"><span>€/L</span></div></div>`;
+  return `<div class="card fav-card${alerted?' alerted':''}"><div class="section-head" style="margin-bottom:4px"><div class="fav-name">${esc(fav.name)}</div><button class="fav-remove" data-favid="${esc(id)}" title="Entfernen">✕</button></div><div class="hint" style="font-size:11px">${esc(fav.address)}</div><div class="fav-price-big">${cur?euro(cur):'—'}<span style="font-size:13px;font-weight:600;${trendColor}">${esc(trendStr)}</span></div>${alertBadge}<div class="fav-chart"><canvas id="fc_${id.replace(/-/g,'_')}"></canvas></div><div class="fav-alert-row"><span>🔔</span><span>Alarm wenn ≤</span><input class="fav-alert-input" type="number" step="0.01" min="0" max="5" value="${threshold!==null?threshold.toFixed(2):''}" placeholder="1.85" data-alertid="${esc(id)}"><span>€/L</span></div></div>`;
  }).join('');
  ids.forEach(id=>{
   const c=document.getElementById('fc_'+id.replace(/-/g,'_'));if(!c)return;
@@ -248,7 +267,7 @@ function drawChart(){
  x.font='10px system-ui';x.fillStyle=muted;
  if(data.length<2){x.textAlign='center';x.fillText('Nach mindestens zwei Suchen erscheint hier ein Verlauf.',w/2,h/2);return}
  const pad={l:45,r:10,t:12,b:27},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b,min=Math.min(...data.map(d=>d.v))-.01,max=Math.max(...data.map(d=>d.v))+.01;
- for(let i=0;i<4;i++){const yy=pad.t+ch*i/3;x.strokeStyle=line;x.beginPath();x.moveTo(pad.l,yy);x.lineTo(w-pad.r,yy);x.stroke();x.fillStyle=muted;x.textAlign='right';x.fillText((max-(max-min)*i/3).toFixed(3),pad.l-5,yy+3)}
+ for(let i=0;i<4;i++){const yy=pad.t+ch*i/3;x.strokeStyle=line;x.beginPath();x.moveTo(pad.l,yy);x.lineTo(w-pad.r,yy);x.stroke();x.fillStyle=muted;x.textAlign='right';x.fillText((max-(max-min)*i/3).toFixed(2),pad.l-5,yy+3)}
  x.strokeStyle=brand;x.lineWidth=2;x.beginPath();data.forEach((d,i)=>{const xx=pad.l+(cw*i/Math.max(1,data.length-1)),yy=pad.t+(max-d.v)/(max-min)*ch;i?x.lineTo(xx,yy):x.moveTo(xx,yy)});x.stroke();
  x.fillStyle=muted;x.textAlign='left';x.fillText(new Date(data[0].t).toLocaleDateString('de-DE'),pad.l,h-5);x.textAlign='right';x.fillText(new Date(data.at(-1).t).toLocaleDateString('de-DE'),w-pad.r,h-5);
 }
@@ -262,7 +281,7 @@ function drawMiniChart(c,data){
  const pad={l:38,r:4,t:4,b:16},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
  const min=Math.min(...data.map(d=>d.v))-.003,max=Math.max(...data.map(d=>d.v))+.003;
  x.strokeStyle=line;x.beginPath();x.moveTo(pad.l,pad.t);x.lineTo(pad.l,pad.t+ch);x.stroke();
- x.fillStyle=muted;x.textAlign='right';x.fillText(max.toFixed(3),pad.l-2,pad.t+4);x.fillText(min.toFixed(3),pad.l-2,pad.t+ch);
+ x.fillStyle=muted;x.textAlign='right';x.fillText(max.toFixed(2),pad.l-2,pad.t+4);x.fillText(min.toFixed(2),pad.l-2,pad.t+ch);
  x.strokeStyle=brand;x.lineWidth=1.5;x.beginPath();
  data.forEach((d,i)=>{const xx=pad.l+cw*i/Math.max(1,data.length-1),yy=pad.t+(max-d.v)/(max-min)*ch;i?x.lineTo(xx,yy):x.moveTo(xx,yy)});x.stroke();
  x.fillStyle=muted;x.textAlign='left';x.fillText(new Date(data[0].t).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}),pad.l,h-1);
@@ -324,9 +343,9 @@ $('gpsBtn').onclick=()=>{
    $('place').value=place;
    state.coords={lat:pos.coords.latitude,lng:pos.coords.longitude,label:geo.display_name};
    state.place=place;persist();
-  }catch(e){alert('Ortsbestimmung fehlgeschlagen')}
+  }catch(e){showToast('Ortsbestimmung fehlgeschlagen')}
   btn.textContent='📍';btn.disabled=false;
- },()=>{alert('Standortzugriff verweigert');btn.textContent='📍';btn.disabled=false;},{timeout:8000});
+ },()=>{showToast('Standortzugriff verweigert – bitte in den Browser-Einstellungen erlauben');btn.textContent='📍';btn.disabled=false;},{timeout:8000});
 };
 document.querySelectorAll('.fuel').forEach(b=>b.onclick=()=>{state.fuel=b.dataset.fuel;persist();render()});
 $('clearHistory').onclick=()=>{if(confirm('Gespeicherte Preisentwicklung löschen?')){state.history={e10:[],e5:[],diesel:[]};persist();drawChart()}};

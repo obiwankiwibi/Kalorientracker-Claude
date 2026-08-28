@@ -1,6 +1,6 @@
-/* cache: 20260828T220000 */
+/* cache: 20260828T230000 */
 /* push: enabled */
-const CACHE = 'kt-v15';
+const CACHE = 'kt-v16';
 const PRECACHE = [
   './',
   './index.html',
@@ -9,7 +9,10 @@ const PRECACHE = [
   './icon-512.png',
   './kalorien.html',
   './manifest-kalorien.json',
-  './icon-kalorien.svg'
+  './icon-kalorien.svg',
+  './tankstellen_finder.html',
+  './manifest-tankstellen.json',
+  './icon-tankstellen.svg'
 ];
 
 self.addEventListener('install', e => {
