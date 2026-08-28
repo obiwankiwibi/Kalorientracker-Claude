@@ -28,16 +28,37 @@
       --teal-dim: rgba(0,80,200,0.10);
       --salmon:   #d04030;
       --bar-bg:   rgba(0,0,0,0.07);
+      --bg-grad-a: #b8d4f0;
+      --bg-grad-b: #dce8f5;
+      --bg-grad-c: #e8f2fc;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:       #0d1117;
+        --layer1:   #161b24;
+        --layer2:   #1c2235;
+        --border:   rgba(100,140,255,0.13);
+        --border2:  rgba(100,140,255,0.20);
+        --text:     #dde4f5;
+        --muted:    #7a8aaa;
+        --teal:     #5580f0;
+        --teal-dim: rgba(85,128,240,0.15);
+        --salmon:   #f07070;
+        --bar-bg:   rgba(255,255,255,0.07);
+        --bg-grad-a: #0a1020;
+        --bg-grad-b: #0d1525;
+        --bg-grad-c: #0f1a2e;
+      }
     }
 
     #page-bg {
       position: fixed; inset: 0; z-index: -1;
-      background: linear-gradient(155deg, #b8d4f0 0%, #dce8f5 45%, #e8f2fc 100%);
-      will-change: transform;
+      background: linear-gradient(155deg, var(--bg-grad-a) 0%, var(--bg-grad-b) 45%, var(--bg-grad-c) 100%);
     }
 
     body {
-      background: transparent;
+      background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       min-height: 100vh;
@@ -57,18 +78,26 @@
     .header-backup-btn:hover { color: var(--teal); }
     .header-backup-btn.ok { color: var(--teal); }
     .header-notif-btn {
-      background: none; border: none; cursor: pointer; font-family: inherit;
-      display: flex; align-items: center; gap: 3px; padding: 0;
-      border-radius: 10px; transition: opacity 0.15s;
+      background: var(--layer2); border: 1px solid var(--border2); cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; gap: 4px; padding: 5px 9px;
+      border-radius: 20px; transition: opacity 0.15s, border-color 0.15s;
     }
-    .header-notif-icon { font-size: 16px; line-height: 1; }
+    .header-notif-icon { font-size: 14px; line-height: 1; }
     .header-notif-label {
-      font-size: 10px; font-weight: 700; letter-spacing: 0.2px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1px;
       color: var(--muted);
     }
-    .header-notif-btn.active .header-notif-label { color: #f59e0b; }
-    .header-notif-btn.active .header-notif-icon { filter: none; }
-    .header-notif-btn:not(.active) { opacity: 0.5; }
+    .header-notif-btn.active { border-color: #f59e0b; background: rgba(245,158,11,0.10); }
+    .header-notif-btn.active .header-notif-label { color: #b45309; }
+    .header-notif-btn:not(.active) { opacity: 0.8; }
+    .header-backup-pill {
+      background: var(--layer2); border: 1px solid var(--border2); cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; gap: 4px; padding: 5px 9px;
+      border-radius: 20px; font-size: 11px; font-weight: 600; color: var(--muted);
+      transition: border-color 0.15s, color 0.15s; white-space: nowrap;
+    }
+    .header-backup-pill:hover { border-color: var(--teal); color: var(--teal); }
+    .header-backup-pill.ok { border-color: var(--teal); color: var(--teal); }
 
     /* ── Page header ── */
     .page-header {
@@ -166,7 +195,7 @@
     .fuel-unit-sm    { font-size: 9px; color: var(--muted); margin-bottom: 3px; position: relative; }
     .fuel-name-sm    { font-size: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
     .fuel-meta-sm    { font-size: 9px; color: var(--muted); margin-top: 1px; position: relative; }
-    .fuel-updated-sm { font-size: 8px; color: var(--muted); margin-top: 2px; position: relative; opacity: 0.6; }
+    .fuel-updated-sm { font-size: 11px; color: var(--muted); margin-top: 2px; position: relative; opacity: 0.7; }
     .fuel-trend-sm   { font-size: 10px; font-weight: 700; margin-top: 2px; position: relative; }
     .fuel-fav-badge  { display: none; }
     .fuel-actions {
@@ -309,7 +338,7 @@
     .c-kawa   { background: rgba(109,194,40,0.15); color: #4a9a10; }
 
     .app-name { font-size: 12px; font-weight: 700; text-align: center; line-height: 1.2; }
-    .app-desc { font-size: 9px; color: var(--muted); text-align: center; line-height: 1.4; }
+    .app-desc { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.4; }
     #einkaufCount { font-size: 11px; font-weight: 700; color: var(--accent); background: rgba(0,180,160,0.12); border-radius: 20px; padding: 2px 8px; margin-top: 4px; display: inline-block; }
 
     /* ── Backup ── */
@@ -337,12 +366,12 @@
     .muell-row:last-child { margin-bottom: 0; }
     .muell-date-block { text-align: center; min-width: 34px; flex-shrink: 0; }
     .muell-day-num  { font-size: 22px; font-weight: 800; line-height: 1; color: var(--text); }
-    .muell-day-name { font-size: 9px; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-top: 2px; }
+    .muell-day-name { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-top: 2px; }
     .muell-right    { flex: 1; min-width: 0; }
     .muell-diff     { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
     .muell-chips    { display: flex; flex-wrap: wrap; gap: 5px; }
     .muell-chip     { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 99px; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
-    .muell-note     { font-size: 9px; color: var(--muted); margin-top: 2px; }
+    .muell-note     { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .mc-grau  { background: rgba(107,117,153,0.18); color: #8a95b8; }
     .mc-braun { background: rgba(80,160,80,0.18);   color: #60b870; }
     .mc-gelb  { background: rgba(240,170,50,0.18);  color: #c89020; }
@@ -369,9 +398,30 @@
     .kal-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
     .kal-btns { display: flex; gap: 5px; }
     .kal-btn {
-      width: 27px; height: 27px; background: rgba(232,99,90,0.15); color: var(--salmon);
+      width: 30px; height: 30px; background: rgba(232,99,90,0.15); color: var(--salmon);
+      border: 1.5px solid rgba(208,64,48,0.25);
       border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 800; line-height: 1;
+      font-size: 14px; font-weight: 800; line-height: 1; cursor: pointer;
+      transition: background 0.12s;
+    }
+    .kal-btn:active { background: rgba(232,99,90,0.28); }
+    /* Push-Onboarding-Banner */
+    .push-banner {
+      width: 100%; max-width: 420px; background: var(--layer1);
+      border: 1px solid rgba(245,158,11,0.3); border-radius: 16px;
+      padding: 12px 14px; display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .push-banner-text { flex: 1; font-size: 12px; color: var(--muted); line-height: 1.4; }
+    .push-banner-text strong { color: var(--text); font-weight: 600; }
+    .push-banner-cta {
+      background: var(--teal); color: #fff; border: none; border-radius: 10px;
+      padding: 7px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+      font-family: inherit; white-space: nowrap; flex-shrink: 0;
+    }
+    .push-banner-dismiss {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 16px; padding: 2px 4px; flex-shrink: 0; line-height: 1;
     }
     .kal-num { font-size: 30px; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
     .kal-sub { font-size: 10px; color: var(--muted); margin-top: 3px; margin-bottom: 10px; }
@@ -415,7 +465,7 @@
     #dashGrid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-auto-rows: 175px;
+      grid-auto-rows: minmax(140px, auto);
       gap: 10px;
       width: 100%;
       max-width: 420px;
@@ -452,7 +502,8 @@
 
   <div class="page-header">
     <div class="page-logo">YaPi<span>Hub</span></div>
-    <div style="display:flex;align-items:center;gap:12px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="header-backup-pill" id="headerBackupPill" onclick="doBackupQuick()" title="Backup erstellen">💾 Backup</button>
       <button class="header-notif-btn" id="headerNotifBtn" onclick="toggleFuelNotify()" title="Push-Benachrichtigungen">
         <span class="header-notif-icon">🔔</span>
         <span class="header-notif-label" id="headerNotifLabel">Push aus</span>
@@ -461,9 +512,18 @@
     </div>
   </div>
 
+  <!-- Push-Onboarding (einmalig) -->
+  <div class="push-banner" id="pushBanner" style="display:none">
+    <span style="font-size:20px;flex-shrink:0">🔔</span>
+    <div class="push-banner-text"><strong>Spritpreis-Alarm</strong><br>Benachrichtigung aktivieren, wenn Super 95 günstig ist.</div>
+    <button class="push-banner-cta" onclick="toggleFuelNotify();dismissPushBanner()">Aktivieren</button>
+    <button class="push-banner-dismiss" onclick="dismissPushBanner()" title="Schließen">×</button>
+  </div>
+
   <!-- ══ DASHBOARD ══ -->
   <div id="dashGrid">
-    <div class="weather-card" id="weatherCard" data-tile-id="weather" onclick="openWetter()" title="Wettervorhersage öffnen">
+    <div class="weather-card" id="weatherCard" data-tile-id="weather" onclick="openWetter()" title="Wettervorhersage öffnen (wetter.com ↗)" style="cursor:pointer">
+      <span style="position:absolute;top:8px;left:10px;font-size:10px;color:rgba(255,255,255,0.55);font-weight:600;letter-spacing:0.04em;z-index:2">↗ wetter.com</span>
       <div class="weather-bg-emoji" id="weatherBgEmoji">☀️</div>
       <div class="weather-loading" id="weatherLoading">📍 Lädt…</div>
       <div class="weather-content" id="weatherContent" style="display:none">
@@ -493,7 +553,7 @@
       <div class="fuel-updated-sm" id="fuelUpdated"></div>
       <div class="fuel-trend-sm" id="fuelTrend" style="display:none"></div>
       <div class="fuel-fav-badge" id="fuelFavBadge" style="display:none"></div>
-      <button class="fuel-setup-btn" id="fuelSetupBtn" onclick="openFuelSetup()">⚙ API-Key einrichten</button>
+      <button class="fuel-setup-btn" id="fuelSetupBtn" onclick="openFuelSetup()" style="display:none;margin-top:auto;width:100%;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">⚙ API-Key einrichten →</button>
       <div class="fuel-actions">
         <a href="tankstellen_finder.html" class="fuel-refresh-btn" id="fuelRefreshBtn" title="Preise aktualisieren">↻</a>
         <a href="tankstellen_finder.html" class="fuel-open-link">Alle →</a>
@@ -601,22 +661,23 @@
       <span class="section-title">Lebens-Uhr</span>
       <span style="font-size:10px;color:var(--muted)">Ø 78,6 J. · 07.12.1995</span>
     </div>
-    <div style="display:flex;justify-content:center;padding:6px 0 4px">
-      <canvas id="lifeCanvas" style="display:block;max-width:100%"></canvas>
+    <div style="display:flex;align-items:center;gap:16px;padding:6px 0 4px;flex-wrap:wrap;justify-content:center">
+      <canvas id="lifeCanvas" style="display:block;max-width:100%;flex-shrink:0"></canvas>
+      <div style="display:flex;flex-direction:column;gap:8px;min-width:130px">
+        <span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">
+          <span style="display:inline-block;width:20px;height:4px;background:#e8ecff;border-radius:2px;flex-shrink:0"></span><span>Zeiger: Lebensjahre</span>
+        </span>
+        <span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">
+          <span style="display:inline-block;width:20px;height:4px;background:#3dbdb5;border-radius:2px;flex-shrink:0"></span><span>Zeiger: Tag im Jahr</span>
+        </span>
+        <span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">
+          <span style="display:inline-block;width:20px;height:4px;background:#e05555;border-radius:2px;flex-shrink:0"></span><span>Zeiger: Sekunden ↺</span>
+        </span>
+        <div id="lifePct" style="font-size:12px;color:var(--muted);padding-top:4px;border-top:1px solid var(--border)"></div>
+      </div>
     </div>
     <div style="text-align:center;padding-bottom:6px">
-      <div id="lifePct" style="font-size:11px;color:var(--muted);margin-top:2px"></div>
-      <div style="display:flex;gap:14px;justify-content:center;margin-top:5px;flex-wrap:wrap">
-        <span style="font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px">
-          <span style="display:inline-block;width:18px;height:4px;background:#e8ecff;border-radius:2px"></span>Lebensjahre
-        </span>
-        <span style="font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px">
-          <span style="display:inline-block;width:18px;height:4px;background:#3dbdb5;border-radius:2px"></span>Tag im Jahr
-        </span>
-        <span style="font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px">
-          <span style="display:inline-block;width:18px;height:4px;background:#e05555;border-radius:2px"></span>Sekunden ↺
-        </span>
-      </div>
+      <div style="display:flex;gap:0px;justify-content:center;margin-top:2px;flex-wrap:wrap"></div>
       <div id="lifeCountdown" style="
         display:inline-flex;gap:6px;align-items:baseline;
         margin-top:10px;padding:7px 14px;border-radius:10px;
@@ -739,8 +800,8 @@ function loadFuelPrice() {
 
   if (!tkState.apiKey) {
     document.getElementById('fuelPrice').textContent   = '–';
-    document.getElementById('fuelName').textContent    = 'Kein API-Key';
-    document.getElementById('fuelMeta').textContent    = 'Einmalig einrichten';
+    document.getElementById('fuelName').textContent    = 'Spritpreise einrichten';
+    document.getElementById('fuelMeta').textContent    = 'Kostenloser API-Key bei tankerkoenig.de';
     document.getElementById('fuelUpdated').textContent = '';
     document.getElementById('fuelSetupBtn').style.display = '';
     document.getElementById('fuelFavBadge').style.display = 'none';
@@ -918,6 +979,18 @@ async function initFuelNotifyBtn() {
   if (!reg) return;
   const sub = await reg.pushManager.getSubscription();
   setNotifBtnState(!!sub);
+  // Push-Onboarding: einmalig zeigen wenn noch kein Abo
+  if (!sub && !localStorage.getItem('push_banner_dismissed')) {
+    setTimeout(() => {
+      const b = document.getElementById('pushBanner');
+      if (b) b.style.display = 'flex';
+    }, 2000);
+  }
+}
+function dismissPushBanner() {
+  const b = document.getElementById('pushBanner');
+  if (b) b.style.display = 'none';
+  localStorage.setItem('push_banner_dismissed', '1');
 }
 initFuelNotifyBtn();
 
@@ -974,6 +1047,26 @@ function doBackup() {
 }
 
 updateBackupSub();
+
+function doBackupQuick() {
+  doBackup();
+  const pill = document.getElementById('headerBackupPill');
+  if (!pill) return;
+  pill.classList.add('ok');
+  pill.textContent = '✓ Gesichert';
+  setTimeout(() => { pill.classList.remove('ok'); pill.textContent = '💾 Backup'; }, 2000);
+}
+
+// Backup-Pill: letzten Zeitstempel als Tooltip
+(function() {
+  const ts = localStorage.getItem('haushalt_backup_ts');
+  const pill = document.getElementById('headerBackupPill');
+  if (!pill || !ts) return;
+  const d = new Date(parseInt(ts));
+  const diff = Math.round((Date.now() - d) / 86400000);
+  const ago = diff === 0 ? 'heute' : diff === 1 ? 'gestern' : 'vor ' + diff + ' Tagen';
+  pill.title = 'Letztes Backup: ' + ago;
+})();
 
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(
@@ -1161,13 +1254,16 @@ function drawLifeClock() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const cx = size/2, cy = size/2;
 
-  // Theme
+  // Theme — live detection each frame (handles OS toggle without page reload)
   const cs = getComputedStyle(document.documentElement);
-  const isDark = false;
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const ink    = cs.getPropertyValue('--text').trim();
   const mut    = cs.getPropertyValue('--muted').trim();
   const teal   = cs.getPropertyValue('--teal').trim();
   const salmon = '#e05555';
+
+  // Theme detection (live)
+  const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
   // Life data
   const birth   = new Date(1995, 11, 7);
