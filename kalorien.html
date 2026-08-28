@@ -946,7 +946,9 @@ function suggestFoods(q) {
     .map(f => ({...f, _src:'scan'}));
   const scanNames = new Set(scanMatches.map(f => normFood(f.name)));
   const dbMatches = FOOD_DB.filter(f => normFood(f.name).includes(term) && !scanNames.has(normFood(f.name)));
-  foodSugResults = [...scanMatches, ...dbMatches].slice(0, 8);
+  const rank = f => normFood(f.name).startsWith(term) ? 0 : 1;
+  const combined = [...scanMatches, ...dbMatches].sort((a,b) => rank(a) - rank(b));
+  foodSugResults = combined.slice(0, 8);
   if (!foodSugResults.length) { box.style.display = 'none'; return; }
   box.innerHTML = foodSugResults.map((f, i) => {
     const emoji = f._src === 'scan' ? '📷' : f.emoji;
