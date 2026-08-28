@@ -2292,7 +2292,56 @@ document.addEventListener('touchend',e=>{
   if(dx>0&&currentView==='week') switchView('day','right');
 },{passive:true});
 
+/* ---------- Scan-DB Migration (einmalig) ---------- */
+function migrateToScanDb(){
+  const FLAG='kalorientracker_scan_migrated_v1';
+  if(localStorage.getItem(FLAG))return;
+  try{
+    const existing=getScanDb();
+    const seen=new Set(existing.map(x=>x.name.trim().toLowerCase()));
+    const toAdd=[];
+
+    // aus Lebensmittel-Verlauf (max. 10 Einträge)
+    getFoodHistory().forEach(h=>{
+      if(!h.kcalPer100)return;
+      const nrm=h.name.trim().toLowerCase();
+      if(seen.has(nrm))return;
+      seen.add(nrm);
+      toAdd.push({name:h.name.trim(),kcal:h.kcalPer100,per100:h.per100||null});
+    });
+
+    // aus allen gespeicherten Tageseinträgen
+    const store=loadStore();
+    Object.values(store).forEach(day=>{
+      (day.entries||[]).forEach(e=>{
+        if(!e.kcalPer100)return;
+        const nrm=e.name.trim().toLowerCase();
+        if(seen.has(nrm))return;
+        seen.add(nrm);
+        const base=e.amount?toBaseUnits(e.amount,e.unit||'g'):100;
+        const sc=base>0?(100/base):1;
+        const n=e.nutrients||{};
+        const per100=(n.protein!=null||n.carbs!=null||n.fat!=null)?{
+          protein:n.protein!=null?Math.round(n.protein*sc*10)/10:null,
+          carbs:n.carbs!=null?Math.round(n.carbs*sc*10)/10:null,
+          fat:n.fat!=null?Math.round(n.fat*sc*10)/10:null,
+          sugars:n.sugars!=null?Math.round(n.sugars*sc*10)/10:null,
+          fiber:n.fiber!=null?Math.round(n.fiber*sc*10)/10:null,
+          nutriscore:n.nutriscore||null,
+        }:null;
+        toAdd.push({name:e.name.trim(),kcal:e.kcalPer100,per100});
+      });
+    });
+
+    if(toAdd.length){
+      localStorage.setItem(SCAN_DB_KEY,JSON.stringify([...existing,...toAdd].slice(0,200)));
+    }
+    localStorage.setItem(FLAG,'1');
+  }catch(e){}
+}
+
 /* ---------- Start ---------- */
+migrateToScanDb();
 render();
 fetchWeather();
 if (sessionStorage.getItem('autoScan') === '1') {
