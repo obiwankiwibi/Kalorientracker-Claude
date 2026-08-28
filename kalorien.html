@@ -2214,6 +2214,82 @@ async function exportExcel(btn) {
   }
 }
 
+/* ---------- Excel-Import ---------- */
+async function importExcel(event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  try {
+    if (!window.XLSXStyle) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Bibliothek nicht geladen'));
+        document.head.appendChild(s);
+      });
+    }
+    const XS = window.XLSXStyle;
+    const buf = await file.arrayBuffer();
+    const wb = XS.read(buf, {type:'array'});
+    const ws = wb.Sheets['Tage'];
+    if (!ws) { alert('Kein "Tage"-Blatt gefunden. Bitte eine exportierte Kalorientracker-Datei verwenden.'); return; }
+
+    const rows = XS.utils.sheet_to_json(ws, {header:1, defval:''});
+    const MEAL_REV = {'Frühstück':'fruehstueck','Mittagessen':'mittagessen','Abendessen':'abendessen','Snack':'snack'};
+
+    function parseDE(s) {
+      const m = String(s).match(/(\d{2})\.(\d{2})\.(\d{4})/);
+      return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
+    }
+
+    const dayImport = {};
+    rows.slice(1).forEach(row => {
+      const dateKey = parseDE(row[0]);
+      if (!dateKey) return;
+      const mahlzeit = String(row[1]||'');
+      if (mahlzeit === '→ Tagesgesamt') {
+        if (!dayImport[dateKey]) dayImport[dateKey] = {entries:[], water:0};
+        dayImport[dateKey].water = Number(row[12])||0;
+        return;
+      }
+      const name = String(row[2]||'').trim();
+      if (!name) return;
+      if (!dayImport[dateKey]) dayImport[dateKey] = {entries:[], water:0};
+      const toN = v => v!==''&&v!=null&&!isNaN(Number(v)) ? Number(v) : null;
+      dayImport[dateKey].entries.push({
+        id: Date.now()+'-'+Math.random().toString(36).slice(2,7),
+        name,
+        kcal: Number(row[5])||0,
+        meal: MEAL_REV[mahlzeit] || mahlzeit || '',
+        amount: toN(row[3]),
+        unit: String(row[4]||'')||undefined,
+        nutrients: {
+          protein: toN(row[6]),
+          carbs: toN(row[7]),
+          fat: toN(row[8]),
+          sugars: toN(row[9]),
+          fiber: toN(row[10]),
+          nutriscore: String(row[11]||'')||null,
+        }
+      });
+    });
+
+    const nDays = Object.keys(dayImport).length;
+    const nEntries = Object.values(dayImport).reduce((s,d)=>s+d.entries.length,0);
+    if (!nEntries) { alert('Keine Einträge in der Datei gefunden.'); return; }
+    if (!confirm(`${nEntries} Einträge in ${nDays} Tagen importieren?\n\nBestehende Einträge an diesen Tagen werden ersetzt.`)) return;
+
+    const store = loadStore();
+    Object.entries(dayImport).forEach(([k,v]) => { store[k] = v; });
+    saveStore(store);
+    render();
+    alert(`✓ ${nEntries} Einträge in ${nDays} Tagen importiert.`);
+  } catch(err) {
+    alert('Import fehlgeschlagen: '+err.message);
+  }
+}
+
 /* ---------- Wetter ---------- */
 let weatherTemp=null;
 function wmoEmoji(c){
@@ -2418,11 +2494,16 @@ if (sessionStorage.getItem('autoScan') === '1') {
         <span class="bb-icon">📊</span>
         <span><div class="bb-label">Als Excel exportieren</div><div class="bb-sub">Zwei Tabellenblätter: Tage &amp; Wochen</div></span>
       </button>
+      <button class="backup-btn" onclick="document.getElementById('importExcelFile').click()">
+        <span class="bb-icon">📥</span>
+        <span><div class="bb-label">Excel importieren</div><div class="bb-sub">Aus exportierter .xlsx-Datei wiederherstellen</div></span>
+      </button>
     </div>
     <button class="backup-close" onclick="closeBackup()">Schließen</button>
   </div>
 </div>
 <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">
+<input type="file" id="importExcelFile" accept=".xlsx" style="display:none;" onchange="importExcel(event)">
 
 <!-- Custom Calendar -->
 <div class="cal-bg" id="calBg" style="display:none;" onclick="if(event.target===this)closeCalPicker()">
