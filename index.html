@@ -1254,16 +1254,12 @@ function drawLifeClock() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const cx = size/2, cy = size/2;
 
-  // Theme — live detection each frame (handles OS toggle without page reload)
   const cs = getComputedStyle(document.documentElement);
   const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const ink    = cs.getPropertyValue('--text').trim();
   const mut    = cs.getPropertyValue('--muted').trim();
   const teal   = cs.getPropertyValue('--teal').trim();
   const salmon = '#e05555';
-
-  // Theme detection (live)
-  const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
   // Life data
   const birth   = new Date(1995, 11, 7);
