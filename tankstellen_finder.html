@@ -62,13 +62,25 @@ header{display:flex;}.logo{font:700 19px/1.2 system-ui}.logo small{display:block
 
 /* ── Toast ── */
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;z-index:999;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
-.toast.show{opacity:1}
+.toast.show{opacity:1;pointer-events:auto}
 /* ── Lade-Skeleton ── */
 .station-skeleton{display:grid;gap:9px}
 .skel-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;opacity:.6;animation:pulse 1.4s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:.6}50%{opacity:.35}}
 .skel-line{height:12px;border-radius:6px;background:var(--line);margin-bottom:8px}
 .skel-line.w60{width:60%}.skel-line.w40{width:40%}.skel-line.w80{width:80%}
+/* ── Öffnungszeiten-Skeleton ── */
+.hours-skel{display:grid;gap:7px;padding:4px 0}
+.hours-skel-row{display:flex;justify-content:space-between;gap:14px}
+.skel-sm{height:10px;border-radius:4px;background:var(--line);animation:pulse 1.4s ease-in-out infinite}
+.skel-sm.d40{width:40%}.skel-sm.d30{width:30%}
+/* ── Pull-to-Refresh ── */
+#ptr{position:fixed;top:-52px;left:50%;transform:translateX(-50%);background:var(--brand);color:#fff;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;z-index:300;transition:top .2s,opacity .2s;box-shadow:0 4px 14px rgba(0,0,0,.2);opacity:0}
+#ptr.pulling{top:10px;opacity:.75}
+#ptr.refreshing{top:10px;opacity:1;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:translateX(-50%) rotate(360deg)}}
+/* ── Toast mit Aktion ── */
+.toast-action{background:none;border:none;color:var(--brand);font:600 13px/1 system-ui;padding:0 0 0 12px;cursor:pointer;white-space:nowrap;text-decoration:underline;font-family:inherit}
 /* ── Preis-Alarm ── */
 .fav-alert-row{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--line);flex-wrap:wrap;}
 .fav-alert-input{width:60px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:4px 6px;font-size:11px;text-align:center;font:inherit;}
@@ -91,6 +103,7 @@ header { border-bottom: 2px solid var(--brand); }
 <body>
 <div id="page-bg" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="ptr" aria-hidden="true">↻</div>
 <div class="app">
 <header class="site-nav"><div class="site-nav-title">⛽ Tankstellen</div><button class="site-nav-btn" id="settingsBtn" title="API-Einstellungen">⚙</button><button class="site-nav-btn" onclick="doQuickBackup()" title="Backup erstellen">💾</button><a href="index.html" class="site-nav-btn" title="Startseite">⌂</a></header>
 <section class="search-card"><div class="grid"><div class="field place"><label>Ort oder Postleitzahl</label><div style="display:flex;gap:6px"><input id="place" value="Hilchenbach" placeholder="z. B. Hilchenbach" style="flex:1"><button id="gpsBtn" class="icon" title="Aktuellen Standort ermitteln" style="flex-shrink:0;font-size:15px">📍</button></div></div><div class="field"><label>Umkreis</label><select id="radius"><option value="3">3 km</option><option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="25">25 km</option></select></div><div class="field"><label>Sortierung</label><select id="sorting"><option value="price">Preis</option><option value="dist">Entfernung</option></select></div><button class="primary" id="searchBtn">Tankstellen suchen</button></div><div class="subactions"><span class="status" id="status">API-Key in den Einstellungen hinterlegen</span></div>
@@ -106,7 +119,7 @@ header { border-bottom: 2px solid var(--brand); }
   <div class="card stat"><div class="eyebrow">Günstigster Preis</div><div class="big" id="minPrice">—</div><div class="hint" id="minName">Noch keine Suche</div></div>
   <div class="card stat"><div class="eyebrow">Durchschnitt</div><div class="big" id="avgPrice">—</div><div class="hint">der gefundenen Preise</div></div>
   <div class="card stat"><div class="eyebrow">Spanne</div><div class="big" id="spread">—</div><div class="hint">günstig bis teuer</div></div>
-  <div class="card stat"><div class="eyebrow">Ersparnis / 50 L</div><div class="big" id="savings">—</div><div class="hint">günstigste vs. Durchschnitt</div></div>
+  <div class="card stat"><div class="eyebrow" id="savingsLabel">Ersparnis / 50 L</div><div class="big" id="savings">—</div><div class="hint">günstigste vs. Durchschnitt</div></div>
 </div>
 <div class="layout"><main><div class="section-head"><div class="section-title">Tankstellen</div><span class="count" id="count">0</span></div><div class="stations" id="stations"><div class="card empty"><strong>Bereit für die erste Suche</strong>API-Key hinterlegen und Tankstellen in der Umgebung abrufen.</div></div></main><aside><div class="card chart-card"><div class="section-head"><div class="section-title">Lokale Preisentwicklung</div><button class="text-btn" id="clearHistory">Löschen</button></div><div class="hint">Der Durchschnitt wird bei jeder Suche lokal gespeichert.</div><div class="chart-wrap"><canvas id="chart"></canvas></div><div class="legend"><span><i class="dot"></i><span id="legendFuel">Super 95 (E5)</span></span></div></div></aside></div>
 <div class="fav-section" id="favSection" style="display:none">
@@ -115,20 +128,20 @@ header { border-bottom: 2px solid var(--brand); }
 </div>
 <footer class="attribution">Preisdaten: <a href="https://www.tankerkoenig.de" target="_blank" rel="noopener">www.tankerkoenig.de</a> &middot; Lizenz: <a href="https://creativecommons.org/licenses/by/4.0/deed.de" target="_blank" rel="noopener">CC BY 4.0</a></footer>
 </div>
-<div class="overlay" id="overlay"><div class="modal"><h2>API-Einstellungen</h2><p class="notice">Der Key wird nur lokal in diesem Browser gespeichert und nie in den Code geschrieben. <strong>API-Keys dürfen laut Nutzungsbedingungen nicht auf GitHub oder in Foren veröffentlicht werden.</strong> → <a href="https://creativecommons.tankerkoenig.de/?page=info" target="_blank" rel="noopener" style="color:var(--brand)">API-Dokumentation &amp; Registrierung</a></p><div class="field"><label>Tankerkönig API-Key</label><input id="apiKey" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div><div class="actions"><button class="ghost" id="cancelSettings">Abbrechen</button><button class="primary" id="saveSettings">Speichern</button></div></div></div>
+<div class="overlay" id="overlay"><div class="modal"><h2>API-Einstellungen</h2><p class="notice">Der Key wird nur lokal in diesem Browser gespeichert und nie in den Code geschrieben. <strong>API-Keys dürfen laut Nutzungsbedingungen nicht auf GitHub oder in Foren veröffentlicht werden.</strong> → <a href="https://creativecommons.tankerkoenig.de/?page=info" target="_blank" rel="noopener" style="color:var(--brand)">API-Dokumentation &amp; Registrierung</a></p><div class="field"><label>Tankerkönig API-Key</label><input id="apiKey" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div><div class="field" style="margin-top:14px"><label>Tankgröße (Liter)</label><input id="tankSizeInput" type="number" min="10" max="200" step="5" placeholder="50"></div><div class="actions"><button class="ghost" id="cancelSettings">Abbrechen</button><button class="primary" id="saveSettings">Speichern</button></div></div></div>
 <script>
 const STORE='tankstellen_finder_v2';
 // Key für den Zugriff auf die freie Tankerkönig-Spritpreis-API
 // Für eigenen Key bitte hier https://creativecommons.tankerkoenig.de registrieren.
 // Der Key wird nur lokal im Browser gespeichert und darf nicht im Code veröffentlicht werden.
 const TK_HOUR=3600000;
-const state=Object.assign({apiKey:'',fuel:'e5',theme:'light',history:{e10:[],e5:[],diesel:[]},stations:[],place:'57271 Hilchenbach-Dahlbruch',coords:null,lastRequest:0,favorites:{},favPrices:{},favAlerts:{}},JSON.parse(localStorage.getItem(STORE)||'{}'));
+const state=Object.assign({apiKey:'',fuel:'e5',theme:'light',history:{e10:[],e5:[],diesel:[]},stations:[],place:'57271 Hilchenbach-Dahlbruch',coords:null,lastRequest:0,tankSize:50,favorites:{},favPrices:{},favAlerts:{}},JSON.parse(localStorage.getItem(STORE)||'{}'));
 const $=id=>document.getElementById(id), euro=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){localStorage.setItem(STORE,JSON.stringify(state))}
 function setStatus(msg){$('status').textContent=msg}
 let _toastTimer=null;
-function showToast(msg,ms=3200){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>t.classList.remove('show'),ms)}
+function showToast(msg,ms=3200,actionLabel='',actionFn=null){const t=$('toast');if(actionLabel&&actionFn){t.innerHTML=`<span>${esc(msg)}</span><button class="toast-action">${esc(actionLabel)}</button>`;t.querySelector('.toast-action').onclick=()=>{actionFn();t.classList.remove('show');clearTimeout(_toastTimer);};}else{t.textContent=msg;}t.classList.add('show');clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>t.classList.remove('show'),ms);}
 function skeletonHtml(n=4){return`<div class="station-skeleton">${Array.from({length:n},()=>`<div class="skel-card"><div class="skel-line w80"></div><div class="skel-line w60"></div><div class="skel-line w40"></div></div>`).join('')}</div>`}
 
 function fuelLabel(f){return{e10:'Super E10',e5:'Super 95 (E5)',diesel:'Diesel'}[f]||f}
@@ -195,11 +208,19 @@ function recordFavPrices(){
  });
 }
 
+let _undoFav=null;
 function toggleFav(id){
  const s=state.stations.find(s=>s.id===id);if(!s)return;
- if(state.favorites[id]){delete state.favorites[id];delete state.favPrices[id]}
- else{state.favorites[id]={name:s.name,brand:s.brand||'',address:`${s.street||''} ${s.houseNumber||''}`.trim()+`, ${s.postCode} ${s.place}`};if(!state.favPrices[id])state.favPrices[id]=[]}
- persist();render();
+ if(state.favorites[id]){
+  _undoFav={id,fav:{...state.favorites[id]},prices:[...(state.favPrices[id]||[])]};
+  delete state.favorites[id];delete state.favPrices[id];
+  persist();render();
+  showToast('Tankstelle entfernt',5000,'Rückgängig',()=>{if(_undoFav&&_undoFav.id===id){state.favorites[id]=_undoFav.fav;state.favPrices[id]=_undoFav.prices;persist();render();_undoFav=null;}});
+ }else{
+  state.favorites[id]={name:s.name,brand:s.brand||'',address:`${s.street||''} ${s.houseNumber||''}`.trim()+`, ${s.postCode} ${s.place}`};
+  if(!state.favPrices[id])state.favPrices[id]=[];
+  persist();render();
+ }
 }
 
 let filterName='',filterBrand='',favsOnly=false,sortDir='asc';
@@ -229,7 +250,7 @@ function render(){
  const vals=list.map(s=>s[state.fuel]),avg=vals.reduce((a,b)=>a+b,0)/vals.length,min=Math.min(...vals),max=Math.max(...vals),cheap=list.find(s=>s[state.fuel]===min);
  $('minPrice').textContent=euro(min);$('minName').textContent=cheap.name;$('avgPrice').textContent=euro(avg);
  $('spread').textContent=(max-min).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
- const saving=(avg-min)*50;$('savings').textContent=saving>0?saving.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €':'—';
+ const tz=state.tankSize||50;const saving=(avg-min)*tz;$('savings').textContent=saving>0?saving.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €':'—';$('savingsLabel').textContent='Ersparnis / '+tz+' L';
  $('stations').innerHTML=list.map(s=>{
   const isFav=!!state.favorites[s.id];
   return `<article class="card station"><div class="station-left">${brandBadge(s.brand)}<div style="flex:1;min-width:0"><div class="name">${esc(s.name)}</div><div class="address">${esc(s.street)} ${esc(s.houseNumber)}, ${esc(s.postCode)} ${esc(s.place)}</div><div class="badges"><button class="badge hours-btn ${s.isOpen?'open':'closed'}" data-sid="${esc(s.id)}">${s.isOpen?'Geöffnet ▾':'Geschlossen ▾'}</button><span class="badge">${Number(s.dist).toLocaleString('de-DE',{maximumFractionDigits:1})} km</span></div><div class="hours-panel" id="hp_${s.id}" style="display:none"></div></div></div><div><div class="price">${euro(s[state.fuel])}<small>pro Liter</small></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.lat+','+s.lng)}">Route öffnen</a><button class="star${isFav?' active':''}" data-favid="${esc(s.id)}" title="${isFav?'Nicht mehr beobachten':'Beobachten'}">★</button></div></article>`;
@@ -288,12 +309,14 @@ function drawMiniChart(c,data){
  x.textAlign='right';x.fillText(new Date(data.at(-1).t).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}),w-pad.r,h-1);
 }
 
-const BRAND_C={'ARAL':{bg:'#0066B2',fg:'#fff'},'Shell':{bg:'#FFD500',fg:'#D01919'},'BP':{bg:'#007A33',fg:'#fff'},'JET':{bg:'#E2001A',fg:'#fff'},'Esso':{bg:'#EE2436',fg:'#fff'},'ESSO':{bg:'#EE2436',fg:'#fff'},'TotalEnergies':{bg:'#E95B0C',fg:'#fff'},'TOTAL':{bg:'#E95B0C',fg:'#fff'},'OMV':{bg:'#E6380B',fg:'#fff'},'Star':{bg:'#2a2a2a',fg:'#F5C400'},'STAR':{bg:'#2a2a2a',fg:'#F5C400'},'AVIA':{bg:'#E30613',fg:'#fff'},'Westfalen':{bg:'#003399',fg:'#fff'},'HEM':{bg:'#FF6600',fg:'#fff'},'Q1':{bg:'#005CA9',fg:'#fff'},'Raiffeisen':{bg:'#005CA9',fg:'#fff'},'Agip':{bg:'#EB0028',fg:'#fff'}};
+const BRAND_C={'ARAL':{bg:'#0066B2',fg:'#fff'},'Shell':{bg:'#FFD500',fg:'#D01919'},'BP':{bg:'#007A33',fg:'#fff'},'JET':{bg:'#E2001A',fg:'#fff'},'Esso':{bg:'#EE2436',fg:'#fff'},'ESSO':{bg:'#EE2436',fg:'#fff'},'TotalEnergies':{bg:'#E95B0C',fg:'#fff'},'Total':{bg:'#E95B0C',fg:'#fff'},'TOTAL':{bg:'#E95B0C',fg:'#fff'},'OMV':{bg:'#E6380B',fg:'#fff'},'Star':{bg:'#2a2a2a',fg:'#F5C400'},'STAR':{bg:'#2a2a2a',fg:'#F5C400'},'AVIA':{bg:'#E30613',fg:'#fff'},'Westfalen':{bg:'#003399',fg:'#fff'},'HEM':{bg:'#FF6600',fg:'#fff'},'Q1':{bg:'#005CA9',fg:'#fff'},'Raiffeisen':{bg:'#005CA9',fg:'#fff'},'Agip':{bg:'#EB0028',fg:'#fff'}};
+const BRAND_ABBR={'TotalEnergies':'TOTAL','Total':'TOTAL','Westfalen':'WFN','Raiffeisen':'RAIF','Agip':'AGIP','Shell':'Shell','Esso':'ESSO'};
 function brandBadge(brand){
  const b=brand||'?';
  const cfg=BRAND_C[b]||{bg:'var(--line)',fg:'var(--muted)'};
- const t=b.replace(/\s+/g,'').replace(/[^A-Za-z0-9]/g,'').slice(0,2).toUpperCase()||'??';
- return `<span class="brand-badge" style="background:${cfg.bg};color:${cfg.fg}">${t}</span>`;
+ const abbr=BRAND_ABBR[b]||(b.replace(/\s+/g,'').replace(/[^A-Za-z0-9]/g,'').slice(0,4).toUpperCase()||'??');
+ const fs=abbr.length>3?'9px':abbr.length>2?'10px':'11px';
+ return `<span class="brand-badge" style="background:${cfg.bg};color:${cfg.fg};font-size:${fs}">${abbr}</span>`;
 }
 
 async function fetchOpeningHours(id,panel){
@@ -302,7 +325,7 @@ async function fetchOpeningHours(id,panel){
  if(cached){panel.innerHTML=cached;return}
  const elapsed=Date.now()-state.lastRequest;
  if(elapsed<62000){panel.innerHTML=`<span class="hours-load">Bitte noch ${Math.ceil((62000-elapsed)/1000)} s warten…</span>`;return}
- panel.innerHTML='<span class="hours-load">Wird geladen…</span>';
+ panel.innerHTML=`<div class="hours-skel">${Array.from({length:3},()=>'<div class="hours-skel-row"><div class="skel-sm d40"></div><div class="skel-sm d30"></div></div>').join('')}</div>`;
  try{
   const r=await fetch(`https://creativecommons.tankerkoenig.de/json/detail.php?id=${encodeURIComponent(id)}&apikey=${encodeURIComponent(state.apiKey)}`);
   const data=await r.json();
@@ -322,9 +345,9 @@ function renderHours(st){
  return h;
 }
 
-function openSettings(){$('apiKey').value=state.apiKey;$('overlay').classList.add('open');setTimeout(()=>$('apiKey').focus(),50)}
+function openSettings(){$('apiKey').value=state.apiKey;$('tankSizeInput').value=state.tankSize||50;$('overlay').classList.add('open');setTimeout(()=>$('apiKey').focus(),50)}
 $('settingsBtn').onclick=openSettings;$('cancelSettings').onclick=()=>$('overlay').classList.remove('open');
-$('saveSettings').onclick=()=>{state.apiKey=$('apiKey').value.trim();persist();$('overlay').classList.remove('open');setStatus(state.apiKey?'Bereit zur Suche':'API-Key fehlt')};
+$('saveSettings').onclick=()=>{state.apiKey=$('apiKey').value.trim();const ts=parseInt($('tankSizeInput').value,10);if(ts>=10&&ts<=200)state.tankSize=ts;persist();$('overlay').classList.remove('open');setStatus(state.apiKey?'Bereit zur Suche':'API-Key fehlt');render();};
 $('overlay').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')};
 $('searchBtn').onclick=search;$('place').oninput=()=>{state.coords=null};$('sorting').onchange=render;
 $('nameSearch').oninput=()=>{filterName=$('nameSearch').value.toLowerCase().trim();render()};
@@ -376,6 +399,25 @@ window.onresize=()=>requestAnimationFrame(drawChart);$('place').value=state.plac
 // Stündliche Auto-Abfrage; sofortige Abfrage falls Daten fehlen oder veraltet
 if(state.apiKey&&(!state.stations.length||Date.now()-state.lastRequest>TK_HOUR))search();
 setInterval(search,TK_HOUR);
+
+// Pull-to-Refresh
+(()=>{
+ let startY=0,pulling=false;const ptr=$('ptr');
+ document.addEventListener('touchstart',e=>{if(window.scrollY<5)startY=e.touches[0].clientY;},{passive:true});
+ document.addEventListener('touchmove',e=>{
+  if(!startY||window.scrollY>5){if(pulling){pulling=false;ptr.className='';}return}
+  const dy=e.touches[0].clientY-startY;
+  if(dy>35){pulling=true;ptr.className='pulling';}
+ },{passive:true});
+ document.addEventListener('touchend',()=>{
+  if(!pulling){startY=0;return}
+  ptr.className='refreshing';startY=0;pulling=false;
+  if(!state.apiKey){showToast('API-Key in den Einstellungen hinterlegen');ptr.className='';return}
+  const elapsed=Date.now()-state.lastRequest;
+  if(elapsed<60000){showToast('Bitte noch '+Math.ceil((60000-elapsed)/1000)+' s warten');ptr.className='';return}
+  search().then(()=>{ptr.className='';}).catch(()=>{ptr.className='';});
+ });
+})();
 
 function doQuickBackup(){
   var d={};
