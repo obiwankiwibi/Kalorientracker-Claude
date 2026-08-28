@@ -925,11 +925,13 @@ const FOOD_DB = [
 ];
 let foodSugResults = [];
 
+function normFood(s){ return s.toLowerCase().replace(/ä/g,'a').replace(/ö/g,'o').replace(/ü/g,'u').replace(/ß/g,'ss'); }
+
 function suggestFoods(q) {
   const box = document.getElementById('foodSuggestions');
-  const term = (q || '').trim().toLowerCase();
+  const term = normFood((q || '').trim());
   if (term.length < 1) { box.style.display = 'none'; return; }
-  foodSugResults = FOOD_DB.filter(f => f.name.toLowerCase().includes(term)).slice(0, 8);
+  foodSugResults = FOOD_DB.filter(f => normFood(f.name).includes(term)).slice(0, 8);
   if (!foodSugResults.length) { box.style.display = 'none'; return; }
   box.innerHTML = foodSugResults.map((f, i) => `
     <div class="food-sug-item" onclick="selectFoodDb(${i})">
