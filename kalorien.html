@@ -2103,16 +2103,16 @@ async function exportExcel(btn) {
   labelEl.textContent = 'Lade …';
   btn.disabled = true;
   try {
-    if (!window.XLSXStyle) {
+    if (!window._xsStyled) {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
         s.src = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
-        s.onload = resolve;
+        s.onload = () => { window._xsStyled = true; resolve(); };
         s.onerror = () => reject(new Error('Bibliothek nicht geladen'));
         document.head.appendChild(s);
       });
     }
-    const XS = window.XLSXStyle;
+    const XS = window.XLSX;
     const store = loadStore();
     const goal = getGoal();
     const MEAL_NAMES = {fruehstueck:'Frühstück',mittagessen:'Mittagessen',abendessen:'Abendessen',snack:'Snack'};
@@ -2220,16 +2220,16 @@ async function importExcel(event) {
   event.target.value = '';
   if (!file) return;
   try {
-    if (!window.XLSXStyle) {
+    if (!window._xsStyled) {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
         s.src = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
-        s.onload = resolve;
+        s.onload = () => { window._xsStyled = true; resolve(); };
         s.onerror = () => reject(new Error('Bibliothek nicht geladen'));
         document.head.appendChild(s);
       });
     }
-    const XS = window.XLSXStyle;
+    const XS = window.XLSX;
     const buf = await file.arrayBuffer();
     const wb = XS.read(buf, {type:'array'});
     const ws = wb.Sheets['Tage'];
