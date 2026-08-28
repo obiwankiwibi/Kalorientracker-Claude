@@ -2103,28 +2103,48 @@ async function exportExcel(btn) {
   labelEl.textContent = 'Lade …';
   btn.disabled = true;
   try {
-    if (!window.XLSX) {
+    if (!window.XLSXStyle) {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        s.src = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
         s.onload = resolve;
         s.onerror = () => reject(new Error('Bibliothek nicht geladen'));
         document.head.appendChild(s);
       });
     }
+    const XS = window.XLSXStyle;
     const store = loadStore();
     const goal = getGoal();
     const MEAL_NAMES = {fruehstueck:'Frühstück',mittagessen:'Mittagessen',abendessen:'Abendessen',snack:'Snack'};
 
+    const S_HDR = {fill:{fgColor:{rgb:'2A8C54'}},font:{bold:true,color:{rgb:'FFFFFF'}},alignment:{vertical:'center'}};
+    const S_SUM = {fill:{fgColor:{rgb:'D4EDDA'}},font:{bold:true,color:{rgb:'145C32'}}};
+    const S_A   = {fill:{fgColor:{rgb:'FFFFFF'}}};
+    const S_B   = {fill:{fgColor:{rgb:'F0F7F3'}}};
+
+    function applyStyles(ws, nCols, rowMeta) {
+      rowMeta.forEach((type, ri) => {
+        const st = type==='hdr'?S_HDR : type==='sum'?S_SUM : type===0?S_A : type===1?S_B : null;
+        if(!st)return;
+        for(let ci=0;ci<nCols;ci++){
+          const addr=XS.utils.encode_cell({r:ri,c:ci});
+          if(!ws[addr])ws[addr]={v:'',t:'s'};
+          ws[addr].s=st;
+        }
+      });
+    }
+
     /* === Tage-Tabelle === */
     const daysRows = [['Datum','Mahlzeit','Lebensmittel','Menge','Einheit','kcal','Eiweiß (g)','KH (g)','Fett (g)','Zucker (g)','Ballaststoffe (g)','Nutri-Score','Wasser (ml)']];
+    const daysRowMeta = ['hdr'];
     const sortedKeys = Object.keys(store).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+    let dayGroupIdx = 0;
     sortedKeys.forEach(dateKey=>{
       const day=store[dateKey]||{entries:[],water:0};
       if(!day.entries.length&&!day.water)return;
       const d=new Date(dateKey+'T12:00:00');
-      // Datum als lesbarer deutscher Text: "Mi. 27.08.2026"
       const dateFmt=d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
+      const grp=dayGroupIdx%2;
       let dayKcal=0,dayP=0,dayC=0,dayF=0;
       day.entries.forEach(e=>{
         const n=e.nutrients||{};
@@ -2133,14 +2153,18 @@ async function exportExcel(btn) {
         const p=rnd(n.protein),c=rnd(n.carbs),f=rnd(n.fat),sg=rnd(n.sugars),fi=rnd(n.fiber);
         dayKcal+=kcal||0;if(p!=null)dayP+=p;if(c!=null)dayC+=c;if(f!=null)dayF+=f;
         daysRows.push([dateFmt,e.meal?(MEAL_NAMES[e.meal]||e.meal):'',e.name,e.amount??'',e.unit||'',kcal,p??'',c??'',f??'',sg??'',fi??'',n.nutriscore||'','']);
+        daysRowMeta.push(grp);
       });
-      // Tagesgesamt in Mahlzeit-Spalte, damit Datum-Spalte konsistent bleibt
       daysRows.push([dateFmt,'→ Tagesgesamt','','','',Math.round(dayKcal),Math.round(dayP*10)/10||'',Math.round(dayC*10)/10||'',Math.round(dayF*10)/10||'','','','',day.water||0]);
-      daysRows.push([]); // Leerzeile als Trenner
+      daysRowMeta.push('sum');
+      daysRows.push([]);
+      daysRowMeta.push('blank');
+      dayGroupIdx++;
     });
 
     /* === Wochen-Tabelle === */
     const weeksRows = [['KW','Jahr','Von','Bis','Tage mit Einträgen','Gesamt kcal','Ø kcal/Tag','Ziel kcal/Tag','Eiweiß (g)','KH (g)','Fett (g)','Wasser (L)']];
+    const weeksRowMeta = ['hdr'];
     const weekMap={};
     sortedKeys.forEach(dateKey=>{
       const d=new Date(dateKey+'T12:00:00');
@@ -2156,21 +2180,32 @@ async function exportExcel(btn) {
       day.entries.forEach(e=>{if(!e.nutrients)return;weekMap[wkey].p+=e.nutrients.protein||0;weekMap[wkey].c+=e.nutrients.carbs||0;weekMap[wkey].f+=e.nutrients.fat||0;});
     });
     const fmtDE=iso=>new Date(iso+'T12:00:00').toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+    let wkIdx=0;
     Object.keys(weekMap).sort().forEach(wkey=>{
       const w=weekMap[wkey];w.dates.sort();
       weeksRows.push([w.kw,w.year,fmtDE(w.dates[0]),fmtDE(w.dates[w.dates.length-1]),w.days,Math.round(w.kcal),w.days?Math.round(w.kcal/7):0,Math.round(goal),Math.round(w.p*10)/10,Math.round(w.c*10)/10,Math.round(w.f*10)/10,Math.round(w.water/100)/10]);
+      weeksRowMeta.push(wkIdx%2);
+      wkIdx++;
     });
 
-    const wb=window.XLSX.utils.book_new();
-    const wsDays=window.XLSX.utils.aoa_to_sheet(daysRows);
+    const wb=XS.utils.book_new();
+
+    const wsDays=XS.utils.aoa_to_sheet(daysRows);
     wsDays['!cols']=[{wch:18},{wch:14},{wch:28},{wch:8},{wch:7},{wch:7},{wch:11},{wch:8},{wch:8},{wch:9},{wch:15},{wch:12},{wch:11}];
-    window.XLSX.utils.book_append_sheet(wb,wsDays,'Tage');
-    const wsWeeks=window.XLSX.utils.aoa_to_sheet(weeksRows);
+    wsDays['!autofilter']={ref:XS.utils.encode_range({s:{r:0,c:0},e:{r:0,c:12}})};
+    wsDays['!freeze']={xSplit:0,ySplit:1,topLeftCell:'A2',activePane:'bottomLeft',state:'frozen'};
+    applyStyles(wsDays, 13, daysRowMeta);
+    XS.utils.book_append_sheet(wb,wsDays,'Tage');
+
+    const wsWeeks=XS.utils.aoa_to_sheet(weeksRows);
     wsWeeks['!cols']=[{wch:6},{wch:6},{wch:12},{wch:12},{wch:18},{wch:12},{wch:12},{wch:14},{wch:11},{wch:8},{wch:8},{wch:10}];
-    window.XLSX.utils.book_append_sheet(wb,wsWeeks,'Wochen');
+    wsWeeks['!autofilter']={ref:XS.utils.encode_range({s:{r:0,c:0},e:{r:0,c:11}})};
+    wsWeeks['!freeze']={xSplit:0,ySplit:1,topLeftCell:'A2',activePane:'bottomLeft',state:'frozen'};
+    applyStyles(wsWeeks, 12, weeksRowMeta);
+    XS.utils.book_append_sheet(wb,wsWeeks,'Wochen');
 
     const today=new Date().toISOString().slice(0,10);
-    window.XLSX.writeFile(wb,'Kalorientracker_'+today+'.xlsx');
+    XS.writeFile(wb,'Kalorientracker_'+today+'.xlsx');
     labelEl.textContent='✓ Exportiert!';
     setTimeout(()=>{labelEl.textContent=origLabel;btn.disabled=false;},2500);
   } catch(err) {
