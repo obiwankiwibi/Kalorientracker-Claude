@@ -10,7 +10,17 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kalorien">
 <link rel="apple-touch-icon" href="icon-kalorien.svg">
-<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');</script>
+<script>
+(function(){
+  if(!('serviceWorker' in navigator))return;
+  let refreshing=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(!refreshing){refreshing=true;window.location.reload();}
+  });
+  navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'})
+    .then(reg=>{reg.update();});
+})();
+</script>
 <style>
   :root{
     --bg:#F4EEE2;
