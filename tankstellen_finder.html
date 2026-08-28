@@ -87,6 +87,12 @@ header{display:flex;}.logo{font:700 19px/1.2 system-ui}.logo small{display:block
 .fav-alert-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(240,150,0,0.15);border:1px solid rgba(240,150,0,0.5);color:#854d0e;border-radius:99px;padding:3px 9px;font-size:11px;font-weight:700;margin-top:6px;width:100%;}
 .fav-card.alerted{border-color:rgba(240,150,0,0.55);box-shadow:0 0 0 2px rgba(240,150,0,0.15);}
 
+/* ── Install Banner ── */
+.install-banner{display:flex;align-items:center;gap:10px;background:var(--soft);border:1px solid var(--brand);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600;color:var(--ink)}
+.install-banner span{flex:1}
+/* ── Stale-Warn ── */
+.stale-warn{font-size:12px;color:var(--warn);background:rgba(166,96,22,0.08);border:1px solid rgba(166,96,22,0.25);border-radius:9px;padding:7px 12px;margin-bottom:10px}
+.stale-warn::before{content:'⚠ '}
 /* ── Visual improvements ── */
 header { border-bottom: 2px solid var(--brand); }
 .section-title { display:flex;align-items:center;gap:8px; }
@@ -105,7 +111,8 @@ header { border-bottom: 2px solid var(--brand); }
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div id="ptr" aria-hidden="true">↻</div>
 <div class="app">
-<header class="site-nav"><div class="site-nav-title">⛽ Tankstellen</div><button class="site-nav-btn" id="settingsBtn" title="API-Einstellungen">⚙</button><button class="site-nav-btn" onclick="doQuickBackup()" title="Backup erstellen">💾</button><a href="index.html" class="site-nav-btn" title="Startseite">⌂</a></header>
+<header class="site-nav"><div class="site-nav-title">⛽ Tankstellen</div><button class="site-nav-btn" id="settingsBtn" title="API-Einstellungen">⚙</button><button class="site-nav-btn" id="notifBtn" title="Benachrichtigungen aktivieren">🔔</button><button class="site-nav-btn" onclick="doQuickBackup()" title="Backup erstellen">💾</button><a href="index.html" class="site-nav-btn" title="Startseite">⌂</a></header>
+<div id="installBanner" class="install-banner" style="display:none"><span>⬇ Als App installieren — Direktzugang ohne Browser-Leiste</span><button class="primary" id="installBtn" style="padding:7px 14px;font-size:13px;flex-shrink:0">Installieren</button><button class="site-nav-btn" id="installDismiss">✕</button></div>
 <section class="search-card"><div class="grid"><div class="field place"><label>Ort oder Postleitzahl</label><div style="display:flex;gap:6px"><input id="place" value="Hilchenbach" placeholder="z. B. Hilchenbach" style="flex:1"><button id="gpsBtn" class="icon" title="Aktuellen Standort ermitteln" style="flex-shrink:0;font-size:15px">📍</button></div></div><div class="field"><label>Umkreis</label><select id="radius"><option value="3">3 km</option><option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="25">25 km</option></select></div><div class="field"><label>Sortierung</label><select id="sorting"><option value="price">Preis</option><option value="dist">Entfernung</option></select></div><button class="primary" id="searchBtn">Tankstellen suchen</button></div><div class="subactions"><span class="status" id="status">API-Key in den Einstellungen hinterlegen</span></div>
 <div class="filter-bar" id="filterBar" style="display:none">
   <input id="nameSearch" class="filter-input" placeholder="Name suchen…">
@@ -121,7 +128,7 @@ header { border-bottom: 2px solid var(--brand); }
   <div class="card stat"><div class="eyebrow">Spanne</div><div class="big" id="spread">—</div><div class="hint">günstig bis teuer</div></div>
   <div class="card stat"><div class="eyebrow" id="savingsLabel">Ersparnis / 50 L</div><div class="big" id="savings">—</div><div class="hint">günstigste vs. Durchschnitt</div></div>
 </div>
-<div class="layout"><main><div class="section-head"><div class="section-title">Tankstellen</div><span class="count" id="count">0</span></div><div class="stations" id="stations"><div class="card empty"><strong>Bereit für die erste Suche</strong>API-Key hinterlegen und Tankstellen in der Umgebung abrufen.</div></div></main><aside><div class="card chart-card"><div class="section-head"><div class="section-title">Lokale Preisentwicklung</div><button class="text-btn" id="clearHistory">Löschen</button></div><div class="hint">Der Durchschnitt wird bei jeder Suche lokal gespeichert.</div><div class="chart-wrap"><canvas id="chart"></canvas></div><div class="legend"><span><i class="dot"></i><span id="legendFuel">Super 95 (E5)</span></span></div></div></aside></div>
+<div class="layout"><main><div id="staleWarn" class="stale-warn" style="display:none"></div><div class="section-head"><div class="section-title">Tankstellen</div><span class="count" id="count">0</span></div><div class="stations" id="stations"><div class="card empty"><strong>Bereit für die erste Suche</strong>API-Key hinterlegen und Tankstellen in der Umgebung abrufen.</div></div></main><aside><div class="card chart-card"><div class="section-head"><div class="section-title">Lokale Preisentwicklung</div><button class="text-btn" id="clearHistory">Löschen</button></div><div class="hint">Der Durchschnitt wird bei jeder Suche lokal gespeichert.</div><div class="chart-wrap"><canvas id="chart"></canvas></div><div class="legend"><span><i class="dot"></i><span id="legendFuel">Super 95 (E5)</span></span></div></div></aside></div>
 <div class="fav-section" id="favSection" style="display:none">
   <div class="section-head"><div class="section-title">Beobachtete Tankstellen</div><span class="count" id="favCount">0</span></div>
   <div class="fav-grid" id="favGrid"></div>
@@ -172,7 +179,7 @@ async function search(){
   const p=new URLSearchParams({lat:coords.lat,lng:coords.lng,rad:$('radius').value,type:'all',sort:'dist',apikey:state.apiKey});
   const r=await fetch('https://creativecommons.tankerkoenig.de/json/list.php?'+p);const data=await r.json();
   if(!r.ok||data.ok===false)throw Error(data.message||'Tankstellen konnten nicht geladen werden');
-  state.stations=data.stations||[];state.lastRequest=Date.now();recordHistory();recordFavPrices();persist();render();
+  state.stations=data.stations||[];state.lastRequest=Date.now();recordHistory();recordFavPrices();persist();render();notifyIfAlerted();checkStale();
   setStatus(`Aktualisiert ${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})} · ${coords.label||state.place}`);startCooldown();
  }catch(e){
   const cors=e instanceof TypeError&&e.message==='Failed to fetch';
@@ -355,7 +362,7 @@ $('brandFilter').onchange=()=>{filterBrand=$('brandFilter').value;render()};
 $('favsOnlyBtn').onclick=()=>{favsOnly=!favsOnly;$('favsOnlyBtn').classList.toggle('active',favsOnly);render()};
 $('sortDirBtn').onclick=()=>{sortDir=sortDir==='asc'?'desc':'asc';$('sortDirBtn').textContent=sortDir==='asc'?'↑ Aufsteigend':'↓ Absteigend';render()};
 $('gpsBtn').onclick=()=>{
- if(!navigator.geolocation){alert('Geolocation nicht verfügbar');return}
+ if(!navigator.geolocation){showToast('Geolocation nicht verfügbar');return}
  const btn=$('gpsBtn');btn.textContent='⏳';btn.disabled=true;
  navigator.geolocation.getCurrentPosition(async pos=>{
   try{
@@ -395,28 +402,63 @@ $('favGrid').addEventListener('change',e=>{
  persist();renderFavs();
 });
 persist();
-window.onresize=()=>requestAnimationFrame(drawChart);$('place').value=state.place;setStatus(state.apiKey?'Bereit zur Suche':'API-Key in den Einstellungen hinterlegen');render();
+window.onresize=()=>requestAnimationFrame(drawChart);$('place').value=state.place;setStatus(state.apiKey?'Bereit zur Suche':'API-Key in den Einstellungen hinterlegen');render();checkStale();
 // Stündliche Auto-Abfrage; sofortige Abfrage falls Daten fehlen oder veraltet
 if(state.apiKey&&(!state.stations.length||Date.now()-state.lastRequest>TK_HOUR))search();
 setInterval(search,TK_HOUR);
 
+// Install Banner
+let _deferredInstall=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredInstall=e;$('installBanner').style.display='flex';});
+window.addEventListener('appinstalled',()=>{$('installBanner').style.display='none';_deferredInstall=null;});
+$('installBtn').onclick=async()=>{if(!_deferredInstall)return;_deferredInstall.prompt();const{outcome}=await _deferredInstall.userChoice;if(outcome==='accepted')$('installBanner').style.display='none';_deferredInstall=null;};
+$('installDismiss').onclick=()=>$('installBanner').style.display='none';
+// Benachrichtigungen
+$('notifBtn').onclick=async()=>{
+ if(!('Notification'in window)){showToast('Benachrichtigungen werden in diesem Browser nicht unterstützt');return}
+ if(Notification.permission==='granted'){showToast('Benachrichtigungen sind bereits aktiv 🔔');return}
+ const perm=await Notification.requestPermission();
+ if(perm==='granted'){showToast('Benachrichtigungen aktiviert — Preis-Alarm meldet sich bei Erreichen des Ziels');$('notifBtn').style.color='var(--brand)';}
+ else showToast('Benachrichtigungen verweigert — bitte in den Browser-Einstellungen erlauben');
+};
+if(typeof Notification!=='undefined'&&Notification.permission==='granted')$('notifBtn').style.color='var(--brand)';
+async function notifyIfAlerted(){
+ if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
+ const reg=await navigator.serviceWorker?.getRegistration?.();if(!reg)return;
+ Object.keys(state.favorites).forEach(id=>{
+  const hist=(state.favPrices[id]||[]).filter(h=>h.fuel===state.fuel);
+  if(hist.length<2)return;
+  const cur=hist.at(-1).v,prev=hist.at(-2).v,thr=state.favAlerts[id];
+  if(thr&&cur<=thr&&prev>thr)reg.showNotification(state.favorites[id].name,{body:`${fuelLabel(state.fuel)}: ${euro(cur)} — Ziel ${euro(thr)} erreicht!`,icon:'./icon-tankstellen.svg',tag:'fav-'+id});
+ });
+}
+function checkStale(){
+ const sw=$('staleWarn');if(!sw)return;
+ const age=state.lastRequest?Date.now()-state.lastRequest:Infinity;
+ if(age>2*TK_HOUR&&state.stations.length){
+  sw.style.display='';
+  sw.textContent=`Preisdaten von ${new Date(state.lastRequest).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})} Uhr — möglicherweise veraltet`;
+ }else sw.style.display='none';
+}
 // Pull-to-Refresh
 (()=>{
  let startY=0,pulling=false;const ptr=$('ptr');
+ const resetPtr=()=>{ptr.className='';document.body.style.overscrollBehavior='';startY=0;pulling=false;};
  document.addEventListener('touchstart',e=>{if(window.scrollY<5)startY=e.touches[0].clientY;},{passive:true});
  document.addEventListener('touchmove',e=>{
-  if(!startY||window.scrollY>5){if(pulling){pulling=false;ptr.className='';}return}
+  if(!startY||window.scrollY>5){if(pulling)resetPtr();return}
   const dy=e.touches[0].clientY-startY;
-  if(dy>35){pulling=true;ptr.className='pulling';}
+  if(dy>35&&!pulling){pulling=true;ptr.className='pulling';document.body.style.overscrollBehavior='contain';}
  },{passive:true});
  document.addEventListener('touchend',()=>{
   if(!pulling){startY=0;return}
-  ptr.className='refreshing';startY=0;pulling=false;
+  ptr.className='refreshing';document.body.style.overscrollBehavior='';startY=0;pulling=false;
   if(!state.apiKey){showToast('API-Key in den Einstellungen hinterlegen');ptr.className='';return}
   const elapsed=Date.now()-state.lastRequest;
   if(elapsed<60000){showToast('Bitte noch '+Math.ceil((60000-elapsed)/1000)+' s warten');ptr.className='';return}
   search().then(()=>{ptr.className='';}).catch(()=>{ptr.className='';});
  });
+ document.addEventListener('touchcancel',()=>{if(pulling)resetPtr();});
 })();
 
 function doQuickBackup(){
