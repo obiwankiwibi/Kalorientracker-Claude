@@ -2084,6 +2084,86 @@ function importData(e){
   reader.readAsText(file);
 }
 
+/* ---------- Excel-Export ---------- */
+async function exportExcel(btn) {
+  const labelEl = btn.querySelector('.bb-label');
+  const origLabel = labelEl.textContent;
+  labelEl.textContent = 'Lade …';
+  btn.disabled = true;
+  try {
+    if (!window.XLSX) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Bibliothek nicht geladen'));
+        document.head.appendChild(s);
+      });
+    }
+    const store = loadStore();
+    const goal = getGoal();
+    const MEAL_NAMES = {fruehstueck:'Frühstück',mittagessen:'Mittagessen',abendessen:'Abendessen',snack:'Snack'};
+
+    /* === Tage-Tabelle === */
+    const daysRows = [['Datum','Wochentag','Mahlzeit','Lebensmittel','Menge','Einheit','kcal','Eiweiß (g)','KH (g)','Fett (g)','Zucker (g)','Ballaststoffe (g)','Nutri-Score','Wasser (ml)']];
+    const sortedKeys = Object.keys(store).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+    sortedKeys.forEach(dateKey=>{
+      const day=store[dateKey]||{entries:[],water:0};
+      if(!day.entries.length&&!day.water)return;
+      const d=new Date(dateKey+'T12:00:00');
+      const weekday=d.toLocaleDateString('de-DE',{weekday:'long'});
+      let dayKcal=0,dayP=0,dayC=0,dayF=0;
+      day.entries.forEach(e=>{
+        const n=e.nutrients||{};
+        const rnd=(v,d=1)=>v!=null?Math.round(v*10**d)/10**d:null;
+        const kcal=rnd(e.kcal,1);
+        const p=rnd(n.protein),c=rnd(n.carbs),f=rnd(n.fat),sg=rnd(n.sugars),fi=rnd(n.fiber);
+        dayKcal+=kcal||0;if(p!=null)dayP+=p;if(c!=null)dayC+=c;if(f!=null)dayF+=f;
+        daysRows.push([dateKey,weekday,e.meal?(MEAL_NAMES[e.meal]||e.meal):'',e.name,e.amount??'',e.unit||'',kcal,p??'',c??'',f??'',sg??'',fi??'',n.nutriscore||'','']);
+      });
+      daysRows.push([dateKey,weekday,'','→ Tagesgesamt','','',Math.round(dayKcal),Math.round(dayP*10)/10||'',Math.round(dayC*10)/10||'',Math.round(dayF*10)/10||'','','','',day.water||0]);
+      daysRows.push([]);
+    });
+
+    /* === Wochen-Tabelle === */
+    const weeksRows = [['KW','Jahr','Von','Bis','Tage mit Einträgen','Gesamt kcal','Ø kcal/Tag','Ziel kcal/Tag','Eiweiß (g)','KH (g)','Fett (g)','Wasser (L)']];
+    const weekMap={};
+    sortedKeys.forEach(dateKey=>{
+      const d=new Date(dateKey+'T12:00:00');
+      const kw=getISOWeek(d),year=d.getFullYear();
+      const wkey=year+'-W'+String(kw).padStart(2,'0');
+      if(!weekMap[wkey])weekMap[wkey]={kw,year,dates:[],kcal:0,days:0,p:0,c:0,f:0,water:0};
+      const day=store[dateKey]||{entries:[],water:0};
+      const total=day.entries.reduce((s,e)=>s+e.kcal,0);
+      weekMap[wkey].dates.push(dateKey);
+      weekMap[wkey].kcal+=total;
+      if(total>0)weekMap[wkey].days++;
+      weekMap[wkey].water+=(day.water||0);
+      day.entries.forEach(e=>{if(!e.nutrients)return;weekMap[wkey].p+=e.nutrients.protein||0;weekMap[wkey].c+=e.nutrients.carbs||0;weekMap[wkey].f+=e.nutrients.fat||0;});
+    });
+    Object.keys(weekMap).sort().forEach(wkey=>{
+      const w=weekMap[wkey];w.dates.sort();
+      weeksRows.push([w.kw,w.year,w.dates[0],w.dates[w.dates.length-1],w.days,Math.round(w.kcal),w.days?Math.round(w.kcal/7):0,Math.round(goal),Math.round(w.p*10)/10,Math.round(w.c*10)/10,Math.round(w.f*10)/10,Math.round(w.water/100)/10]);
+    });
+
+    const wb=window.XLSX.utils.book_new();
+    const wsDays=window.XLSX.utils.aoa_to_sheet(daysRows);
+    wsDays['!cols']=[{wch:12},{wch:12},{wch:14},{wch:28},{wch:8},{wch:7},{wch:7},{wch:11},{wch:8},{wch:8},{wch:9},{wch:15},{wch:12},{wch:11}];
+    window.XLSX.utils.book_append_sheet(wb,wsDays,'Tage');
+    const wsWeeks=window.XLSX.utils.aoa_to_sheet(weeksRows);
+    wsWeeks['!cols']=[{wch:6},{wch:6},{wch:12},{wch:12},{wch:18},{wch:12},{wch:12},{wch:14},{wch:11},{wch:8},{wch:8},{wch:10}];
+    window.XLSX.utils.book_append_sheet(wb,wsWeeks,'Wochen');
+
+    const today=new Date().toISOString().slice(0,10);
+    window.XLSX.writeFile(wb,'Kalorientracker_'+today+'.xlsx');
+    labelEl.textContent='✓ Exportiert!';
+    setTimeout(()=>{labelEl.textContent=origLabel;btn.disabled=false;},2500);
+  } catch(err) {
+    labelEl.textContent=origLabel;btn.disabled=false;
+    alert('Export fehlgeschlagen: '+err.message);
+  }
+}
+
 /* ---------- Wetter ---------- */
 let weatherTemp=null;
 function wmoEmoji(c){
@@ -2234,6 +2314,10 @@ if (sessionStorage.getItem('autoScan') === '1') {
       <button class="backup-btn" onclick="document.getElementById('importFile').click()">
         <span class="bb-icon">⬆</span>
         <span><div class="bb-label">Backup importieren</div><div class="bb-sub">Vorhandene Daten werden überschrieben</div></span>
+      </button>
+      <button class="backup-btn" onclick="exportExcel(this)">
+        <span class="bb-icon">📊</span>
+        <span><div class="bb-label">Als Excel exportieren</div><div class="bb-sub">Zwei Tabellenblätter: Tage &amp; Wochen</div></span>
       </button>
     </div>
     <button class="backup-close" onclick="closeBackup()">Schließen</button>
