@@ -102,6 +102,13 @@ header { border-bottom: 2px solid var(--brand); }
 .stat:last-child { border-right:none; }
 .big { color:var(--brand); }
 .search-card { border:2px solid var(--brand); }
+.search-compact-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:0}
+.search-compact-label{font-size:13px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search-body{overflow:hidden;transition:max-height .35s cubic-bezier(.4,0,.2,1);max-height:600px}
+.search-body.collapsed{max-height:0}
+.search-toggle-btn{background:var(--card);border:1px solid var(--line);border-radius:99px;width:32px;height:32px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:transform .25s;flex-shrink:0;font-family:inherit}
+.search-toggle-btn.open{transform:rotate(180deg)}
+.topstats{margin-top:18px}
 .filter-bar { background:var(--soft);border-radius:10px;padding:12px;margin-top:12px;border-top:none; }
 .fav-section .section-title { color:var(--brand); }
 </style>
@@ -113,7 +120,15 @@ header { border-bottom: 2px solid var(--brand); }
 <div class="app">
 <header class="site-nav"><div class="site-nav-title">⛽ Tankstellen</div><button class="site-nav-btn" id="settingsBtn" title="API-Einstellungen">⚙</button><button class="site-nav-btn" id="notifBtn" title="Benachrichtigungen aktivieren">🔔</button><button class="site-nav-btn" onclick="doQuickBackup()" title="Backup erstellen">💾</button><a href="index.html" class="site-nav-btn" title="Startseite">⌂</a></header>
 <div id="installBanner" class="install-banner" style="display:none"><span>⬇ Als App installieren — Direktzugang ohne Browser-Leiste</span><button class="primary" id="installBtn" style="padding:7px 14px;font-size:13px;flex-shrink:0">Installieren</button><button class="site-nav-btn" id="installDismiss">✕</button></div>
-<section class="search-card"><div class="grid"><div class="field place"><label>Ort oder Postleitzahl</label><div style="display:flex;gap:6px"><input id="place" value="Hilchenbach" placeholder="z. B. Hilchenbach" style="flex:1"><button id="gpsBtn" class="icon" title="Aktuellen Standort ermitteln" style="flex-shrink:0;font-size:15px">📍</button></div></div><div class="field"><label>Umkreis</label><select id="radius"><option value="3">3 km</option><option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="25">25 km</option></select></div><div class="field"><label>Sortierung</label><select id="sorting"><option value="price">Preis</option><option value="dist">Entfernung</option></select></div><button class="primary" id="searchBtn">Tankstellen suchen</button></div><div class="subactions"><span class="status" id="status">API-Key in den Einstellungen hinterlegen</span></div>
+<section class="search-card" id="searchCard">
+<div class="search-compact-bar" id="searchCompactBar" style="display:none">
+  <span class="search-compact-label" id="searchCompactLabel">Suche</span>
+  <div style="display:flex;gap:6px;align-items:center">
+    <button class="primary" id="refreshBtn" style="padding:6px 14px;font-size:13px">↻ Aktualisieren</button>
+    <button class="search-toggle-btn" id="searchToggle" title="Suche einblenden">▾</button>
+  </div>
+</div>
+<div class="search-body" id="searchBody"><div class="grid"><div class="field place"><label>Ort oder Postleitzahl</label><div style="display:flex;gap:6px"><input id="place" value="Hilchenbach" placeholder="z. B. Hilchenbach" style="flex:1"><button id="gpsBtn" class="icon" title="Aktuellen Standort ermitteln" style="flex-shrink:0;font-size:15px">📍</button></div></div><div class="field"><label>Umkreis</label><select id="radius"><option value="3">3 km</option><option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="25">25 km</option></select></div><div class="field"><label>Sortierung</label><select id="sorting"><option value="price">Preis</option><option value="dist">Entfernung</option></select></div><button class="primary" id="searchBtn">Tankstellen suchen</button></div><div class="subactions"><span class="status" id="status">API-Key in den Einstellungen hinterlegen</span></div></div>
 <div class="filter-bar" id="filterBar" style="display:none">
   <input id="nameSearch" class="filter-input" placeholder="Name suchen…">
   <select id="brandFilter" class="filter-input" style="flex:none;width:auto"><option value="">Alle Marken</option></select>
@@ -122,13 +137,13 @@ header { border-bottom: 2px solid var(--brand); }
 </div>
 </section>
 <div class="fuel-tabs"><button class="fuel" data-fuel="e10">Super E10</button><button class="fuel active" data-fuel="e5">Super 95 (E5)</button><button class="fuel" data-fuel="diesel">Diesel</button></div>
-<div class="topstats">
-  <div class="card stat"><div class="eyebrow">Günstigster Preis</div><div class="big" id="minPrice">—</div><div class="hint" id="minName">Noch keine Suche</div></div>
+<div class="layout"><main><div id="staleWarn" class="stale-warn" style="display:none"></div><div class="section-head"><div class="section-title">Tankstellen</div><span class="count" id="count">0</span></div><div class="stations" id="stations"><div class="card empty"><strong>Bereit für die erste Suche</strong>API-Key hinterlegen und Tankstellen in der Umgebung abrufen.</div></div></main><aside><div class="card chart-card"><div class="section-head"><div class="section-title">Lokale Preisentwicklung</div><button class="text-btn" id="clearHistory">Löschen</button></div><div class="hint">Der Durchschnitt wird bei jeder Suche lokal gespeichert.</div><div class="chart-wrap"><canvas id="chart"></canvas></div><div class="legend"><span><i class="dot"></i><span id="legendFuel">Super 95 (E5)</span></span></div></div></aside></div>
+<div class="topstats" id="topstats" style="display:none">
+  <div class="card stat"><div class="eyebrow">Günstigster Preis</div><div class="big" id="minPrice">—</div><div class="hint" id="minName">—</div></div>
   <div class="card stat"><div class="eyebrow">Durchschnitt</div><div class="big" id="avgPrice">—</div><div class="hint">der gefundenen Preise</div></div>
   <div class="card stat"><div class="eyebrow">Spanne</div><div class="big" id="spread">—</div><div class="hint">günstig bis teuer</div></div>
   <div class="card stat"><div class="eyebrow" id="savingsLabel">Ersparnis / 50 L</div><div class="big" id="savings">—</div><div class="hint">günstigste vs. Durchschnitt</div></div>
 </div>
-<div class="layout"><main><div id="staleWarn" class="stale-warn" style="display:none"></div><div class="section-head"><div class="section-title">Tankstellen</div><span class="count" id="count">0</span></div><div class="stations" id="stations"><div class="card empty"><strong>Bereit für die erste Suche</strong>API-Key hinterlegen und Tankstellen in der Umgebung abrufen.</div></div></main><aside><div class="card chart-card"><div class="section-head"><div class="section-title">Lokale Preisentwicklung</div><button class="text-btn" id="clearHistory">Löschen</button></div><div class="hint">Der Durchschnitt wird bei jeder Suche lokal gespeichert.</div><div class="chart-wrap"><canvas id="chart"></canvas></div><div class="legend"><span><i class="dot"></i><span id="legendFuel">Super 95 (E5)</span></span></div></div></aside></div>
 <div class="fav-section" id="favSection" style="display:none">
   <div class="section-head"><div class="section-title">Beobachtete Tankstellen</div><span class="count" id="favCount">0</span></div>
   <div class="fav-grid" id="favGrid"></div>
@@ -170,7 +185,7 @@ async function search(){
  if(!state.apiKey){openSettings();setStatus('Bitte zuerst API-Key speichern');return}
  const elapsed=Date.now()-state.lastRequest;
  if(elapsed<60000){startCooldown();return}
- $('searchBtn').disabled=true;setStatus('Suche läuft …');$('stations').innerHTML=skeletonHtml();
+ $('searchBtn').disabled=true;$('refreshBtn').textContent='⏳';$('refreshBtn').disabled=true;setStatus('Suche läuft …');$('stations').innerHTML=skeletonHtml();
  try{
   let coords=state.coords;
   if(!coords||state.place!==$('place').value.trim()){coords=await geocode($('place').value.trim());state.coords=coords;state.place=$('place').value.trim()}
@@ -180,14 +195,24 @@ async function search(){
   const r=await fetch('https://creativecommons.tankerkoenig.de/json/list.php?'+p);const data=await r.json();
   if(!r.ok||data.ok===false)throw Error(data.message||'Tankstellen konnten nicht geladen werden');
   state.stations=data.stations||[];state.lastRequest=Date.now();recordHistory();recordFavPrices();persist();render();notifyIfAlerted();checkStale();
-  setStatus(`Aktualisiert ${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})} · ${coords.label||state.place}`);startCooldown();
+  setStatus(`Aktualisiert ${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})} · ${coords.label||state.place}`);startCooldown();collapseSearch();
  }catch(e){
   const cors=e instanceof TypeError&&e.message==='Failed to fetch';
   const msg=cors?'CORS-Fehler: Datei muss über HTTP geöffnet werden (z. B. GitHub Pages), nicht als lokale Datei.':e.message;
   setStatus(msg);
   $('stations').innerHTML=`<div class="card empty"><strong>Abruf fehlgeschlagen</strong>${esc(msg)}${cors?'<br><br><a href="https://pages.github.com" target="_blank" rel="noopener" style="color:var(--brand)">→ GitHub Pages einrichten</a>':''}</div>`;
-  $('searchBtn').disabled=false;
+  $('searchBtn').disabled=false;$('refreshBtn').textContent='↻ Aktualisieren';$('refreshBtn').disabled=false;
  }
+}
+
+function collapseSearch(){
+ const place=state.place||$('place').value.trim()||'Suche';
+ const rad=$('radius').value;
+ $('searchCompactLabel').textContent=`${place} · ${rad} km`;
+ $('searchCompactBar').style.display='';
+ $('searchBody').classList.add('collapsed');
+ $('searchToggle').classList.remove('open');
+ $('searchToggle').title='Suche einblenden';
 }
 
 function validStations(){
@@ -252,8 +277,9 @@ function render(){
  $('count').textContent=list.length;
  if(!list.length){
   $('stations').innerHTML='<div class="card empty"><strong>Keine Preise gefunden</strong>Für den gewählten Kraftstoff und Umkreis sind keine Preise verfügbar.</div>';
-  $('minPrice').textContent=$('avgPrice').textContent=$('spread').textContent=$('savings').textContent='—';$('minName').textContent='Keine Daten';drawChart();renderFavs();return;
+  $('minPrice').textContent=$('avgPrice').textContent=$('spread').textContent=$('savings').textContent='—';$('minName').textContent='Keine Daten';$('topstats').style.display='none';drawChart();renderFavs();return;
  }
+ $('topstats').style.display='';
  const vals=list.map(s=>s[state.fuel]),avg=vals.reduce((a,b)=>a+b,0)/vals.length,min=Math.min(...vals),max=Math.max(...vals),cheap=list.find(s=>s[state.fuel]===min);
  $('minPrice').textContent=euro(min);$('minName').textContent=cheap.name;$('avgPrice').textContent=euro(avg);
  $('spread').textContent=(max-min).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
@@ -356,7 +382,8 @@ function openSettings(){$('apiKey').value=state.apiKey;$('tankSizeInput').value=
 $('settingsBtn').onclick=openSettings;$('cancelSettings').onclick=()=>$('overlay').classList.remove('open');
 $('saveSettings').onclick=()=>{state.apiKey=$('apiKey').value.trim();const ts=parseInt($('tankSizeInput').value,10);if(ts>=10&&ts<=200)state.tankSize=ts;persist();$('overlay').classList.remove('open');setStatus(state.apiKey?'Bereit zur Suche':'API-Key fehlt');render();};
 $('overlay').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')};
-$('searchBtn').onclick=search;$('place').oninput=()=>{state.coords=null};$('sorting').onchange=render;
+$('searchBtn').onclick=search;$('refreshBtn').onclick=search;$('place').oninput=()=>{state.coords=null};$('sorting').onchange=render;
+$('searchToggle').onclick=()=>{const body=$('searchBody');const collapsed=body.classList.toggle('collapsed');$('searchToggle').classList.toggle('open',!collapsed);$('searchToggle').title=collapsed?'Suche einblenden':'Suche ausblenden';};
 $('nameSearch').oninput=()=>{filterName=$('nameSearch').value.toLowerCase().trim();render()};
 $('brandFilter').onchange=()=>{filterBrand=$('brandFilter').value;render()};
 $('favsOnlyBtn').classList.add('active');
@@ -404,6 +431,7 @@ $('favGrid').addEventListener('change',e=>{
 });
 persist();
 window.onresize=()=>requestAnimationFrame(drawChart);$('place').value=state.place;setStatus(state.apiKey?'Bereit zur Suche':'API-Key in den Einstellungen hinterlegen');render();checkStale();
+if(state.stations.length)collapseSearch();
 // Stündliche Auto-Abfrage; sofortige Abfrage falls Daten fehlen oder veraltet
 if(state.apiKey&&(!state.stations.length||Date.now()-state.lastRequest>TK_HOUR))search();
 setInterval(search,TK_HOUR);
