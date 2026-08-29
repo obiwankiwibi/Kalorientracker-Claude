@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fahrräder</title>
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#ffffff;
+  --bg2:#f4f4f4;
+  --text:#111111;
+  --muted:#888888;
+  --line:#e5e5e5;
+  --accent:#2d8a4e;
+  --accent-t:#ffffff;
+}
+
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#111111;
+    --bg2:#1e1e1e;
+    --text:#f0f0f0;
+    --muted:#888888;
+    --line:#2a2a2a;
+    --accent:#3aaa64;
+    --accent-t:#ffffff;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111111;
+  --bg2:#1e1e1e;
+  --text:#f0f0f0;
+  --muted:#888888;
+  --line:#2a2a2a;
+  --accent:#3aaa64;
+  --accent-t:#ffffff;
+}
+
+html,body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  font-size:16px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  transition:background .2s,color .2s;
+}
+
+/* ── Nav ── */
+.app-nav{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;
+  background:var(--bg);
+  border-bottom:1px solid var(--line);
+  transition:background .2s,border-color .2s;
+}
+.app-nav-back{
+  font-size:22px;color:var(--text);text-decoration:none;
+  width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+}
+.app-nav-label{
+  font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+}
+.app-nav-btn{
+  background:none;border:none;cursor:pointer;
+  font-size:20px;color:var(--muted);
+  width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+}
+
+/* ── Bike switcher ── */
+.bike-tabs{
+  display:flex;
+  border-bottom:1px solid var(--line);
+  background:var(--bg);
+  position:sticky;top:65px;z-index:90;
+}
+.bike-tab{
+  flex:1;padding:13px 0;
+  font-size:13px;font-weight:600;letter-spacing:.02em;
+  color:var(--muted);text-align:center;cursor:pointer;
+  border:none;background:none;
+  border-bottom:2px solid transparent;
+  transition:color .15s,border-color .15s;
+  font-family:inherit;
+}
+.bike-tab.active{
+  color:var(--accent);
+  border-bottom-color:var(--accent);
+}
+
+/* ── Page quick-nav ── */
+.page-nav{
+  display:flex;overflow-x:auto;gap:8px;
+  padding:14px 20px;
+  border-bottom:1px solid var(--line);
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.page-nav::-webkit-scrollbar{display:none;}
+.page-nav a{
+  flex-shrink:0;
+  padding:7px 16px;
+  border-radius:100px;
+  border:1px solid var(--line);
+  font-size:12px;letter-spacing:.04em;
+  color:var(--text);text-decoration:none;
+  white-space:nowrap;
+  transition:background .15s,border-color .15s;
+}
+.page-nav a:hover{background:var(--bg2);}
+.page-nav span{
+  flex-shrink:0;padding:7px 16px;border-radius:100px;
+  border:1px solid var(--text);font-size:12px;font-weight:600;letter-spacing:.04em;
+  color:var(--text);cursor:pointer;white-space:nowrap;
+  transition:background .15s;
+}
+
+/* ── Brand header ── */
+.brand{
+  text-align:center;
+  padding:48px 20px 0;
+}
+.brand-icon{font-size:64px;display:block;margin-bottom:20px;}
+.brand-name{
+  font-size:clamp(2.4rem,9vw,3.6rem);
+  font-weight:700;letter-spacing:-.02em;line-height:1;
+  margin-bottom:14px;
+}
+.brand-badge{
+  display:inline-block;
+  padding:6px 16px;
+  border-radius:100px;
+  border:1px solid var(--line);
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);
+}
+
+/* ── Placeholder hero ── */
+.hero-img{
+  margin:32px auto 0;
+  max-width:100%;
+  overflow:hidden;
+  background:var(--bg2);
+  transition:background .2s;
+}
+.hero-img img{
+  width:100%;display:block;
+  aspect-ratio:16/9;object-fit:cover;
+}
+.hero-placeholder{
+  width:100%;aspect-ratio:16/9;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;color:var(--muted);font-size:13px;
+}
+.hero-placeholder-icon{font-size:48px;}
+
+/* ── Key stats ── */
+.stats{
+  padding:56px 20px;
+  display:flex;flex-direction:column;align-items:center;
+  gap:52px;
+}
+.stat{text-align:center;}
+.stat-num{
+  font-size:clamp(3rem,12vw,5rem);
+  font-weight:700;color:var(--text);
+  letter-spacing:-.03em;line-height:1;
+  display:flex;align-items:baseline;justify-content:center;gap:6px;
+}
+.stat-unit{
+  font-size:clamp(1.4rem,5vw,2.4rem);
+  font-weight:400;color:var(--muted);
+}
+.stat-word{
+  font-size:clamp(1.6rem,7vw,3rem);
+  font-weight:700;color:var(--text);
+  letter-spacing:-.01em;line-height:1;
+}
+.stat-dash{
+  font-size:clamp(2rem,8vw,4rem);
+  font-weight:300;color:var(--muted);
+  letter-spacing:-.01em;line-height:1;
+}
+.stat-lbl{
+  margin-top:10px;
+  font-size:14px;color:var(--muted);
+  letter-spacing:.02em;
+}
+
+/* ── Divider band ── */
+.band{height:8px;background:var(--bg2);margin:0;transition:background .2s;}
+
+/* ── Section wrapper ── */
+.sec{
+  padding:40px 20px 0;
+  max-width:640px;
+  margin:0 auto;
+}
+.eyebrow{
+  font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:6px;
+}
+.sec-title{
+  font-size:22px;font-weight:700;
+  margin-bottom:28px;
+}
+
+/* ── Placeholder notice ── */
+.placeholder-notice{
+  padding:32px 20px;
+  border:1.5px dashed var(--line);
+  border-radius:12px;
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:40px;
+}
+.placeholder-notice-icon{font-size:32px;margin-bottom:10px;}
+
+/* ── Slider ── */
+.slider-outer{margin-top:40px;}
+.slider-wrap{position:relative;}
+.slider-vp{overflow:hidden;}
+.slider-track{
+  display:flex;
+  transition:transform .35s cubic-bezier(.25,.46,.45,.94);
+  will-change:transform;
+}
+.slide{flex:0 0 100%;position:relative;}
+.slide img{
+  width:100%;aspect-ratio:4/3;object-fit:cover;display:block;
+}
+.slide-cap{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:12px 16px;
+  background:linear-gradient(transparent,rgba(0,0,0,.6));
+  color:#fff;font-size:13px;letter-spacing:.02em;
+}
+.sl-btn{
+  position:absolute;top:50%;transform:translateY(-50%);
+  background:rgba(255,255,255,.88);border:none;cursor:pointer;
+  width:42px;height:42px;border-radius:50%;
+  font-size:24px;display:flex;align-items:center;justify-content:center;
+  color:#111;box-shadow:0 2px 10px rgba(0,0,0,.15);
+  transition:background .15s;
+}
+.sl-prev{left:12px;}
+.sl-next{right:12px;}
+.sl-dots{
+  display:flex;justify-content:center;align-items:center;gap:6px;
+  padding:18px 0;
+}
+.sl-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--muted);opacity:.35;
+  cursor:pointer;border:none;
+  transition:opacity .2s,width .2s,border-radius .2s;
+}
+.sl-dot.on{opacity:1;width:20px;border-radius:3px;background:var(--text);}
+
+/* ── Gallery upload ── */
+.gal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.gal-upload-btn{
+  background:#111;border:none;color:#fff;cursor:pointer;
+  font-size:13px;font-weight:700;padding:6px 14px;border-radius:20px;
+  display:flex;align-items:center;gap:5px;font-family:inherit;
+}
+.upload-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:500;align-items:flex-end;justify-content:center;
+}
+.upload-overlay.open{display:flex;}
+.upload-box{
+  background:var(--bg);border-radius:20px 20px 0 0;padding:24px 20px 36px;
+  width:100%;max-width:480px;
+}
+.upload-handle{width:40px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 18px;}
+.upload-title{font-size:18px;font-weight:700;margin-bottom:6px;color:var(--text);}
+.upload-sub{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+.upload-input{
+  width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;
+  font-size:14px;font-family:inherit;margin-bottom:10px;outline:none;
+  background:var(--bg);color:var(--text);
+}
+.upload-input:focus{border-color:var(--text);}
+.upload-btns{display:flex;gap:10px;margin-top:6px;}
+.upload-cancel{
+  flex:1;padding:12px;border:1.5px solid var(--line);border-radius:12px;
+  font-size:14px;font-weight:600;font-family:inherit;background:var(--bg);
+  color:var(--text);cursor:pointer;
+}
+.upload-go{
+  flex:2;padding:12px;border:none;border-radius:12px;
+  background:#111;color:#fff;font-size:14px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+}
+.upload-progress{
+  margin-top:12px;font-size:12px;color:var(--muted);text-align:center;min-height:18px;
+}
+
+/* ── Gallery management overlay ── */
+.mgmt-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:500;align-items:flex-end;justify-content:center;
+}
+.mgmt-overlay.open{display:flex;}
+.mgmt-box{
+  background:var(--bg);border-radius:20px 20px 0 0;padding:24px 20px 36px;
+  width:100%;max-width:480px;max-height:78vh;overflow-y:auto;
+}
+.mgmt-handle{width:40px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 18px;}
+.mgmt-title{font-size:18px;font-weight:700;margin-bottom:4px;color:var(--text);}
+.mgmt-sub{font-size:12px;color:var(--muted);margin-bottom:16px;}
+.mgmt-list{display:flex;flex-direction:column;gap:10px;}
+.mgmt-card{
+  display:flex;align-items:center;gap:10px;
+  padding:10px;border:1.5px solid var(--line);border-radius:12px;
+  background:var(--bg);transition:border-color .2s;
+}
+.mgmt-card.is-hero{border-color:var(--text);}
+.mgmt-thumb{width:64px;height:48px;object-fit:cover;border-radius:7px;flex-shrink:0;}
+.mgmt-info{flex:1;min-width:0;}
+.mgmt-cap{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mgmt-badge{font-size:10px;color:var(--text);font-weight:700;letter-spacing:.06em;margin-top:2px;}
+.mgmt-actions{display:flex;gap:5px;flex-shrink:0;}
+.mgmt-btn{
+  background:var(--bg2);border:none;cursor:pointer;
+  width:32px;height:32px;border-radius:8px;font-size:14px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text);font-family:inherit;transition:opacity .15s;
+}
+.mgmt-btn:disabled{opacity:.25;cursor:default;}
+.mgmt-btn.hero-set{background:var(--bg2);}
+.mgmt-btn.hero-active{background:var(--bg2);opacity:.35;cursor:default;}
+.mgmt-btn.del{background:#fff0f0;color:#c0392b;}
+.mgmt-empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 0;}
+.mgmt-close-btn{
+  width:100%;padding:13px;border:1.5px solid var(--line);border-radius:12px;
+  background:var(--bg);color:var(--text);font-size:14px;font-weight:600;
+  font-family:inherit;cursor:pointer;margin-top:16px;
+}
+
+/* ── Tech accordion ── */
+.tech-blocks{margin-top:0;}
+.tblock{border-top:1px solid var(--line);transition:border-color .2s;}
+.tblock:last-child{border-bottom:1px solid var(--line);margin-bottom:48px;}
+.tblock-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 0;cursor:pointer;user-select:none;
+}
+.tblock-title{
+  font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text);
+}
+.tblock-arrow{
+  font-size:12px;color:var(--muted);
+  transition:transform .25s;
+  border:1px solid var(--line);border-radius:50%;
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+}
+.tblock.open .tblock-arrow{transform:rotate(180deg);}
+.tblock-body{display:none;padding-bottom:20px;}
+.tblock.open .tblock-body{display:block;}
+
+.trow{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding:11px 0;border-top:1px solid var(--line);gap:16px;
+}
+.trow:first-child{border-top:none;}
+.tlbl{font-size:13px;color:var(--muted);flex-shrink:0;}
+.tval{font-size:15px;font-weight:600;color:var(--text);text-align:right;}
+.tval.tbd{color:var(--muted);font-weight:400;font-style:italic;}
+
+/* ── Equipment tags ── */
+.equip{
+  display:flex;flex-wrap:wrap;gap:8px;
+  padding-top:4px;
+}
+.etag{
+  padding:6px 13px;
+  border-radius:100px;
+  border:1px solid var(--line);
+  font-size:12px;color:var(--text);
+  letter-spacing:.01em;
+  transition:border-color .2s,color .2s;
+}
+
+/* ── Werkstatt ── */
+.ws-card{
+  padding:20px;
+  border:1px solid var(--line);border-radius:12px;
+  background:var(--bg2);
+  margin-bottom:24px;
+}
+.ws-name{font-size:15px;font-weight:700;margin-bottom:4px;}
+.ws-addr{font-size:13px;color:var(--muted);margin-bottom:16px;}
+.ws-contacts{display:flex;flex-direction:column;gap:10px;}
+.ws-contact-link{
+  display:flex;align-items:center;gap:10px;
+  font-size:13px;color:var(--text);text-decoration:none;
+}
+.ws-contact-link:hover{color:var(--muted);}
+.ws-contact-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+.ws-hours{margin-bottom:24px;}
+.ws-hours-title{
+  font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:16px;
+}
+.ws-hours-group{margin-bottom:20px;}
+.ws-hours-label{
+  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:4px;
+}
+.ws-closed{color:#c0392b;font-weight:500;}
+
+/* ── Manual link card ── */
+.manual-link{
+  display:flex;align-items:center;gap:16px;
+  margin-top:24px;margin-bottom:32px;
+  padding:18px 20px;
+  border:1px solid var(--line);border-radius:12px;
+  text-decoration:none;color:var(--text);
+  background:var(--bg2);
+  transition:border-color .2s,background .2s;
+}
+.manual-link:hover{border-color:var(--text);}
+.manual-link-icon{font-size:24px;flex-shrink:0;}
+.manual-link-body{flex:1;}
+.manual-link-title{font-size:14px;font-weight:600;margin-bottom:3px;}
+.manual-link-meta{font-size:12px;color:var(--muted);}
+.manual-link-arrow{font-size:18px;color:var(--muted);flex-shrink:0;}
+
+/* ── Footer ── */
+.footer{
+  text-align:center;padding:32px 20px;
+  font-size:12px;color:var(--muted);letter-spacing:.05em;
+  border-top:1px solid var(--line);
+  transition:border-color .2s;
+}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--text);color:var(--bg);
+  padding:10px 20px;border-radius:100px;
+  font-size:13px;font-weight:500;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;
+  white-space:nowrap;z-index:600;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="app-nav">
+  <a class="app-nav-back" href="index.html" aria-label="Zurück">←</a>
+  <span class="app-nav-label">Unsere Fahrräder</span>
+  <button class="app-nav-btn" onclick="sharePage()" aria-label="Teilen" title="Teilen">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+  </button>
+</nav>
+
+<!-- Bike Switcher -->
+<div class="bike-tabs">
+  <button class="bike-tab active" id="tab0" onclick="switchBike(0)">🚲 Mein Fahrrad</button>
+  <button class="bike-tab" id="tab1" onclick="switchBike(1)">🚲 Fahrrad Freundin</button>
+</div>
+
+<!-- Quick-nav -->
+<nav class="page-nav" aria-label="Seitennavigation">
+  <a href="#galerie">Galerie</a>
+  <a href="#technik">Technik</a>
+  <a href="#ausstattung">Ausstattung</a>
+  <a href="#werkstatt">Händler</a>
+</nav>
+
+<!-- Brand -->
+<div class="brand" id="brandSection">
+  <span class="brand-icon" id="bikeIcon">🚲</span>
+  <div class="brand-name" id="bikeName">Fahrrad 1</div>
+  <span class="brand-badge" id="bikeBadge">Daten folgen</span>
+</div>
+
+<!-- Hero image -->
+<div class="hero-img" id="heroImg">
+  <div class="hero-placeholder">
+    <div class="hero-placeholder-icon">📷</div>
+    <span>Noch kein Foto hinterlegt</span>
+  </div>
+</div>
+
+<!-- Key stats -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-dash" id="statGang">–</div>
+    <div class="stat-lbl">Schaltung</div>
+  </div>
+  <div class="stat">
+    <div class="stat-dash" id="statRad">–</div>
+    <div class="stat-lbl">Reifengröße</div>
+  </div>
+  <div class="stat">
+    <div class="stat-dash" id="statRahmen">–</div>
+    <div class="stat-lbl">Rahmengröße</div>
+  </div>
+</div>
+
+<div class="band"></div>
+
+<!-- Gallery -->
+<div class="slider-outer" id="galerie">
+  <div class="sec">
+    <div class="gal-header">
+      <div>
+        <div class="eyebrow">Galerie</div>
+        <div class="sec-title">Fotos</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="gal-upload-btn" onclick="openMgmt()" style="background:var(--bg2);color:var(--text);border:1.5px solid var(--line)">⚙️ Verwalten</button>
+        <button class="gal-upload-btn" onclick="openUpload()">📷 Hochladen</button>
+      </div>
+    </div>
+  </div>
+  <div class="slider-wrap">
+    <div class="slider-vp" id="slVp">
+      <div class="slider-track" id="slTrack"></div>
+      <button class="sl-btn sl-prev" id="slPrev" aria-label="Zurück">&#8249;</button>
+      <button class="sl-btn sl-next" id="slNext" aria-label="Weiter">&#8250;</button>
+    </div>
+    <div class="sl-dots" id="slDots"></div>
+  </div>
+</div>
+
+<!-- Upload overlay -->
+<div class="upload-overlay" id="uploadOverlay" onclick="if(event.target===this)closeUpload()">
+  <div class="upload-box">
+    <div class="upload-handle"></div>
+    <div class="upload-title">📷 Foto hochladen</div>
+    <div class="upload-sub" id="uploadSub">GitHub Token einmalig eingeben (wird lokal gespeichert).</div>
+    <input class="upload-input" id="uploadToken" type="password" placeholder="GitHub Personal Access Token" autocomplete="off">
+    <input class="upload-input" id="uploadCaption" type="text" placeholder="Bildunterschrift (optional)" maxlength="80">
+    <input type="file" id="uploadFile" accept="image/*" style="display:none" onchange="onFileSelected()">
+    <div class="upload-btns">
+      <button class="upload-cancel" onclick="closeUpload()">Abbrechen</button>
+      <button class="upload-go" onclick="startUpload()">Foto wählen &amp; hochladen</button>
+    </div>
+    <div class="upload-progress" id="uploadProgress"></div>
+  </div>
+</div>
+
+<!-- Gallery management overlay -->
+<div class="mgmt-overlay" id="mgmtOverlay" onclick="if(event.target===this)closeMgmt()">
+  <div class="mgmt-box">
+    <div class="mgmt-handle"></div>
+    <div class="mgmt-title">⚙️ Galerie verwalten</div>
+    <div class="mgmt-sub">Eigene Fotos verwalten: Reihenfolge, Hero-Bild oder löschen.</div>
+    <div class="mgmt-list" id="mgmtGrid"></div>
+    <button class="mgmt-close-btn" onclick="closeMgmt()">Schließen</button>
+  </div>
+</div>
+
+<div class="band" style="margin-top:40px"></div>
+
+<!-- Technical Data -->
+<div class="sec" id="technik" style="padding-top:40px">
+  <div class="eyebrow">Fahrraddaten</div>
+  <div class="sec-title">Technische Daten</div>
+
+  <div class="tech-blocks">
+    <div class="tblock open">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Fahrrad</span>
+        <span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body" id="techFahrrad">
+        <div class="trow"><span class="tlbl">Marke</span><span class="tval tbd" id="tMarke">wird nachgetragen</span></div>
+        <div class="trow"><span class="tlbl">Modell</span><span class="tval tbd" id="tModell">wird nachgetragen</span></div>
+        <div class="trow"><span class="tlbl">Typ</span><span class="tval tbd" id="tTyp">wird nachgetragen</span></div>
+        <div class="trow"><span class="tlbl">Farbe</span><span class="tval tbd" id="tFarbe">wird nachgetragen</span></div>
+        <div class="trow"><span class="tlbl">Rahmengröße</span><span class="tval tbd" id="tRahmengroesse">wird nachgetragen</span></div>
+        <div class="trow"><span class="tlbl">Rahmenmaterial</span><span class="tval tbd" id="tMaterial">wird nachgetragen</span></div>
+        <div class="trow"><span class="tlbl">Reifengröße</span><span class="tval tbd" id="tReifen">wird nachgetragen</span></div>
+        <div class="trow"><span class="tlbl">Händler</span><span class="tval">Fahrrad Feldmann, Olpe</span></div>
+      </div>
+    </div>
+
+    <div class="tblock">
+      <div class="tblock-hd" onclick="toggle(this)">
+        <span class="tblock-title">Antrieb &amp; Schaltung</span>
+        <span class="tblock-arrow">∨</span>
+      </div>
+      <div class="tblock-body">
+        <div class="trow"><span class="tlbl">Schaltung</span><span class="tval tbd" id="tSchaltung">wird nachgetragen</span></div>
+        <div class="trow"><span class="tlbl">Gänge</span><span class="tval tbd" id="tGaenge">wird nachgetragen</span></div>
+        <div class="trow"><span class="tlbl">Antrieb</span><span class="tval tbd" id="tAntrieb">wird nachgetragen</span></div>
+        <div class="trow"><span class="tlbl">Bremsen</span><span class="tval tbd" id="tBremsen">wird nachgetragen</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="band"></div>
+
+<!-- Equipment -->
+<div class="sec" id="ausstattung" style="padding-top:40px">
+  <div class="eyebrow">Zubehör &amp; Ausstattung</div>
+  <div class="sec-title">Ausstattung</div>
+
+  <div class="placeholder-notice">
+    <div class="placeholder-notice-icon">🔧</div>
+    Ausstattung wird nach Lieferung der Infos ergänzt.
+  </div>
+</div>
+
+<div class="band" style="margin-top:0"></div>
+
+<!-- Händler -->
+<div class="sec" id="werkstatt" style="padding-top:40px;padding-bottom:48px">
+  <div class="eyebrow">Fachhandel</div>
+  <div class="sec-title">Händler</div>
+
+  <div class="ws-card">
+    <div class="ws-name">Fahrrad Feldmann</div>
+    <div class="ws-addr">Am Breithammer 2 · 57462 Olpe</div>
+    <div class="ws-contacts">
+      <a class="ws-contact-link" href="tel:+492761629090">
+        <span class="ws-contact-icon">📞</span>
+        <span>02761 62909</span>
+      </a>
+      <a class="ws-contact-link" href="https://www.fahrrad-feldmann.de" target="_blank" rel="noopener">
+        <span class="ws-contact-icon">🌐</span>
+        <span>fahrrad-feldmann.de</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="ws-hours">
+    <div class="ws-hours-title">Öffnungszeiten</div>
+
+    <div class="ws-hours-group">
+      <div class="ws-hours-label">Montag – Freitag</div>
+      <div class="trow" style="border-top:none;padding-top:0"><span class="tlbl">Öffnungszeit</span><span class="tval">09:30 – 18:00 Uhr</span></div>
+    </div>
+
+    <div class="ws-hours-group">
+      <div class="ws-hours-label">Samstag</div>
+      <div class="trow" style="border-top:none;padding-top:0"><span class="tlbl">Öffnungszeit</span><span class="tval">09:00 – 13:00 Uhr</span></div>
+    </div>
+
+    <div class="ws-hours-group">
+      <div class="ws-hours-label">Sonntag</div>
+      <div class="trow" style="border-top:none;padding-top:0"><span class="tlbl">Geöffnet</span><span class="tval ws-closed">Geschlossen</span></div>
+    </div>
+
+    <div class="ws-hours-group">
+      <div class="ws-hours-label">Feiertage</div>
+      <div class="trow" style="border-top:none;padding-top:0"><span class="tlbl">24.12. &amp; 31.12.</span><span class="tval ws-closed">Geschlossen</span></div>
+    </div>
+  </div>
+
+  <a class="manual-link" href="https://www.fahrrad-feldmann.de" target="_blank" rel="noopener">
+    <div class="manual-link-icon">🚲</div>
+    <div class="manual-link-body">
+      <div class="manual-link-title">Fahrrad Feldmann – Olpe</div>
+      <div class="manual-link-meta">Am Breithammer 2 · 57462 Olpe</div>
+    </div>
+    <div class="manual-link-arrow">→</div>
+  </a>
+</div>
+
+<!-- Footer -->
+<div class="footer" id="footerLabel">Unsere Fahrräder · Fahrrad Feldmann</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* Firebase */
+const FB_CONFIG = {
+  apiKey:            'AIzaSyDzy2Y_UxOzLh2uVa3xpqZwl_52A-ULo_Y',
+  authDomain:        'claude-code-34507.firebaseapp.com',
+  databaseURL:       'https://claude-code-34507-default-rtdb.europe-west1.firebasedatabase.app',
+  projectId:         'claude-code-34507',
+  storageBucket:     'claude-code-34507.firebasestorage.app',
+  messagingSenderId: '560819187404',
+  appId:             '1:560819187404:web:394cee9f588237198bdc69'
+};
+firebase.initializeApp(FB_CONFIG);
+const db = firebase.database();
+
+const GH_OWNER  = 'obiwankiwibi';
+const GH_REPO   = 'Kalorientracker-Claude';
+const GH_BRANCH = 'main';
+
+/* ── Bike config ── */
+const BIKES = [
+  {
+    name: 'Fahrrad 1',
+    badge: 'Daten folgen',
+    icon: '🚲',
+    fbGallery: 'fahrrad1_gallery',
+    fbHero: 'fahrrad1_hero',
+    ghFolder: 'images/fahrrad1-user',
+  },
+  {
+    name: 'Fahrrad 2',
+    badge: 'Daten folgen',
+    icon: '🚲',
+    fbGallery: 'fahrrad2_gallery',
+    fbHero: 'fahrrad2_hero',
+    ghFolder: 'images/fahrrad2-user',
+  }
+];
+
+let activeBike = 0;
+let galleryData = {};
+let heroUrl = '';
+let dbUnsubGallery = null;
+let dbUnsubHero = null;
+
+/* ── Accordion ── */
+function toggle(hd) { hd.parentElement.classList.toggle('open'); }
+
+/* ── Toast ── */
+let _toastTimer;
+function showToast(msg, ms=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+/* ── Bike switcher ── */
+function switchBike(idx) {
+  activeBike = idx;
+  document.querySelectorAll('.bike-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  updateBikeUI();
+  subscribeGallery();
+}
+
+function updateBikeUI() {
+  const b = BIKES[activeBike];
+  document.getElementById('bikeIcon').textContent = b.icon;
+  document.getElementById('bikeName').textContent = b.name;
+  document.getElementById('bikeBadge').textContent = b.badge;
+  document.getElementById('tab0').textContent = (activeBike===0 ? '🚲 Mein Fahrrad' : '🚲 Mein Fahrrad');
+  document.getElementById('tab1').textContent = (activeBike===1 ? '🚲 Fahrrad Freundin' : '🚲 Fahrrad Freundin');
+}
+
+/* ── Gallery subscription ── */
+function subscribeGallery() {
+  if (dbUnsubGallery) dbUnsubGallery();
+  if (dbUnsubHero) dbUnsubHero();
+  galleryData = {};
+  heroUrl = '';
+
+  const b = BIKES[activeBike];
+
+  const heroRef = db.ref(b.fbHero);
+  const heroListener = heroRef.on('value', snap => {
+    heroUrl = snap.val() || '';
+    refreshHeroDisplay();
+    updateMgmtView();
+  });
+  dbUnsubHero = () => heroRef.off('value', heroListener);
+
+  renderSlider([]);
+  const galRef = db.ref(b.fbGallery);
+  const galListener = galRef.on('value', snap => {
+    galleryData = snap.val() || {};
+    renderSlider(getSortedUploads());
+    updateMgmtView();
+  });
+  dbUnsubGallery = () => galRef.off('value', galListener);
+}
+
+/* ── Slider ── */
+const track  = document.getElementById('slTrack');
+const dotsEl = document.getElementById('slDots');
+const vp     = document.getElementById('slVp');
+let cur = 0, sx = 0;
+
+function getSortedUploads() {
+  return Object.entries(galleryData)
+    .map(([key, v]) => ({ key, ...v, _sortKey: v.order ?? v.uploaded ?? parseInt(key) }))
+    .sort((a, b) => a._sortKey - b._sortKey);
+}
+
+function refreshHeroDisplay() {
+  const hero = document.getElementById('heroImg');
+  if (heroUrl) {
+    hero.innerHTML = `<img src="${heroUrl}" alt="Fahrrad" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block">`;
+  } else {
+    hero.innerHTML = `<div class="hero-placeholder"><div class="hero-placeholder-icon">📷</div><span>Noch kein Foto hinterlegt</span></div>`;
+  }
+}
+
+function renderSlider(extraImages) {
+  if (!extraImages.length) {
+    track.innerHTML = `<div class="slide" style="display:flex;align-items:center;justify-content:center;aspect-ratio:4/3;background:var(--bg2);color:var(--muted);font-size:13px;flex-direction:column;gap:10px"><span style="font-size:40px">📷</span>Noch keine Fotos</div>`;
+    dotsEl.innerHTML = '';
+    document.getElementById('slPrev').style.display = 'none';
+    document.getElementById('slNext').style.display = 'none';
+    return;
+  }
+  document.getElementById('slPrev').style.display = '';
+  document.getElementById('slNext').style.display = '';
+  track.innerHTML = extraImages.map((img, i) =>
+    `<div class="slide">
+      <img src="${img.url}" alt="${img.caption||''}" loading="${i===0?'eager':'lazy'}" style="width:100%;aspect-ratio:4/3;object-fit:cover">
+      ${img.caption ? `<div class="slide-cap">${img.caption}</div>` : ''}
+    </div>`
+  ).join('');
+  dotsEl.innerHTML = '';
+  extraImages.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'sl-dot' + (i===0?' on':'');
+    d.setAttribute('aria-label','Bild '+(i+1));
+    d.onclick = () => go(i);
+    dotsEl.appendChild(d);
+  });
+  cur = 0;
+  track.style.transform = 'translateX(0)';
+}
+
+function go(n) {
+  const total = track.querySelectorAll('.slide').length;
+  if (!total) return;
+  cur = (n + total) % total;
+  track.style.transform = 'translateX(-'+cur*100+'%)';
+  dotsEl.querySelectorAll('.sl-dot').forEach((d,i) => d.classList.toggle('on', i===cur));
+}
+
+document.getElementById('slPrev').onclick = () => go(cur-1);
+document.getElementById('slNext').onclick = () => go(cur+1);
+vp.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, {passive:true});
+vp.addEventListener('touchend',   e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  if (Math.abs(dx) > 40) go(dx < 0 ? cur+1 : cur-1);
+}, {passive:true});
+
+/* ── Gallery management ── */
+function openMgmt() {
+  updateMgmtView();
+  document.getElementById('mgmtOverlay').classList.add('open');
+}
+function closeMgmt() {
+  document.getElementById('mgmtOverlay').classList.remove('open');
+}
+
+function updateMgmtView() {
+  const grid = document.getElementById('mgmtGrid');
+  if (!grid) return;
+  const imgs = getSortedUploads();
+  if (!imgs.length) {
+    grid.innerHTML = '<div class="mgmt-empty">Noch keine eigenen Fotos hochgeladen.</div>';
+    return;
+  }
+  const fbPath = BIKES[activeBike].fbGallery;
+  const fbHero = BIKES[activeBike].fbHero;
+  grid.innerHTML = imgs.map((img, i) => {
+    const isHero = img.url === heroUrl;
+    const safeUrl = img.url.replace(/'/g, '%27');
+    return `<div class="mgmt-card${isHero ? ' is-hero' : ''}">
+      <img class="mgmt-thumb" src="${img.url}" alt="">
+      <div class="mgmt-info">
+        <div class="mgmt-cap">${img.caption || 'Kein Titel'}</div>
+        ${isHero ? '<div class="mgmt-badge">⭐ Hero-Bild</div>' : ''}
+      </div>
+      <div class="mgmt-actions">
+        <button class="mgmt-btn" onclick="mgmtMove('${img.key}',-1,'${fbPath}')" ${i===0?'disabled':''} title="Nach oben">↑</button>
+        <button class="mgmt-btn" onclick="mgmtMove('${img.key}',1,'${fbPath}')" ${i===imgs.length-1?'disabled':''} title="Nach unten">↓</button>
+        <button class="mgmt-btn ${isHero?'hero-active':'hero-set'}" onclick="mgmtSetHero('${safeUrl}','${fbHero}')" ${isHero?'disabled':''} title="Als Hero setzen">⭐</button>
+        <button class="mgmt-btn del" onclick="mgmtDelete('${img.key}','${safeUrl}','${fbPath}','${fbHero}')" title="Löschen">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function mgmtMove(key, dir, fbPath) {
+  const imgs = getSortedUploads();
+  const idx = imgs.findIndex(img => img.key === key);
+  if (idx < 0) return;
+  const targetIdx = idx + dir;
+  if (targetIdx < 0 || targetIdx >= imgs.length) return;
+  const a = imgs[idx], b = imgs[targetIdx];
+  const updates = {};
+  updates[`${fbPath}/${a.key}/order`] = b._sortKey;
+  updates[`${fbPath}/${b.key}/order`] = a._sortKey;
+  await db.ref().update(updates);
+}
+
+async function mgmtSetHero(safeUrl, fbHero) {
+  await db.ref(fbHero).set(decodeURIComponent(safeUrl));
+}
+
+async function mgmtDelete(key, safeUrl, fbPath, fbHero) {
+  if (!confirm('Foto aus der Galerie entfernen?')) return;
+  const url = decodeURIComponent(safeUrl);
+  if (url === heroUrl) await db.ref(fbHero).remove();
+  await db.ref(`${fbPath}/${key}`).remove();
+}
+
+/* ── Upload ── */
+function openUpload() {
+  const tok = localStorage.getItem('gh_token_scala') || '';
+  document.getElementById('uploadToken').value = tok;
+  document.getElementById('uploadCaption').value = '';
+  document.getElementById('uploadProgress').textContent = '';
+  document.getElementById('uploadSub').textContent = tok
+    ? 'Token bereits gespeichert. Neues Foto wählen.'
+    : 'GitHub Personal Access Token einmalig eingeben (wird nur lokal gespeichert).';
+  document.getElementById('uploadOverlay').classList.add('open');
+}
+function closeUpload() {
+  document.getElementById('uploadOverlay').classList.remove('open');
+}
+
+let _pendingFile = null;
+function onFileSelected() {
+  const f = document.getElementById('uploadFile').files[0];
+  if (!f) return;
+  _pendingFile = f;
+  startUpload();
+}
+
+async function startUpload() {
+  if (!_pendingFile) {
+    document.getElementById('uploadFile').click();
+    return;
+  }
+  const tok     = document.getElementById('uploadToken').value.trim();
+  const caption = document.getElementById('uploadCaption').value.trim();
+  const prog    = document.getElementById('uploadProgress');
+  if (!tok) { prog.textContent = 'Bitte Token eingeben.'; return; }
+  localStorage.setItem('gh_token_scala', tok);
+
+  prog.textContent = 'Bild wird verarbeitet …';
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const b64 = e.target.result.split(',')[1];
+    const ext = _pendingFile.name.split('.').pop().toLowerCase() || 'jpg';
+    const fname = `${Date.now()}.${ext}`;
+    const ghFolder = BIKES[activeBike].ghFolder;
+    const path = `${ghFolder}/${fname}`;
+    const url  = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`;
+    prog.textContent = 'Upload läuft …';
+    try {
+      const r = await fetch(url, {
+        method: 'PUT',
+        headers: { Authorization: `token ${tok}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `foto: ${fname}`, content: b64, branch: GH_BRANCH })
+      });
+      if (!r.ok) { const err = await r.json(); prog.textContent = 'Fehler: ' + (err.message||r.status); return; }
+      const imgUrl = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${path}`;
+      const fbPath = BIKES[activeBike].fbGallery;
+      const key = Date.now().toString();
+      await db.ref(`${fbPath}/${key}`).set({ url: imgUrl, caption, uploaded: Date.now(), order: Date.now() });
+      prog.textContent = 'Erfolgreich hochgeladen!';
+      _pendingFile = null;
+      setTimeout(closeUpload, 1200);
+    } catch(err) {
+      prog.textContent = 'Netzwerkfehler: ' + err.message;
+    }
+  };
+  reader.readAsDataURL(_pendingFile);
+}
+
+/* ── Share ── */
+function sharePage() {
+  const url  = window.location.href;
+  const text = `Unsere Fahrräder – ${BIKES[activeBike].name}`;
+  if (navigator.share) {
+    navigator.share({ title: text, url });
+  } else {
+    navigator.clipboard?.writeText(url).then(() => showToast('Link kopiert!')).catch(() => window.open(url, '_blank'));
+  }
+}
+
+/* ── Init ── */
+subscribeGallery();
+</script>
+</body>
+</html>
