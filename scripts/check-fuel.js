@@ -2,7 +2,7 @@
 const webpush = require('web-push');
 const fetch   = require('node-fetch');
 
-const PRICE_THRESHOLD = 2.10;   // € – Benachrichtigung unter diesem Wert
+const DEFAULT_THRESHOLD = 2.15; // € – Fallback wenn nicht in Firebase gesetzt
 const MIN_NOTIFY_GAP  = 4 * 60 * 60 * 1000; // 4 Stunden Anti-Spam
 
 const {
@@ -56,6 +56,11 @@ async function main() {
     console.log('Keine Favoriten-Stationen konfiguriert. Beende.');
     return;
   }
+
+  const PRICE_THRESHOLD = (typeof config.threshold === 'number' && config.threshold > 0)
+    ? config.threshold
+    : DEFAULT_THRESHOLD;
+  console.log(`Schwellenwert: ${PRICE_THRESHOLD.toFixed(2)} €`);
 
   // Anti-Spam: max. alle 4 Stunden
   if (lastNotif && Date.now() - lastNotif < MIN_NOTIFY_GAP) {
