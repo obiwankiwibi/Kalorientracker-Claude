@@ -230,7 +230,7 @@ function toggleFav(id){
  }
 }
 
-let filterName='',filterBrand='',favsOnly=false,sortDir='asc';
+let filterName='',filterBrand='',favsOnly=true,sortDir='asc';
 
 function updateBrandFilter(){
  const sel=$('brandFilter');const cur=sel.value;
@@ -359,6 +359,7 @@ $('overlay').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList
 $('searchBtn').onclick=search;$('place').oninput=()=>{state.coords=null};$('sorting').onchange=render;
 $('nameSearch').oninput=()=>{filterName=$('nameSearch').value.toLowerCase().trim();render()};
 $('brandFilter').onchange=()=>{filterBrand=$('brandFilter').value;render()};
+$('favsOnlyBtn').classList.add('active');
 $('favsOnlyBtn').onclick=()=>{favsOnly=!favsOnly;$('favsOnlyBtn').classList.toggle('active',favsOnly);render()};
 $('sortDirBtn').onclick=()=>{sortDir=sortDir==='asc'?'desc':'asc';$('sortDirBtn').textContent=sortDir==='asc'?'↑ Aufsteigend':'↓ Absteigend';render()};
 $('gpsBtn').onclick=()=>{
