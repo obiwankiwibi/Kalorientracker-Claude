@@ -240,7 +240,7 @@
       width: 28px; height: 28px; border-radius: 50%;
       border: 2px solid var(--accent); flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      color: var(--accent); font-size: 18px; line-height: 1;
+      color: var(--accent); font-size: 18px; line-height: 1; cursor: pointer;
     }
 
     .add-task-input {
@@ -565,7 +565,7 @@
   <div id="doneTasksList" style="display:none"></div>
 
   <div class="add-task-bar">
-    <div class="add-task-circle">+</div>
+    <div class="add-task-circle" onclick="document.getElementById('addTaskInput').focus()">+</div>
     <input class="add-task-input" id="addTaskInput"
            placeholder="Aufgabe hinzufügen"
            onkeydown="if(event.key==='Enter')addTask()">
