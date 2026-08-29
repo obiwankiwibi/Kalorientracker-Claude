@@ -1,6 +1,6 @@
 {
-  "name": "yapi hub",
-  "short_name": "yapi hub",
+  "name": "YaPi Hub",
+  "short_name": "YaPiHub",
   "description": "Der persönliche Hub für Yannick & Pia",
   "start_url": "./index.html",
   "display": "standalone",
