@@ -93,40 +93,41 @@ async function main() {
     return;
   }
 
-  // Alle Stationen mit Preisen auflisten
-  const lines = [];
+  // Stationen mit Preisen auswerten
+  const cheapLines = [];   // unter Schwellenwert → ins Notification-Body
+  const otherLines = [];   // über Schwellenwert → nur Log
   let anyBelowThreshold = false;
 
   for (const id of config.stations) {
     const p = prices[id];
-    if (!p) { lines.push(`• (unbekannt)`); continue; }
-    if (p.status !== 'open') { lines.push(`• geschlossen`); continue; }
+    if (!p) { console.log(`  ${id}: keine Daten`); continue; }
+    if (p.status !== 'open') { console.log(`  ${id}: geschlossen`); continue; }
 
     const price = p.e5 ?? p.e10 ?? p.diesel;
-    if (price == null) { lines.push(`• kein Preis`); continue; }
+    if (price == null) { console.log(`  ${id}: kein Preis`); continue; }
 
     const fuelLabel = p.e5 != null ? 'E5' : p.e10 != null ? 'E10' : 'Diesel';
     const priceStr = price.toFixed(3).replace('.', ',');
-
-    // Stationsname aus config.stationNames falls vorhanden, sonst nur ID
     const name = (config.stationNames && config.stationNames[id]) ? config.stationNames[id] : id.substring(0, 8);
 
     if (price < PRICE_THRESHOLD) {
-      lines.push(`✅ ${name}: ${priceStr} € (${fuelLabel})`);
+      cheapLines.push(`✅ ${name}: ${priceStr} € (${fuelLabel})`);
       anyBelowThreshold = true;
     } else {
-      lines.push(`• ${name}: ${priceStr} € (${fuelLabel})`);
+      otherLines.push(`• ${name}: ${priceStr} € (${fuelLabel})`);
     }
   }
 
-  console.log('Stationsübersicht:\n' + lines.join('\n'));
+  console.log('Günstig:\n' + (cheapLines.join('\n') || '—'));
+  console.log('Teurer:\n' + (otherLines.join('\n') || '—'));
 
   if (!anyBelowThreshold) {
     console.log(`Kein Favorit unter Schwellenwert ${PRICE_THRESHOLD.toFixed(2)} €. Keine Benachrichtigung.`);
     return;
   }
 
-  const body = lines.join('\n');
+  // Body: zuerst günstige, dann teurere offene Stationen — keine geschlossenen
+  const body = [...cheapLines, ...otherLines].join('\n');
   const payload = JSON.stringify({
     title: `⛽ Sprit günstig – unter ${PRICE_THRESHOLD.toFixed(2).replace('.', ',')} €!`,
     body,

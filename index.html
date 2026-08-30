@@ -930,10 +930,12 @@ async function saveFuelStationsToFirebase() {
   const tk = JSON.parse(localStorage.getItem('tankstellen_finder_v2') || '{}');
   const favIds = Object.keys(tk.favorites || {});
   if (!favIds.length || !tk.apiKey) return;
+  const stationNames = {};
+  favIds.forEach(id => { stationNames[id] = tk.favorites[id]?.name || id; });
   await fetch(FB_DB + '/fuel_config.json', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ apiKey: tk.apiKey, stations: favIds })
+    body: JSON.stringify({ apiKey: tk.apiKey, stations: favIds, stationNames })
   });
 }
 
