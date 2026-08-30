@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Fahrräder</title>
-<script>(function(){var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.dataset.theme=t;})();</script>
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');</script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -22,7 +21,7 @@
 }
 
 @media(prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
+  :root{
     --bg:#111111;
     --bg2:#1e1e1e;
     --text:#f0f0f0;
@@ -31,15 +30,6 @@
     --accent:#3aaa64;
     --accent-t:#ffffff;
   }
-}
-:root[data-theme="dark"]{
-  --bg:#111111;
-  --bg2:#1e1e1e;
-  --text:#f0f0f0;
-  --muted:#888888;
-  --line:#2a2a2a;
-  --accent:#3aaa64;
-  --accent-t:#ffffff;
 }
 
 html,body{
@@ -464,7 +454,6 @@ html,body{
   <a class="app-nav-back" href="index.html" aria-label="Zurück">←</a>
   <span class="app-nav-label">Unsere Fahrräder</span>
   <div style="display:flex;gap:2px;align-items:center">
-    <button id="themeBtn" class="app-nav-btn" onclick="toggleTheme()" aria-label="Darstellung wechseln" title="Dunkel/Hell">🌙</button>
     <button class="app-nav-btn" onclick="sharePage()" aria-label="Teilen" title="Teilen">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
     </button>
@@ -685,13 +674,6 @@ html,body{
 <div class="toast" id="toast"></div>
 
 <script>
-/* Theme */
-(function(){var b=document.getElementById('themeBtn');if(b)b.textContent=document.documentElement.dataset.theme==='dark'?'☀️':'🌙';})();
-function toggleTheme(){
-  var h=document.documentElement,next=h.dataset.theme==='dark'?'light':'dark';
-  h.dataset.theme=next;localStorage.setItem('theme',next);
-  document.getElementById('themeBtn').textContent=next==='dark'?'☀️':'🌙';
-}
 
 /* Firebase */
 const FB_CONFIG = {

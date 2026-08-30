@@ -1017,7 +1017,8 @@ const BACKUP_STATIC_KEYS = [
   'kalorientracker_history','kalorientracker_favorites',
   'haushaltskosten_v1',
   'tankstellen_finder_v2',
-  'recentLists','restaurants','scannedSuggestions','einkauf_offers'
+  'recentLists','restaurants','scannedSuggestions','einkauf_offers',
+  'todo_tasks','fb_db_url','haushalt_device_id'
 ];
 
 function updateBackupSub() {
@@ -1239,16 +1240,18 @@ initTodoWidget();
 /* ── Einkaufsliste Anzahl ── */
 (function() {
   try {
-    const listId = 'zuhause';
-    const items = JSON.parse(localStorage.getItem('list_' + listId) || '{}');
-    const total = Object.values(items).length;
-    const el = document.getElementById('einkaufCount');
-    if (!el) return;
-    if (total > 0) {
-      const done = Object.values(items).filter(it => it.checked).length;
-      el.textContent = done > 0 ? `${total - done} offen · ${done} erledigt` : `${total} Artikel`;
-      el.style.display = '';
+    let total = 0, done = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith('list_')) continue;
+      const items = Object.values(JSON.parse(localStorage.getItem(k) || '{}'));
+      total += items.length;
+      done  += items.filter(it => it.checked).length;
     }
+    const el = document.getElementById('einkaufCount');
+    if (!el || total === 0) return;
+    el.textContent = done > 0 ? `${total - done} offen · ${done} erledigt` : `${total} Artikel`;
+    el.style.display = '';
   } catch(e) {}
 })();
 
