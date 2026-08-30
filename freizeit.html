@@ -6,9 +6,11 @@
 <title>Freizeitaktivitäten</title>
 <style>
 :root{--bg:#edf2f7;--card:#fff;--ink:#17202a;--muted:#718096;--line:#dce2e8;--brand:#0050c8;--soft:rgba(200,88,0,0.1);--warn:#a66016;--radius:13px;--shadow:0 10px 30px rgba(23,32,42,.07)}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161e2e;--ink:#e8eaf2;--muted:#7880a0;--line:#2a3045;--brand:#4d8fe8;--soft:rgba(77,143,232,0.12);--warn:#f0a050;--shadow:0 10px 30px rgba(0,0,0,.35)}}
 
 
 #page-bg{position:fixed;inset:0;z-index:-1;background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%);will-change:transform}
+@media(prefers-color-scheme:dark){#page-bg{background:linear-gradient(155deg,#0a1020 0%,#0d1525 45%,#0f1a2e 100%)}}
 
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}

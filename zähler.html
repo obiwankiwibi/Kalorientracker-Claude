@@ -21,6 +21,23 @@
       --radius: 13px;
       --mono: 'Courier New','Menlo','Monaco',monospace;
     }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:    #0d1117;
+        --card:  #161e2e;
+        --card2: #1c2536;
+        --ink:   #e8eaf2;
+        --muted: #7880a0;
+        --line:  #2a3045;
+        --shadow: 0 1px 3px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+        --pos:    #4ade80; --pos-bg:  rgba(74,222,128,.1);
+        --neg:    #f87171; --neg-bg:  rgba(248,113,113,.1);
+        --warn:   #fbbf24; --warn-bg: rgba(251,191,36,.08); --warn-line: rgba(251,191,36,.28);
+        --brand:  #4d8fe8;
+        --brand-bg: rgba(77,143,232,.1);
+      }
+    }
     
     
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -237,7 +254,8 @@
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
 
     /* ── Circuit background ── */
-    #page-bg { position: fixed; inset: 0; z-index: -1; background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%); }
+    #page-bg { position: fixed; inset: 0; z-index: -1; background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%); will-change: transform; }
+    @media (prefers-color-scheme: dark) { #page-bg { background: linear-gradient(155deg,#0a1020 0%,#0d1525 45%,#0f1a2e 100%); } }
       </style>
 </head>
 <body>

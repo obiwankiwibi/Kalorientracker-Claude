@@ -1,5 +1,6 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#081d17"><title>Pflanzen · Zimmergrün</title><script>(function(){var t=localStorage.getItem("pflanzen_theme")||"light";document.documentElement.setAttribute("data-theme",t);})()</script><style>
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#081d17"><title>Pflanzen · Zimmergrün</title><style>
 :root{--ink:#10251e;--deep:#081d17;--green:#207555;--lime:#c8f06a;--cream:#f4f2e8;--paper:#fffef9;--muted:#65736c;--line:#dce3db;--danger:#8a321f;--shadow:0 24px 70px #061b151c}
+@media(prefers-color-scheme:dark){:root{--ink:#c8ddd5;--deep:#0a2218;--green:#3daa78;--lime:#c8f06a;--cream:#111a14;--paper:#0e1610;--muted:#7a9988;--line:#1e3028;--danger:#e05c46;--shadow:0 24px 70px rgba(0,0,0,.5)}}
 
 
 /* ── Notizen ── */
@@ -21,6 +22,7 @@
 .notes-save-btn:hover{opacity:.85}
 /* #page-bg */
 #page-bg{position:fixed;inset:0;z-index:-1;background:#f4f2e8;will-change:transform}
+@media(prefers-color-scheme:dark){#page-bg{background:linear-gradient(155deg,#081a10 0%,#0a2018 45%,#0d2218 100%)}}
 body{background:transparent!important}
 /* App nav bar */
 .app-nav{display:flex;align-items:center;gap:10px;padding:10px 16px 0;position:sticky;top:0;z-index:100;background:rgba(244,242,232,0.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}

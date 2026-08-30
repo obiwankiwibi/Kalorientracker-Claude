@@ -7,10 +7,6 @@
   <link rel="manifest" href="manifest-todo.json">
   <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');</script>
 
-  <script>(function(){
-    var t = localStorage.getItem('todo_theme') || 'light';
-    document.documentElement.setAttribute('data-theme', t);
-  })();</script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -19,20 +15,6 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:      #0c0f1e;
-      --surface: #272a3d;
-      --card:    #313554;
-      --border:  #3a3d55;
-      --text:    #eef0f8;
-      --muted:   #7880a0;
-      --accent:  #1b4fd8;
-      --star:    #f5a623;
-      --green:   #4ade80;
-      --red:     #e8635a;
-      --shadow:  0 8px 32px rgba(0,0,0,0.45);
-    }
-
-    html[data-theme="light"] {
       --bg:      #edf2f7;
       --surface: #ffffff;
       --card:    #e5e5ea;
@@ -44,6 +26,22 @@
       --green:   #34c759;
       --red:     #ff3b30;
       --shadow:  0 4px 16px rgba(0,0,0,0.12);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:      #0c0f1e;
+        --surface: #272a3d;
+        --card:    #313554;
+        --border:  #3a3d55;
+        --text:    #eef0f8;
+        --muted:   #7880a0;
+        --accent:  #4d8fe8;
+        --star:    #f5a623;
+        --green:   #4ade80;
+        --red:     #e8635a;
+        --shadow:  0 8px 32px rgba(0,0,0,0.45);
+      }
     }
 
     html, body { height: 100%; }
@@ -512,8 +510,8 @@
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
     /* ── Circuit background ── */
-    #page-bg { position: fixed; inset: 0; z-index: -1; background: url('images/circuit-bg.jpg') center/cover; }
-    [data-theme=light] #page-bg{background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%)}
+    #page-bg { position: fixed; inset: 0; z-index: -1; background: linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%); will-change: transform; }
+    @media (prefers-color-scheme: dark) { #page-bg { background: linear-gradient(155deg,#0a1020 0%,#0d1525 45%,#0f1a2e 100%); } }
   </style>
 </head>
 <body>

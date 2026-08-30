@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Müllplan</title>
-<script>(function(){var t=localStorage.getItem('hub_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})()</script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -17,6 +16,19 @@
   --muted:   #6b7a99;
   --border:  rgba(0,0,80,0.09);
   --shadow:  0 4px 18px rgba(0,0,80,0.07);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:      #0d1117;
+    --surface: rgba(22,30,46,0.92);
+    --card:    #161e2e;
+    --teal:    #4d8fe8;
+    --text:    #e8eaf2;
+    --muted:   #7880a0;
+    --border:  rgba(255,255,255,0.08);
+    --shadow:  0 4px 18px rgba(0,0,0,0.35);
+  }
 }
 
 
@@ -33,6 +45,7 @@ body {
 }
 
 #page-bg { position: fixed; inset: 0; z-index: -1; background:linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%); will-change: transform; }
+@media (prefers-color-scheme: dark) { #page-bg { background: linear-gradient(155deg,#0a1020 0%,#0d1525 45%,#0f1a2e 100%); } }
 
 /* ── Nav ── */
 .site-nav {
