@@ -2,8 +2,7 @@
 const webpush = require('web-push');
 const fetch   = require('node-fetch');
 
-const DEFAULT_THRESHOLD = 2.10; // € – Fallback wenn nicht in Firebase gesetzt
-const MIN_NOTIFY_GAP  = 2 * 60 * 60 * 1000; // 2 Stunden Anti-Spam
+const MIN_NOTIFY_GAP  = 25 * 60 * 1000; // 25 Minuten Anti-Spam (Testmodus)
 const NOTIFY_HOUR_START = 7;
 const NOTIFY_HOUR_END   = 22;
 
@@ -67,12 +66,7 @@ async function main() {
     return;
   }
 
-  const PRICE_THRESHOLD = (typeof config.threshold === 'number' && config.threshold > 0)
-    ? config.threshold
-    : DEFAULT_THRESHOLD;
-  console.log(`Schwellenwert: ${PRICE_THRESHOLD.toFixed(2)} €`);
-
-  // Anti-Spam: max. alle 2 Stunden
+  // Anti-Spam: max. alle 25 Minuten (Testmodus)
   if (lastNotif && Date.now() - lastNotif < MIN_NOTIFY_GAP) {
     const nextIn = Math.round((MIN_NOTIFY_GAP - (Date.now() - lastNotif)) / 60000);
     console.log(`Letzte Benachrichtigung erst vor kurzem. Nächste frühestens in ${nextIn} Minuten.`);
@@ -93,43 +87,35 @@ async function main() {
     return;
   }
 
-  // Stationen mit Preisen auswerten
-  const cheapLines = [];   // unter Schwellenwert → ins Notification-Body
-  const otherLines = [];   // über Schwellenwert → nur Log
-  let anyBelowThreshold = false;
+  // Alle offenen Stationen mit E10-Preis auswerten
+  const lines = [];
 
   for (const id of config.stations) {
     const p = prices[id];
     if (!p) { console.log(`  ${id}: keine Daten`); continue; }
     if (p.status !== 'open') { console.log(`  ${id}: geschlossen`); continue; }
 
-    const price = p.e5 ?? p.e10 ?? p.diesel;
-    if (price == null) { console.log(`  ${id}: kein Preis`); continue; }
-
-    const fuelLabel = p.e5 != null ? 'E5' : p.e10 != null ? 'E10' : 'Diesel';
-    const priceStr = price.toFixed(3).replace('.', ',');
+    const price = p.e10;
     const name = (config.stationNames && config.stationNames[id]) ? config.stationNames[id] : id.substring(0, 8);
 
-    if (price < PRICE_THRESHOLD) {
-      cheapLines.push(`✅ ${name}: ${priceStr} € (${fuelLabel})`);
-      anyBelowThreshold = true;
+    if (price == null) {
+      lines.push(`• ${name}: kein E10`);
     } else {
-      otherLines.push(`• ${name}: ${priceStr} € (${fuelLabel})`);
+      lines.push(`• ${name}: ${price.toFixed(3).replace('.', ',')} €`);
     }
   }
 
-  console.log('Günstig:\n' + (cheapLines.join('\n') || '—'));
-  console.log('Teurer:\n' + (otherLines.join('\n') || '—'));
+  console.log('E10-Preise:\n' + (lines.join('\n') || '—'));
 
-  if (!anyBelowThreshold) {
-    console.log(`Kein Favorit unter Schwellenwert ${PRICE_THRESHOLD.toFixed(2)} €. Keine Benachrichtigung.`);
+  if (!lines.length) {
+    console.log('Keine offenen Stationen gefunden. Keine Benachrichtigung.');
     return;
   }
 
-  // Body: zuerst günstige, dann teurere offene Stationen — keine geschlossenen
-  const body = [...cheapLines, ...otherLines].join('\n');
+  const nowBerlinStr = nowBerlin.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  const body = lines.join('\n');
   const payload = JSON.stringify({
-    title: `⛽ Sprit günstig – unter ${PRICE_THRESHOLD.toFixed(2).replace('.', ',')} €!`,
+    title: `⛽ E10-Preise – ${nowBerlinStr} Uhr`,
     body,
     icon:  'https://obiwankiwibi.github.io/Kalorientracker-Claude/icon-192.png',
     url:   'https://obiwankiwibi.github.io/Kalorientracker-Claude/tankstellen_finder.html'
