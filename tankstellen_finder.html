@@ -11,6 +11,7 @@
 <title>Tankstellenvergleich</title>
 <link rel="manifest" href="manifest-tankstellen.json">
 <link rel="apple-touch-icon" href="icon-tankstellen.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});</script>
 <style>
 :root{--bg:#edf2f7;--card:#fff;--ink:#17202a;--muted:#718096;--line:#dce2e8;--brand:#0050c8;--soft:rgba(27,79,216,0.10);--warn:#a66016;--radius:13px;--shadow:0 10px 30px rgba(23,32,42,.07);--grad-a:#b8d4f0;--grad-b:#dce8f5;--grad-c:#e8f2fc}
@@ -87,6 +88,22 @@ header{display:flex;}.logo{font:700 19px/1.2 system-ui}.logo small{display:block
 .fav-alert-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(240,150,0,0.15);border:1px solid rgba(240,150,0,0.5);color:#854d0e;border-radius:99px;padding:3px 9px;font-size:11px;font-weight:700;margin-top:6px;width:100%;}
 .fav-card.alerted{border-color:rgba(240,150,0,0.55);box-shadow:0 0 0 2px rgba(240,150,0,0.15);}
 
+/* ── View Toggle ── */
+.view-toggle{display:flex;gap:0;margin-bottom:18px;border:1px solid var(--line);border-radius:99px;overflow:hidden;width:fit-content;background:var(--card)}
+.view-tab{border:0;background:none;color:var(--muted);padding:8px 20px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;transition:background .15s,color .15s;line-height:1}
+.view-tab.active{background:var(--brand);color:#fff}
+/* ── Map ── */
+#mapContainer{height:480px;border-radius:var(--radius);overflow:hidden;margin-bottom:18px;border:1px solid var(--line);box-shadow:var(--shadow);display:none;position:relative;z-index:1}
+.leaflet-tile-pane{filter:none}
+@media(prefers-color-scheme:dark){.leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}.leaflet-marker-icon,.leaflet-control{filter:invert(1) hue-rotate(180deg)}.tk-marker,.leaflet-popup-content-wrapper,.leaflet-popup-tip{filter:invert(1) hue-rotate(180deg)}}
+.tk-marker{background:#12264a;color:#fff;border-radius:9px;padding:5px 9px;min-width:62px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.5);cursor:pointer;white-space:nowrap}
+.tk-marker.fav{background:#0050c8}
+.tk-marker.closed{opacity:.55}
+.tk-marker.cheapest{background:#15803d}
+.tk-brand{font-size:9px;font-weight:700;letter-spacing:.04em;opacity:.75;line-height:1.2}
+.tk-price{font-size:15px;font-weight:800;line-height:1.3;font-variant-numeric:tabular-nums}
+.tk-star{position:absolute;top:-5px;right:-5px;font-size:11px;background:#f6c000;color:#000;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;line-height:1}
+
 /* ── Install Banner ── */
 .install-banner{display:flex;align-items:center;gap:10px;background:var(--soft);border:1px solid var(--brand);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600;color:var(--ink)}
 .install-banner span{flex:1}
@@ -136,7 +153,11 @@ header { border-bottom: 2px solid var(--brand); }
   <button id="sortDirBtn" class="filter-chip">↑ Aufsteigend</button>
 </div>
 </section>
-<div class="fuel-tabs"><button class="fuel" data-fuel="e10">Super E10</button><button class="fuel active" data-fuel="e5">Super 95 (E5)</button><button class="fuel" data-fuel="diesel">Diesel</button></div>
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+  <div class="fuel-tabs" style="margin-bottom:0"><button class="fuel" data-fuel="e10">Super E10</button><button class="fuel active" data-fuel="e5">Super 95 (E5)</button><button class="fuel" data-fuel="diesel">Diesel</button></div>
+  <div class="view-toggle"><button class="view-tab active" data-view="list">☰ Liste</button><button class="view-tab" data-view="map">🗺 Karte</button></div>
+</div>
+<div id="mapContainer"></div>
 <div class="layout"><main><div id="staleWarn" class="stale-warn" style="display:none"></div><div class="section-head"><div class="section-title">Tankstellen</div><span class="count" id="count">0</span></div><div class="stations" id="stations"><div class="card empty"><strong>Bereit für die erste Suche</strong>API-Key hinterlegen und Tankstellen in der Umgebung abrufen.</div></div></main><aside><div class="card chart-card"><div class="section-head"><div class="section-title">Lokale Preisentwicklung</div><button class="text-btn" id="clearHistory">Löschen</button></div><div class="hint">Der Durchschnitt wird bei jeder Suche lokal gespeichert.</div><div class="chart-wrap"><canvas id="chart"></canvas></div><div class="legend"><span><i class="dot"></i><span id="legendFuel">Super 95 (E5)</span></span></div></div></aside></div>
 <div class="topstats" id="topstats" style="display:none">
   <div class="card stat"><div class="eyebrow">Günstigster Preis</div><div class="big" id="minPrice">—</div><div class="hint" id="minName">—</div></div>
@@ -151,6 +172,7 @@ header { border-bottom: 2px solid var(--brand); }
 <footer class="attribution">Preisdaten: <a href="https://www.tankerkoenig.de" target="_blank" rel="noopener">www.tankerkoenig.de</a> &middot; Lizenz: <a href="https://creativecommons.org/licenses/by/4.0/deed.de" target="_blank" rel="noopener">CC BY 4.0</a></footer>
 </div>
 <div class="overlay" id="overlay"><div class="modal"><h2>API-Einstellungen</h2><p class="notice">Der Key wird nur lokal in diesem Browser gespeichert und nie in den Code geschrieben. <strong>API-Keys dürfen laut Nutzungsbedingungen nicht auf GitHub oder in Foren veröffentlicht werden.</strong> → <a href="https://creativecommons.tankerkoenig.de/?page=info" target="_blank" rel="noopener" style="color:var(--brand)">API-Dokumentation &amp; Registrierung</a></p><div class="field"><label>Tankerkönig API-Key</label><input id="apiKey" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div><div class="field" style="margin-top:14px"><label>Tankgröße (Liter)</label><input id="tankSizeInput" type="number" min="10" max="200" step="5" placeholder="50"></div><div class="actions"><button class="ghost" id="cancelSettings">Abbrechen</button><button class="primary" id="saveSettings">Speichern</button></div></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const STORE='tankstellen_finder_v2';
 // Key für den Zugriff auf die freie Tankerkönig-Spritpreis-API
@@ -289,6 +311,7 @@ function render(){
   return `<article class="card station"><div class="station-left">${brandBadge(s.brand)}<div style="flex:1;min-width:0"><div class="name">${esc(s.name)}</div><div class="address">${esc(s.street)} ${esc(s.houseNumber)}, ${esc(s.postCode)} ${esc(s.place)}</div><div class="badges"><button class="badge hours-btn ${s.isOpen?'open':'closed'}" data-sid="${esc(s.id)}">${s.isOpen?'Geöffnet ▾':'Geschlossen ▾'}</button><span class="badge">${Number(s.dist).toLocaleString('de-DE',{maximumFractionDigits:1})} km</span></div><div class="hours-panel" id="hp_${s.id}" style="display:none"></div></div></div><div><div class="price">${euro(s[state.fuel])}<small>pro Liter</small></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.lat+','+s.lng)}">Route öffnen</a><button class="star${isFav?' active':''}" data-favid="${esc(s.id)}" title="${isFav?'Nicht mehr beobachten':'Beobachten'}">★</button></div></article>`;
  }).join('');
  drawChart();renderFavs();
+ if(_mapView==='map')updateMapMarkers();
 }
 
 function renderFavs(){
@@ -352,6 +375,62 @@ function brandBadge(brand){
  return `<span class="brand-badge" style="background:${cfg.bg};color:${cfg.fg};font-size:${fs}">${abbr}</span>`;
 }
 
+/* ── Map ── */
+let _leafMap=null,_leafMarkers=[],_mapView='list';
+
+function switchView(v){
+ _mapView=v;
+ document.querySelectorAll('.view-tab').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+ const mapC=$('mapContainer'),layout=document.querySelector('.layout');
+ if(v==='map'){
+  mapC.style.display='';layout.style.display='none';
+  if(!_leafMap)initLeafMap();else updateMapMarkers();
+ }else{
+  mapC.style.display='none';layout.style.display='';
+ }
+}
+
+function initLeafMap(){
+ const center=state.coords?[state.coords.lat,state.coords.lng]:[50.87,8.11];
+ _leafMap=L.map('mapContainer').setView(center,12);
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(_leafMap);
+ updateMapMarkers();
+}
+
+function updateMapMarkers(){
+ if(!_leafMap)return;
+ _leafMarkers.forEach(m=>m.remove());
+ _leafMarkers=[];
+ const list=validStations();
+ const fuel=state.fuel;
+ const prices=list.filter(s=>typeof s[fuel]==='number').map(s=>s[fuel]);
+ const minPrice=prices.length?Math.min(...prices):Infinity;
+ list.forEach(s=>{
+  if(!s.lat||!s.lng)return;
+  const price=s[fuel];
+  const isFav=!!state.favorites[s.id];
+  const isCheapest=price===minPrice&&prices.length>0;
+  const priceStr=typeof price==='number'?price.toFixed(3).replace('.',','):'—';
+  const abbr=(s.brand||'?').replace(/\s+/g,'').slice(0,5).toUpperCase()||'??';
+  const cls=['tk-marker',isFav?'fav':'',!s.isOpen?'closed':'',isCheapest&&!isFav?'cheapest':''].filter(Boolean).join(' ');
+  const starHtml=isFav?'<span class="tk-star">★</span>':'';
+  const icon=L.divIcon({
+   html:`<div class="${cls}" style="position:relative">${starHtml}<div class="tk-brand">${esc(abbr)}</div><div class="tk-price">${priceStr}</div></div>`,
+   className:'',iconAnchor:[35,48],iconSize:[70,48]
+  });
+  const popup=`<strong>${esc(s.name)}</strong><br><small style="color:#666">${esc(s.street||'')} ${esc(s.houseNumber||'')}, ${esc(s.postCode)} ${esc(s.place)}</small><hr style="margin:6px 0;border:none;border-top:1px solid #ddd"><div style="line-height:2">E10: <b>${s.e10?s.e10.toFixed(3).replace('.',',')+' €':'—'}</b><br>E5: <b>${s.e5?s.e5.toFixed(3).replace('.',',')+' €':'—'}</b><br>Diesel: <b>${s.diesel?s.diesel.toFixed(3).replace('.',',')+' €':'—'}</b></div><div style="margin-top:8px;display:flex;gap:8px"><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.lat+','+s.lng)}" target="_blank" style="color:#0050c8;font-size:12px">Route öffnen ↗</a><span style="color:#999;font-size:12px">${s.isOpen?'Geöffnet':'Geschlossen'}</span></div>`;
+  const m=L.marker([s.lat,s.lng],{icon}).addTo(_leafMap);
+  m.bindPopup(popup,{maxWidth:240});
+  _leafMarkers.push(m);
+ });
+ if(state.coords&&list.length){
+  const bounds=L.latLngBounds(_leafMarkers.map(m=>m.getLatLng()));
+  _leafMap.fitBounds(bounds,{padding:[30,30],maxZoom:14});
+ }else if(state.coords){
+  _leafMap.setView([state.coords.lat,state.coords.lng],12);
+ }
+}
+
 async function fetchOpeningHours(id,panel){
  const key='tk_h_'+id;
  const cached=localStorage.getItem(key);
@@ -406,6 +485,7 @@ $('gpsBtn').onclick=()=>{
  },()=>{showToast('Standortzugriff verweigert – bitte in den Browser-Einstellungen erlauben');btn.textContent='📍';btn.disabled=false;},{timeout:8000});
 };
 document.querySelectorAll('.fuel').forEach(b=>b.onclick=()=>{state.fuel=b.dataset.fuel;persist();render()});
+document.querySelectorAll('.view-tab').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 $('clearHistory').onclick=()=>{if(confirm('Gespeicherte Preisentwicklung löschen?')){state.history={e10:[],e5:[],diesel:[]};persist();drawChart()}};
 $('stations').addEventListener('click',async e=>{
  const star=e.target.closest('.star[data-favid]');

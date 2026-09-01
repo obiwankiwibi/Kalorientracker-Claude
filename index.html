@@ -995,8 +995,9 @@ async function initFuelNotifyBtn() {
   if (!reg) return;
   const sub = await reg.pushManager.getSubscription();
   setNotifBtnState(!!sub);
-  // Push-Onboarding: einmalig zeigen wenn noch kein Abo
-  if (!sub && !localStorage.getItem('push_banner_dismissed')) {
+  if (sub) {
+    saveFuelStationsToFirebase().catch(() => {});
+  } else if (!localStorage.getItem('push_banner_dismissed')) {
     setTimeout(() => {
       const b = document.getElementById('pushBanner');
       if (b) b.style.display = 'flex';
