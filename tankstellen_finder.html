@@ -301,7 +301,7 @@ function render(){
   $('stations').innerHTML='<div class="card empty"><strong>Keine Preise gefunden</strong>Für den gewählten Kraftstoff und Umkreis sind keine Preise verfügbar.</div>';
   $('minPrice').textContent=$('avgPrice').textContent=$('spread').textContent=$('savings').textContent='—';$('minName').textContent='Keine Daten';$('topstats').style.display='none';drawChart();renderFavs();return;
  }
- $('topstats').style.display='';
+ $('topstats').style.display=_mapView==='map'?'none':'';
  const vals=list.map(s=>s[state.fuel]),avg=vals.reduce((a,b)=>a+b,0)/vals.length,min=Math.min(...vals),max=Math.max(...vals),cheap=list.find(s=>s[state.fuel]===min);
  $('minPrice').textContent=euro(min);$('minName').textContent=cheap.name;$('avgPrice').textContent=euro(avg);
  $('spread').textContent=(max-min).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
@@ -317,7 +317,7 @@ function render(){
 function renderFavs(){
  const ids=Object.keys(state.favorites);const sec=$('favSection');
  if(!ids.length){sec.style.display='none';return}
- sec.style.display='';$('favCount').textContent=ids.length;
+ sec.style.display=_mapView==='map'?'none':'';$('favCount').textContent=ids.length;
  $('favGrid').innerHTML=ids.map(id=>{
   const fav=state.favorites[id];
   const hist=(state.favPrices[id]||[]).filter(h=>h.fuel===state.fuel);
