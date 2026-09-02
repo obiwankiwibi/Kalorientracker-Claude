@@ -135,7 +135,7 @@ header { border-bottom: 2px solid var(--brand); }
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div id="ptr" aria-hidden="true">↻</div>
 <div class="app">
-<header class="site-nav"><div class="site-nav-title">⛽ Tankstellen</div><button class="site-nav-btn" id="settingsBtn" title="API-Einstellungen">⚙</button><button class="site-nav-btn" id="notifBtn" title="Benachrichtigungen aktivieren">🔔</button><button class="site-nav-btn" onclick="doQuickBackup()" title="Backup erstellen">💾</button><a href="index.html" class="site-nav-btn" title="Startseite">⌂</a></header>
+<header class="site-nav"><div class="site-nav-title">⛽ Tankstellen</div><button class="site-nav-btn" id="settingsBtn" title="API-Einstellungen">⚙</button><button class="site-nav-btn" id="notifBtn" title="Push-Benachrichtigungen konfigurieren">🔔</button><button class="site-nav-btn" onclick="doQuickBackup()" title="Backup erstellen">💾</button><a href="index.html" class="site-nav-btn" title="Startseite">⌂</a></header>
 <div id="installBanner" class="install-banner" style="display:none"><span>⬇ Als App installieren — Direktzugang ohne Browser-Leiste</span><button class="primary" id="installBtn" style="padding:7px 14px;font-size:13px;flex-shrink:0">Installieren</button><button class="site-nav-btn" id="installDismiss">✕</button></div>
 <section class="search-card" id="searchCard">
 <div class="search-compact-bar" id="searchCompactBar" style="display:none">
@@ -171,7 +171,7 @@ header { border-bottom: 2px solid var(--brand); }
 </div>
 <footer class="attribution">Preisdaten: <a href="https://www.tankerkoenig.de" target="_blank" rel="noopener">www.tankerkoenig.de</a> &middot; Lizenz: <a href="https://creativecommons.org/licenses/by/4.0/deed.de" target="_blank" rel="noopener">CC BY 4.0</a></footer>
 </div>
-<div class="overlay" id="overlay"><div class="modal"><h2>API-Einstellungen</h2><p class="notice">Der Key wird nur lokal in diesem Browser gespeichert und nie in den Code geschrieben. <strong>API-Keys dürfen laut Nutzungsbedingungen nicht auf GitHub oder in Foren veröffentlicht werden.</strong> → <a href="https://creativecommons.tankerkoenig.de/?page=info" target="_blank" rel="noopener" style="color:var(--brand)">API-Dokumentation &amp; Registrierung</a></p><div class="field"><label>Tankerkönig API-Key</label><input id="apiKey" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div><div class="field" style="margin-top:14px"><label>Tankgröße (Liter)</label><input id="tankSizeInput" type="number" min="10" max="200" step="5" placeholder="50"></div><hr style="margin:18px 0;border:none;border-top:1px solid var(--line)"><h3 style="margin:0 0 12px;font-size:15px;font-weight:700">Push-Benachrichtigungen</h3><div class="field"><label>Kraftstoffarten</label><div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600"><input type="checkbox" id="notifE10"> E10</label><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600"><input type="checkbox" id="notifE5"> Super 95</label><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600"><input type="checkbox" id="notifDiesel"> Diesel</label></div></div><div class="field" style="margin-top:14px"><label>Preisschwelle €/L (leer = immer senden)</label><input id="notifThreshold" type="number" step="0.01" min="0" max="5" placeholder="z. B. 1,85" style="max-width:160px"></div><p style="font-size:11px;color:var(--muted);margin:8px 0 0">Benachrichtigungen werden täglich 7–22 Uhr gesendet. Einstellungen werden in Firebase gespeichert.</p><div class="actions"><button class="ghost" id="cancelSettings">Abbrechen</button><button class="primary" id="saveSettings">Speichern</button></div></div></div>
+<div class="overlay" id="overlay"><div class="modal"><h2>Einstellungen</h2><p class="notice">Der Key wird nur lokal in diesem Browser gespeichert und nie in den Code geschrieben. <strong>API-Keys dürfen laut Nutzungsbedingungen nicht auf GitHub oder in Foren veröffentlicht werden.</strong> → <a href="https://creativecommons.tankerkoenig.de/?page=info" target="_blank" rel="noopener" style="color:var(--brand)">API-Dokumentation &amp; Registrierung</a></p><div class="field"><label>Tankerkönig API-Key</label><input id="apiKey" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div><div class="field" style="margin-top:14px"><label>Tankgröße (Liter)</label><input id="tankSizeInput" type="number" min="10" max="200" step="5" placeholder="50"></div><hr style="margin:18px 0;border:none;border-top:1px solid var(--line)"><h3 style="margin:0 0 12px;font-size:15px;font-weight:700">Push-Benachrichtigungen</h3><div class="field"><label>Kraftstoffarten</label><div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600"><input type="checkbox" id="notifE10"> E10</label><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600"><input type="checkbox" id="notifE5"> Super 95</label><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600"><input type="checkbox" id="notifDiesel"> Diesel</label></div></div><div class="field" style="margin-top:14px"><label>Preisschwelle €/L (leer = immer senden)</label><input id="notifThreshold" type="number" step="0.01" min="0" max="5" placeholder="z. B. 1,85" style="max-width:160px"></div><p style="font-size:11px;color:var(--muted);margin:8px 0 0">Benachrichtigungen werden täglich 7–22 Uhr gesendet. Einstellungen werden in Firebase gespeichert.</p><div class="actions"><button class="ghost" id="cancelSettings">Abbrechen</button><button class="primary" id="saveSettings">Speichern</button></div></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const STORE='tankstellen_finder_v2';
@@ -571,13 +571,14 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredIn
 window.addEventListener('appinstalled',()=>{$('installBanner').style.display='none';_deferredInstall=null;});
 $('installBtn').onclick=async()=>{if(!_deferredInstall)return;_deferredInstall.prompt();const{outcome}=await _deferredInstall.userChoice;if(outcome==='accepted')$('installBanner').style.display='none';_deferredInstall=null;};
 $('installDismiss').onclick=()=>$('installBanner').style.display='none';
-// Benachrichtigungen
-$('notifBtn').onclick=async()=>{
- if(!('Notification'in window)){showToast('Benachrichtigungen werden in diesem Browser nicht unterstützt');return}
- if(Notification.permission==='granted'){showToast('Benachrichtigungen sind bereits aktiv 🔔');return}
- const perm=await Notification.requestPermission();
- if(perm==='granted'){showToast('Benachrichtigungen aktiviert — Preis-Alarm meldet sich bei Erreichen des Ziels');$('notifBtn').style.color='var(--brand)';}
- else showToast('Benachrichtigungen verweigert — bitte in den Browser-Einstellungen erlauben');
+// Benachrichtigungen – 🔔 öffnet direkt die Push-Einstellungen
+$('notifBtn').onclick=()=>{
+ openSettings();
+ // Zur Benachrichtigungs-Sektion scrollen
+ setTimeout(()=>{
+  const el=$('notifE10');
+  if(el)el.closest('hr')?el.closest('hr').scrollIntoView({behavior:'smooth',block:'center'}):el.scrollIntoView({behavior:'smooth',block:'center'});
+ },120);
 };
 if(typeof Notification!=='undefined'&&Notification.permission==='granted')$('notifBtn').style.color='var(--brand)';
 async function notifyIfAlerted(){
