@@ -6,6 +6,8 @@ const MIN_NOTIFY_GAP  = 25 * 60 * 1000; // 25 Minuten Anti-Spam (Testmodus)
 const NOTIFY_HOUR_START = 7;
 const NOTIFY_HOUR_END   = 22;
 
+const FUEL_LABEL = { e10: 'E10', e5: 'E5', diesel: 'Diesel' };
+
 const {
   VAPID_PUBLIC_KEY,
   VAPID_PRIVATE_KEY,
@@ -73,6 +75,14 @@ async function main() {
     return;
   }
 
+  // Konfigurierte Kraftstoffarten und Preisschwelle
+  const fuels = Array.isArray(config.notifyFuels) && config.notifyFuels.length
+    ? config.notifyFuels
+    : ['e10'];
+  const threshold = typeof config.notifyThreshold === 'number' ? config.notifyThreshold : null;
+
+  console.log(`Konfiguration: Kraftstoffe=[${fuels.join(', ')}], Schwelle=${threshold !== null ? threshold + ' €' : 'keine'}`);
+
   // Tankerkönig API: Preise der Favoriten abfragen
   const ids = config.stations.join(',');
   const url = `https://creativecommons.tankerkoenig.de/json/prices.php?ids=${ids}&apikey=${config.apiKey}`;
@@ -87,7 +97,7 @@ async function main() {
     return;
   }
 
-  // Alle offenen Stationen mit E10-Preis auswerten
+  // Stationen auswerten
   const lines = [];
 
   for (const id of config.stations) {
@@ -95,28 +105,48 @@ async function main() {
     if (!p) { console.log(`  ${id}: keine Daten`); continue; }
     if (p.status !== 'open') { console.log(`  ${id}: geschlossen`); continue; }
 
-    const price = p.e10;
-    const name = (config.stationNames && config.stationNames[id]) ? config.stationNames[id] : id.substring(0, 8);
+    const name = (config.stationNames && config.stationNames[id])
+      ? config.stationNames[id]
+      : id.substring(0, 8);
 
-    if (price == null) {
-      lines.push(`• ${name}: kein E10`);
-    } else {
-      lines.push(`• ${name}: ${price.toFixed(3).replace('.', ',')} €`);
+    // Preise für alle konfigurierten Kraftstoffarten sammeln
+    const parts = [];
+    let belowThreshold = false;
+    for (const f of fuels) {
+      const price = p[f];
+      if (price == null) {
+        parts.push(`${FUEL_LABEL[f]}: —`);
+      } else {
+        parts.push(`${FUEL_LABEL[f]}: ${price.toFixed(3).replace('.', ',')} €`);
+        if (threshold !== null && price <= threshold) belowThreshold = true;
+      }
     }
+
+    // Schwelle: Station nur aufnehmen wenn mindestens ein Preis ≤ Schwelle
+    if (threshold !== null && !belowThreshold) {
+      console.log(`  ${name}: über Schwelle (${threshold} €)`);
+      continue;
+    }
+
+    lines.push(`• ${name}: ${parts.join(' | ')}`);
   }
 
-  console.log('E10-Preise:\n' + (lines.join('\n') || '—'));
+  const fuelTitle = fuels.map(f => FUEL_LABEL[f]).join('/');
+  console.log(`${fuelTitle}-Preise:\n` + (lines.join('\n') || '—'));
 
   if (!lines.length) {
-    console.log('Keine offenen Stationen gefunden. Keine Benachrichtigung.');
+    const reason = threshold !== null
+      ? `Alle Stationen über Schwellenwert ${threshold.toFixed(2).replace('.', ',')} €`
+      : 'Keine offenen Stationen gefunden';
+    console.log(`${reason}. Keine Benachrichtigung.`);
     return;
   }
 
   const nowBerlinStr = nowBerlin.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-  const body = lines.join('\n');
+  const thresholdNote = threshold !== null ? ` (≤ ${threshold.toFixed(2).replace('.', ',')} €)` : '';
   const payload = JSON.stringify({
-    title: `⛽ E10-Preise – ${nowBerlinStr} Uhr`,
-    body,
+    title: `⛽ ${fuelTitle}-Preise${thresholdNote} – ${nowBerlinStr} Uhr`,
+    body: lines.join('\n'),
     icon:  'https://obiwankiwibi.github.io/Kalorientracker-Claude/icon-192.png',
     url:   'https://obiwankiwibi.github.io/Kalorientracker-Claude/tankstellen_finder.html'
   });

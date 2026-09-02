@@ -171,7 +171,7 @@ header { border-bottom: 2px solid var(--brand); }
 </div>
 <footer class="attribution">Preisdaten: <a href="https://www.tankerkoenig.de" target="_blank" rel="noopener">www.tankerkoenig.de</a> &middot; Lizenz: <a href="https://creativecommons.org/licenses/by/4.0/deed.de" target="_blank" rel="noopener">CC BY 4.0</a></footer>
 </div>
-<div class="overlay" id="overlay"><div class="modal"><h2>API-Einstellungen</h2><p class="notice">Der Key wird nur lokal in diesem Browser gespeichert und nie in den Code geschrieben. <strong>API-Keys dürfen laut Nutzungsbedingungen nicht auf GitHub oder in Foren veröffentlicht werden.</strong> → <a href="https://creativecommons.tankerkoenig.de/?page=info" target="_blank" rel="noopener" style="color:var(--brand)">API-Dokumentation &amp; Registrierung</a></p><div class="field"><label>Tankerkönig API-Key</label><input id="apiKey" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div><div class="field" style="margin-top:14px"><label>Tankgröße (Liter)</label><input id="tankSizeInput" type="number" min="10" max="200" step="5" placeholder="50"></div><div class="actions"><button class="ghost" id="cancelSettings">Abbrechen</button><button class="primary" id="saveSettings">Speichern</button></div></div></div>
+<div class="overlay" id="overlay"><div class="modal"><h2>API-Einstellungen</h2><p class="notice">Der Key wird nur lokal in diesem Browser gespeichert und nie in den Code geschrieben. <strong>API-Keys dürfen laut Nutzungsbedingungen nicht auf GitHub oder in Foren veröffentlicht werden.</strong> → <a href="https://creativecommons.tankerkoenig.de/?page=info" target="_blank" rel="noopener" style="color:var(--brand)">API-Dokumentation &amp; Registrierung</a></p><div class="field"><label>Tankerkönig API-Key</label><input id="apiKey" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div><div class="field" style="margin-top:14px"><label>Tankgröße (Liter)</label><input id="tankSizeInput" type="number" min="10" max="200" step="5" placeholder="50"></div><hr style="margin:18px 0;border:none;border-top:1px solid var(--line)"><h3 style="margin:0 0 12px;font-size:15px;font-weight:700">Push-Benachrichtigungen</h3><div class="field"><label>Kraftstoffarten</label><div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600"><input type="checkbox" id="notifE10"> E10</label><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600"><input type="checkbox" id="notifE5"> Super 95</label><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600"><input type="checkbox" id="notifDiesel"> Diesel</label></div></div><div class="field" style="margin-top:14px"><label>Preisschwelle €/L (leer = immer senden)</label><input id="notifThreshold" type="number" step="0.01" min="0" max="5" placeholder="z. B. 1,85" style="max-width:160px"></div><p style="font-size:11px;color:var(--muted);margin:8px 0 0">Benachrichtigungen werden täglich 7–22 Uhr gesendet. Einstellungen werden in Firebase gespeichert.</p><div class="actions"><button class="ghost" id="cancelSettings">Abbrechen</button><button class="primary" id="saveSettings">Speichern</button></div></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const STORE='tankstellen_finder_v2';
@@ -179,7 +179,7 @@ const STORE='tankstellen_finder_v2';
 // Für eigenen Key bitte hier https://creativecommons.tankerkoenig.de registrieren.
 // Der Key wird nur lokal im Browser gespeichert und darf nicht im Code veröffentlicht werden.
 const TK_HOUR=3600000;
-const state=Object.assign({apiKey:'',fuel:'e5',theme:'light',history:{e10:[],e5:[],diesel:[]},stations:[],place:'57271 Hilchenbach-Dahlbruch',coords:null,lastRequest:0,tankSize:50,favorites:{},favPrices:{},favAlerts:{}},JSON.parse(localStorage.getItem(STORE)||'{}'));
+const state=Object.assign({apiKey:'',fuel:'e5',theme:'light',history:{e10:[],e5:[],diesel:[]},stations:[],place:'57271 Hilchenbach-Dahlbruch',coords:null,lastRequest:0,tankSize:50,favorites:{},favPrices:{},favAlerts:{},notifyFuels:['e10','e5','diesel'],notifyThreshold:null},JSON.parse(localStorage.getItem(STORE)||'{}'));
 const $=id=>document.getElementById(id), euro=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){localStorage.setItem(STORE,JSON.stringify(state))}
@@ -442,6 +442,25 @@ function updateMapMarkers(){
  }
 }
 
+async function savePushConfig(){
+ const fbUrl=localStorage.getItem('firebase_db_url');
+ if(!fbUrl){showToast('Firebase-URL fehlt – bitte auf der Startseite einrichten');return;}
+ const stationNames={};
+ Object.keys(state.favorites).forEach(id=>{stationNames[id]=(state.favorites[id]?.name)||id;});
+ const config={
+  apiKey:state.apiKey,
+  stations:Object.keys(state.favorites),
+  stationNames,
+  notifyFuels:state.notifyFuels||['e10','e5','diesel'],
+  notifyThreshold:state.notifyThreshold||null
+ };
+ try{
+  const r=await fetch(fbUrl+'/fuel_config.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(config)});
+  if(!r.ok)throw new Error();
+  showToast('Push-Einstellungen gespeichert');
+ }catch{showToast('Fehler beim Speichern in Firebase');}
+}
+
 async function fetchOpeningHours(id,panel){
  const key='tk_h_'+id;
  const cached=localStorage.getItem(key);
@@ -468,9 +487,28 @@ function renderHours(st){
  return h;
 }
 
-function openSettings(){$('apiKey').value=state.apiKey;$('tankSizeInput').value=state.tankSize||50;$('overlay').classList.add('open');setTimeout(()=>$('apiKey').focus(),50)}
+function openSettings(){
+ $('apiKey').value=state.apiKey;
+ $('tankSizeInput').value=state.tankSize||50;
+ const fuels=state.notifyFuels||['e10','e5','diesel'];
+ $('notifE10').checked=fuels.includes('e10');
+ $('notifE5').checked=fuels.includes('e5');
+ $('notifDiesel').checked=fuels.includes('diesel');
+ $('notifThreshold').value=state.notifyThreshold!=null?state.notifyThreshold.toFixed(2):'';
+ $('overlay').classList.add('open');setTimeout(()=>$('apiKey').focus(),50);
+}
 $('settingsBtn').onclick=openSettings;$('cancelSettings').onclick=()=>$('overlay').classList.remove('open');
-$('saveSettings').onclick=()=>{state.apiKey=$('apiKey').value.trim();const ts=parseInt($('tankSizeInput').value,10);if(ts>=10&&ts<=200)state.tankSize=ts;persist();$('overlay').classList.remove('open');setStatus(state.apiKey?'Bereit zur Suche':'API-Key fehlt');render();};
+$('saveSettings').onclick=async()=>{
+ state.apiKey=$('apiKey').value.trim();
+ const ts=parseInt($('tankSizeInput').value,10);if(ts>=10&&ts<=200)state.tankSize=ts;
+ const fuels=['e10','e5','diesel'].filter(f=>$('notif'+f.charAt(0).toUpperCase()+f.slice(1)).checked);
+ state.notifyFuels=fuels.length?fuels:['e10'];
+ const thr=parseFloat($('notifThreshold').value);
+ state.notifyThreshold=isNaN(thr)||thr<=0?null:thr;
+ persist();$('overlay').classList.remove('open');
+ setStatus(state.apiKey?'Bereit zur Suche':'API-Key fehlt');render();
+ await savePushConfig();
+};
 $('overlay').onclick=e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open')};
 $('searchBtn').onclick=search;$('refreshBtn').onclick=search;$('place').oninput=()=>{state.coords=null};$('sorting').onchange=render;
 $('searchToggle').onclick=()=>{const body=$('searchBody');const collapsed=body.classList.toggle('collapsed');$('searchToggle').classList.toggle('open',!collapsed);$('searchToggle').title=collapsed?'Suche einblenden':'Suche ausblenden';};
