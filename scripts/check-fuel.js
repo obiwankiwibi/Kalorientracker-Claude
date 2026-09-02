@@ -117,7 +117,7 @@ async function main() {
       if (price == null) {
         parts.push(`${FUEL_LABEL[f]}: —`);
       } else {
-        parts.push(`${FUEL_LABEL[f]}: ${price.toFixed(3).replace('.', ',')} €`);
+        parts.push(`${FUEL_LABEL[f]}: ${price.toFixed(2).replace('.', ',')} €`);
         if (threshold !== null && price <= threshold) belowThreshold = true;
       }
     }
