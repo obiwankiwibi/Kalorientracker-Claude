@@ -2,7 +2,7 @@ name: Spritpreise Benachrichtigung
 
 on:
   schedule:
-    - cron: '0,30 * * * *'   # alle 30 Minuten
+    - cron: '0 5,10,15,18 * * *'   # 07/12/17/20 Uhr CEST (UTC+2)
   workflow_dispatch:        # manuell auslösbar
 
 jobs:

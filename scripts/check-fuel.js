@@ -2,7 +2,7 @@
 const webpush = require('web-push');
 const fetch   = require('node-fetch');
 
-const MIN_NOTIFY_GAP  = 25 * 60 * 1000; // 25 Minuten Anti-Spam (Testmodus)
+const MIN_NOTIFY_GAP  = 3 * 60 * 60 * 1000; // 3 Stunden Anti-Spam
 const NOTIFY_HOUR_START = 7;
 const NOTIFY_HOUR_END   = 22;
 
