@@ -95,7 +95,7 @@ header{display:flex;}.logo{font:700 19px/1.2 system-ui}.logo small{display:block
 /* ── Map ── */
 #mapContainer{height:480px;border-radius:var(--radius);overflow:hidden;margin-bottom:18px;border:1px solid var(--line);box-shadow:var(--shadow);display:none;position:relative;z-index:1}
 .leaflet-tile-pane{filter:none}
-@media(prefers-color-scheme:dark){.leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}.leaflet-marker-icon,.leaflet-control{filter:invert(1) hue-rotate(180deg)}.tk-marker,.leaflet-popup-content-wrapper,.leaflet-popup-tip{filter:invert(1) hue-rotate(180deg)}}
+@media(prefers-color-scheme:dark){.leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}.leaflet-popup-content-wrapper{background:#1e2a3a;color:#e8eaf2;border:1px solid rgba(255,255,255,.1)}.leaflet-popup-tip{background:#1e2a3a}.leaflet-popup-content a{color:#5580f0}}
 .tk-marker{background:#12264a;color:#fff;border-radius:9px;padding:5px 9px;min-width:62px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.5);cursor:pointer;white-space:nowrap}
 .tk-marker.fav{background:#0050c8}
 .tk-marker.closed{opacity:.55}
@@ -382,19 +382,30 @@ function switchView(v){
  _mapView=v;
  document.querySelectorAll('.view-tab').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
  const mapC=$('mapContainer'),layout=document.querySelector('.layout');
+ const topstats=$('topstats'),favSec=$('favSection');
  if(v==='map'){
-  mapC.style.display='';layout.style.display='none';
-  if(!_leafMap)initLeafMap();else updateMapMarkers();
+  mapC.style.display='block';
+  if(layout)layout.style.display='none';
+  if(topstats)topstats.style.display='none';
+  if(favSec)favSec.style.display='none';
+  // defer init until container has dimensions
+  setTimeout(()=>{
+   if(!_leafMap)initLeafMap();
+   else{_leafMap.invalidateSize();updateMapMarkers();}
+  },80);
  }else{
-  mapC.style.display='none';layout.style.display='';
+  mapC.style.display='none';
+  if(layout)layout.style.display='';
+  // topstats and favSection are managed by render()
+  render();
  }
 }
 
 function initLeafMap(){
  const center=state.coords?[state.coords.lat,state.coords.lng]:[50.87,8.11];
- _leafMap=L.map('mapContainer').setView(center,12);
+ _leafMap=L.map('mapContainer',{zoomControl:true}).setView(center,12);
  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(_leafMap);
- updateMapMarkers();
+ setTimeout(()=>{_leafMap.invalidateSize();updateMapMarkers();},100);
 }
 
 function updateMapMarkers(){
