@@ -653,7 +653,8 @@ html { height: 100%; }
     .rb-scroll{flex:1;overflow-y:auto;padding:8px 12px 80px;}
     #rbPriceBar{display:none;align-items:center;justify-content:space-between;padding:9px 16px;background:var(--surface);border-bottom:2px solid var(--active);font-size:13px;color:var(--muted);flex-shrink:0;}
     #rbPriceTotal{font-weight:800;color:var(--active);font-size:17px;}
-    .rb-search-wrap{padding:8px 12px 4px;flex-shrink:0;}
+    .rb-search-wrap{padding:8px 12px 4px;flex-shrink:0;display:flex;align-items:center;gap:6px;}
+    .rb-action-btn{flex-shrink:0;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
     .ingr-results { background:var(--surface); border:1px solid var(--border); border-radius:14px; max-height:180px; overflow-y:auto; margin-bottom:8px; }
     .ingr-result-row { padding:10px 14px; cursor:pointer; font-size:14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
     .ingr-result-row:last-child { border-bottom:none; }
@@ -1572,10 +1573,13 @@ html { height: 100%; }
   <div id="rbNutriBar"><span id="rbNutriText"></span></div>
   <div class="rb-selected" id="rbSelectedStrip" style="display:none;"></div>
   <div class="rb-search-wrap">
-    <div class="search-inner">
+    <div class="search-inner" style="flex:1;">
       <span style="color:var(--muted);font-size:15px">🔍</span>
       <input id="rbSearchInput" placeholder="Zutat suchen…" oninput="rbOnSearch()" autocomplete="off" autocorrect="off">
     </div>
+    <button class="rb-action-btn" onclick="openRbCustomSheet()" title="Eigene Zutat">✏️</button>
+    <button class="rb-action-btn" onclick="openRbPhotoAdder()" title="Foto">📷</button>
+    <button class="rb-action-btn" onclick="openRbScanner()" title="Barcode scannen">&#9881;</button>
   </div>
   <div class="cat-row" id="rbCatRow"></div>
   <div class="cat-row sort-row" id="rbSortRow"></div>
@@ -1647,6 +1651,33 @@ html { height: 100%; }
     <div class="sheet-btns">
       <button class="sh-btn secondary" onclick="closeChefkochSheet()">Abbrechen</button>
       <button class="sh-btn primary"   onclick="importChefkoch()">Importieren</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RECIPE BUILDER CUSTOM INGREDIENT ══ -->
+<div class="sheet-overlay" id="rbCustomSheet" onclick="if(event.target===this)closeRbCustomSheet()" style="display:none;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">✏️ Eigene Zutat</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <input class="sheet-input" id="rbCustEmoji" placeholder="🥗" style="width:62px;flex:none;text-align:center;font-size:20px;margin-bottom:0;">
+      <input class="sheet-input" id="rbCustName" placeholder="Name *" style="flex:1;margin-bottom:0;" autocomplete="off">
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+      <input class="sheet-input" id="rbCustQty" type="number" min="0.1" step="0.5" value="1" placeholder="Menge" style="width:80px;flex:none;margin-bottom:0;text-align:center;">
+      <div id="rbCustUnitChips" style="flex:1;display:flex;flex-wrap:wrap;gap:5px;"></div>
+    </div>
+    <div style="font-size:10.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Nährwerte pro 100g (optional)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <input class="sheet-input" id="rbCustKcal"    type="number" min="0" placeholder="kcal"    style="margin-bottom:0;">
+      <input class="sheet-input" id="rbCustProtein" type="number" min="0" placeholder="Eiweiß g" style="margin-bottom:0;">
+      <input class="sheet-input" id="rbCustCarbs"   type="number" min="0" placeholder="Kohlenhydrate g" style="margin-bottom:0;">
+      <input class="sheet-input" id="rbCustFat"     type="number" min="0" placeholder="Fett g"   style="margin-bottom:0;">
+    </div>
+    <div class="sheet-btns">
+      <button class="sh-btn secondary" onclick="closeRbCustomSheet()">Abbrechen</button>
+      <button class="sh-btn primary" onclick="saveRbCustomIng()">Hinzufügen</button>
     </div>
   </div>
 </div>
@@ -2035,6 +2066,7 @@ let scannedRef = null;         // Firebase ref für gescannte Vorschläge
 
 let scanStream2 = null, scanTrack2 = null;
 let scannerRunning2 = false, scanLoopId2 = null, scanTorchOn = false;
+let scanMode = null; // null = shopping list, 'recipe' = recipe builder
 
 let picker = { id: null, name: '', emoji: '', amount: '', store: '', isNew: true };
 let activeStoreFilter = '';
@@ -2632,7 +2664,10 @@ function resetAllUsage() {
 /* ── Foto-Angebot ── */
 let pendingPhotoData = null;
 
-function openPhotoAdder() {
+let photoMode = null; // null = shopping list, 'recipe' = recipe builder
+
+function openPhotoAdder(mode) {
+  photoMode = mode || null;
   pendingPhotoData = null;
   document.getElementById('photoPreview').style.display = 'none';
   document.getElementById('photoDropLabel').style.display = '';
@@ -2640,6 +2675,9 @@ function openPhotoAdder() {
   document.getElementById('photoItemName').value = '';
   document.getElementById('photoItemStore').value = '';
   document.getElementById('photoItemPrice').value = '';
+  const storeRow = document.getElementById('photoItemStore').closest('input') || document.getElementById('photoItemStore');
+  document.getElementById('photoItemStore').style.display = photoMode === 'recipe' ? 'none' : '';
+  document.getElementById('photoItemPrice').placeholder = photoMode === 'recipe' ? 'kcal pro 100g (optional)' : 'Preis (z.B. 2,99 €) – optional';
   document.getElementById('photoSaveBtn').disabled = true;
   document.getElementById('photoPickerOverlay').classList.add('open');
 }
@@ -2691,7 +2729,16 @@ function compressImage(file, maxPx, quality) {
 
 function savePhotoItem() {
   if (!pendingPhotoData) return;
-  const name  = document.getElementById('photoItemName').value.trim() || 'Foto-Angebot';
+  const name = document.getElementById('photoItemName').value.trim() || 'Foto-Angebot';
+  if (photoMode === 'recipe') {
+    const kcalPer100 = parseFloat(document.getElementById('photoItemPrice').value) || 0;
+    rbIngredients.push({ name, emoji: '📸', qty: 1, unit: 'Stück', amountG: 100, kcalPer100, proteinPer100: 0, carbsPer100: 0, fatPer100: 0, unitPrice: null, unitG: 100, custom: true, photo: pendingPhotoData });
+    closePhotoAdder();
+    rbRenderTiles();
+    rbRenderSelected();
+    showToast(`📸 ${name} hinzugefügt`);
+    return;
+  }
   const store = document.getElementById('photoItemStore').value.trim() || null;
   const price = document.getElementById('photoItemPrice').value.trim() || null;
   const id = 'i_' + Date.now();
@@ -3008,7 +3055,8 @@ function restPressCancel() { clearTimeout(_rpt); _rpid = null; _rpfired = false;
 // ═══════════════════════════════════════════════
 //  BARCODE SCANNER
 // ═══════════════════════════════════════════════
-async function openScanner() {
+async function openScanner(mode) {
+  scanMode = mode || null;
   document.getElementById('scanOverlay').classList.add('open');
   document.getElementById('scanStatus').textContent = 'Kamera wird gestartet…';
   document.getElementById('scanTorch').classList.remove('visible','on');
@@ -3077,6 +3125,7 @@ function stopScan() {
   }
   if (scanStream2) { scanStream2.getTracks().forEach(t => t.stop()); scanStream2 = null; }
   scanTrack2 = null; scanTorchOn = false;
+  scanMode = null;
   const video = document.getElementById('scanVideo');
   video.srcObject = null;
   document.getElementById('scanOverlay').classList.remove('open');
@@ -3105,6 +3154,21 @@ async function lookupAndAdd(code) {
     const p     = data.product;
     const name  = (p.product_name_de || p.product_name || '').trim() || 'Unbekanntes Produkt';
     const emoji = emojiFromCategories(p.categories_tags || [], p.product_name || '');
+
+    if (scanMode === 'recipe') {
+      // Nährwerte aus Open Food Facts
+      const n = p.nutriments || {};
+      const kcalPer100    = parseFloat(n['energy-kcal_100g']) || 0;
+      const proteinPer100 = parseFloat(n['proteins_100g'])    || 0;
+      const carbsPer100   = parseFloat(n['carbohydrates_100g'])|| 0;
+      const fatPer100     = parseFloat(n['fat_100g'])          || 0;
+      stopScan();
+      rbIngredients.push({ name, emoji, qty: 1, unit: 'Stück', amountG: 100, kcalPer100, proteinPer100, carbsPer100, fatPer100, unitPrice: null, unitG: 100, custom: false });
+      rbRenderTiles();
+      rbRenderSelected();
+      showToast(`${emoji} ${name} hinzugefügt`);
+      return;
+    }
 
     // Preis ermitteln (Open Prices API → Kategorie-Schätzung)
     document.getElementById('scanStatus').textContent = 'Preis wird gesucht…';
@@ -4218,8 +4282,64 @@ function closeRecipeBuilder() {
   rbEditId = null;
 }
 
+// ── Recipe Builder: Custom Ingredient ──
+let rbCustUnit = 'Stück';
+
+function openRbCustomSheet() {
+  rbCustUnit = 'Stück';
+  document.getElementById('rbCustEmoji').value = '';
+  document.getElementById('rbCustName').value  = '';
+  document.getElementById('rbCustQty').value   = '1';
+  document.getElementById('rbCustKcal').value    = '';
+  document.getElementById('rbCustProtein').value = '';
+  document.getElementById('rbCustCarbs').value   = '';
+  document.getElementById('rbCustFat').value     = '';
+  renderRbCustUnitChips();
+  document.getElementById('rbCustomSheet').style.display = 'flex';
+  setTimeout(() => document.getElementById('rbCustName').focus(), 150);
+}
+
+function closeRbCustomSheet() {
+  document.getElementById('rbCustomSheet').style.display = 'none';
+}
+
+function renderRbCustUnitChips() {
+  document.getElementById('rbCustUnitChips').innerHTML = RB_UNITS.map(u =>
+    `<button class="chip${rbCustUnit===u?' on':''}" onclick="rbCustUnit='${u}';renderRbCustUnitChips()">${u}</button>`
+  ).join('');
+}
+
+function saveRbCustomIng() {
+  const name = document.getElementById('rbCustName').value.trim();
+  if (!name) { showToast('Bitte Namen eingeben'); return; }
+  const emoji = document.getElementById('rbCustEmoji').value.trim() || '🥗';
+  const qty   = parseFloat(document.getElementById('rbCustQty').value) || 1;
+  const unit  = rbCustUnit;
+  const kcalPer100    = parseFloat(document.getElementById('rbCustKcal').value)    || 0;
+  const proteinPer100 = parseFloat(document.getElementById('rbCustProtein').value) || 0;
+  const carbsPer100   = parseFloat(document.getElementById('rbCustCarbs').value)   || 0;
+  const fatPer100     = parseFloat(document.getElementById('rbCustFat').value)     || 0;
+  const amountG = rbQtyToG(qty, unit, 100);
+  rbIngredients.push({ name, emoji, qty, unit, amountG, kcalPer100, proteinPer100, carbsPer100, fatPer100, unitPrice: null, unitG: 100, custom: true });
+  closeRbCustomSheet();
+  rbRenderTiles();
+  rbRenderSelected();
+}
+
+// ── Recipe Builder: Photo ──
+function openRbPhotoAdder() {
+  openPhotoAdder('recipe');
+}
+
+// ── Recipe Builder: Scan ──
+function openRbScanner() {
+  openScanner('recipe');
+}
+
+const RB_FOOD_SUGGESTIONS = SUGGESTIONS.filter(s => s.kcal != null);
+
 function rbRenderCats() {
-  const cats = ['Alle', ...new Set(SUGGESTIONS.map(s => s.cat))];
+  const cats = ['Alle', ...new Set(RB_FOOD_SUGGESTIONS.map(s => s.cat))];
   document.getElementById('rbCatRow').innerHTML = cats.map(c =>
     `<button class="chip${(!rbCatFilter && c==='Alle') || rbCatFilter===c ? ' on' : ''}" onclick="rbSetCat('${c === 'Alle' ? '' : c}')">${c}</button>`
   ).join('');
@@ -4363,7 +4483,7 @@ function rbUpdatePriceBar() {
 
 function rbRenderTiles() {
   const selectedNames = new Set(rbIngredients.map(r => r.name.toLowerCase()));
-  let list = rbCatFilter ? SUGGESTIONS.filter(s => s.cat === rbCatFilter) : SUGGESTIONS.slice();
+  let list = rbCatFilter ? RB_FOOD_SUGGESTIONS.filter(s => s.cat === rbCatFilter) : RB_FOOD_SUGGESTIONS.slice();
   if (rbSearchQuery) list = list.filter(s => s.name.toLowerCase().includes(rbSearchQuery));
   if (rbSortKey) {
     list = list.slice().sort((a, b) => {
