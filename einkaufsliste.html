@@ -635,6 +635,8 @@ html { height: 100%; }
     .recipe-toolbar { display:flex; gap:8px; padding:0 0 16px; }
     .recipe-tool-btn { flex:1; padding:13px; border-radius:16px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
     .recipe-tool-btn.primary { background:var(--active); color:#fff; border-color:var(--active); }
+    .rb-view .tile.sug.rb-sel{background:linear-gradient(145deg,#2a8c54,#1d6b3e);opacity:1;filter:none;}
+    .rb-view .tile.sug.rb-sel::after{content:'✓';position:absolute;top:5px;right:8px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);}
     .rb-view{position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;}
     .rb-header{display:flex;align-items:center;gap:8px;padding:14px 12px 10px;border-bottom:1px solid var(--border);flex-shrink:0;}
     .rb-back{background:none;border:none;color:var(--active);font-size:15px;font-weight:600;cursor:pointer;padding:6px 4px;font-family:inherit;-webkit-tap-highlight-color:transparent;}
@@ -4098,8 +4100,8 @@ function rbRenderTiles() {
   list.forEach(s => {
     const sel = selectedNames.has(s.name.toLowerCase());
     const tile = document.createElement('div');
-    tile.className = 'tile sug' + (sel ? ' in-list' : '');
-    tile.innerHTML = `<div class="tile-emoji">${s.emoji}</div><div class="tile-name">${s.name}</div>`;
+    tile.className = 'tile sug' + (sel ? ' rb-sel' : '');
+    tile.innerHTML = `<div class="tile-emoji">${s.emoji}</div><div class="tile-name">${s.name}</div>${sugPriceHtml(s)}`;
     tile.addEventListener('click', () => rbToggleItem(s));
     grid.appendChild(tile);
   });
