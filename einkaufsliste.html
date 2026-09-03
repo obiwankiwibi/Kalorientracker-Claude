@@ -1292,7 +1292,7 @@ html { height: 100%; }
   <div class="grid" id="activeGrid"></div>
 </div>
 
-<!-- ══ DONE ITEMS ══ -->
+<!-- ══ DONE SUGGESTIONS ══ -->
 <div class="section" id="doneSection" style="display:none">
   <div class="sec-header" onclick="toggleDone()">
     <div class="sec-title" id="doneTitle">
@@ -4048,11 +4048,11 @@ function renderRecipes() {
 let recActiveCat = null;
 function renderRecipeTiles(filter) {
   recActiveCat = filter;
-  const cats = ['Alle', ...new Set(ITEMS.map(it => it.cat).filter(Boolean))];
+  const cats = ['Alle', ...new Set(SUGGESTIONS.map(it => it.cat).filter(Boolean))];
   document.getElementById('recCatChips').innerHTML = cats.map(c =>
     `<button class="rec-cat-chip${(!filter && c==='Alle') || filter===c ? ' active' : ''}" onclick="renderRecipeTiles(${c==='Alle' ? 'null' : `'${c}'`})">${c}</button>`
   ).join('');
-  const items = filter ? ITEMS.filter(it => it.cat === filter) : ITEMS;
+  const items = filter ? SUGGESTIONS.filter(it => it.cat === filter) : SUGGESTIONS;
   const grid = document.getElementById('recTileGrid');
   grid.innerHTML = '';
   items.forEach(item => {
@@ -4102,7 +4102,7 @@ function searchIngredients() {
   const q = document.getElementById('ingrSearch').value.trim().toLowerCase();
   const box = document.getElementById('ingrResults');
   if (q.length < 1) { box.style.display = 'none'; return; }
-  const matches = ITEMS.filter(it => it.name.toLowerCase().includes(q)).slice(0, 8);
+  const matches = SUGGESTIONS.filter(it => it.name.toLowerCase().includes(q)).slice(0, 8);
   if (!matches.length) { box.style.display = 'none'; return; }
   // Store matches in a temporary lookup keyed by index
   box._matchItems = matches;
@@ -4326,10 +4326,10 @@ function importChefkoch() {
     i++;
   }
 
-  // Match to ITEMS catalog
+  // Match to SUGGESTIONS catalog
   const ingredients = parsed.map(p => {
     const pn = p.name.toLowerCase();
-    const matched = ITEMS.find(it =>
+    const matched = SUGGESTIONS.find(it =>
       pn.includes(it.name.toLowerCase()) ||
       it.name.toLowerCase().includes(pn.split(' ')[0])
     );
