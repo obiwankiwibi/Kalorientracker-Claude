@@ -1569,6 +1569,7 @@ html { height: 100%; }
       <input class="sheet-input" id="ckUrlIn" placeholder="https://www.chefkoch.de/rezepte/…" style="flex:1;margin-bottom:0;">
       <button class="sh-btn primary" id="ckLoadBtn" style="flex:none;white-space:nowrap;" onclick="loadChefkochUrl(this)">Laden</button>
     </div>
+    <div style="font-size:12px;margin-bottom:4px;min-height:16px;" id="ckLoadStatus"></div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:12px;" id="ckWorkerHint"></div>
 
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:11px;color:var(--muted);"><span style="flex:1;height:1px;background:var(--line);"></span>oder Text aus Druckansicht einfügen<span style="flex:1;height:1px;background:var(--line);"></span></div>
@@ -4183,7 +4184,9 @@ function configWorkerUrl() {
 
 function loadChefkochUrl(btn) {
   const url = document.getElementById('ckUrlIn').value.trim();
-  if (!url) { showToast('Bitte Chefkoch-Link eingeben'); return; }
+  const statusEl = document.getElementById('ckLoadStatus');
+  function setStatus(msg, color) { if(statusEl){statusEl.textContent=msg;statusEl.style.color=color||'var(--muted)';} }
+  if (!url) { setStatus('Bitte Link eingeben.','var(--coral)'); return; }
   let workerUrl = localStorage.getItem('ck_worker_url');
   if (!workerUrl) {
     const w = prompt('Bitte zuerst die Cloudflare Worker URL eingeben\n(z. B. https://chefkoch.DEIN-NAME.workers.dev):');
@@ -4192,17 +4195,21 @@ function loadChefkochUrl(btn) {
     localStorage.setItem('ck_worker_url', workerUrl);
   }
   btn.disabled = true; btn.textContent = '…';
-  fetch(`${workerUrl}?url=${encodeURIComponent(url)}`)
-    .then(r => r.json())
+  setStatus('Wird geladen…');
+  const fetchUrl = `${workerUrl}?url=${encodeURIComponent(url)}`;
+  console.log('[CK import] fetching', fetchUrl);
+  fetch(fetchUrl)
+    .then(r => { console.log('[CK import] status', r.status); return r.json(); })
     .then(data => {
+      console.log('[CK import] data', JSON.stringify(data).slice(0,300));
       if (data.error) throw new Error(data.error);
       const nameEl = document.getElementById('ckNameIn');
       if (data.title && !nameEl.value) nameEl.value = data.title;
       document.getElementById('ckTextIn').value = (data.ingredients || []).join('\n');
       if (data.servings) document.getElementById('ckTextIn')._servings = data.servings;
-      showToast(`${(data.ingredients || []).length} Zutaten geladen`);
+      setStatus(`✓ ${(data.ingredients||[]).length} Zutaten geladen`, 'var(--green)');
     })
-    .catch(e => showToast('Fehler: ' + e.message))
+    .catch(e => { console.error('[CK import] error', e); setStatus('✗ ' + e.message, 'var(--coral)'); })
     .finally(() => { btn.disabled = false; btn.textContent = 'Laden'; });
 }
 
