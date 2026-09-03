@@ -635,6 +635,16 @@ html { height: 100%; }
     .recipe-toolbar { display:flex; gap:8px; padding:0 0 16px; }
     .recipe-tool-btn { flex:1; padding:13px; border-radius:16px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
     .recipe-tool-btn.primary { background:var(--active); color:#fff; border-color:var(--active); }
+    .rec-cat-chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+    .rec-cat-chips::-webkit-scrollbar{display:none;}
+    .rec-cat-chip{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:20px;padding:5px 13px;font-size:12px;white-space:nowrap;cursor:pointer;font-family:inherit;}
+    .rec-cat-chip.active{background:rgba(42,140,84,0.14);border-color:var(--active);color:var(--active);font-weight:600;}
+    .rec-tile-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;max-height:200px;overflow-y:auto;margin-bottom:10px;scrollbar-width:none;}
+    .rec-tile-grid::-webkit-scrollbar{display:none;}
+    .rec-tile{display:flex;flex-direction:column;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:8px 4px 6px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+    .rec-tile:active{background:rgba(42,140,84,0.10);}
+    .rec-tile-emoji{font-size:24px;line-height:1.2;}
+    .rec-tile-name{font-size:10px;color:var(--text);text-align:center;line-height:1.25;margin-top:2px;word-break:break-word;}
     .ingr-results { background:var(--surface); border:1px solid var(--border); border-radius:14px; max-height:180px; overflow-y:auto; margin-bottom:8px; }
     .ingr-result-row { padding:10px 14px; cursor:pointer; font-size:14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
     .ingr-result-row:last-child { border-bottom:none; }
@@ -1546,7 +1556,9 @@ html { height: 100%; }
       <span style="font-size:13px;color:var(--muted);">Portionen</span>
     </div>
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;">Zutaten</div>
-    <input class="sheet-input" id="ingrSearch" placeholder="Zutat suchen…" oninput="searchIngredients()" autocomplete="off" style="margin-bottom:4px;">
+    <div class="rec-cat-chips" id="recCatChips"></div>
+    <div class="rec-tile-grid" id="recTileGrid"></div>
+    <input class="sheet-input" id="ingrSearch" placeholder="Oder Zutat suchen…" oninput="searchIngredients()" autocomplete="off" style="margin-bottom:4px;">
     <div class="ingr-results" id="ingrResults" style="display:none;"></div>
     <div id="ingrList" style="max-height:200px;overflow-y:auto;margin-bottom:12px;"></div>
     <div class="sheet-btns">
@@ -4033,6 +4045,28 @@ function renderRecipes() {
   }).join('');
 }
 
+let recActiveCat = null;
+function renderRecipeTiles(filter) {
+  recActiveCat = filter;
+  const cats = ['Alle', ...new Set(ITEMS.map(it => it.cat).filter(Boolean))];
+  document.getElementById('recCatChips').innerHTML = cats.map(c =>
+    `<button class="rec-cat-chip${(!filter && c==='Alle') || filter===c ? ' active' : ''}" onclick="renderRecipeTiles(${c==='Alle' ? 'null' : `'${c}'`})">${c}</button>`
+  ).join('');
+  const items = filter ? ITEMS.filter(it => it.cat === filter) : ITEMS;
+  const grid = document.getElementById('recTileGrid');
+  grid.innerHTML = '';
+  items.forEach(item => {
+    const tile = document.createElement('div');
+    tile.className = 'rec-tile';
+    tile.innerHTML = `<div class="rec-tile-emoji">${item.emoji}</div><div class="rec-tile-name">${item.name}</div>`;
+    tile.addEventListener('click', () => {
+      const unitG = parseUnitG(item.unit);
+      addIngredientRaw({name:item.name,emoji:item.emoji,amountG:unitG,kcalPer100:item.kcal,proteinPer100:item.protein,carbsPer100:item.carbs,fatPer100:item.fat,unitPrice:item.price,unitG,catalogUnit:item.unit,custom:false});
+    });
+    grid.appendChild(tile);
+  });
+}
+
 function openRecipeSheet(id) {
   editRecipeId = id || null;
   const r = id ? recipes[id] : null;
@@ -4044,6 +4078,7 @@ function openRecipeSheet(id) {
   pendingIngredients = r ? JSON.parse(JSON.stringify(r.ingredients)) : [];
   document.getElementById('ingrSearch').value = '';
   document.getElementById('ingrResults').style.display = 'none';
+  renderRecipeTiles(null);
   renderIngrList();
   document.getElementById('recipeOverlay').style.display = 'flex';
 }
@@ -4214,8 +4249,15 @@ function loadChefkochUrl(btn) {
 }
 
 function importChefkoch() {
-  const name = document.getElementById('ckNameIn').value.trim();
-  if (!name) { showToast('Bitte Rezeptname eingeben'); return; }
+  let name = document.getElementById('ckNameIn').value.trim();
+  if (!name) {
+    // Try to extract title from text (first non-Zutaten/Zubereitung line before "Zutaten")
+    const allLines = document.getElementById('ckTextIn').value.split('\n').map(l => l.trim()).filter(Boolean);
+    const zutatenIdx = allLines.findIndex(l => /^zutaten$/i.test(l));
+    const titleLine = zutatenIdx > 0 ? allLines[0] : null;
+    name = (titleLine && !/^zutaten$/i.test(titleLine) && !/^für\s/i.test(titleLine)) ? titleLine : 'Rezept ' + new Date().toLocaleDateString('de-DE');
+    document.getElementById('ckNameIn').value = name;
+  }
   const text = document.getElementById('ckTextIn').value.trim();
   if (!text) { showToast('Bitte Text einfügen'); return; }
 
@@ -4271,14 +4313,14 @@ function importChefkoch() {
       if (!amtRe.exec(nextLine) && !oneLineRe.exec(nextLine)) {
         parsed.push({ amountG: Math.max(Math.round(toAmountG(parseFloat(amtMatch[1].replace(',','.')), amtMatch[2])), 1), name: cleanName(nextLine) });
         i += 2;
-        // Skip lowercase description lines
-        while (i < ingrLines.length && /^[a-zäöüß]/.test(ingrLines[i]) && !amtRe.exec(normalizeSlashN(ingrLines[i]))) i++;
+        // Skip lowercase or parenthetical description lines
+        while (i < ingrLines.length && /^[a-zäöüß(]/.test(ingrLines[i]) && !amtRe.exec(normalizeSlashN(ingrLines[i]))) i++;
         continue;
       }
     }
 
     // Standalone ingredient without amount: "Salz und Pfeffer"
-    if (!/^[a-zäöüß]/.test(line) && !/^\d+\s+Min/.test(line) && line.length > 1) {
+    if (!/^[a-zäöüß(]/.test(line) && !/^\d+\s+Min/.test(line) && line.length > 1) {
       parsed.push({ amountG: 5, name: cleanName(line) });
     }
     i++;
