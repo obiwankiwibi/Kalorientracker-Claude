@@ -684,6 +684,40 @@ html { height: 100%; }
     .ingr-qty-input:focus { border-color:var(--active); }
     .ingr-remove { background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; padding:4px; line-height:1; }
 
+    /* ── Recipe steps in save sheet ── */
+    .rb-step-row { display:flex; align-items:flex-start; gap:6px; margin-bottom:8px; }
+    .rb-step-num { font-size:11px; font-weight:700; color:var(--muted); padding-top:13px; min-width:18px; flex-shrink:0; }
+    .rb-step-remove { background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; padding:8px 4px; line-height:1; flex-shrink:0; margin-top:1px; -webkit-tap-highlight-color:transparent; }
+    .rb-add-step-btn { width:100%; padding:10px; border-radius:12px; border:1.5px dashed var(--border); background:none; color:var(--active); font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; margin-top:4px; -webkit-tap-highlight-color:transparent; }
+    .rb-add-step-btn:active { opacity:.7; }
+
+    /* ── Cooking view (reader mode) ── */
+    .cook-view { position:fixed; inset:0; z-index:300; background:#FDF8EE; display:flex; flex-direction:column; overflow:hidden; }
+    .cook-header { display:flex; align-items:center; gap:8px; padding:14px 14px 12px; border-bottom:2px solid #D4B896; background:#F5EDD8; flex-shrink:0; }
+    .cook-back { background:none; border:none; color:#8B5C14; font-size:15px; font-weight:600; cursor:pointer; padding:6px 4px; font-family:Georgia,'Times New Roman',serif; -webkit-tap-highlight-color:transparent; }
+    .cook-header-title { flex:1; font-family:Georgia,'Times New Roman',serif; font-size:16px; font-weight:700; color:#4A2E0A; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cook-body { flex:1; overflow-y:auto; padding:24px 20px 60px; max-width:600px; margin:0 auto; width:100%; }
+    .cook-emoji-line { font-size:48px; text-align:center; margin-bottom:8px; line-height:1; }
+    .cook-title { font-family:Georgia,'Times New Roman',serif; font-size:26px; font-weight:700; color:#4A2E0A; text-align:center; margin-bottom:6px; line-height:1.25; }
+    .cook-meta { font-family:Georgia,'Times New Roman',serif; font-size:13px; color:#7A5C3A; text-align:center; margin-bottom:20px; }
+    .cook-portions-row { display:flex; align-items:center; justify-content:center; gap:12px; background:#EDD9B0; border-radius:16px; padding:10px 16px; margin-bottom:28px; }
+    .cook-portions-label { font-family:Georgia,'Times New Roman',serif; font-size:13px; color:#5C3317; font-weight:600; }
+    .cook-portions-btn { width:32px; height:32px; border-radius:50%; border:1.5px solid #C4A46A; background:#FDF8EE; color:#8B5C14; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; -webkit-tap-highlight-color:transparent; }
+    .cook-portions-val { font-family:Georgia,'Times New Roman',serif; font-size:18px; font-weight:700; color:#4A2E0A; min-width:32px; text-align:center; }
+    .cook-section { margin-bottom:28px; }
+    .cook-section-title { font-family:Georgia,'Times New Roman',serif; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:#8B5C14; margin-bottom:12px; padding-bottom:6px; border-bottom:1px solid #D4B896; }
+    .cook-ingr-item { display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid #E8D9C0; font-family:Georgia,'Times New Roman',serif; }
+    .cook-ingr-item:last-child { border-bottom:none; }
+    .cook-ingr-left { display:flex; align-items:center; gap:10px; color:#4A2E0A; font-size:15px; }
+    .cook-ingr-amt { font-weight:700; color:#8B5C14; font-size:15px; font-variant-numeric:tabular-nums; }
+    .cook-desc { font-family:Georgia,'Times New Roman',serif; font-size:16px; color:#4A2E0A; line-height:1.7; white-space:pre-wrap; }
+    .cook-step { display:flex; gap:16px; margin-bottom:22px; }
+    .cook-step-num { width:32px; height:32px; background:#EDD9B0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:Georgia,'Times New Roman',serif; font-size:14px; font-weight:700; color:#8B5C14; flex-shrink:0; margin-top:2px; }
+    .cook-step-text { font-family:Georgia,'Times New Roman',serif; font-size:16px; color:#4A2E0A; line-height:1.65; flex:1; }
+    .cook-btn-add { flex:0 0 auto; width:42px; height:42px; }
+    .recipe-btn-cook { width:42px; height:42px; border-radius:12px; border:1.5px solid #8B5C14; background:#FDF8EE; color:#8B5C14; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; -webkit-tap-highlight-color:transparent; transition:opacity .15s; }
+    .recipe-btn-cook:active { opacity:.75; }
+
     /* ── Bottom nav ── */
     .bottom-nav {
       position: fixed;
@@ -1639,7 +1673,10 @@ html { height: 100%; }
       <input class="sheet-input" id="rbPortionsIn" type="number" min="1" value="4" style="width:90px;flex:none;margin-bottom:0;">
       <span style="font-size:13px;color:var(--muted);">Portionen</span>
     </div>
-    <textarea class="sheet-input" id="rbDescIn" rows="3" placeholder="Kochbeschreibung (optional)…" style="resize:vertical;font-family:inherit;"></textarea>
+    <textarea class="sheet-input" id="rbDescIn" rows="2" placeholder="Kurze Beschreibung (optional)…" style="resize:vertical;font-family:inherit;"></textarea>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 8px;">Kochschritte</div>
+    <div id="rbStepsList"></div>
+    <button class="rb-add-step-btn" onclick="rbAddStep()">+ Schritt hinzufügen</button>
     <div class="sheet-btns">
       <button class="sh-btn secondary" onclick="closeRecipeSaveSheet()">Abbrechen</button>
       <button class="sh-btn danger" id="rbDeleteBtn" onclick="deleteFromBuilder()" style="display:none;flex:0 0 auto;padding:13px 16px;">🗑</button>
@@ -1736,6 +1773,38 @@ html { height: 100%; }
     <div class="sheet-btns">
       <button class="sh-btn secondary" onclick="closeRecipeToList()">Abbrechen</button>
       <button class="sh-btn primary" onclick="confirmRecipeToList()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ COOKING VIEW ══ -->
+<div class="cook-view" id="cookView" style="display:none;">
+  <div class="cook-header">
+    <button class="cook-back" onclick="closeCookView()">← Rezepte</button>
+    <div class="cook-header-title" id="cookHeaderTitle"></div>
+    <div style="width:60px;"></div>
+  </div>
+  <div class="cook-body">
+    <div class="cook-emoji-line" id="cookEmoji"></div>
+    <div class="cook-title" id="cookTitle"></div>
+    <div class="cook-meta" id="cookMeta"></div>
+    <div class="cook-portions-row">
+      <span class="cook-portions-label">Portionen</span>
+      <button class="cook-portions-btn" onclick="cookAdjPortions(-1)">−</button>
+      <span class="cook-portions-val" id="cookPortionsVal">4</span>
+      <button class="cook-portions-btn" onclick="cookAdjPortions(1)">+</button>
+    </div>
+    <div class="cook-section">
+      <div class="cook-section-title">Zutaten</div>
+      <div id="cookIngredients"></div>
+    </div>
+    <div class="cook-section" id="cookDescSection" style="display:none;">
+      <div class="cook-section-title">Beschreibung</div>
+      <div class="cook-desc" id="cookDesc"></div>
+    </div>
+    <div class="cook-section" id="cookStepsSection" style="display:none;">
+      <div class="cook-section-title">Zubereitung</div>
+      <div id="cookSteps"></div>
     </div>
   </div>
 </div>
@@ -4351,6 +4420,7 @@ function renderRecipes() {
       </div>` : ''}
       <div class="recipe-actions">
         <button class="recipe-btn-add" onclick="addRecipeToList('${id}')">🛒 Zur Einkaufsliste</button>
+        <button class="recipe-btn-cook" onclick="openCookView('${id}')" title="Kochansicht">📖</button>
         <button class="recipe-btn-edit" onclick="openRecipeBuilder('${id}')" title="Bearbeiten">✏️</button>
       </div>
     </div>`;
@@ -4796,6 +4866,7 @@ function openRecipeSaveSheet() {
   document.getElementById('rbEmojiIn').value    = r ? r.emoji       : '';
   document.getElementById('rbPortionsIn').value = r ? r.servings    : 4;
   document.getElementById('rbDescIn').value     = r ? (r.description || '') : '';
+  initRbSteps(r ? (r.steps || []) : []);
   document.getElementById('rbDeleteBtn').style.display = rbEditId ? '' : 'none';
   document.getElementById('recipeSaveOverlay').style.display = 'flex';
   setTimeout(() => document.getElementById('rbNameIn').focus(), 150);
@@ -4820,6 +4891,120 @@ function deleteFromBuilder() {
     });
 }
 
+// ── Recipe Steps ──────────────────────────────────────────────
+let rbSteps = [];
+
+function esc(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function initRbSteps(steps) {
+  rbSteps = steps ? steps.slice() : [];
+  renderRbSteps();
+}
+
+function renderRbSteps() {
+  const list = document.getElementById('rbStepsList');
+  if (!list) return;
+  list.innerHTML = rbSteps.map((s, i) =>
+    `<div class="rb-step-row">
+      <span class="rb-step-num">${i+1}.</span>
+      <textarea class="sheet-input" style="flex:1;min-height:54px;resize:vertical;font-family:inherit;margin-bottom:0;" placeholder="Schritt ${i+1}…" oninput="rbSteps[${i}]=this.value">${esc(s)}</textarea>
+      <button class="rb-step-remove" onclick="rbRemoveStep(${i})">×</button>
+    </div>`
+  ).join('');
+}
+
+function rbAddStep() {
+  rbSteps.push('');
+  renderRbSteps();
+  const textareas = document.querySelectorAll('#rbStepsList textarea');
+  if (textareas.length) textareas[textareas.length - 1].focus();
+}
+
+function rbRemoveStep(i) {
+  rbSteps.splice(i, 1);
+  renderRbSteps();
+}
+
+// ── Cooking View ──────────────────────────────────────────────
+let cookRecipeId = null;
+let cookPortions = 1;
+let cookBaseServings = 1;
+
+function openCookView(id) {
+  const r = recipes[id];
+  if (!r) return;
+  cookRecipeId = id;
+  cookBaseServings = r.servings || 4;
+  cookPortions = cookBaseServings;
+  document.getElementById('cookHeaderTitle').textContent = r.name;
+  document.getElementById('cookEmoji').textContent = r.emoji || '🍽️';
+  document.getElementById('cookTitle').textContent = r.name;
+  document.getElementById('cookPortionsVal').textContent = cookPortions;
+  renderCookIngredients();
+  // description
+  const descSec = document.getElementById('cookDescSection');
+  const descEl  = document.getElementById('cookDesc');
+  if (r.description) {
+    descEl.textContent = r.description;
+    descSec.style.display = '';
+  } else {
+    descSec.style.display = 'none';
+  }
+  // steps
+  const stepsSec = document.getElementById('cookStepsSection');
+  const stepsEl  = document.getElementById('cookSteps');
+  const steps    = (r.steps || []).filter(s => s.trim());
+  if (steps.length) {
+    stepsEl.innerHTML = steps.map((s, i) =>
+      `<div class="cook-step">
+        <div class="cook-step-num">${i+1}</div>
+        <div class="cook-step-text">${esc(s)}</div>
+      </div>`
+    ).join('');
+    stepsSec.style.display = '';
+  } else {
+    stepsSec.style.display = 'none';
+  }
+  document.getElementById('cookView').style.display = 'flex';
+}
+
+function closeCookView() {
+  document.getElementById('cookView').style.display = 'none';
+  cookRecipeId = null;
+}
+
+function cookAdjPortions(delta) {
+  cookPortions = Math.max(0.5, cookPortions + delta);
+  document.getElementById('cookPortionsVal').textContent =
+    cookPortions === Math.floor(cookPortions) ? cookPortions : cookPortions.toFixed(1);
+  renderCookIngredients();
+}
+
+function renderCookIngredients() {
+  const r = cookRecipeId ? recipes[cookRecipeId] : null;
+  if (!r) return;
+  const scale = cookPortions / (cookBaseServings || 1);
+  const ings  = r.ingredients.filter(ing => !ing.custom);
+  document.getElementById('cookMeta').textContent =
+    `${cookBaseServings} Portion${cookBaseServings !== 1 ? 'en' : ''} · ${ings.length} Zutat${ings.length !== 1 ? 'en' : ''}`;
+  document.getElementById('cookIngredients').innerHTML = ings.map(ing => {
+    const scaledQty = ((ing.qty || 1) * scale);
+    const qtyStr = scaledQty === Math.floor(scaledQty) ? scaledQty : parseFloat(scaledQty.toFixed(1));
+    const amt = ing.unit === 'g' || ing.unit === 'ml'
+      ? `${Math.round((ing.amountG || 0) * scale)} ${ing.unit}`
+      : `${qtyStr} ${ing.unit}`;
+    return `<div class="cook-ingr-item">
+      <div class="cook-ingr-left">
+        <span style="font-size:22px;">${ing.emoji || '🥗'}</span>
+        <span>${ing.name}</span>
+      </div>
+      <span class="cook-ingr-amt">${amt}</span>
+    </div>`;
+  }).join('');
+}
+
 function saveRecipeFromBuilder() {
   const name = document.getElementById('rbNameIn').value.trim();
   if (!name) { showToast('Bitte Rezeptname eingeben'); return; }
@@ -4829,6 +5014,7 @@ function saveRecipeFromBuilder() {
     emoji:       document.getElementById('rbEmojiIn').value.trim() || '🍽️',
     servings:    parseInt(document.getElementById('rbPortionsIn').value) || 4,
     description: document.getElementById('rbDescIn').value.trim(),
+    steps:       rbSteps.filter(s => s.trim()),
     ingredients: rbIngredients
   };
   saveRecipes();
