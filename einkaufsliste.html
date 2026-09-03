@@ -5351,9 +5351,8 @@ function doQuickBackup(){
 // ═══════════════════════════════════════════════
 const WEEK_PLAN_STORE = 'wochenplan_v1';
 let weekPlan = {};
-let planWeekStart = planGetMonday(new Date());
-let _planPickerTarget = null; // {dateStr, meal}
-let _planSlotTarget  = null; // {dateStr, meal}
+let _planPickerTarget = null;
+let _planSlotTarget  = null;
 let _planSlotSrv     = 1;
 
 const PLAN_MEALS = [
@@ -5410,6 +5409,9 @@ function savePlan() {
 }
 
 function planKey(dateStr, meal) { return dateStr + '_' + meal; }
+
+// initialized after function declarations so planGetMonday is defined
+let planWeekStart = planGetMonday(new Date());
 
 function renderWochenplan() {
   loadPlan();
