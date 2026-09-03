@@ -468,6 +468,24 @@
   .quick-fav-chip:active{opacity:0.8;}
   .qfc-kcal{font-size:10.5px;color:var(--amber);font-weight:700;opacity:0.85;}
   .quick-favs-label{width:100%;font-size:10px;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-faint);font-weight:700;padding:0 2px;}
+  /* ── Kalorien Kachel-Grid (manuell modal) ── */
+  .kal-cat-chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .kal-cat-chips::-webkit-scrollbar{display:none;}
+  .kal-cat-chip{border:1px solid var(--line);background:rgba(0,0,0,0.03);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-soft);white-space:nowrap;transition:background .12s,border-color .12s,color .12s;font-family:inherit;flex-shrink:0;}
+  .kal-cat-chip.active{background:rgba(42,140,84,0.14);border-color:rgba(42,140,84,0.45);color:var(--mint);}
+  .kal-tile-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px;max-height:220px;overflow-y:auto;scrollbar-width:thin;}
+  .kal-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 4px 7px;background:var(--card);border:1px solid var(--line);border-radius:14px;cursor:pointer;transition:border-color .12s,background .12s;-webkit-tap-highlight-color:transparent;}
+  .kal-tile:active{background:rgba(42,140,84,0.09);border-color:rgba(42,140,84,0.4);}
+  .kal-tile-emoji{font-size:20px;line-height:1;}
+  .kal-tile-name{font-size:9.5px;font-weight:600;color:var(--text-soft);text-align:center;line-height:1.2;word-break:break-word;}
+  .kal-tile-kcal{font-size:8.5px;color:var(--text-faint);font-variant-numeric:tabular-nums;}
+  .kal-or-sep{font-size:10.5px;color:var(--text-faint);text-align:center;text-transform:uppercase;letter-spacing:0.07em;font-weight:700;margin:2px 0 10px;display:flex;align-items:center;gap:8px;}
+  .kal-or-sep::before,.kal-or-sep::after{content:'';flex:1;height:1px;background:var(--line);}
+  .kal-foto-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .kal-foto-btn{flex:none;border:1px dashed var(--line);background:rgba(0,0,0,0.02);border-radius:12px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--text-faint);transition:border-color .15s,color .15s;font-family:inherit;}
+  .kal-foto-btn:active{border-color:var(--mint);color:var(--mint);}
+  .kal-foto-thumb{width:52px;height:52px;border-radius:10px;object-fit:cover;border:1px solid var(--line);display:none;flex-shrink:0;}
+  .kal-foto-hint{font-size:11px;color:var(--text-faint);line-height:1.4;}
 </style>
 </head>
 <body>
@@ -641,6 +659,17 @@
         <button type="button" class="meal-chip" data-meal="snack" onclick="selectMeal(this)">🍎 Snack</button>
       </div>
     </div>
+    <!-- Kachel-Auswahl -->
+    <div class="kal-cat-chips" id="kalCatChips"></div>
+    <div class="kal-tile-grid" id="kalTileGrid"></div>
+    <div class="kal-foto-row">
+      <button class="kal-foto-btn" type="button" onclick="openKalFoto()">📷 Foto aufnehmen</button>
+      <img class="kal-foto-thumb" id="kalFotoThumb" alt="">
+      <span class="kal-foto-hint" id="kalFotoHint">Etikett fotografieren als<br>Ausfüllhilfe</span>
+      <input type="file" accept="image/*" capture="environment" id="kalFotoInput" style="display:none" onchange="kalFotoSelected(this)">
+    </div>
+    <div class="kal-or-sep">oder manuell eingeben</div>
+
     <div class="field">
       <label>Bezeichnung</label>
       <input id="manName" placeholder="z. B. Apfel" oninput="suggestFoods(this.value)" autocomplete="off">
@@ -1684,6 +1713,64 @@ function toggleEntry(id){
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); if(id==='scanBg')stopScanner(); }
 
+/* ---------- Kalorien-Kachelraster ---------- */
+let kalActiveCat = null;
+
+function renderKalTiles(filter) {
+  kalActiveCat = filter;
+  const cats = ['Alle', ...new Set(FOOD_DB.map(f => f.cat))];
+  const chipsEl = document.getElementById('kalCatChips');
+  chipsEl.innerHTML = cats.map(c =>
+    `<button class="kal-cat-chip${(!filter && c==='Alle') || filter===c ? ' active' : ''}" onclick="renderKalTiles(${c==='Alle' ? 'null' : `'${c}'`})">${c}</button>`
+  ).join('');
+  const items = filter ? FOOD_DB.filter(f => f.cat === filter) : FOOD_DB;
+  const grid = document.getElementById('kalTileGrid');
+  grid.innerHTML = '';
+  items.forEach(item => {
+    const tile = document.createElement('div');
+    tile.className = 'kal-tile';
+    tile.innerHTML = `<div class="kal-tile-emoji">${item.emoji}</div><div class="kal-tile-name">${item.name}</div><div class="kal-tile-kcal">${item.kcal} kcal</div>`;
+    tile.addEventListener('click', () => selectKalTile(item));
+    grid.appendChild(tile);
+  });
+}
+
+function selectKalTile(item) {
+  document.getElementById('manName').value = item.name;
+  document.getElementById('manKcalPer100').value = item.kcal;
+  document.getElementById('manUnit').value = 'g';
+  updateKcalLabel();
+  document.getElementById('manProtein').value = item.protein ?? '';
+  document.getElementById('manCarbs').value   = item.carbs   ?? '';
+  document.getElementById('manFat').value     = item.fat     ?? '';
+  document.getElementById('manSugars').value  = '';
+  document.getElementById('manFiber').value   = '';
+  selectedNutriscore = null;
+  document.querySelectorAll('.ns-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('nutriPanel').style.display = 'block';
+  document.getElementById('nutriToggle').classList.add('open');
+  document.getElementById('foodSuggestions').style.display = 'none';
+  updateKcalPreview();
+  setTimeout(() => document.getElementById('manAmount').focus(), 50);
+}
+
+function openKalFoto() {
+  document.getElementById('kalFotoInput').click();
+}
+
+function kalFotoSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const thumb = document.getElementById('kalFotoThumb');
+    thumb.src = e.target.result;
+    thumb.style.display = 'block';
+    document.getElementById('kalFotoHint').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
 function openManual(){
   document.getElementById('manName').value='';
   document.getElementById('manAmount').value='';
@@ -1704,10 +1791,13 @@ function openManual(){
   selectedNutriscore=null;
   document.querySelectorAll('.ns-btn').forEach(b=>b.classList.remove('selected'));
   updateKcalLabel();
+  renderKalTiles(null);
+  const ft=document.getElementById('kalFotoThumb'); ft.src=''; ft.style.display='none';
+  document.getElementById('kalFotoInput').value='';
+  document.getElementById('kalFotoHint').style.display='';
   renderFavorites();
   renderFoodHistory();
   openModal('manualBg');
-  setTimeout(()=>document.getElementById('manName').focus(),250);
 }
 
 function submitManual(){
