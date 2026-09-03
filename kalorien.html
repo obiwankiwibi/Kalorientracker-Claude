@@ -484,6 +484,13 @@
   .kal-foto-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
   .kal-foto-btn{flex:none;border:1px dashed var(--line);background:rgba(0,0,0,0.02);border-radius:12px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--text-faint);transition:border-color .15s,color .15s;font-family:inherit;}
   .kal-foto-btn:active{border-color:var(--mint);color:var(--mint);}
+  .kal-recipe-toggle{font-size:13px;font-weight:700;color:var(--text-soft);cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:10px 2px 8px;border-top:1px solid var(--line);margin-top:4px;-webkit-tap-highlight-color:transparent;}
+  .kal-recipe-card{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--card-elev);border:1px solid var(--line);border-radius:14px;margin-bottom:7px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .12s;}
+  .kal-recipe-card:active{background:rgba(42,140,84,0.09);}
+  .kal-recipe-emoji{font-size:28px;flex-shrink:0;line-height:1;}
+  .kal-recipe-name{font-size:14px;font-weight:700;color:var(--text);}
+  .kal-recipe-macros{font-size:11.5px;color:var(--mint);font-weight:600;margin-top:2px;}
+  .kal-recipe-sub{font-size:11px;color:var(--text-faint);margin-top:1px;}
   .kal-foto-thumb{width:52px;height:52px;border-radius:10px;object-fit:cover;border:1px solid var(--line);display:none;flex-shrink:0;}
   .kal-foto-hint{font-size:11px;color:var(--text-faint);line-height:1.4;}
 </style>
@@ -644,6 +651,27 @@
   </div>
 </div>
 
+<!-- Rezept Portionen Picker -->
+<div id="kalRecipePicker" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeKalRecipePicker()">
+  <div style="background:var(--card);border-radius:26px 26px 0 0;padding:20px 20px 36px;width:100%;max-width:480px;border:1px solid var(--line);border-bottom:none;animation:up .22s cubic-bezier(.3,0,.2,1);">
+    <div style="width:36px;height:4px;background:rgba(0,0,0,0.12);border-radius:99px;margin:0 auto 16px;"></div>
+    <div id="krName" style="font-size:17px;font-weight:700;margin-bottom:4px;color:var(--text);"></div>
+    <div id="krKcalInfo" style="font-size:13px;color:var(--text-soft);margin-bottom:18px;"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <label style="font-size:14px;font-weight:700;color:var(--text);">Portionen</label>
+      <input id="krPortions" type="number" min="0.5" step="0.5" value="1" oninput="updateKrPreview()" style="width:80px;padding:10px;text-align:center;font-size:20px;font-weight:700;border:1px solid var(--line);border-radius:14px;background:rgba(0,0,0,0.03);color:var(--text);outline:none;font-family:inherit;">
+      <div style="flex:1;text-align:right;">
+        <div id="krPreviewKcal" style="font-size:22px;font-weight:800;color:var(--mint);"></div>
+        <div id="krPreviewMacros" style="font-size:11px;color:var(--text-soft);margin-top:2px;"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeKalRecipePicker()" style="flex:1;padding:13px;border:1px solid var(--line);background:rgba(0,0,0,0.04);border-radius:18px;color:var(--text-soft);font-size:15px;cursor:pointer;font-family:inherit;">Abbrechen</button>
+      <button onclick="addKalRecipeEntry()" style="flex:1;padding:13px;background:linear-gradient(135deg,var(--mint),var(--mint-deep));border:none;border-radius:18px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
 <!-- Manual entry modal -->
 <div class="modal-bg" id="manualBg">
   <div class="modal">
@@ -668,6 +696,10 @@
       <span class="kal-foto-hint" id="kalFotoHint">Etikett fotografieren als<br>Ausfüllhilfe</span>
       <input type="file" accept="image/*" capture="environment" id="kalFotoInput" style="display:none" onchange="kalFotoSelected(this)">
     </div>
+    <div class="kal-recipe-toggle" onclick="toggleKalRecipes()">
+      <span>📖 Aus Rezepten</span><span id="kalRecipeArrow">▾</span>
+    </div>
+    <div id="kalRecipeSection" style="display:none;margin-bottom:4px;"></div>
     <div class="kal-or-sep">oder manuell eingeben</div>
 
     <div class="field">
@@ -2563,6 +2595,108 @@ fetchWeather();
 if (sessionStorage.getItem('autoScan') === '1') {
   sessionStorage.removeItem('autoScan');
   setTimeout(openScan, 600);
+}
+
+// ── Rezepte aus einkaufsliste.html ──────────────────────────────────────
+const KAL_RECIPE_STORE = 'rezepte_v2';
+let kalRecipePick = null;
+
+function toggleKalRecipes() {
+  const sec = document.getElementById('kalRecipeSection');
+  const arrow = document.getElementById('kalRecipeArrow');
+  const open = sec.style.display !== 'none';
+  sec.style.display = open ? 'none' : 'block';
+  arrow.textContent = open ? '▾' : '▴';
+  if (!open) renderKalRecipes();
+}
+
+function renderKalRecipes() {
+  let data = {};
+  try { data = JSON.parse(localStorage.getItem(KAL_RECIPE_STORE) || '{}'); } catch(e) {}
+  const ids = Object.keys(data);
+  const sec = document.getElementById('kalRecipeSection');
+  if (!ids.length) {
+    sec.innerHTML = '<div style="font-size:13px;color:var(--text-faint);text-align:center;padding:12px 0;">Noch keine Rezepte in der Einkaufslisten-App gespeichert.</div>';
+    return;
+  }
+  sec.innerHTML = ids.map(id => {
+    const r = data[id];
+    const s = r.servings || 1;
+    let kcal=0, p=0, c=0, f=0;
+    (r.ingredients || []).forEach(ing => {
+      kcal += (ing.amountG / 100) * (ing.kcalPer100 || 0);
+      p    += (ing.amountG / 100) * (ing.proteinPer100 || 0);
+      c    += (ing.amountG / 100) * (ing.carbsPer100 || 0);
+      f    += (ing.amountG / 100) * (ing.fatPer100 || 0);
+    });
+    const ppKcal = Math.round(kcal / s);
+    const ppP = (p / s).toFixed(1);
+    const ppC = (c / s).toFixed(1);
+    const ppF = (f / s).toFixed(1);
+    const emoji = (r.emoji || '🍽️').replace(/"/g, '');
+    const safeName = r.name.replace(/"/g, '&quot;');
+    return `<div class="kal-recipe-card"
+      data-ppkcal="${ppKcal}" data-ppp="${ppP}" data-ppc="${ppC}" data-ppf="${ppF}"
+      data-emoji="${emoji}" data-name="${safeName}" data-servings="${s}"
+      onclick="openKalRecipePicker(this)">
+      <div class="kal-recipe-emoji">${emoji}</div>
+      <div>
+        <div class="kal-recipe-name">${r.name}</div>
+        <div class="kal-recipe-macros">${ppKcal} kcal · E ${ppP}g · KH ${ppC}g · F ${ppF}g</div>
+        <div class="kal-recipe-sub">pro Portion · ${s} Portion${s !== 1 ? 'en' : ''} gesamt</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openKalRecipePicker(card) {
+  kalRecipePick = {
+    ppKcal: parseFloat(card.dataset.ppkcal),
+    ppP:    parseFloat(card.dataset.ppp),
+    ppC:    parseFloat(card.dataset.ppc),
+    ppF:    parseFloat(card.dataset.ppf),
+    emoji:  card.dataset.emoji,
+    name:   card.dataset.name,
+    servings: parseInt(card.dataset.servings) || 1
+  };
+  document.getElementById('krName').textContent = kalRecipePick.emoji + ' ' + kalRecipePick.name;
+  document.getElementById('krKcalInfo').textContent =
+    kalRecipePick.ppKcal + ' kcal pro Portion · ' + kalRecipePick.servings + ' Portion' + (kalRecipePick.servings !== 1 ? 'en' : '') + ' gesamt';
+  document.getElementById('krPortions').value = 1;
+  updateKrPreview();
+  document.getElementById('kalRecipePicker').style.display = 'flex';
+  setTimeout(() => document.getElementById('krPortions').focus(), 100);
+}
+
+function updateKrPreview() {
+  if (!kalRecipePick) return;
+  const n = parseFloat(document.getElementById('krPortions').value) || 0;
+  document.getElementById('krPreviewKcal').textContent = Math.round(n * kalRecipePick.ppKcal) + ' kcal';
+  document.getElementById('krPreviewMacros').textContent =
+    'E ' + (n * kalRecipePick.ppP).toFixed(1) + 'g · KH ' + (n * kalRecipePick.ppC).toFixed(1) + 'g · F ' + (n * kalRecipePick.ppF).toFixed(1) + 'g';
+}
+
+function closeKalRecipePicker() {
+  document.getElementById('kalRecipePicker').style.display = 'none';
+  kalRecipePick = null;
+}
+
+function addKalRecipeEntry() {
+  if (!kalRecipePick) return;
+  const n = parseFloat(document.getElementById('krPortions').value) || 1;
+  const { ppKcal, ppP, ppC, ppF, emoji, name } = kalRecipePick;
+  addEntry(
+    emoji + ' ' + name,
+    Math.round(n * ppKcal),
+    '',
+    { protein: parseFloat((n * ppP).toFixed(1)), carbs: parseFloat((n * ppC).toFixed(1)), fat: parseFloat((n * ppF).toFixed(1)) },
+    null,
+    'Portion',
+    n,
+    selectedMeal
+  );
+  closeKalRecipePicker();
+  closeModal('manualBg');
 }
 </script>
 
