@@ -4169,6 +4169,7 @@ function configWorkerUrl() {
   const current = localStorage.getItem('ck_worker_url') || '';
   const w = prompt('Cloudflare Worker URL eingeben\n(z. B. https://chefkoch.DEIN-NAME.workers.dev)\n\nLeer lassen zum Entfernen:', current);
   if (w === null) return;
+  const savedRecipeUrl = document.getElementById('ckUrlIn')?.value || '';
   if (w.trim()) {
     localStorage.setItem('ck_worker_url', w.trim());
     showToast('Worker-URL gespeichert');
@@ -4177,6 +4178,7 @@ function configWorkerUrl() {
     showToast('Worker-URL entfernt');
   }
   openChefkochSheet(); // refresh badge
+  if (savedRecipeUrl) document.getElementById('ckUrlIn').value = savedRecipeUrl;
 }
 
 function loadChefkochUrl(btn) {
