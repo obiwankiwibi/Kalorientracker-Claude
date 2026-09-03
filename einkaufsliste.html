@@ -691,6 +691,57 @@ html { height: 100%; }
     .rb-add-step-btn { width:100%; padding:10px; border-radius:12px; border:1.5px dashed var(--border); background:none; color:var(--active); font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; margin-top:4px; -webkit-tap-highlight-color:transparent; }
     .rb-add-step-btn:active { opacity:.7; }
 
+    /* ── Wochenplan ── */
+    .plan-wrap { padding: 0 0 80px; }
+    .plan-nav { display:flex; align-items:center; justify-content:space-between; padding:12px 14px 14px; }
+    .plan-nav-btn { background:none; border:none; color:var(--active); font-size:22px; cursor:pointer; padding:6px 8px; -webkit-tap-highlight-color:transparent; line-height:1; }
+    .plan-nav-label { text-align:center; }
+    .plan-nav-kw { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+    .plan-nav-range { font-size:15px; font-weight:700; color:var(--text); }
+    .plan-table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; padding:0 12px 12px; }
+    .plan-table-scroll::-webkit-scrollbar { display:none; }
+    .plan-table { border-collapse:collapse; width:100%; min-width:520px; }
+    .plan-table th { font-size:11px; font-weight:700; text-align:center; padding:6px 3px 8px; color:var(--muted); border-bottom:2px solid var(--border); white-space:nowrap; }
+    .plan-table th.plan-today { color:var(--active); }
+    .plan-table th .plan-day-name { display:block; text-transform:uppercase; letter-spacing:.04em; }
+    .plan-table th .plan-day-date { display:block; font-size:15px; font-weight:800; color:var(--text); margin-top:1px; }
+    .plan-table th.plan-today .plan-day-date { color:var(--active); }
+    .plan-table td.plan-row-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; padding:8px 8px 8px 2px; vertical-align:middle; white-space:nowrap; border-right:1px solid var(--border); }
+    .plan-table td.plan-row-label span { display:block; font-size:16px; margin-bottom:2px; }
+    .plan-cell { width:80px; min-width:72px; height:78px; vertical-align:top; padding:4px 3px; }
+    .plan-slot { width:100%; height:100%; border-radius:12px; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; -webkit-tap-highlight-color:transparent; font-family:inherit; transition:opacity .15s; }
+    .plan-slot:active { opacity:.7; }
+    .plan-slot.empty { background:var(--card); border:1.5px dashed var(--border); }
+    .plan-slot.empty .plan-plus { font-size:22px; color:var(--border); line-height:1; }
+    .plan-slot.filled { background:var(--surface); border:1.5px solid var(--active); }
+    .plan-slot-emoji { font-size:22px; line-height:1; }
+    .plan-slot-name { font-size:10px; font-weight:700; color:var(--text); max-width:68px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; line-height:1.2; }
+    .plan-slot-srv { font-size:9px; color:var(--muted); }
+    .plan-table tr + tr td { padding-top:3px; }
+    .plan-table tr:not(:last-child) td.plan-row-label { border-bottom:1px solid var(--border); }
+    .plan-cta { margin:4px 12px 0; display:flex; gap:8px; }
+    .plan-cta-btn { flex:1; padding:14px; border-radius:16px; border:none; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:opacity .15s; }
+    .plan-cta-btn:active { opacity:.75; }
+    .plan-cta-btn.primary { background:var(--active); color:#fff; }
+    .plan-cta-btn.secondary { background:var(--card); color:var(--text); }
+    /* Plan picker / slot options */
+    .plan-recipe-row { display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .plan-recipe-row:last-child { border-bottom:none; }
+    .plan-recipe-row:active { opacity:.7; }
+    .plan-recipe-list { max-height:55vh; overflow-y:auto; }
+    .plan-srv-row { display:flex; align-items:center; justify-content:center; gap:12px; padding:14px 0; }
+    .plan-srv-btn { width:34px; height:34px; border-radius:50%; border:1.5px solid var(--border); background:var(--surface); color:var(--active); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .plan-srv-val { font-size:22px; font-weight:800; min-width:32px; text-align:center; }
+
+    .plan-th-meal { width:62px; min-width:56px; padding:6px 4px; }
+    .plan-th-day { text-align:center; padding:6px 3px 8px; font-size:11px; font-weight:700; color:var(--muted); white-space:nowrap; }
+    .plan-th-day.plan-today { color:var(--active); }
+    .plan-th-date { display:block; font-size:14px; font-weight:800; color:var(--text); }
+    .plan-th-day.plan-today .plan-th-date { color:var(--active); }
+    .plan-td-meal { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; padding:6px 6px; vertical-align:middle; white-space:nowrap; border-right:1px solid var(--border); }
+    .plan-meal-emoji { display:block; font-size:16px; margin-bottom:2px; }
+    .plan-meal-label { display:block; }
+    .plan-slot-td { width:80px; min-width:72px; height:78px; vertical-align:top; padding:4px 3px; }
     /* ── Cooking view (reader mode) ── */
     .cook-view { position:fixed; inset:0; z-index:300; background:#FDF8EE; display:flex; flex-direction:column; overflow:hidden; }
     .cook-header { display:flex; align-items:center; gap:8px; padding:14px 14px 12px; border-bottom:2px solid #D4B896; background:#F5EDD8; flex-shrink:0; }
@@ -1444,46 +1495,55 @@ html { height: 100%; }
 </div>
 
 <!-- ══ RESTAURANTS VIEW ══ -->
-<div id="restaurantsView" style="display:none; padding: 16px 12px;">
-  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-    <h2 style="font-size:17px; font-weight:700;">Restaurants</h2>
-    <button onclick="openRestForm()" style="
-      background:var(--active); border:none; color:#fff;
-      width:34px; height:34px; border-radius:50%;
-      font-size:22px; cursor:pointer; display:flex;
-      align-items:center; justify-content:center;">+</button>
+<!-- ══ WOCHENPLAN VIEW ══ -->
+<div id="wocheView" style="display:none;">
+  <div class="plan-wrap">
+    <div class="plan-nav">
+      <button class="plan-nav-btn" onclick="planNavWeek(-1)">‹</button>
+      <div class="plan-nav-label">
+        <div class="plan-nav-kw" id="planKwLabel"></div>
+        <div class="plan-nav-range" id="planRangeLabel"></div>
+      </div>
+      <button class="plan-nav-btn" onclick="planNavWeek(1)">›</button>
+    </div>
+    <div class="plan-table-scroll">
+      <table class="plan-table" id="planTable"></table>
+    </div>
+    <div class="plan-cta">
+      <button class="plan-cta-btn primary" onclick="planToList()">🛒 Woche einkaufen</button>
+      <button class="plan-cta-btn secondary" onclick="planClearWeek()">🗑</button>
+    </div>
   </div>
-  <p id="restDeleteHint" style="font-size:13px; color:var(--muted); margin-bottom:16px; display:none;">Lang drücken zum Löschen.</p>
-
-  <button onclick="findNearby()" style="
-    width:100%; padding:14px; margin-bottom:20px;
-    background: linear-gradient(135deg, #1b6b3e, #164f30);
-    color:#fff; border:none; border-radius:16px;
-    font-size:15px; font-weight:600; cursor:pointer; touch-action:manipulation;
-    display:flex; align-items:center; justify-content:center; gap:8px;">
-    📍 Restaurants in der Nähe
-  </button>
-
-  <div id="restaurantGrid"></div>
 </div>
 
-<!-- ══ RESTAURANT FORM SHEET ══ -->
-<div class="sheet-overlay" id="restOverlay" onclick="restOverlayClick(event)">
+<!-- ══ PLAN RECIPE PICKER ══ -->
+<div class="sheet-overlay" id="planPickerOverlay" onclick="if(event.target===this)closePlanPicker()" style="display:none;">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">🍽️ Restaurant hinzufügen</div>
-
-    <div style="display:flex; gap:8px; margin-bottom:10px;">
-      <input class="sheet-input" id="restEmoji" placeholder="Emoji 🍕" style="width:72px; flex:none; text-align:center; font-size:20px;">
-      <input class="sheet-input" id="restName" placeholder="Name *" style="flex:1; margin-bottom:0;">
+    <div class="sheet-title" id="planPickerTitle">Rezept wählen</div>
+    <div class="plan-recipe-list" id="planRecipeList"></div>
+    <div class="sheet-btns" style="padding-top:8px;">
+      <button class="sh-btn secondary" onclick="closePlanPicker()">Abbrechen</button>
     </div>
-    <input class="sheet-input" id="restHours" placeholder="Öffnungszeiten (z.B. Mo–Sa 11–22 Uhr)">
-    <input class="sheet-input" id="restPhone" placeholder="Telefon (optional)" inputmode="tel">
-    <input class="sheet-input" id="restUrl"   placeholder="Website oder Google Maps Link (optional)">
+  </div>
+</div>
 
-    <div style="display:flex; gap:8px; margin-top:4px;">
-      <button class="sh-btn secondary" onclick="closeRestForm()">Abbrechen</button>
-      <button class="sh-btn primary"   onclick="saveRestaurant()">Hinzufügen</button>
+<!-- ══ PLAN SLOT OPTIONS ══ -->
+<div class="sheet-overlay" id="planSlotOverlay" onclick="if(event.target===this)closePlanSlot()" style="display:none;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="planSlotTitle"></div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:14px;" id="planSlotMeta"></div>
+    <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;">Portionen</div>
+    <div class="plan-srv-row">
+      <button class="plan-srv-btn" onclick="planAdjSrv(-1)">−</button>
+      <span class="plan-srv-val" id="planSrvVal">4</span>
+      <button class="plan-srv-btn" onclick="planAdjSrv(1)">+</button>
+    </div>
+    <div class="sheet-btns" style="padding-top:4px;">
+      <button class="sh-btn secondary" onclick="closePlanSlot()">Schließen</button>
+      <button class="sh-btn secondary" onclick="openPlanPickerFromSlot()">Ändern</button>
+      <button class="sh-btn danger" style="flex:0 0 auto;padding:13px 16px;" onclick="planRemoveSlot()">🗑</button>
     </div>
   </div>
 </div>
@@ -1832,9 +1892,9 @@ html { height: 100%; }
     <div class="nav-icon">🏷️</div>
     <div>Angebote</div>
   </div>
-  <div class="nav-item" id="navRestaurants" onclick="showTab('restaurants')">
-    <div class="nav-icon">🍽️</div>
-    <div>Restaurants</div>
+  <div class="nav-item" id="navWoche" onclick="showTab('woche')">
+    <div class="nav-icon">🗓️</div>
+    <div>Woche</div>
   </div>
   <div class="nav-item" id="navRezepte" onclick="showTab('rezepte')">
     <div class="nav-icon">🍽️</div>
@@ -3071,7 +3131,7 @@ function showTab(tab) {
   activeTab = tab;
   const isListe       = tab === 'liste';
   const isAngebote    = tab === 'angebote';
-  const isRestaurants = tab === 'restaurants';
+  const isWoche       = tab === 'woche';
   const isRezepte     = tab === 'rezepte';
 
   // Liste-Elemente
@@ -3095,23 +3155,23 @@ function showTab(tab) {
   }
 
   // Andere Views
-  document.getElementById('offersView').style.display      = isAngebote    ? 'block' : 'none';
-  document.getElementById('restaurantsView').style.display = isRestaurants ? 'block' : 'none';
-  document.getElementById('recipesView').style.display     = isRezepte     ? 'block' : 'none';
+  document.getElementById('offersView').style.display  = isAngebote ? 'block' : 'none';
+  document.getElementById('wocheView').style.display   = isWoche    ? 'block' : 'none';
+  document.getElementById('recipesView').style.display = isRezepte  ? 'block' : 'none';
   const stb = document.getElementById('scrollTopBtn');
-  if (stb && !isAngebote && !isRestaurants) stb.classList.remove('visible');
+  if (stb && !isAngebote) stb.classList.remove('visible');
 
   // Nav
-  document.getElementById('navListe').classList.toggle('on',       isListe);
-  document.getElementById('navAngebote').classList.toggle('on',    isAngebote);
-  document.getElementById('navRestaurants').classList.toggle('on', isRestaurants);
-  document.getElementById('navRezepte').classList.toggle('on',     isRezepte);
+  document.getElementById('navListe').classList.toggle('on',    isListe);
+  document.getElementById('navAngebote').classList.toggle('on', isAngebote);
+  document.getElementById('navWoche').classList.toggle('on',    isWoche);
+  document.getElementById('navRezepte').classList.toggle('on',  isRezepte);
 
   const clearMenuItem = document.getElementById('clearDoneMenuItem');
   if (clearMenuItem) clearMenuItem.style.display = isListe ? '' : 'none';
-  if (isAngebote)    { renderStores(); renderOffers(); updatePlzBtn(); }
-  if (isRestaurants) renderRestaurants();
-  if (isRezepte)     renderRecipes();
+  if (isAngebote) { renderStores(); renderOffers(); updatePlzBtn(); }
+  if (isWoche)    renderWochenplan();
+  if (isRezepte)  renderRecipes();
 }
 
 function renderStores() {
@@ -5285,6 +5345,260 @@ function doQuickBackup(){
   a.download="hub-backup-"+new Date().toISOString().slice(0,10)+".json";
   a.click();URL.revokeObjectURL(a.href);
 }
+
+// ═══════════════════════════════════════════════
+//  WOCHENPLAN
+// ═══════════════════════════════════════════════
+const WEEK_PLAN_STORE = 'wochenplan_v1';
+let weekPlan = {};
+let planWeekStart = planGetMonday(new Date());
+let _planPickerTarget = null; // {dateStr, meal}
+let _planSlotTarget  = null; // {dateStr, meal}
+let _planSlotSrv     = 1;
+
+const PLAN_MEALS = [
+  { id: 'breakfast', label: 'Frühstück', emoji: '🌅' },
+  { id: 'lunch',     label: 'Mittag',    emoji: '☀️'  },
+  { id: 'dinner',    label: 'Abend',     emoji: '🌙'  },
+];
+const PLAN_DAYS_DE = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+function planGetMonday(d) {
+  const dt = new Date(d);
+  const day = dt.getDay(); // 0=Sun
+  const diff = (day === 0) ? -6 : 1 - day;
+  dt.setDate(dt.getDate() + diff);
+  dt.setHours(0, 0, 0, 0);
+  return dt;
+}
+
+function planGetISOWeek(d) {
+  const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = dt.getUTCDay() || 7;
+  dt.setUTCDate(dt.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+  return Math.ceil((((dt - yearStart) / 86400000) + 1) / 7);
+}
+
+function planDateStr(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+function planGetWeekDates() {
+  return Array.from({length: 7}, (_, i) => {
+    const d = new Date(planWeekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+}
+
+function planNavWeek(delta) {
+  planWeekStart = new Date(planWeekStart);
+  planWeekStart.setDate(planWeekStart.getDate() + delta * 7);
+  renderWochenplan();
+}
+
+function loadPlan() {
+  try { weekPlan = JSON.parse(localStorage.getItem(WEEK_PLAN_STORE) || '{}'); }
+  catch(e) { weekPlan = {}; }
+}
+
+function savePlan() {
+  localStorage.setItem(WEEK_PLAN_STORE, JSON.stringify(weekPlan));
+}
+
+function planKey(dateStr, meal) { return dateStr + '_' + meal; }
+
+function renderWochenplan() {
+  loadPlan();
+  const kw = planGetISOWeek(planWeekStart);
+  const days = planGetWeekDates();
+  const endDate = days[6];
+  const fmt = d => String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0');
+  document.getElementById('planKwLabel').textContent = 'KW ' + kw;
+  document.getElementById('planRangeLabel').textContent = fmt(days[0]) + ' – ' + fmt(endDate) + '.' + endDate.getFullYear();
+  renderPlanTable(days);
+}
+
+function renderPlanTable(days) {
+  const table = document.getElementById('planTable');
+  // Header
+  const thead = document.createElement('thead');
+  thead.innerHTML = '<tr><th class="plan-th-meal"></th>' +
+    days.map((d, i) => {
+      const isToday = planDateStr(d) === planDateStr(new Date());
+      return `<th class="plan-th-day${isToday ? ' plan-today' : ''}">${PLAN_DAYS_DE[i]}<br><span class="plan-th-date">${d.getDate()}.${d.getMonth()+1}.</span></th>`;
+    }).join('') + '</tr>';
+
+  // Body
+  const tbody = document.createElement('tbody');
+  PLAN_MEALS.forEach(meal => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="plan-td-meal"><span class="plan-meal-emoji">${meal.emoji}</span><span class="plan-meal-label">${meal.label}</span></td>`;
+    days.forEach(d => {
+      const ds = planDateStr(d);
+      const key = planKey(ds, meal.id);
+      const slot = weekPlan[key];
+      const td = document.createElement('td');
+      td.className = 'plan-slot-td';
+      if (slot && recipes[slot.recipeId]) {
+        const r = recipes[slot.recipeId];
+        td.innerHTML = `<div class="plan-slot filled" onclick="openSlotOptions('${ds}','${meal.id}')">
+          <div class="plan-slot-emoji">${r.emoji || '🍽️'}</div>
+          <div class="plan-slot-name">${r.name}</div>
+          <div class="plan-slot-srv">${slot.servings} P.</div>
+        </div>`;
+      } else {
+        td.innerHTML = `<div class="plan-slot empty" onclick="openPlanPicker('${ds}','${meal.id}')"><span class="plan-plus">+</span></div>`;
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  table.innerHTML = '';
+  table.appendChild(thead);
+  table.appendChild(tbody);
+}
+
+function openPlanPicker(dateStr, meal) {
+  _planPickerTarget = { dateStr, meal };
+  const list = document.getElementById('planRecipeList');
+  const rArr = Object.values(recipes);
+  if (!rArr.length) {
+    list.innerHTML = '<div style="padding:1rem;color:var(--muted);text-align:center;">Noch keine Rezepte vorhanden</div>';
+  } else {
+    list.innerHTML = rArr.map(r => `
+      <div class="plan-recipe-row" onclick="setPlanSlot('${dateStr}','${meal}','${r.id}')">
+        <span style="font-size:26px;line-height:1;">${r.emoji || '🍽️'}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:15px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.name}</div>
+          <div style="font-size:12px;color:var(--muted);">${r.ingredients ? r.ingredients.length : 0} Zutaten · ${r.servings || 1} Port.</div>
+        </div>
+      </div>`).join('');
+  }
+  document.getElementById('planPickerOverlay').style.display = 'flex';
+}
+
+function closePlanPicker() {
+  document.getElementById('planPickerOverlay').style.display = 'none';
+  _planPickerTarget = null;
+}
+
+function setPlanSlot(dateStr, meal, recipeId) {
+  const key = planKey(dateStr, meal);
+  const existing = weekPlan[key];
+  weekPlan[key] = { recipeId, servings: existing ? existing.servings : (recipes[recipeId] ? (recipes[recipeId].servings || 1) : 1) };
+  savePlan();
+  closePlanPicker();
+  closePlanSlot();
+  renderPlanTable(planGetWeekDates());
+}
+
+function openSlotOptions(dateStr, meal) {
+  _planSlotTarget = { dateStr, meal };
+  const key = planKey(dateStr, meal);
+  const slot = weekPlan[key];
+  if (!slot) return;
+  _planSlotSrv = slot.servings || 1;
+  const r = recipes[slot.recipeId];
+  document.getElementById('planSlotTitle').textContent = r ? (r.emoji + ' ' + r.name) : 'Rezept';
+  document.getElementById('planSrvVal').textContent = _planSlotSrv;
+  document.getElementById('planSlotOverlay').style.display = 'flex';
+}
+
+function closePlanSlot() {
+  document.getElementById('planSlotOverlay').style.display = 'none';
+  _planSlotTarget = null;
+}
+
+function planAdjSrv(delta) {
+  _planSlotSrv = Math.max(0.5, _planSlotSrv + delta);
+  document.getElementById('planSrvVal').textContent = _planSlotSrv;
+  if (_planSlotTarget) {
+    const key = planKey(_planSlotTarget.dateStr, _planSlotTarget.meal);
+    if (weekPlan[key]) { weekPlan[key].servings = _planSlotSrv; savePlan(); }
+  }
+}
+
+function planRemoveSlot() {
+  if (!_planSlotTarget) return;
+  delete weekPlan[planKey(_planSlotTarget.dateStr, _planSlotTarget.meal)];
+  savePlan();
+  closePlanSlot();
+  renderPlanTable(planGetWeekDates());
+}
+
+function openPlanPickerFromSlot() {
+  const target = _planSlotTarget;
+  closePlanSlot();
+  if (target) openPlanPicker(target.dateStr, target.meal);
+}
+
+function planToList() {
+  const days = planGetWeekDates();
+  const agg = {}; // name.lower → {ing object, totalG}
+  days.forEach(d => {
+    PLAN_MEALS.forEach(meal => {
+      const key = planKey(planDateStr(d), meal.id);
+      const slot = weekPlan[key];
+      if (!slot) return;
+      const r = recipes[slot.recipeId];
+      if (!r || !r.ingredients) return;
+      const scale = (slot.servings || 1) / (r.servings || 1);
+      r.ingredients.forEach(ing => {
+        const k = ing.name.toLowerCase();
+        if (agg[k]) {
+          agg[k].totalG += (ing.amountG || 0) * scale;
+        } else {
+          agg[k] = { ing: Object.assign({}, ing), totalG: (ing.amountG || 0) * scale };
+        }
+      });
+    });
+  });
+
+  const entries = Object.values(agg);
+  if (!entries.length) { showToast('Keine Rezepte diese Woche'); return; }
+
+  entries.forEach(({ ing, totalG }) => {
+    const unitG = ing.unitG || 100;
+    const packs = Math.ceil(totalG / unitG);
+    persist(ing.name, {
+      name: ing.name,
+      emoji: ing.emoji || '🛒',
+      qty: packs,
+      unit: ing.catalogUnit || ing.unit || 'Stk',
+      amountG: packs * unitG,
+      kcalPer100: ing.kcalPer100,
+      proteinPer100: ing.proteinPer100,
+      carbsPer100: ing.carbsPer100,
+      fatPer100: ing.fatPer100,
+      unitPrice: ing.unitPrice,
+      unitG,
+      catalogUnit: ing.catalogUnit,
+      checked: false,
+    });
+  });
+
+  showToast(entries.length + ' Zutaten zur Einkaufsliste hinzugefügt');
+  showTab('liste');
+}
+
+function planClearWeek() {
+  const days = planGetWeekDates();
+  days.forEach(d => {
+    PLAN_MEALS.forEach(meal => {
+      delete weekPlan[planKey(planDateStr(d), meal.id)];
+    });
+  });
+  savePlan();
+  renderPlanTable(planGetWeekDates());
+}
+
+// init
+loadPlan();
 </script>
 </body>
 </html>
