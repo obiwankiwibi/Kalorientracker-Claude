@@ -635,16 +635,17 @@ html { height: 100%; }
     .recipe-toolbar { display:flex; gap:8px; padding:0 0 16px; }
     .recipe-tool-btn { flex:1; padding:13px; border-radius:16px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
     .recipe-tool-btn.primary { background:var(--active); color:#fff; border-color:var(--active); }
-    .rec-cat-chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
-    .rec-cat-chips::-webkit-scrollbar{display:none;}
-    .rec-cat-chip{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:20px;padding:5px 13px;font-size:12px;white-space:nowrap;cursor:pointer;font-family:inherit;}
-    .rec-cat-chip.active{background:rgba(42,140,84,0.14);border-color:var(--active);color:var(--active);font-weight:600;}
-    .rec-tile-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;max-height:200px;overflow-y:auto;margin-bottom:10px;scrollbar-width:none;}
-    .rec-tile-grid::-webkit-scrollbar{display:none;}
-    .rec-tile{display:flex;flex-direction:column;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:8px 4px 6px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
-    .rec-tile:active{background:rgba(42,140,84,0.10);}
-    .rec-tile-emoji{font-size:24px;line-height:1.2;}
-    .rec-tile-name{font-size:10px;color:var(--text);text-align:center;line-height:1.25;margin-top:2px;word-break:break-word;}
+    .rb-view{position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;}
+    .rb-header{display:flex;align-items:center;gap:8px;padding:14px 12px 10px;border-bottom:1px solid var(--border);flex-shrink:0;}
+    .rb-back{background:none;border:none;color:var(--active);font-size:15px;font-weight:600;cursor:pointer;padding:6px 4px;font-family:inherit;-webkit-tap-highlight-color:transparent;}
+    .rb-title{flex:1;font-size:16px;font-weight:700;text-align:center;color:var(--text);}
+    .rb-done{background:var(--active);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;}
+    .rb-badge{display:inline-block;background:rgba(255,255,255,0.3);border-radius:10px;padding:0 6px;font-size:12px;margin-left:4px;min-width:16px;text-align:center;}
+    .rb-selected{overflow-x:auto;white-space:nowrap;padding:8px 12px;border-bottom:1px solid var(--border);scrollbar-width:none;flex-shrink:0;}
+    .rb-selected::-webkit-scrollbar{display:none;}
+    .rb-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(42,140,84,0.12);border:1px solid var(--active);border-radius:20px;padding:5px 10px 5px 12px;margin-right:6px;font-size:13px;cursor:pointer;color:var(--text);}
+    .rb-chip-x{color:var(--muted);font-size:14px;line-height:1;}
+    .rb-scroll{flex:1;overflow-y:auto;padding:8px 12px 80px;}
     .ingr-results { background:var(--surface); border:1px solid var(--border); border-radius:14px; max-height:180px; overflow-y:auto; margin-bottom:8px; }
     .ingr-result-row { padding:10px 14px; cursor:pointer; font-size:14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
     .ingr-result-row:last-child { border-bottom:none; }
@@ -1536,35 +1537,44 @@ html { height: 100%; }
 <!-- ══ REZEPTE VIEW ══ -->
 <div id="recipesView" style="display:none; padding:16px 12px;">
   <div class="recipe-toolbar">
-    <button class="recipe-tool-btn primary" onclick="openRecipeSheet()">+ Neues Rezept</button>
+    <button class="recipe-tool-btn primary" onclick="openRecipeBuilder()">+ Rezept erstellen</button>
     <button class="recipe-tool-btn" onclick="openChefkochSheet()">📥 Chefkoch</button>
   </div>
   <div id="recipeList"></div>
 </div>
 
-<!-- ══ REZEPT SHEET ══ -->
-<div class="sheet-overlay" id="recipeOverlay" onclick="recipeOverlayClick(event)" style="display:none">
+<!-- ══ RECIPE BUILDER VIEW (full-screen) ══ -->
+<div class="rb-view" id="recipeBuilderView" style="display:none;">
+  <div class="rb-header">
+    <button class="rb-back" onclick="closeRecipeBuilder()">← Zurück</button>
+    <span class="rb-title" id="rbTitle">Zutaten wählen</span>
+    <button class="rb-done" onclick="openRecipeSaveSheet()">Fertig <span class="rb-badge" id="rbCountBadge">0</span></button>
+  </div>
+  <div class="rb-selected" id="rbSelectedStrip" style="display:none;"></div>
+  <div class="cat-row" id="rbCatRow"></div>
+  <div class="rb-scroll">
+    <div class="grid" id="rbGrid"></div>
+  </div>
+</div>
+
+<!-- ══ RECIPE SAVE SHEET ══ -->
+<div class="sheet-overlay" id="recipeSaveOverlay" onclick="if(event.target===this)closeRecipeSaveSheet()" style="display:none;">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title" id="recipeSheetTitle">🍽️ Neues Rezept</div>
+    <div class="sheet-title">🍽️ Rezept speichern</div>
     <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <input class="sheet-input" id="recipeEmojiIn" placeholder="🍽️" style="width:62px;flex:none;text-align:center;font-size:20px;margin-bottom:0;">
-      <input class="sheet-input" id="recipeNameIn"  placeholder="Rezeptname *" style="flex:1;margin-bottom:0;">
+      <input class="sheet-input" id="rbEmojiIn" placeholder="🍽️" style="width:62px;flex:none;text-align:center;font-size:20px;margin-bottom:0;">
+      <input class="sheet-input" id="rbNameIn" placeholder="Rezeptname *" style="flex:1;margin-bottom:0;">
     </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
-      <input class="sheet-input" id="recipePortionsIn" placeholder="4" type="number" min="1" value="4" style="width:90px;flex:none;margin-bottom:0;">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+      <input class="sheet-input" id="rbPortionsIn" type="number" min="1" value="4" style="width:90px;flex:none;margin-bottom:0;">
       <span style="font-size:13px;color:var(--muted);">Portionen</span>
     </div>
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;">Zutaten</div>
-    <div class="rec-cat-chips" id="recCatChips"></div>
-    <div class="rec-tile-grid" id="recTileGrid"></div>
-    <input class="sheet-input" id="ingrSearch" placeholder="Oder Zutat suchen…" oninput="searchIngredients()" autocomplete="off" style="margin-bottom:4px;">
-    <div class="ingr-results" id="ingrResults" style="display:none;"></div>
-    <div id="ingrList" style="max-height:200px;overflow-y:auto;margin-bottom:12px;"></div>
+    <textarea class="sheet-input" id="rbDescIn" rows="3" placeholder="Kochbeschreibung (optional)…" style="resize:vertical;font-family:inherit;"></textarea>
     <div class="sheet-btns">
-      <button class="sh-btn secondary" onclick="closeRecipeSheet()">Abbrechen</button>
-      <button class="sh-btn danger"    id="recipeDeleteBtn" onclick="deleteCurrentRecipe()" style="display:none;flex:0 0 auto;padding:13px 16px;">🗑</button>
-      <button class="sh-btn primary"   onclick="saveRecipe()">Speichern</button>
+      <button class="sh-btn secondary" onclick="closeRecipeSaveSheet()">Abbrechen</button>
+      <button class="sh-btn danger" id="rbDeleteBtn" onclick="deleteFromBuilder()" style="display:none;flex:0 0 auto;padding:13px 16px;">🗑</button>
+      <button class="sh-btn primary" onclick="saveRecipeFromBuilder()">Speichern</button>
     </div>
   </div>
 </div>
@@ -3976,8 +3986,7 @@ autoLoadOffersJson();
 // ═══════════════════════════════════════════════
 const RECIPE_STORE = 'rezepte_v2';
 let recipes = JSON.parse(localStorage.getItem(RECIPE_STORE) || '{}');
-let editRecipeId = null;
-let pendingIngredients = [];
+// legacy aliases removed — builder state is rbEditId / rbIngredients
 
 function saveRecipes() { localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes)); }
 
@@ -4038,130 +4047,132 @@ function renderRecipes() {
       ${totalPrice ? `<div style="font-size:12px;color:var(--muted);text-align:right;margin-bottom:10px;">ca. ${totalPrice.toFixed(2).replace('.',',')} € gesamt</div>` : ''}
       <div class="recipe-ingr-list">${ingrHtml}${moreIngr}</div>
       <div class="recipe-actions">
-        <button class="recipe-btn secondary" onclick="openRecipeSheet('${id}')">✏️ Bearbeiten</button>
+        <button class="recipe-btn secondary" onclick="openRecipeBuilder('${id}')">✏️ Bearbeiten</button>
         <button class="recipe-btn primary"   onclick="addRecipeToList('${id}')">🛒 Zur Liste</button>
       </div>
     </div>`;
   }).join('');
 }
 
-let recActiveCat = null;
-function renderRecipeTiles(filter) {
-  recActiveCat = filter;
-  const cats = ['Alle', ...new Set(SUGGESTIONS.map(it => it.cat).filter(Boolean))];
-  document.getElementById('recCatChips').innerHTML = cats.map(c =>
-    `<button class="rec-cat-chip${(!filter && c==='Alle') || filter===c ? ' active' : ''}" onclick="renderRecipeTiles(${c==='Alle' ? 'null' : `'${c}'`})">${c}</button>`
+// ── Recipe Builder ──────────────────────────────────────────────
+let rbIngredients = [];
+let rbEditId = null;
+let rbCatFilter = null;
+
+function openRecipeBuilder(id) {
+  rbEditId = id || null;
+  const r = id ? recipes[id] : null;
+  rbIngredients = r ? JSON.parse(JSON.stringify(r.ingredients)) : [];
+  rbCatFilter = null;
+  document.getElementById('rbTitle').textContent = id ? 'Rezept bearbeiten' : 'Zutaten wählen';
+  rbRenderCats();
+  rbRenderTiles();
+  rbRenderSelected();
+  document.getElementById('recipeBuilderView').style.display = 'flex';
+}
+
+function closeRecipeBuilder() {
+  document.getElementById('recipeBuilderView').style.display = 'none';
+  rbIngredients = [];
+  rbEditId = null;
+}
+
+function rbRenderCats() {
+  const cats = ['Alle', ...new Set(SUGGESTIONS.map(s => s.cat))];
+  document.getElementById('rbCatRow').innerHTML = cats.map(c =>
+    `<button class="chip${(!rbCatFilter && c==='Alle') || rbCatFilter===c ? ' on' : ''}" onclick="rbSetCat('${c === 'Alle' ? '' : c}')">${c}</button>`
   ).join('');
-  const items = filter ? SUGGESTIONS.filter(it => it.cat === filter) : SUGGESTIONS;
-  const grid = document.getElementById('recTileGrid');
+}
+
+function rbSetCat(cat) {
+  rbCatFilter = cat || null;
+  rbRenderCats();
+  rbRenderTiles();
+}
+
+function rbRenderTiles() {
+  const selectedNames = new Set(rbIngredients.map(r => r.name.toLowerCase()));
+  const list = rbCatFilter ? SUGGESTIONS.filter(s => s.cat === rbCatFilter) : SUGGESTIONS;
+  const grid = document.getElementById('rbGrid');
   grid.innerHTML = '';
-  items.forEach(item => {
+  list.forEach(s => {
+    const sel = selectedNames.has(s.name.toLowerCase());
     const tile = document.createElement('div');
-    tile.className = 'rec-tile';
-    tile.innerHTML = `<div class="rec-tile-emoji">${item.emoji}</div><div class="rec-tile-name">${item.name}</div>`;
-    tile.addEventListener('click', () => {
-      const unitG = parseUnitG(item.unit);
-      addIngredientRaw({name:item.name,emoji:item.emoji,amountG:unitG,kcalPer100:item.kcal,proteinPer100:item.protein,carbsPer100:item.carbs,fatPer100:item.fat,unitPrice:item.price,unitG,catalogUnit:item.unit,custom:false});
-    });
+    tile.className = 'tile sug' + (sel ? ' in-list' : '');
+    tile.innerHTML = `<div class="tile-emoji">${s.emoji}</div><div class="tile-name">${s.name}</div>`;
+    tile.addEventListener('click', () => rbToggleItem(s));
     grid.appendChild(tile);
   });
+  document.getElementById('rbCountBadge').textContent = rbIngredients.length;
 }
 
-function openRecipeSheet(id) {
-  editRecipeId = id || null;
-  const r = id ? recipes[id] : null;
-  document.getElementById('recipeSheetTitle').textContent = id ? '✏️ Rezept bearbeiten' : '🍽️ Neues Rezept';
-  document.getElementById('recipeEmojiIn').value    = r ? r.emoji    : '';
-  document.getElementById('recipeNameIn').value     = r ? r.name     : '';
-  document.getElementById('recipePortionsIn').value = r ? r.servings : 4;
-  document.getElementById('recipeDeleteBtn').style.display = id ? '' : 'none';
-  pendingIngredients = r ? JSON.parse(JSON.stringify(r.ingredients)) : [];
-  document.getElementById('ingrSearch').value = '';
-  document.getElementById('ingrResults').style.display = 'none';
-  renderRecipeTiles(null);
-  renderIngrList();
-  document.getElementById('recipeOverlay').style.display = 'flex';
+function rbToggleItem(s) {
+  const idx = rbIngredients.findIndex(r => r.name.toLowerCase() === s.name.toLowerCase());
+  if (idx >= 0) {
+    rbIngredients.splice(idx, 1);
+  } else {
+    const unitG = parseUnitG(s.unit);
+    rbIngredients.push({name:s.name,emoji:s.emoji,amountG:unitG,kcalPer100:s.kcal,proteinPer100:s.protein,carbsPer100:s.carbs,fatPer100:s.fat,unitPrice:s.price,unitG,catalogUnit:s.unit,custom:false});
+  }
+  rbRenderTiles();
+  rbRenderSelected();
 }
 
-function closeRecipeSheet() {
-  document.getElementById('recipeOverlay').style.display = 'none';
-  pendingIngredients = [];
+function rbRenderSelected() {
+  const strip = document.getElementById('rbSelectedStrip');
+  if (!rbIngredients.length) { strip.style.display = 'none'; return; }
+  strip.style.display = 'block';
+  strip.innerHTML = rbIngredients.map((ing, i) =>
+    `<span class="rb-chip" onclick="rbRemove(${i})">${ing.emoji} ${ing.name} <span class="rb-chip-x">×</span></span>`
+  ).join('');
+  document.getElementById('rbCountBadge').textContent = rbIngredients.length;
 }
 
-function recipeOverlayClick(e) { if (e.target === e.currentTarget) closeRecipeSheet(); }
+function rbRemove(i) {
+  rbIngredients.splice(i, 1);
+  rbRenderTiles();
+  rbRenderSelected();
+}
 
-function deleteCurrentRecipe() {
-  if (!editRecipeId || !confirm('Rezept löschen?')) return;
-  delete recipes[editRecipeId];
+function openRecipeSaveSheet() {
+  if (!rbIngredients.length) { showToast('Bitte mindestens eine Zutat wählen'); return; }
+  const r = rbEditId ? recipes[rbEditId] : null;
+  document.getElementById('rbNameIn').value     = r ? r.name        : '';
+  document.getElementById('rbEmojiIn').value    = r ? r.emoji       : '';
+  document.getElementById('rbPortionsIn').value = r ? r.servings    : 4;
+  document.getElementById('rbDescIn').value     = r ? (r.description || '') : '';
+  document.getElementById('rbDeleteBtn').style.display = rbEditId ? '' : 'none';
+  document.getElementById('recipeSaveOverlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('rbNameIn').focus(), 150);
+}
+
+function closeRecipeSaveSheet() {
+  document.getElementById('recipeSaveOverlay').style.display = 'none';
+}
+
+function deleteFromBuilder() {
+  if (!rbEditId || !confirm('Rezept löschen?')) return;
+  delete recipes[rbEditId];
   saveRecipes();
-  closeRecipeSheet();
+  closeRecipeSaveSheet();
+  closeRecipeBuilder();
   renderRecipes();
 }
 
-function searchIngredients() {
-  const q = document.getElementById('ingrSearch').value.trim().toLowerCase();
-  const box = document.getElementById('ingrResults');
-  if (q.length < 1) { box.style.display = 'none'; return; }
-  const matches = SUGGESTIONS.filter(it => it.name.toLowerCase().includes(q)).slice(0, 8);
-  if (!matches.length) { box.style.display = 'none'; return; }
-  // Store matches in a temporary lookup keyed by index
-  box._matchItems = matches;
-  box.innerHTML = matches.map((item, i) =>
-    `<div class="ingr-result-row" data-ingr-idx="${i}">
-      <span>${item.emoji} ${item.name}</span>
-      <span style="color:var(--muted);font-size:12px">${item.unit} · ${item.price.toFixed(2).replace('.',',')} €</span>
-    </div>`
-  ).join('');
-  box.querySelectorAll('[data-ingr-idx]').forEach(el => {
-    el.addEventListener('click', () => {
-      const item = box._matchItems[+el.dataset.ingrIdx];
-      const unitG = parseUnitG(item.unit);
-      addIngredientRaw({name:item.name,emoji:item.emoji,amountG:unitG,kcalPer100:item.kcal,proteinPer100:item.protein,carbsPer100:item.carbs,fatPer100:item.fat,unitPrice:item.price,unitG,catalogUnit:item.unit,custom:false});
-    });
-  });
-  box.style.display = 'block';
-}
-
-function addIngredientRaw(obj) {
-  pendingIngredients.push(obj);
-  document.getElementById('ingrSearch').value = '';
-  document.getElementById('ingrResults').style.display = 'none';
-  renderIngrList();
-}
-
-function renderIngrList() {
-  const list = document.getElementById('ingrList');
-  if (!pendingIngredients.length) {
-    list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:12px 0;">Keine Zutaten. Oben suchen.</div>';
-    return;
-  }
-  list.innerHTML = pendingIngredients.map((ing, i) => {
-    const kcalStr = !ing.custom ? `${Math.round((ing.amountG/100)*(ing.kcalPer100||0))} kcal` : '';
-    return `<div class="ingr-row">
-      <div style="font-size:20px">${ing.emoji || '🥗'}</div>
-      <div class="ingr-info">
-        <div class="ingr-name-small">${ing.name}</div>
-        <div class="ingr-unit-small">${kcalStr}${ing.catalogUnit ? ' · ' + ing.catalogUnit : ''}</div>
-      </div>
-      <input class="ingr-qty-input" type="number" min="0" step="10" value="${ing.amountG}"
-        oninput="pendingIngredients[${i}].amountG=+this.value||0; renderIngrList()" title="Gramm">
-      <button class="ingr-remove" onclick="pendingIngredients.splice(${i},1); renderIngrList()">×</button>
-    </div>`;
-  }).join('');
-}
-
-function saveRecipe() {
-  const name = document.getElementById('recipeNameIn').value.trim();
+function saveRecipeFromBuilder() {
+  const name = document.getElementById('rbNameIn').value.trim();
   if (!name) { showToast('Bitte Rezeptname eingeben'); return; }
-  const id = editRecipeId || Date.now().toString();
+  const id = rbEditId || Date.now().toString();
   recipes[id] = {
     id, name,
-    emoji:    document.getElementById('recipeEmojiIn').value.trim() || '🍽️',
-    servings: parseInt(document.getElementById('recipePortionsIn').value) || 4,
-    ingredients: pendingIngredients
+    emoji:       document.getElementById('rbEmojiIn').value.trim() || '🍽️',
+    servings:    parseInt(document.getElementById('rbPortionsIn').value) || 4,
+    description: document.getElementById('rbDescIn').value.trim(),
+    ingredients: rbIngredients
   };
   saveRecipes();
-  closeRecipeSheet();
+  closeRecipeSaveSheet();
+  closeRecipeBuilder();
   renderRecipes();
   showToast('Rezept gespeichert ✓');
 }
