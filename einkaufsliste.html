@@ -4236,10 +4236,13 @@ function importChefkoch() {
 
   const ingrLines = lines.slice(start, end).filter(l => !/^für\s+\d+/i.test(l));
 
+  // Normalize "Zehe/n" → "Zehen", "Scheibe/n" → "Scheiben" etc.
+  function normalizeSlashN(s) { return s.replace(/\/n\b/gi, 'n'); }
+  const UNITS = 'g|kg|ml|l|el|tl|essl|teel|stück|stk|pck|prise|bund|dose|zehen?|glas|gläser|handvoll|tasse|tassen|becher|scheiben?|pkg|pkt|msp|spritzer';
   // Amount-only line (e.g. "350 g" or "2 EL" or "1")
-  const amtRe = /^(\d+(?:[,\.]\d+)?)\s*(g|kg|ml|l|el|tl|essl|teel|stück|stk|pck|prise|bund|dose|zehen?)?$/i;
+  const amtRe = new RegExp(`^(\\d+(?:[,\\.]\\d+)?)\\s*(${UNITS})?$`, 'i');
   // One-line format (e.g. "500 g Möhren")
-  const oneLineRe = /^(\d+(?:[,\.]\d+)?)\s*(g|kg|ml|l|el|tl|essl|teel|stück|stk|pck|prise|bund|dose)?\s+(\S.+)/i;
+  const oneLineRe = new RegExp(`^(\\d+(?:[,\\.]\\d+)?)\\s*(${UNITS})?\\s+(\\S.+)`, 'i');
 
   function toAmountG(qty, unit) {
     const u = (unit || '').toLowerCase();
@@ -4247,12 +4250,12 @@ function importChefkoch() {
     if (u === 'g'  || u === 'ml') return qty;
     return qty * 80; // EL, TL, Stück etc.
   }
-  function cleanName(n) { return n.replace(/\(n\)/gi, 'n').replace(/\([^)]*\)/g, '').trim(); }
+  function cleanName(n) { return n.replace(/\(n\)/gi, 'n').replace(/\([^)]*\)/g, '').replace(/\/[ns]\b/gi, '').trim(); }
 
   const parsed = [];
   let i = 0;
   while (i < ingrLines.length) {
-    const line = ingrLines[i];
+    const line = normalizeSlashN(ingrLines[i]);
 
     // One-line: "500 g Möhren"
     const oneMatch = !amtRe.exec(line) && oneLineRe.exec(line);
@@ -4264,12 +4267,12 @@ function importChefkoch() {
     // Two-line: "350 g" then "Bucatini"
     const amtMatch = amtRe.exec(line);
     if (amtMatch && i + 1 < ingrLines.length) {
-      const nextLine = ingrLines[i + 1];
+      const nextLine = normalizeSlashN(ingrLines[i + 1]);
       if (!amtRe.exec(nextLine) && !oneLineRe.exec(nextLine)) {
         parsed.push({ amountG: Math.max(Math.round(toAmountG(parseFloat(amtMatch[1].replace(',','.')), amtMatch[2])), 1), name: cleanName(nextLine) });
         i += 2;
         // Skip lowercase description lines
-        while (i < ingrLines.length && /^[a-zäöüß]/.test(ingrLines[i]) && !amtRe.exec(ingrLines[i])) i++;
+        while (i < ingrLines.length && /^[a-zäöüß]/.test(ingrLines[i]) && !amtRe.exec(normalizeSlashN(ingrLines[i]))) i++;
         continue;
       }
     }
