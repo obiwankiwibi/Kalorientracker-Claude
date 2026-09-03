@@ -4266,6 +4266,9 @@ function openRecipeBuilder(id) {
   rbSearchQuery = '';
   rbSortKey = '';
   rbSortDir = 1;
+  rbApiResults = [];
+  rbApiLoading = false;
+  clearTimeout(rbApiDebounce);
   document.getElementById('rbTitle').textContent = id ? 'Rezept bearbeiten' : 'Zutaten wählen';
   document.getElementById('rbSearchInput').value = '';
   document.getElementById('rbPriceBar').style.display = 'none';
@@ -4347,6 +4350,9 @@ function rbRenderCats() {
 
 function rbSetCat(cat) {
   rbCatFilter = cat || null;
+  rbApiResults = [];
+  rbApiLoading = false;
+  clearTimeout(rbApiDebounce);
   rbRenderCats();
   rbRenderTiles();
 }
@@ -4461,8 +4467,65 @@ function rbSetSort(id) {
   rbRenderTiles();
 }
 
+let rbApiResults = [];
+let rbApiLoading = false;
+let rbApiDebounce = null;
+
 function rbOnSearch() {
   rbSearchQuery = document.getElementById('rbSearchInput').value.toLowerCase();
+  rbCatFilter = null;
+  rbRenderCats();
+  rbApiResults = [];
+  clearTimeout(rbApiDebounce);
+  if (rbSearchQuery.length < 2) {
+    rbApiLoading = false;
+    rbRenderTiles();
+    return;
+  }
+  rbApiLoading = true;
+  rbRenderTiles();
+  rbApiDebounce = setTimeout(() => rbFetchOFF(rbSearchQuery), 500);
+}
+
+async function rbFetchOFF(query) {
+  try {
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=24&fields=product_name_de,product_name,nutriments,categories_tags&countries_tags=de`;
+    const res  = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    const data = await res.json();
+    if (rbSearchQuery !== query) return; // stale
+    rbApiResults = (data.products || []).map(p => {
+      const name = ((p.product_name_de || p.product_name || '').trim());
+      if (!name) return null;
+      const n = p.nutriments || {};
+      const kcalVal = parseFloat(n['energy-kcal_100g'] ?? n['energy-kcal']) || null;
+      if (!kcalVal && kcalVal !== 0) return null; // skip items with no nutritional data
+      const emoji = emojiFromCategories(p.categories_tags || [], name);
+      return {
+        name, emoji,
+        cat: 'Datenbank',
+        price: null,
+        unit: 'Stück',
+        kcal:    kcalVal,
+        protein: parseFloat(n['proteins_100g'])       || 0,
+        carbs:   parseFloat(n['carbohydrates_100g'])   || 0,
+        fat:     parseFloat(n['fat_100g'])             || 0,
+      };
+    }).filter(Boolean);
+    // deduplicate against local results
+    const localNames = new Set(RB_FOOD_SUGGESTIONS.map(s => s.name.toLowerCase()));
+    rbApiResults = rbApiResults.filter(s => !localNames.has(s.name.toLowerCase()));
+    // deduplicate within API results by name
+    const seen = new Set();
+    rbApiResults = rbApiResults.filter(s => {
+      const k = s.name.toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  } catch(e) {
+    rbApiResults = [];
+  }
+  rbApiLoading = false;
   rbRenderTiles();
 }
 
@@ -4505,14 +4568,35 @@ function rbRenderTiles() {
   }
   const grid = document.getElementById('rbGrid');
   grid.innerHTML = '';
-  list.forEach(s => {
+
+  function makeTile(s, isApi) {
     const sel = selectedNames.has(s.name.toLowerCase());
     const tile = document.createElement('div');
     tile.className = 'tile sug' + (sel ? ' rb-sel' : '');
-    tile.innerHTML = `<div class="tile-emoji">${s.emoji}</div><div class="tile-name">${s.name}</div>${sugPriceHtml(s)}`;
+    const kcalHint = isApi && s.kcal ? `<div class="tile-price" style="font-size:10px">${Math.round(s.kcal)} kcal</div>` : sugPriceHtml(s);
+    tile.innerHTML = `<div class="tile-emoji">${s.emoji}</div><div class="tile-name">${s.name}</div>${kcalHint}`;
     tile.addEventListener('click', () => rbToggleItem(s));
     grid.appendChild(tile);
-  });
+  }
+
+  list.forEach(s => makeTile(s, false));
+
+  if (rbSearchQuery.length >= 2) {
+    const divider = document.createElement('div');
+    divider.style.cssText = 'grid-column:1/-1;padding:10px 4px 4px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:8px;';
+    if (rbApiLoading) {
+      divider.innerHTML = '<span>🌐 Open Food Facts</span><span style="font-weight:400;text-transform:none;letter-spacing:0">Wird geladen…</span>';
+      grid.appendChild(divider);
+    } else if (rbApiResults.length > 0) {
+      divider.innerHTML = `<span>🌐 Datenbank (${rbApiResults.length})</span>`;
+      grid.appendChild(divider);
+      rbApiResults.forEach(s => makeTile(s, true));
+    } else if (!rbApiLoading && rbSearchQuery.length >= 2) {
+      divider.innerHTML = '<span style="color:var(--muted)">Keine weiteren Ergebnisse aus Open Food Facts</span>';
+      grid.appendChild(divider);
+    }
+  }
+
   document.getElementById('rbCountBadge').textContent = rbIngredients.length;
   rbRenderSort();
 }
