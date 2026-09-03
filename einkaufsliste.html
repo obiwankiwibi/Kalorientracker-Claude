@@ -1651,6 +1651,26 @@ html { height: 100%; }
   </div>
 </div>
 
+<!-- ══ RECIPE TO LIST PORTIONS PICKER ══ -->
+<div class="sheet-overlay" id="recipeToListOverlay" onclick="if(event.target===this)closeRecipeToList()" style="display:none;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="rtlTitle">🛒 Zur Einkaufsliste</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;" id="rtlInfo"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <label style="font-size:13px;font-weight:600;white-space:nowrap;">Portionen:</label>
+      <button onclick="rtlAdjPortions(-1)" style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+      <input id="rtlPortionsIn" type="number" min="0.5" step="0.5" value="4" style="width:64px;text-align:center;font-size:17px;font-weight:700;border:1.5px solid var(--line);border-radius:10px;padding:6px 4px;background:var(--surface);color:var(--text);">
+      <button onclick="rtlAdjPortions(1)" style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+    </div>
+    <div id="rtlIngList" style="max-height:220px;overflow-y:auto;margin-bottom:14px;display:flex;flex-direction:column;gap:6px;"></div>
+    <div class="sheet-btns">
+      <button class="sh-btn secondary" onclick="closeRecipeToList()">Abbrechen</button>
+      <button class="sh-btn primary" onclick="confirmRecipeToList()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ BOTTOM NAV ══ -->
 <nav class="bottom-nav">
   <div class="nav-item on" id="navListe" onclick="showTab('liste')">
@@ -4167,11 +4187,17 @@ let rbSortDir = 1;
 function openRecipeBuilder(id) {
   rbEditId = id || null;
   const r = id ? recipes[id] : null;
-  rbIngredients = r ? JSON.parse(JSON.stringify(r.ingredients)).map(ing => ({
-    ...ing,
-    qty:  ing.qty  != null ? ing.qty  : (ing.unitG ? Math.round(ing.amountG / ing.unitG) || 1 : 1),
-    unit: ing.unit || ing.catalogUnit || 'Stück'
-  })) : [];
+  rbIngredients = r ? JSON.parse(JSON.stringify(r.ingredients)).map(ing => {
+    let qty  = ing.qty  != null ? ing.qty  : (ing.unitG ? Math.round(ing.amountG / ing.unitG) || 1 : 1);
+    let unit = ing.unit || ing.catalogUnit || 'Stück';
+    // Fix raw catalog units like "1kg" → qty:1, unit:"kg"
+    if (unit && /^\d+(?:[.,]\d+)?\s*(g|kg|ml|l)$/i.test(unit) && ing.qty == null) {
+      const parsed = parseCatalogUnit(unit);
+      qty  = parsed.qty;
+      unit = parsed.unit;
+    }
+    return { ...ing, qty, unit };
+  }) : [];
   rbCatFilter = null;
   rbSearchQuery = '';
   rbSortKey = '';
@@ -4371,13 +4397,25 @@ function rbRenderTiles() {
   rbRenderSort();
 }
 
+function parseCatalogUnit(catalogUnit) {
+  const m = (catalogUnit || '').match(/^(\d+(?:[.,]\d+)?)\s*(g|kg|ml|l)$/i);
+  if (m) {
+    const qty = parseFloat(m[1].replace(',', '.'));
+    const unit = m[2].toLowerCase();
+    return { qty, unit };
+  }
+  return { qty: 1, unit: catalogUnit || 'Stück' };
+}
+
 function rbToggleItem(s) {
   const idx = rbIngredients.findIndex(r => r.name.toLowerCase() === s.name.toLowerCase());
   if (idx >= 0) {
     rbIngredients.splice(idx, 1);
   } else {
     const unitG = parseUnitG(s.unit);
-    rbIngredients.push({name:s.name,emoji:s.emoji,qty:1,unit:s.unit||'Stück',amountG:unitG,kcalPer100:s.kcal,proteinPer100:s.protein,carbsPer100:s.carbs,fatPer100:s.fat,unitPrice:s.price,unitG,catalogUnit:s.unit,custom:false});
+    const { qty, unit } = parseCatalogUnit(s.unit);
+    const amountG = rbQtyToG(qty, unit, unitG);
+    rbIngredients.push({name:s.name,emoji:s.emoji,qty,unit,amountG,kcalPer100:s.kcal,proteinPer100:s.protein,carbsPer100:s.carbs,fatPer100:s.fat,unitPrice:s.price,unitG,catalogUnit:s.unit,custom:false});
   }
   rbRenderTiles();
   rbRenderSelected();
@@ -4453,17 +4491,83 @@ function saveRecipeFromBuilder() {
   showToast('Rezept gespeichert ✓');
 }
 
+let rtlRecipeId = null;
+
 function addRecipeToList(id) {
   const r = recipes[id];
   if (!r || !r.ingredients.length) return;
+  rtlRecipeId = id;
+  const servings = r.servings || 4;
+  document.getElementById('rtlTitle').textContent = r.emoji + ' ' + r.name;
+  document.getElementById('rtlPortionsIn').value = servings;
+  rtlRenderIngredients(servings, servings);
+  document.getElementById('recipeToListOverlay').style.display = 'flex';
+}
+
+function closeRecipeToList() {
+  document.getElementById('recipeToListOverlay').style.display = 'none';
+  rtlRecipeId = null;
+}
+
+function rtlAdjPortions(delta) {
+  const inp = document.getElementById('rtlPortionsIn');
+  const v = Math.max(0.5, parseFloat(inp.value || 1) + delta);
+  inp.value = v === Math.floor(v) ? v : parseFloat(v.toFixed(1));
+  const r = recipes[rtlRecipeId];
+  rtlRenderIngredients(parseFloat(inp.value), r ? (r.servings || 4) : 4);
+}
+
+function rtlRenderIngredients(portions, baseServings) {
+  const r = rtlRecipeId ? recipes[rtlRecipeId] : null;
+  if (!r) return;
+  const scale = portions / (baseServings || 1);
+  const ings = r.ingredients.filter(ing => !ing.custom);
+  document.getElementById('rtlInfo').textContent =
+    `${ings.length} Zutat${ings.length !== 1 ? 'en' : ''} · Basis: ${baseServings} Portion${baseServings !== 1 ? 'en' : ''}`;
+  document.getElementById('rtlIngList').innerHTML = ings.map(ing => {
+    const scaledG = (ing.amountG || 0) * scale;
+    const amtStr = rtlFormatAmt(ing, scale);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);">
+      <span style="font-size:20px;flex-shrink:0;">${ing.emoji || '🥗'}</span>
+      <span style="flex:1;font-size:13px;">${ing.name}</span>
+      <span style="font-size:12px;color:var(--muted);font-weight:600;">${amtStr}</span>
+    </div>`;
+  }).join('');
+}
+
+function rtlFormatAmt(ing, scale) {
+  const s = scale || 1;
+  if (ing.qty != null && ing.unit) {
+    const raw = ing.qty * s;
+    const q = raw === Math.floor(raw) ? raw : parseFloat(raw.toFixed(1));
+    return `${q} ${ing.unit}`;
+  }
+  const g = Math.round((ing.amountG || 0) * s);
+  return g >= 1000 ? `${parseFloat((g/1000).toFixed(2))} kg` : `${g} g`;
+}
+
+document.getElementById('rtlPortionsIn').addEventListener('input', function() {
+  const r = recipes[rtlRecipeId];
+  const p = parseFloat(this.value) || 1;
+  rtlRenderIngredients(p, r ? (r.servings || 4) : 4);
+});
+
+function confirmRecipeToList() {
+  const r = rtlRecipeId ? recipes[rtlRecipeId] : null;
+  if (!r) return;
+  const portions = parseFloat(document.getElementById('rtlPortionsIn').value) || 1;
+  const scale = portions / (r.servings || 1);
   let added = 0;
   r.ingredients.forEach(ing => {
     if (ing.custom) return;
-    if (!state.active[ing.name]) { state.active[ing.name] = true; added++; }
+    const amtStr = rtlFormatAmt(ing, scale);
+    const id = 'i_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    persist(id, { name: ing.name, emoji: ing.emoji || '', amount: amtStr, store: '', checked: false, addedAt: Date.now() });
+    added++;
   });
-  save(); renderActive();
+  closeRecipeToList();
   showTab('liste');
-  showToast(`${added} Zutat${added!==1?'en':''} zur Einkaufsliste hinzugefügt`);
+  showToast(`${added} Zutat${added !== 1 ? 'en' : ''} hinzugefügt`);
 }
 
 function openChefkochSheet() {
