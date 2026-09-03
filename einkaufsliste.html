@@ -634,6 +634,9 @@ html { height: 100%; }
     .recipe-btn.primary { background:var(--active); color:#fff; }
     .recipe-btn.secondary { background:var(--card); color:var(--text); }
     .recipe-empty { text-align:center; padding:48px 24px; color:var(--muted); font-size:14px; }
+    .list-recipe-tile { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; display:flex; align-items:center; gap:10px; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:opacity .15s; }
+    .list-recipe-tile:active { opacity:.7; }
+    #listRecipesGrid { display:flex; flex-direction:column; gap:8px; padding:4px 0 12px; }
     .recipe-toolbar { display:flex; gap:8px; padding:0 0 16px; }
     .recipe-tool-btn { flex:1; padding:13px; border-radius:16px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
     .recipe-tool-btn.primary { background:var(--active); color:#fff; border-color:var(--active); }
@@ -1315,6 +1318,15 @@ html { height: 100%; }
 </div>
 
 <div class="divider"></div>
+
+<!-- ══ RECIPES IN LIST VIEW ══ -->
+<div class="section" id="listRecipesSection" style="display:none;">
+  <div class="sec-header" onclick="toggleListRecipes()" style="cursor:pointer;">
+    <span class="sec-title"><span id="listRecipesArrow">▶</span> Rezepte</span>
+    <span style="font-size:12px;color:var(--muted)" id="listRecipesCount"></span>
+  </div>
+  <div id="listRecipesGrid" style="display:none;"></div>
+</div>
 
 <!-- ══ CATEGORY CHIPS ══ -->
 <div class="cat-row" id="catRow"></div>
@@ -2899,6 +2911,43 @@ function autoClearOldDone(currentItems) {
 }
 
 // ═══════════════════════════════════════════════
+//  REZEPTE IN LISTE
+// ═══════════════════════════════════════════════
+let listRecipesOpen = false;
+
+function renderListRecipes() {
+  const recs = Object.values(recipes || {});
+  const sec = document.getElementById('listRecipesSection');
+  if (!sec) return;
+  sec.style.display = recs.length ? '' : 'none';
+  document.getElementById('listRecipesCount').textContent = recs.length + ' Rezept' + (recs.length !== 1 ? 'e' : '');
+  renderListRecipesGrid();
+}
+
+function renderListRecipesGrid() {
+  const grid = document.getElementById('listRecipesGrid');
+  const recs = Object.entries(recipes || {});
+  grid.innerHTML = recs.map(([id, r]) => {
+    const s = r.servings || 4;
+    const ings = (r.ingredients || []).filter(i => !i.custom).length;
+    return `<div class="list-recipe-tile" onclick="addRecipeToList('${id}')">
+      <span style="font-size:28px;flex-shrink:0;">${r.emoji || '🍽️'}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name}</div>
+        <div style="font-size:12px;color:var(--muted);">${ings} Zutat${ings !== 1 ? 'en' : ''} · ${s} Portion${s !== 1 ? 'en' : ''}</div>
+      </div>
+      <span style="font-size:20px;flex-shrink:0;color:var(--active);">🛒</span>
+    </div>`;
+  }).join('');
+}
+
+function toggleListRecipes() {
+  listRecipesOpen = !listRecipesOpen;
+  document.getElementById('listRecipesArrow').textContent = listRecipesOpen ? '▼' : '▶';
+  document.getElementById('listRecipesGrid').style.display = listRecipesOpen ? 'flex' : 'none';
+}
+
+// ═══════════════════════════════════════════════
 //  TABS
 // ═══════════════════════════════════════════════
 let activeTab = 'liste';
@@ -2915,6 +2964,9 @@ function showTab(tab) {
     const el = document.getElementById(id);
     if (el) el.style.display = isListe ? '' : 'none';
   });
+  if (isListe) renderListRecipes();
+  const lrs = document.getElementById('listRecipesSection');
+  if (lrs) lrs.style.display = isListe ? '' : 'none';
   document.getElementById('setupBanner').style.display  = isListe && offlineMode ? 'block' : 'none';
   document.querySelector('.search-wrap').style.display   = isListe ? '' : 'none';
   document.querySelector('.divider').style.display       = isListe ? '' : 'none';
@@ -4118,7 +4170,10 @@ const RECIPE_STORE = 'rezepte_v2';
 let recipes = JSON.parse(localStorage.getItem(RECIPE_STORE) || '{}');
 // legacy aliases removed — builder state is rbEditId / rbIngredients
 
-function saveRecipes() { localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes)); }
+function saveRecipes() {
+  localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
+  if (activeTab === 'liste') renderListRecipes();
+}
 
 function parseUnitG(unit) {
   const m = unit.match(/^(\d+(?:\.\d+)?)\s*(g|kg|ml|l)/i);
