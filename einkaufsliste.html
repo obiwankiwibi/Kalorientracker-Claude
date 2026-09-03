@@ -1562,9 +1562,21 @@ html { height: 100%; }
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">📥 Rezept importieren</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5;">Kopiere die Zutatenliste von Chefkoch und füge sie hier ein. Eine Zutat pro Zeile:<br><em style="opacity:.7">500 g Möhren · 2 Tomaten · 1 EL Öl</em></p>
+
+    <!-- Option 1: URL via Cloudflare Worker -->
+    <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px;">Link einfügen <span id="ckWorkerBadge" style="font-weight:400;text-transform:none;letter-spacing:0;"></span></div>
+    <div style="display:flex;gap:8px;margin-bottom:4px;">
+      <input class="sheet-input" id="ckUrlIn" placeholder="https://www.chefkoch.de/rezepte/…" style="flex:1;margin-bottom:0;">
+      <button class="sh-btn primary" id="ckLoadBtn" style="flex:none;white-space:nowrap;" onclick="loadChefkochUrl(this)">Laden</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;" id="ckWorkerHint"></div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:11px;color:var(--muted);"><span style="flex:1;height:1px;background:var(--line);"></span>oder Text aus Druckansicht einfügen<span style="flex:1;height:1px;background:var(--line);"></span></div>
+
+    <!-- Option 2: Text paste -->
+    <p style="font-size:12px;color:var(--muted);margin:0 0 8px;line-height:1.5;">Chefkoch → Drucken → alles kopieren und hier einfügen. Portionszahl und Zutaten werden automatisch erkannt.</p>
     <input class="sheet-input" id="ckNameIn" placeholder="Rezeptname *">
-    <textarea class="sheet-input" id="ckTextIn" rows="6" placeholder="Zutatenliste einfügen…" style="resize:vertical;font-family:inherit;"></textarea>
+    <textarea class="sheet-input" id="ckTextIn" rows="5" placeholder="Text aus der Druckansicht einfügen…" style="resize:vertical;font-family:inherit;"></textarea>
     <div class="sheet-btns">
       <button class="sh-btn secondary" onclick="closeChefkochSheet()">Abbrechen</button>
       <button class="sh-btn primary"   onclick="importChefkoch()">Importieren</button>
@@ -4132,55 +4144,157 @@ function addRecipeToList(id) {
 }
 
 function openChefkochSheet() {
-  document.getElementById('ckNameIn').value  = '';
-  document.getElementById('ckTextIn').value  = '';
+  document.getElementById('ckNameIn').value = '';
+  document.getElementById('ckTextIn').value = '';
+  document.getElementById('ckUrlIn').value  = '';
+  const workerUrl = localStorage.getItem('ck_worker_url');
+  const badge = document.getElementById('ckWorkerBadge');
+  const hint  = document.getElementById('ckWorkerHint');
+  if (workerUrl) {
+    badge.textContent = '✓ Worker verbunden';
+    badge.style.color = 'var(--green)';
+    hint.innerHTML = '<span style="cursor:pointer;text-decoration:underline" onclick="configWorkerUrl()">Worker-URL ändern</span>';
+  } else {
+    badge.textContent = '(Worker nicht eingerichtet)';
+    badge.style.color = 'var(--muted)';
+    hint.innerHTML = '→ <span style="cursor:pointer;text-decoration:underline" onclick="configWorkerUrl()">Cloudflare Worker einrichten</span>, um Links direkt zu importieren';
+  }
   document.getElementById('chefkochOverlay').style.display = 'flex';
 }
 function closeChefkochSheet() {
   document.getElementById('chefkochOverlay').style.display = 'none';
 }
 
+function configWorkerUrl() {
+  const current = localStorage.getItem('ck_worker_url') || '';
+  const w = prompt('Cloudflare Worker URL eingeben\n(z. B. https://chefkoch.DEIN-NAME.workers.dev)\n\nLeer lassen zum Entfernen:', current);
+  if (w === null) return;
+  if (w.trim()) {
+    localStorage.setItem('ck_worker_url', w.trim());
+    showToast('Worker-URL gespeichert');
+  } else {
+    localStorage.removeItem('ck_worker_url');
+    showToast('Worker-URL entfernt');
+  }
+  openChefkochSheet(); // refresh badge
+}
+
+function loadChefkochUrl(btn) {
+  const url = document.getElementById('ckUrlIn').value.trim();
+  if (!url) { showToast('Bitte Chefkoch-Link eingeben'); return; }
+  let workerUrl = localStorage.getItem('ck_worker_url');
+  if (!workerUrl) {
+    const w = prompt('Bitte zuerst die Cloudflare Worker URL eingeben\n(z. B. https://chefkoch.DEIN-NAME.workers.dev):');
+    if (!w || !w.trim()) return;
+    workerUrl = w.trim();
+    localStorage.setItem('ck_worker_url', workerUrl);
+  }
+  btn.disabled = true; btn.textContent = '…';
+  fetch(`${workerUrl}?url=${encodeURIComponent(url)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) throw new Error(data.error);
+      const nameEl = document.getElementById('ckNameIn');
+      if (data.title && !nameEl.value) nameEl.value = data.title;
+      document.getElementById('ckTextIn').value = (data.ingredients || []).join('\n');
+      if (data.servings) document.getElementById('ckTextIn')._servings = data.servings;
+      showToast(`${(data.ingredients || []).length} Zutaten geladen`);
+    })
+    .catch(e => showToast('Fehler: ' + e.message))
+    .finally(() => { btn.disabled = false; btn.textContent = 'Laden'; });
+}
+
 function importChefkoch() {
   const name = document.getElementById('ckNameIn').value.trim();
   if (!name) { showToast('Bitte Rezeptname eingeben'); return; }
   const text = document.getElementById('ckTextIn').value.trim();
-  if (!text) { showToast('Bitte Zutatenliste einfügen'); return; }
+  if (!text) { showToast('Bitte Text einfügen'); return; }
 
-  const ingredients = [];
-  text.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
-    const m = line.match(/^(\d+(?:[,\.]\d+)?)\s*(g|kg|ml|l|el|tl|stück|stk|pck|dose|bund|prise)?\s+(.+)/i);
-    let amountG = 100, ingrName = line;
-    if (m) {
-      const qty = parseFloat(m[1].replace(',', '.'));
-      const unit = (m[2] || '').toLowerCase();
-      ingrName = m[3].trim();
-      if      (unit === 'kg') amountG = qty * 1000;
-      else if (unit === 'g')  amountG = qty;
-      else if (unit === 'l')  amountG = qty * 1000;
-      else if (unit === 'ml') amountG = qty;
-      else                    amountG = qty * 80;
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Extract ingredient section between "Zutaten" and "Zubereitung"
+  let start = 0, end = lines.length;
+  for (let j = 0; j < lines.length; j++) {
+    if (/^zutaten$/i.test(lines[j])) start = j + 1;
+    if (/^zubereitung$/i.test(lines[j])) { end = j; break; }
+  }
+
+  // Auto-detect servings: from textarea._servings (URL import) or "Für X Portionen" text
+  let servings = document.getElementById('ckTextIn')._servings || 4;
+  document.getElementById('ckTextIn')._servings = null;
+  const servLine = lines.slice(start, end).find(l => /^für\s+\d+/i.test(l));
+  if (servLine) { const sm = servLine.match(/\d+/); if (sm) servings = parseInt(sm[0]); }
+
+  const ingrLines = lines.slice(start, end).filter(l => !/^für\s+\d+/i.test(l));
+
+  // Amount-only line (e.g. "350 g" or "2 EL" or "1")
+  const amtRe = /^(\d+(?:[,\.]\d+)?)\s*(g|kg|ml|l|el|tl|essl|teel|stück|stk|pck|prise|bund|dose|zehen?)?$/i;
+  // One-line format (e.g. "500 g Möhren")
+  const oneLineRe = /^(\d+(?:[,\.]\d+)?)\s*(g|kg|ml|l|el|tl|essl|teel|stück|stk|pck|prise|bund|dose)?\s+(\S.+)/i;
+
+  function toAmountG(qty, unit) {
+    const u = (unit || '').toLowerCase();
+    if (u === 'kg' || u === 'l')  return qty * 1000;
+    if (u === 'g'  || u === 'ml') return qty;
+    return qty * 80; // EL, TL, Stück etc.
+  }
+  function cleanName(n) { return n.replace(/\(n\)/gi, 'n').replace(/\([^)]*\)/g, '').trim(); }
+
+  const parsed = [];
+  let i = 0;
+  while (i < ingrLines.length) {
+    const line = ingrLines[i];
+
+    // One-line: "500 g Möhren"
+    const oneMatch = !amtRe.exec(line) && oneLineRe.exec(line);
+    if (oneMatch) {
+      parsed.push({ amountG: Math.max(Math.round(toAmountG(parseFloat(oneMatch[1].replace(',','.')), oneMatch[2])), 1), name: cleanName(oneMatch[3]) });
+      i++; continue;
     }
+
+    // Two-line: "350 g" then "Bucatini"
+    const amtMatch = amtRe.exec(line);
+    if (amtMatch && i + 1 < ingrLines.length) {
+      const nextLine = ingrLines[i + 1];
+      if (!amtRe.exec(nextLine) && !oneLineRe.exec(nextLine)) {
+        parsed.push({ amountG: Math.max(Math.round(toAmountG(parseFloat(amtMatch[1].replace(',','.')), amtMatch[2])), 1), name: cleanName(nextLine) });
+        i += 2;
+        // Skip lowercase description lines
+        while (i < ingrLines.length && /^[a-zäöüß]/.test(ingrLines[i]) && !amtRe.exec(ingrLines[i])) i++;
+        continue;
+      }
+    }
+
+    // Standalone ingredient without amount: "Salz und Pfeffer"
+    if (!/^[a-zäöüß]/.test(line) && !/^\d+\s+Min/.test(line) && line.length > 1) {
+      parsed.push({ amountG: 5, name: cleanName(line) });
+    }
+    i++;
+  }
+
+  // Match to ITEMS catalog
+  const ingredients = parsed.map(p => {
+    const pn = p.name.toLowerCase();
     const matched = ITEMS.find(it =>
-      ingrName.toLowerCase().includes(it.name.toLowerCase()) ||
-      it.name.toLowerCase().includes(ingrName.toLowerCase().split(' ')[0])
+      pn.includes(it.name.toLowerCase()) ||
+      it.name.toLowerCase().includes(pn.split(' ')[0])
     );
     if (matched) {
       const unitG = parseUnitG(matched.unit);
-      ingredients.push({ name:matched.name, emoji:matched.emoji, amountG:Math.max(Math.round(amountG),10),
+      return { name:matched.name, emoji:matched.emoji, amountG:p.amountG,
         kcalPer100:matched.kcal, proteinPer100:matched.protein, carbsPer100:matched.carbs, fatPer100:matched.fat,
-        unitPrice:matched.price, unitG, catalogUnit:matched.unit, custom:false });
-    } else {
-      ingredients.push({ name:ingrName, emoji:'🥗', amountG:Math.max(Math.round(amountG),10), custom:true });
+        unitPrice:matched.price, unitG, catalogUnit:matched.unit, custom:false };
     }
+    return { name:p.name, emoji:'🥗', amountG:p.amountG, custom:true };
   });
 
   const id = Date.now().toString();
-  recipes[id] = { id, name, emoji:'🍽️', servings:4, ingredients };
+  recipes[id] = { id, name, emoji:'🍽️', servings, ingredients };
   saveRecipes();
   closeChefkochSheet();
   renderRecipes();
-  const matched = ingredients.filter(i=>!i.custom).length;
-  showToast(`Importiert: ${matched}/${ingredients.length} Zutaten erkannt`);
+  const matchedCount = ingredients.filter(x => !x.custom).length;
+  showToast(`Importiert: ${matchedCount}/${ingredients.length} Zutaten erkannt`);
 }
 
 function doQuickBackup(){

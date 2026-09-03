@@ -1,0 +1,13 @@
+name = "chefkoch-proxy"
+main = "chefkoch-proxy.js"
+compatibility_date = "2024-01-01"
+
+# Deployment:
+#   npm install -g wrangler
+#   wrangler login
+#   wrangler deploy
+#
+# Danach erscheint deine Worker-URL, z. B.:
+#   https://chefkoch-proxy.DEIN-NAME.workers.dev
+#
+# Diese URL in der App unter "Rezept importieren → Worker einrichten" eintragen.
