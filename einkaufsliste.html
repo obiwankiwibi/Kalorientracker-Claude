@@ -1548,6 +1548,13 @@ html { height: 100%; }
     <button class="recipe-tool-btn primary" onclick="openRecipeBuilder()">+ Rezept erstellen</button>
     <button class="recipe-tool-btn" onclick="openChefkochSheet()">📥 Chefkoch</button>
   </div>
+  <div class="search-wrap" style="margin:10px 0 6px;">
+    <div class="search-inner">
+      <span style="color:var(--muted);font-size:15px">🔍</span>
+      <input id="recipeSearchInput" placeholder="Rezept suchen…" oninput="recipeOnSearch()" autocomplete="off" autocorrect="off">
+    </div>
+  </div>
+  <div class="cat-row sort-row" id="recipeSortRow" style="margin-bottom:10px;"></div>
   <div id="recipeList"></div>
 </div>
 
@@ -4034,33 +4041,91 @@ function parseUnitG(unit) {
   return (m[2].toLowerCase() === 'kg' || m[2].toLowerCase() === 'l') ? val * 1000 : val;
 }
 
+let recipeSearch = '';
+let recipeSort = '';
+let recipeSortDir = 1;
+
+const RECIPE_SORT_OPTIONS = [
+  { id:'az',      label:'A–Z'     },
+  { id:'kcal',    label:'kcal'    },
+  { id:'preis',   label:'Preis'   },
+  { id:'zutaten', label:'Zutaten' },
+];
+
+function recipeOnSearch() {
+  recipeSearch = (document.getElementById('recipeSearchInput').value || '').toLowerCase();
+  renderRecipes();
+}
+
+function recipeSetSort(id) {
+  if (recipeSort === id) {
+    if (recipeSortDir === 1) recipeSortDir = -1;
+    else { recipeSort = ''; recipeSortDir = 1; }
+  } else {
+    recipeSort = id;
+    recipeSortDir = 1;
+  }
+  renderRecipes();
+}
+
+function renderRecipeSortRow() {
+  const sr = document.getElementById('recipeSortRow');
+  if (!sr) return;
+  sr.innerHTML = '<span style="font-size:10px;color:var(--muted);flex-shrink:0;align-self:center;padding-right:2px">↕</span>'
+    + RECIPE_SORT_OPTIONS.map(o => {
+      const active = o.id === recipeSort;
+      const arrow = active ? (recipeSortDir === 1 ? ' ↑' : ' ↓') : '';
+      return `<button class="chip ${active ? 'on' : ''}" onclick="recipeSetSort('${o.id}')">${o.label}${arrow}</button>`;
+    }).join('');
+}
+
+function recipeStats(r) {
+  let kcal=0, p=0, c=0, f=0, price=0;
+  r.ingredients.forEach(ing => {
+    if (ing.custom) return;
+    kcal  += (ing.amountG / 100) * (ing.kcalPer100    || 0);
+    p     += (ing.amountG / 100) * (ing.proteinPer100 || 0);
+    c     += (ing.amountG / 100) * (ing.carbsPer100   || 0);
+    f     += (ing.amountG / 100) * (ing.fatPer100     || 0);
+    if (ing.unitPrice && ing.unitG)
+      price += Math.ceil(ing.amountG / ing.unitG) * ing.unitPrice;
+  });
+  return {kcal, p, c, f, price};
+}
+
 function renderRecipes() {
+  renderRecipeSortRow();
   const list = document.getElementById('recipeList');
-  const ids = Object.keys(recipes);
+  let ids = Object.keys(recipes);
+  if (recipeSearch) ids = ids.filter(id => recipes[id].name.toLowerCase().includes(recipeSearch));
   if (!ids.length) {
-    list.innerHTML = '<div class="recipe-empty">Noch keine Rezepte.<br>Tippe auf <b>+ Neues Rezept</b> um zu starten.</div>';
+    list.innerHTML = Object.keys(recipes).length
+      ? '<div class="recipe-empty">Kein Rezept gefunden.</div>'
+      : '<div class="recipe-empty">Noch keine Rezepte.<br>Tippe auf <b>+ Neues Rezept</b> um zu starten.</div>';
     return;
+  }
+  if (recipeSort) {
+    ids.sort((a, b) => {
+      const ra = recipes[a], rb = recipes[b];
+      const sa = recipeStats(ra), sb = recipeStats(rb);
+      const s = recipeSortDir;
+      if (recipeSort === 'az')      return ra.name.localeCompare(rb.name) * s;
+      if (recipeSort === 'kcal')    return (sa.kcal - sb.kcal) * s;
+      if (recipeSort === 'preis')   return (sa.price - sb.price) * s;
+      if (recipeSort === 'zutaten') return (ra.ingredients.length - rb.ingredients.length) * s;
+      return 0;
+    });
   }
   list.innerHTML = ids.map(id => {
     const r = recipes[id];
     const s = r.servings || 1;
-    let totalKcal=0, totalP=0, totalC=0, totalF=0, totalPrice=0;
-    r.ingredients.forEach(ing => {
-      if (!ing.custom) {
-        totalKcal  += (ing.amountG / 100) * (ing.kcalPer100    || 0);
-        totalP     += (ing.amountG / 100) * (ing.proteinPer100 || 0);
-        totalC     += (ing.amountG / 100) * (ing.carbsPer100   || 0);
-        totalF     += (ing.amountG / 100) * (ing.fatPer100     || 0);
-        if (ing.unitPrice && ing.unitG)
-          totalPrice += Math.ceil(ing.amountG / ing.unitG) * ing.unitPrice;
-      }
-    });
+    const {kcal:totalKcal, p:totalP, c:totalC, f:totalF, price:totalPrice} = recipeStats(r);
     const perServing = v => Math.round(v / s);
     const hasNutrition = r.ingredients.some(i => !i.custom);
     const ingrHtml = r.ingredients.slice(0, 5).map(ing => {
       const kcalStr = !ing.custom ? `${Math.round((ing.amountG/100)*(ing.kcalPer100||0))} kcal` : '';
       return `<div class="recipe-ingr-row">
-        <span>${ing.emoji || '🥗'} ${ing.name} <span style="color:var(--muted);font-size:11px">${ing.amountG}g</span></span>
+        <span>${ing.emoji || '🥗'} ${ing.name} <span style="color:var(--muted);font-size:11px">${rbFormatAmt(ing)}</span></span>
         <span style="color:var(--muted);font-size:12px">${kcalStr}</span>
       </div>`;
     }).join('');
@@ -4153,10 +4218,11 @@ function rbQtyToG(qty, unit, unitG) {
 }
 
 function rbFormatAmt(ing) {
-  const qty = ing.qty != null ? ing.qty : 1;
-  const unit = ing.unit || ing.catalogUnit || 'Stück';
-  const q = qty === Math.floor(qty) ? qty : parseFloat(qty.toFixed(1));
-  return `${q} ${unit}`;
+  if (ing.qty != null && ing.unit) {
+    const q = ing.qty === Math.floor(ing.qty) ? ing.qty : parseFloat(ing.qty.toFixed(1));
+    return `${q} ${ing.unit}`;
+  }
+  return `${ing.amountG || 0}g`;
 }
 
 let rbIngEditIdx = -1;
@@ -4383,6 +4449,7 @@ function saveRecipeFromBuilder() {
   closeRecipeSaveSheet();
   closeRecipeBuilder();
   renderRecipes();
+  showTab('rezepte');
   showToast('Rezept gespeichert ✓');
 }
 
