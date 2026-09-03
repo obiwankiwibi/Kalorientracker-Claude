@@ -613,6 +613,41 @@ html { height: 100%; }
     .sh-btn.danger   { background: #4a2020; color: #ff7070; flex: 0 0 auto; padding: 13px 16px; }
     .sh-btn.secondary { background: var(--card); color: var(--text); }
 
+    /* ── Recipes ── */
+    .recipe-card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:16px; margin-bottom:12px; box-shadow:var(--shadow); }
+    .recipe-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .recipe-emoji { font-size:28px; line-height:1; }
+    .recipe-name { flex:1; font-size:16px; font-weight:700; }
+    .recipe-portions { font-size:12px; color:var(--muted); }
+    .recipe-macros { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; background:var(--card); border-radius:12px; padding:10px 8px; margin-bottom:10px; }
+    .recipe-macro { display:flex; flex-direction:column; align-items:center; gap:2px; }
+    .macro-val { font-size:15px; font-weight:700; }
+    .macro-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+    .recipe-ingr-row { display:flex; align-items:center; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); font-size:13px; }
+    .recipe-ingr-row:last-child { border-bottom:none; }
+    .recipe-ingr-list { margin-bottom:12px; }
+    .recipe-actions { display:flex; gap:8px; }
+    .recipe-btn { flex:1; padding:10px; border-radius:14px; border:none; cursor:pointer; font-size:13px; font-weight:600; font-family:inherit; transition:opacity .15s; }
+    .recipe-btn:active { opacity:.75; }
+    .recipe-btn.primary { background:var(--active); color:#fff; }
+    .recipe-btn.secondary { background:var(--card); color:var(--text); }
+    .recipe-empty { text-align:center; padding:48px 24px; color:var(--muted); font-size:14px; }
+    .recipe-toolbar { display:flex; gap:8px; padding:0 0 16px; }
+    .recipe-tool-btn { flex:1; padding:13px; border-radius:16px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
+    .recipe-tool-btn.primary { background:var(--active); color:#fff; border-color:var(--active); }
+    .ingr-results { background:var(--surface); border:1px solid var(--border); border-radius:14px; max-height:180px; overflow-y:auto; margin-bottom:8px; }
+    .ingr-result-row { padding:10px 14px; cursor:pointer; font-size:14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+    .ingr-result-row:last-child { border-bottom:none; }
+    .ingr-result-row:active { background:var(--card); }
+    .ingr-row { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); }
+    .ingr-row:last-child { border-bottom:none; }
+    .ingr-info { flex:1; }
+    .ingr-name-small { font-size:13px; font-weight:600; }
+    .ingr-unit-small { font-size:11px; color:var(--muted); }
+    .ingr-qty-input { width:64px; text-align:center; background:var(--card); border:1.5px solid var(--border); color:var(--text); border-radius:10px; padding:6px 4px; font-size:14px; font-family:inherit; outline:none; }
+    .ingr-qty-input:focus { border-color:var(--active); }
+    .ingr-remove { background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; padding:4px; line-height:1; }
+
     /* ── Bottom nav ── */
     .bottom-nav {
       position: fixed;
@@ -637,7 +672,7 @@ html { height: 100%; }
       color: var(--muted);
       font-size: 11px;
       cursor: pointer;
-      padding: 4px 14px;
+      padding: 4px 8px;
       position: relative;
     }
     .nav-item.on { color: var(--active); }
@@ -1488,6 +1523,55 @@ html { height: 100%; }
 <!-- ══ SCROLL TO TOP ══ -->
 <button id="scrollTopBtn" onclick="scrollToTop()" aria-label="Nach oben">↑</button>
 
+<!-- ══ REZEPTE VIEW ══ -->
+<div id="recipesView" style="display:none; padding:16px 12px;">
+  <div class="recipe-toolbar">
+    <button class="recipe-tool-btn primary" onclick="openRecipeSheet()">+ Neues Rezept</button>
+    <button class="recipe-tool-btn" onclick="openChefkochSheet()">📥 Chefkoch</button>
+  </div>
+  <div id="recipeList"></div>
+</div>
+
+<!-- ══ REZEPT SHEET ══ -->
+<div class="sheet-overlay" id="recipeOverlay" onclick="recipeOverlayClick(event)" style="display:none">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="recipeSheetTitle">🍽️ Neues Rezept</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <input class="sheet-input" id="recipeEmojiIn" placeholder="🍽️" style="width:62px;flex:none;text-align:center;font-size:20px;margin-bottom:0;">
+      <input class="sheet-input" id="recipeNameIn"  placeholder="Rezeptname *" style="flex:1;margin-bottom:0;">
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+      <input class="sheet-input" id="recipePortionsIn" placeholder="4" type="number" min="1" value="4" style="width:90px;flex:none;margin-bottom:0;">
+      <span style="font-size:13px;color:var(--muted);">Portionen</span>
+    </div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;">Zutaten</div>
+    <input class="sheet-input" id="ingrSearch" placeholder="Zutat suchen…" oninput="searchIngredients()" autocomplete="off" style="margin-bottom:4px;">
+    <div class="ingr-results" id="ingrResults" style="display:none;"></div>
+    <div id="ingrList" style="max-height:200px;overflow-y:auto;margin-bottom:12px;"></div>
+    <div class="sheet-btns">
+      <button class="sh-btn secondary" onclick="closeRecipeSheet()">Abbrechen</button>
+      <button class="sh-btn danger"    id="recipeDeleteBtn" onclick="deleteCurrentRecipe()" style="display:none;flex:0 0 auto;padding:13px 16px;">🗑</button>
+      <button class="sh-btn primary"   onclick="saveRecipe()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CHEFKOCH IMPORT SHEET ══ -->
+<div class="sheet-overlay" id="chefkochOverlay" onclick="if(event.target===this)closeChefkochSheet()" style="display:none">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📥 Rezept importieren</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5;">Kopiere die Zutatenliste von Chefkoch und füge sie hier ein. Eine Zutat pro Zeile:<br><em style="opacity:.7">500 g Möhren · 2 Tomaten · 1 EL Öl</em></p>
+    <input class="sheet-input" id="ckNameIn" placeholder="Rezeptname *">
+    <textarea class="sheet-input" id="ckTextIn" rows="6" placeholder="Zutatenliste einfügen…" style="resize:vertical;font-family:inherit;"></textarea>
+    <div class="sheet-btns">
+      <button class="sh-btn secondary" onclick="closeChefkochSheet()">Abbrechen</button>
+      <button class="sh-btn primary"   onclick="importChefkoch()">Importieren</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ BOTTOM NAV ══ -->
 <nav class="bottom-nav">
   <div class="nav-item on" id="navListe" onclick="showTab('liste')">
@@ -1502,6 +1586,10 @@ html { height: 100%; }
   <div class="nav-item" id="navRestaurants" onclick="showTab('restaurants')">
     <div class="nav-icon">🍽️</div>
     <div>Restaurants</div>
+  </div>
+  <div class="nav-item" id="navRezepte" onclick="showTab('rezepte')">
+    <div class="nav-icon">🍽️</div>
+    <div>Rezepte</div>
   </div>
   <div class="nav-item" onclick="switchList()">
     <div class="nav-icon">📋</div>
@@ -2669,9 +2757,10 @@ let activeTab = 'liste';
 
 function showTab(tab) {
   activeTab = tab;
-  const isListe      = tab === 'liste';
-  const isAngebote   = tab === 'angebote';
+  const isListe       = tab === 'liste';
+  const isAngebote    = tab === 'angebote';
   const isRestaurants = tab === 'restaurants';
+  const isRezepte     = tab === 'rezepte';
 
   // Liste-Elemente
   ['connBar','activeSection','doneSection','sugSection'].forEach(id => {
@@ -2693,6 +2782,7 @@ function showTab(tab) {
   // Andere Views
   document.getElementById('offersView').style.display      = isAngebote    ? 'block' : 'none';
   document.getElementById('restaurantsView').style.display = isRestaurants ? 'block' : 'none';
+  document.getElementById('recipesView').style.display     = isRezepte     ? 'block' : 'none';
   const stb = document.getElementById('scrollTopBtn');
   if (stb && !isAngebote && !isRestaurants) stb.classList.remove('visible');
 
@@ -2700,11 +2790,13 @@ function showTab(tab) {
   document.getElementById('navListe').classList.toggle('on',       isListe);
   document.getElementById('navAngebote').classList.toggle('on',    isAngebote);
   document.getElementById('navRestaurants').classList.toggle('on', isRestaurants);
+  document.getElementById('navRezepte').classList.toggle('on',     isRezepte);
 
   const clearMenuItem = document.getElementById('clearDoneMenuItem');
   if (clearMenuItem) clearMenuItem.style.display = isListe ? '' : 'none';
   if (isAngebote)    { renderStores(); renderOffers(); updatePlzBtn(); }
   if (isRestaurants) renderRestaurants();
+  if (isRezepte)     renderRecipes();
 }
 
 function renderStores() {
@@ -3853,6 +3945,243 @@ autoLoadOffersJson();
     }
   }, { passive: true });
 })();
+
+// ═══════════════════════════════════════════════
+//  REZEPTE
+// ═══════════════════════════════════════════════
+const RECIPE_STORE = 'rezepte_v2';
+let recipes = JSON.parse(localStorage.getItem(RECIPE_STORE) || '{}');
+let editRecipeId = null;
+let pendingIngredients = [];
+
+function saveRecipes() { localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes)); }
+
+function parseUnitG(unit) {
+  const m = unit.match(/^(\d+(?:\.\d+)?)\s*(g|kg|ml|l)/i);
+  if (!m) return 100;
+  const val = parseFloat(m[1]);
+  return (m[2].toLowerCase() === 'kg' || m[2].toLowerCase() === 'l') ? val * 1000 : val;
+}
+
+function renderRecipes() {
+  const list = document.getElementById('recipeList');
+  const ids = Object.keys(recipes);
+  if (!ids.length) {
+    list.innerHTML = '<div class="recipe-empty">Noch keine Rezepte.<br>Tippe auf <b>+ Neues Rezept</b> um zu starten.</div>';
+    return;
+  }
+  list.innerHTML = ids.map(id => {
+    const r = recipes[id];
+    const s = r.servings || 1;
+    let totalKcal=0, totalP=0, totalC=0, totalF=0, totalPrice=0;
+    r.ingredients.forEach(ing => {
+      if (!ing.custom) {
+        totalKcal  += (ing.amountG / 100) * (ing.kcalPer100    || 0);
+        totalP     += (ing.amountG / 100) * (ing.proteinPer100 || 0);
+        totalC     += (ing.amountG / 100) * (ing.carbsPer100   || 0);
+        totalF     += (ing.amountG / 100) * (ing.fatPer100     || 0);
+        if (ing.unitPrice && ing.unitG)
+          totalPrice += Math.ceil(ing.amountG / ing.unitG) * ing.unitPrice;
+      }
+    });
+    const perServing = v => Math.round(v / s);
+    const hasNutrition = r.ingredients.some(i => !i.custom);
+    const ingrHtml = r.ingredients.slice(0, 5).map(ing => {
+      const kcalStr = !ing.custom ? `${Math.round((ing.amountG/100)*(ing.kcalPer100||0))} kcal` : '';
+      return `<div class="recipe-ingr-row">
+        <span>${ing.emoji || '🥗'} ${ing.name} <span style="color:var(--muted);font-size:11px">${ing.amountG}g</span></span>
+        <span style="color:var(--muted);font-size:12px">${kcalStr}</span>
+      </div>`;
+    }).join('');
+    const moreIngr = r.ingredients.length > 5
+      ? `<div style="font-size:12px;color:var(--muted);padding-top:4px">+${r.ingredients.length-5} weitere Zutaten</div>` : '';
+
+    return `<div class="recipe-card">
+      <div class="recipe-header">
+        <div class="recipe-emoji">${r.emoji || '🍽️'}</div>
+        <div style="flex:1">
+          <div class="recipe-name">${r.name}</div>
+          <div class="recipe-portions">${s} Portion${s!==1?'en':''} · ${r.ingredients.length} Zutat${r.ingredients.length!==1?'en':''}</div>
+        </div>
+      </div>
+      ${hasNutrition ? `<div class="recipe-macros">
+        <div class="recipe-macro"><span class="macro-val" style="color:var(--active)">${perServing(totalKcal)}</span><span class="macro-lbl">kcal</span></div>
+        <div class="recipe-macro"><span class="macro-val" style="color:#5bbf7e">${perServing(totalP)}g</span><span class="macro-lbl">Eiweiß</span></div>
+        <div class="recipe-macro"><span class="macro-val" style="color:#d4a017">${perServing(totalC)}g</span><span class="macro-lbl">Kohlenh.</span></div>
+        <div class="recipe-macro"><span class="macro-val" style="color:#e07060">${perServing(totalF)}g</span><span class="macro-lbl">Fett</span></div>
+      </div>` : ''}
+      ${totalPrice ? `<div style="font-size:12px;color:var(--muted);text-align:right;margin-bottom:10px;">ca. ${totalPrice.toFixed(2).replace('.',',')} € gesamt</div>` : ''}
+      <div class="recipe-ingr-list">${ingrHtml}${moreIngr}</div>
+      <div class="recipe-actions">
+        <button class="recipe-btn secondary" onclick="openRecipeSheet('${id}')">✏️ Bearbeiten</button>
+        <button class="recipe-btn primary"   onclick="addRecipeToList('${id}')">🛒 Zur Liste</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openRecipeSheet(id) {
+  editRecipeId = id || null;
+  const r = id ? recipes[id] : null;
+  document.getElementById('recipeSheetTitle').textContent = id ? '✏️ Rezept bearbeiten' : '🍽️ Neues Rezept';
+  document.getElementById('recipeEmojiIn').value    = r ? r.emoji    : '';
+  document.getElementById('recipeNameIn').value     = r ? r.name     : '';
+  document.getElementById('recipePortionsIn').value = r ? r.servings : 4;
+  document.getElementById('recipeDeleteBtn').style.display = id ? '' : 'none';
+  pendingIngredients = r ? JSON.parse(JSON.stringify(r.ingredients)) : [];
+  document.getElementById('ingrSearch').value = '';
+  document.getElementById('ingrResults').style.display = 'none';
+  renderIngrList();
+  document.getElementById('recipeOverlay').style.display = 'flex';
+}
+
+function closeRecipeSheet() {
+  document.getElementById('recipeOverlay').style.display = 'none';
+  pendingIngredients = [];
+}
+
+function recipeOverlayClick(e) { if (e.target === e.currentTarget) closeRecipeSheet(); }
+
+function deleteCurrentRecipe() {
+  if (!editRecipeId || !confirm('Rezept löschen?')) return;
+  delete recipes[editRecipeId];
+  saveRecipes();
+  closeRecipeSheet();
+  renderRecipes();
+}
+
+function searchIngredients() {
+  const q = document.getElementById('ingrSearch').value.trim().toLowerCase();
+  const box = document.getElementById('ingrResults');
+  if (q.length < 1) { box.style.display = 'none'; return; }
+  const matches = ITEMS.filter(it => it.name.toLowerCase().includes(q)).slice(0, 8);
+  if (!matches.length) { box.style.display = 'none'; return; }
+  // Store matches in a temporary lookup keyed by index
+  box._matchItems = matches;
+  box.innerHTML = matches.map((item, i) =>
+    `<div class="ingr-result-row" data-ingr-idx="${i}">
+      <span>${item.emoji} ${item.name}</span>
+      <span style="color:var(--muted);font-size:12px">${item.unit} · ${item.price.toFixed(2).replace('.',',')} €</span>
+    </div>`
+  ).join('');
+  box.querySelectorAll('[data-ingr-idx]').forEach(el => {
+    el.addEventListener('click', () => {
+      const item = box._matchItems[+el.dataset.ingrIdx];
+      const unitG = parseUnitG(item.unit);
+      addIngredientRaw({name:item.name,emoji:item.emoji,amountG:unitG,kcalPer100:item.kcal,proteinPer100:item.protein,carbsPer100:item.carbs,fatPer100:item.fat,unitPrice:item.price,unitG,catalogUnit:item.unit,custom:false});
+    });
+  });
+  box.style.display = 'block';
+}
+
+function addIngredientRaw(obj) {
+  pendingIngredients.push(obj);
+  document.getElementById('ingrSearch').value = '';
+  document.getElementById('ingrResults').style.display = 'none';
+  renderIngrList();
+}
+
+function renderIngrList() {
+  const list = document.getElementById('ingrList');
+  if (!pendingIngredients.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:12px 0;">Keine Zutaten. Oben suchen.</div>';
+    return;
+  }
+  list.innerHTML = pendingIngredients.map((ing, i) => {
+    const kcalStr = !ing.custom ? `${Math.round((ing.amountG/100)*(ing.kcalPer100||0))} kcal` : '';
+    return `<div class="ingr-row">
+      <div style="font-size:20px">${ing.emoji || '🥗'}</div>
+      <div class="ingr-info">
+        <div class="ingr-name-small">${ing.name}</div>
+        <div class="ingr-unit-small">${kcalStr}${ing.catalogUnit ? ' · ' + ing.catalogUnit : ''}</div>
+      </div>
+      <input class="ingr-qty-input" type="number" min="0" step="10" value="${ing.amountG}"
+        oninput="pendingIngredients[${i}].amountG=+this.value||0; renderIngrList()" title="Gramm">
+      <button class="ingr-remove" onclick="pendingIngredients.splice(${i},1); renderIngrList()">×</button>
+    </div>`;
+  }).join('');
+}
+
+function saveRecipe() {
+  const name = document.getElementById('recipeNameIn').value.trim();
+  if (!name) { showToast('Bitte Rezeptname eingeben'); return; }
+  const id = editRecipeId || Date.now().toString();
+  recipes[id] = {
+    id, name,
+    emoji:    document.getElementById('recipeEmojiIn').value.trim() || '🍽️',
+    servings: parseInt(document.getElementById('recipePortionsIn').value) || 4,
+    ingredients: pendingIngredients
+  };
+  saveRecipes();
+  closeRecipeSheet();
+  renderRecipes();
+  showToast('Rezept gespeichert ✓');
+}
+
+function addRecipeToList(id) {
+  const r = recipes[id];
+  if (!r || !r.ingredients.length) return;
+  let added = 0;
+  r.ingredients.forEach(ing => {
+    if (ing.custom) return;
+    if (!state.active[ing.name]) { state.active[ing.name] = true; added++; }
+  });
+  save(); renderActive();
+  showTab('liste');
+  showToast(`${added} Zutat${added!==1?'en':''} zur Einkaufsliste hinzugefügt`);
+}
+
+function openChefkochSheet() {
+  document.getElementById('ckNameIn').value  = '';
+  document.getElementById('ckTextIn').value  = '';
+  document.getElementById('chefkochOverlay').style.display = 'flex';
+}
+function closeChefkochSheet() {
+  document.getElementById('chefkochOverlay').style.display = 'none';
+}
+
+function importChefkoch() {
+  const name = document.getElementById('ckNameIn').value.trim();
+  if (!name) { showToast('Bitte Rezeptname eingeben'); return; }
+  const text = document.getElementById('ckTextIn').value.trim();
+  if (!text) { showToast('Bitte Zutatenliste einfügen'); return; }
+
+  const ingredients = [];
+  text.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
+    const m = line.match(/^(\d+(?:[,\.]\d+)?)\s*(g|kg|ml|l|el|tl|stück|stk|pck|dose|bund|prise)?\s+(.+)/i);
+    let amountG = 100, ingrName = line;
+    if (m) {
+      const qty = parseFloat(m[1].replace(',', '.'));
+      const unit = (m[2] || '').toLowerCase();
+      ingrName = m[3].trim();
+      if      (unit === 'kg') amountG = qty * 1000;
+      else if (unit === 'g')  amountG = qty;
+      else if (unit === 'l')  amountG = qty * 1000;
+      else if (unit === 'ml') amountG = qty;
+      else                    amountG = qty * 80;
+    }
+    const matched = ITEMS.find(it =>
+      ingrName.toLowerCase().includes(it.name.toLowerCase()) ||
+      it.name.toLowerCase().includes(ingrName.toLowerCase().split(' ')[0])
+    );
+    if (matched) {
+      const unitG = parseUnitG(matched.unit);
+      ingredients.push({ name:matched.name, emoji:matched.emoji, amountG:Math.max(Math.round(amountG),10),
+        kcalPer100:matched.kcal, proteinPer100:matched.protein, carbsPer100:matched.carbs, fatPer100:matched.fat,
+        unitPrice:matched.price, unitG, catalogUnit:matched.unit, custom:false });
+    } else {
+      ingredients.push({ name:ingrName, emoji:'🥗', amountG:Math.max(Math.round(amountG),10), custom:true });
+    }
+  });
+
+  const id = Date.now().toString();
+  recipes[id] = { id, name, emoji:'🍽️', servings:4, ingredients };
+  saveRecipes();
+  closeChefkochSheet();
+  renderRecipes();
+  const matched = ingredients.filter(i=>!i.custom).length;
+  showToast(`Importiert: ${matched}/${ingredients.length} Zutaten erkannt`);
+}
 
 function doQuickBackup(){
   var d={};
