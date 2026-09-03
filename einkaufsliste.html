@@ -615,51 +615,62 @@ html { height: 100%; }
 
     /* ── Recipes ── */
     .recipe-card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:16px; margin-bottom:12px; box-shadow:var(--shadow); position:relative; }
-    .recipe-delete-btn { position:absolute; top:10px; right:10px; width:28px; height:28px; border-radius:50%; border:none; background:var(--card); color:var(--muted); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; -webkit-tap-highlight-color:transparent; }
-    .recipe-delete-btn:active { background:var(--border); }
-    .recipe-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-right:28px; }
+    .recipe-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
     .recipe-emoji { font-size:28px; line-height:1; }
     .recipe-name { flex:1; font-size:16px; font-weight:700; }
     .recipe-portions { font-size:12px; color:var(--muted); }
-    .recipe-macros { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; background:var(--card); border-radius:12px; padding:10px 8px; margin-bottom:10px; }
+    .recipe-macros { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; background:var(--card); border-radius:12px; padding:10px 8px; margin-bottom:12px; }
     .recipe-macro { display:flex; flex-direction:column; align-items:center; gap:2px; }
     .macro-val { font-size:15px; font-weight:700; }
     .macro-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
-    .recipe-ingr-row { display:flex; align-items:center; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); font-size:13px; }
-    .recipe-ingr-row:last-child { border-bottom:none; }
-    .recipe-ingr-list { margin-bottom:12px; }
-    .recipe-actions { display:flex; gap:8px; }
-    .recipe-btn { flex:1; padding:10px; border-radius:14px; border:none; cursor:pointer; font-size:13px; font-weight:600; font-family:inherit; transition:opacity .15s; }
-    .recipe-btn:active { opacity:.75; }
-    .recipe-btn.primary { background:var(--active); color:#fff; }
-    .recipe-btn.secondary { background:var(--card); color:var(--text); }
+    .recipe-actions { display:flex; align-items:center; gap:8px; }
+    .recipe-btn-add { flex:1; padding:12px; border-radius:14px; border:none; cursor:pointer; font-size:14px; font-weight:700; font-family:inherit; background:var(--active); color:#fff; -webkit-tap-highlight-color:transparent; transition:opacity .15s; }
+    .recipe-btn-add:active { opacity:.75; }
+    .recipe-btn-edit { width:42px; height:42px; border-radius:12px; border:1.5px solid var(--border); background:var(--card); color:var(--text); font-size:18px; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; flex-shrink:0; -webkit-tap-highlight-color:transparent; transition:opacity .15s; }
+    .recipe-btn-edit:active { opacity:.75; }
     .recipe-empty { text-align:center; padding:48px 24px; color:var(--muted); font-size:14px; }
     .list-recipe-tile { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; display:flex; align-items:center; gap:10px; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:opacity .15s; }
     .list-recipe-tile:active { opacity:.7; }
     #listRecipesGrid { display:flex; flex-direction:column; gap:8px; padding:4px 0 12px; }
-    .recipe-toolbar { display:flex; gap:8px; padding:0 0 16px; }
-    .recipe-tool-btn { flex:1; padding:13px; border-radius:16px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
-    .recipe-tool-btn.primary { background:var(--active); color:#fff; border-color:var(--active); }
+    .recipe-toolbar { display:flex; gap:8px; padding:0 0 16px; align-items:stretch; }
+    .recipe-tool-btn { padding:12px 14px; border-radius:16px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; white-space:nowrap; -webkit-tap-highlight-color:transparent; }
+    .recipe-tool-btn.primary { flex:1; background:var(--active); color:#fff; border-color:var(--active); font-size:15px; }
+    /* custom confirm dialog */
+    .confirm-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:2000; display:flex; align-items:flex-end; justify-content:center; }
+    .confirm-sheet { background:var(--surface); border-radius:20px 20px 0 0; padding:24px 20px 32px; width:100%; max-width:430px; }
+    .confirm-title { font-size:17px; font-weight:700; margin-bottom:6px; }
+    .confirm-body { font-size:14px; color:var(--muted); margin-bottom:20px; }
+    .confirm-btns { display:flex; gap:10px; }
+    .confirm-btn { flex:1; padding:14px; border-radius:14px; border:none; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; }
+    .confirm-btn.cancel { background:var(--card); color:var(--text); }
+    .confirm-btn.danger { background:#c0392b; color:#fff; }
     .rb-view .tile.sug.rb-sel{background:linear-gradient(145deg,#2a8c54,#1d6b3e);opacity:1;filter:none;}
     .rb-view .tile.sug.rb-sel::after{content:'✓';position:absolute;top:5px;right:8px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);}
+    .rb-view .tile.sug.rb-api{border:1.5px solid #3a6baa;background:var(--surface);}
+    .rb-view .tile.sug.rb-api::before{content:'🌐';position:absolute;top:4px;right:6px;font-size:9px;opacity:.7;}
     .rb-view{position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;}
     .rb-header{display:flex;align-items:center;gap:8px;padding:14px 12px 10px;border-bottom:1px solid var(--border);flex-shrink:0;}
     .rb-back{background:none;border:none;color:var(--active);font-size:15px;font-weight:600;cursor:pointer;padding:6px 4px;font-family:inherit;-webkit-tap-highlight-color:transparent;}
     .rb-title{flex:1;font-size:16px;font-weight:700;text-align:center;color:var(--text);}
     .rb-done{background:var(--active);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;}
     .rb-badge{display:inline-block;background:rgba(255,255,255,0.3);border-radius:10px;padding:0 6px;font-size:12px;margin-left:4px;min-width:16px;text-align:center;}
-    .rb-selected{overflow-x:auto;white-space:nowrap;padding:8px 12px 10px;border-bottom:1px solid var(--border);scrollbar-width:none;flex-shrink:0;}
+    .rb-selected{overflow-x:auto;white-space:nowrap;padding:8px 12px 10px;border-bottom:1px solid var(--border);scrollbar-width:none;flex-shrink:0;position:relative;}
     .rb-selected::-webkit-scrollbar{display:none;}
+    .rb-selected-fade{position:absolute;top:0;right:0;bottom:0;width:40px;background:linear-gradient(to right,transparent,var(--surface));pointer-events:none;border-radius:0 0 0 0;}
     .rb-sel-tile{display:inline-flex;flex-direction:column;align-items:center;width:88px;background:linear-gradient(145deg,#2a8c54,#1d6b3e);border-radius:14px;padding:8px 6px 7px;margin-right:8px;cursor:pointer;position:relative;text-align:center;color:#fff;vertical-align:top;-webkit-tap-highlight-color:transparent;}
     .rb-sel-name{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:76px;width:100%;margin-top:2px;}
     .rb-sel-amt{font-size:11px;color:rgba(255,255,255,0.85);margin-top:2px;}
     .rb-tile-x{position:absolute;top:3px;right:5px;background:none;border:none;color:rgba(255,255,255,0.7);font-size:15px;cursor:pointer;padding:0;line-height:1;-webkit-tap-highlight-color:transparent;}
-    #rbNutriBar{display:none;padding:5px 16px 7px;background:var(--surface);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted);flex-shrink:0;}
+    #rbStatusBar{display:none;padding:7px 16px;background:var(--surface);border-bottom:2px solid var(--active);flex-shrink:0;display:none;}
+    .rb-status-inner{display:flex;align-items:center;justify-content:space-between;}
+    .rb-status-left{font-size:12px;color:var(--muted);}
+    .rb-status-right{font-size:13px;font-weight:800;color:var(--active);}
+    .rb-status-nutri{font-size:11px;color:var(--muted);margin-top:2px;}
     .rb-scroll{flex:1;overflow-y:auto;padding:8px 12px 80px;}
-    #rbPriceBar{display:none;align-items:center;justify-content:space-between;padding:9px 16px;background:var(--surface);border-bottom:2px solid var(--active);font-size:13px;color:var(--muted);flex-shrink:0;}
-    #rbPriceTotal{font-weight:800;color:var(--active);font-size:17px;}
-    .rb-search-wrap{padding:8px 12px 4px;flex-shrink:0;display:flex;align-items:center;gap:6px;}
-    .rb-action-btn{flex-shrink:0;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+    .rb-search-wrap{padding:8px 12px 4px;flex-shrink:0;display:flex;align-items:flex-end;gap:8px;}
+    .rb-action-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;}
+    .rb-action-btn{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+    .rb-action-label{font-size:9px;color:var(--muted);white-space:nowrap;}
     .ingr-results { background:var(--surface); border:1px solid var(--border); border-radius:14px; max-height:180px; overflow-y:auto; margin-bottom:8px; }
     .ingr-result-row { padding:10px 14px; cursor:pointer; font-size:14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
     .ingr-result-row:last-child { border-bottom:none; }
@@ -1561,7 +1572,7 @@ html { height: 100%; }
 <div id="recipesView" style="display:none; padding:16px 12px;">
   <div class="recipe-toolbar">
     <button class="recipe-tool-btn primary" onclick="openRecipeBuilder()">+ Rezept erstellen</button>
-    <button class="recipe-tool-btn" onclick="openChefkochSheet()">📥 Chefkoch</button>
+    <button class="recipe-tool-btn" onclick="openChefkochSheet()" style="display:flex;align-items:center;gap:5px;">📥 Chefkoch</button>
   </div>
   <div class="search-wrap" style="margin:10px 0 6px;">
     <div class="search-inner">
@@ -1580,20 +1591,33 @@ html { height: 100%; }
     <span class="rb-title" id="rbTitle">Zutaten wählen</span>
     <button class="rb-done" onclick="openRecipeSaveSheet()">Fertig <span class="rb-badge" id="rbCountBadge">0</span></button>
   </div>
-  <div id="rbPriceBar">
-    <div style="display:flex;align-items:center;gap:6px"><span>🧾</span><span id="rbPriceCount"></span></div>
-    <span id="rbPriceTotal"></span>
+  <div id="rbStatusBar" style="display:none;padding:7px 16px;background:var(--surface);border-bottom:2px solid var(--active);flex-shrink:0;">
+    <div class="rb-status-inner">
+      <span class="rb-status-left"><span id="rbPriceCount"></span></span>
+      <span class="rb-status-right"><span id="rbPriceTotal"></span></span>
+    </div>
+    <div class="rb-status-nutri" id="rbNutriText"></div>
   </div>
-  <div id="rbNutriBar"><span id="rbNutriText"></span></div>
-  <div class="rb-selected" id="rbSelectedStrip" style="display:none;"></div>
+  <div class="rb-selected" id="rbSelectedStrip" style="display:none;">
+    <div class="rb-selected-fade"></div>
+  </div>
   <div class="rb-search-wrap">
     <div class="search-inner" style="flex:1;">
       <span style="color:var(--muted);font-size:15px">🔍</span>
       <input id="rbSearchInput" placeholder="Zutat suchen…" oninput="rbOnSearch()" autocomplete="off" autocorrect="off">
     </div>
-    <button class="rb-action-btn" onclick="openRbCustomSheet()" title="Eigene Zutat">✏️</button>
-    <button class="rb-action-btn" onclick="openRbPhotoAdder()" title="Foto">📷</button>
-    <button class="rb-action-btn" onclick="openRbScanner()" title="Barcode scannen">&#9881;</button>
+    <div class="rb-action-wrap">
+      <button class="rb-action-btn" onclick="openRbCustomSheet()">✏️</button>
+      <span class="rb-action-label">Eigene</span>
+    </div>
+    <div class="rb-action-wrap">
+      <button class="rb-action-btn" onclick="openRbPhotoAdder()">📷</button>
+      <span class="rb-action-label">Foto</span>
+    </div>
+    <div class="rb-action-wrap">
+      <button class="rb-action-btn" onclick="openRbScanner()">⚙</button>
+      <span class="rb-action-label">Scan</span>
+    </div>
   </div>
   <div class="cat-row" id="rbCatRow"></div>
   <div class="cat-row sort-row" id="rbSortRow"></div>
@@ -1712,6 +1736,18 @@ html { height: 100%; }
     <div class="sheet-btns">
       <button class="sh-btn secondary" onclick="closeRecipeToList()">Abbrechen</button>
       <button class="sh-btn primary" onclick="confirmRecipeToList()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CUSTOM CONFIRM DIALOG ══ -->
+<div class="confirm-overlay" id="confirmOverlay" style="display:none;" onclick="if(event.target===this)_confirmResolve(false)">
+  <div class="confirm-sheet">
+    <div class="confirm-title" id="confirmTitle"></div>
+    <div class="confirm-body" id="confirmBody"></div>
+    <div class="confirm-btns">
+      <button class="confirm-btn cancel" onclick="_confirmResolve(false)" id="confirmCancelBtn">Abbrechen</button>
+      <button class="confirm-btn danger" onclick="_confirmResolve(true)" id="confirmOkBtn">Löschen</button>
     </div>
   </div>
 </div>
@@ -2447,6 +2483,16 @@ const SORT_OPTIONS = [
   { id:'protein', label:'Eiweiß'     },
   { id:'carbs',   label:'KH'         },
   { id:'fat',     label:'Fett'       },
+];
+
+// Recipe builder sort: no price-per-kg or price-per-kcal (irrelevant for recipes)
+const RB_SORT_OPTIONS = [
+  { id:'az',      label:'A–Z'    },
+  { id:'typ',     label:'Typ'    },
+  { id:'kcal',    label:'kcal'   },
+  { id:'protein', label:'Eiweiß' },
+  { id:'carbs',   label:'KH'     },
+  { id:'fat',     label:'Fett'   },
 ];
 
 function renderSort() {
@@ -4164,6 +4210,29 @@ autoLoadOffersJson();
 })();
 
 // ═══════════════════════════════════════════════
+//  CUSTOM CONFIRM DIALOG
+// ═══════════════════════════════════════════════
+let _confirmResolveCallback = null;
+
+function showConfirm(title, body, okLabel) {
+  return new Promise(resolve => {
+    _confirmResolveCallback = resolve;
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmBody').textContent = body;
+    document.getElementById('confirmOkBtn').textContent = okLabel || 'Löschen';
+    document.getElementById('confirmOverlay').style.display = 'flex';
+  });
+}
+
+function _confirmResolve(result) {
+  document.getElementById('confirmOverlay').style.display = 'none';
+  if (_confirmResolveCallback) {
+    _confirmResolveCallback(result);
+    _confirmResolveCallback = null;
+  }
+}
+
+// ═══════════════════════════════════════════════
 //  REZEPTE
 // ═══════════════════════════════════════════════
 const RECIPE_STORE = 'rezepte_v2';
@@ -4263,23 +4332,15 @@ function renderRecipes() {
     const {kcal:totalKcal, p:totalP, c:totalC, f:totalF, price:totalPrice} = recipeStats(r);
     const perServing = v => Math.round(v / s);
     const hasNutrition = r.ingredients.some(i => !i.custom);
-    const ingrHtml = r.ingredients.slice(0, 5).map(ing => {
-      const kcalStr = !ing.custom ? `${Math.round((ing.amountG/100)*(ing.kcalPer100||0))} kcal` : '';
-      return `<div class="recipe-ingr-row">
-        <span>${ing.emoji || '🥗'} ${ing.name} <span style="color:var(--muted);font-size:11px">${rbFormatAmt(ing)}</span></span>
-        <span style="color:var(--muted);font-size:12px">${kcalStr}</span>
-      </div>`;
-    }).join('');
-    const moreIngr = r.ingredients.length > 5
-      ? `<div style="font-size:12px;color:var(--muted);padding-top:4px">+${r.ingredients.length-5} weitere Zutaten</div>` : '';
+    const ingrCount = r.ingredients.length;
+    const priceStr = totalPrice ? ` · ca. ${totalPrice.toFixed(2).replace('.',',')} €` : '';
 
     return `<div class="recipe-card">
-      <button class="recipe-delete-btn" onclick="deleteRecipe('${id}')" title="Rezept löschen">×</button>
       <div class="recipe-header">
         <div class="recipe-emoji">${r.emoji || '🍽️'}</div>
         <div style="flex:1">
           <div class="recipe-name">${r.name}</div>
-          <div class="recipe-portions">${s} Portion${s!==1?'en':''} · ${r.ingredients.length} Zutat${r.ingredients.length!==1?'en':''}</div>
+          <div class="recipe-portions">${s} Portion${s!==1?'en':''} · ${ingrCount} Zutat${ingrCount!==1?'en':''}${priceStr}</div>
         </div>
       </div>
       ${hasNutrition ? `<div class="recipe-macros">
@@ -4288,11 +4349,9 @@ function renderRecipes() {
         <div class="recipe-macro"><span class="macro-val" style="color:#d4a017">${perServing(totalC)}g</span><span class="macro-lbl">Kohlenh.</span></div>
         <div class="recipe-macro"><span class="macro-val" style="color:#e07060">${perServing(totalF)}g</span><span class="macro-lbl">Fett</span></div>
       </div>` : ''}
-      ${totalPrice ? `<div style="font-size:12px;color:var(--muted);text-align:right;margin-bottom:10px;">ca. ${totalPrice.toFixed(2).replace('.',',')} € gesamt</div>` : ''}
-      <div class="recipe-ingr-list">${ingrHtml}${moreIngr}</div>
       <div class="recipe-actions">
-        <button class="recipe-btn secondary" onclick="openRecipeBuilder('${id}')">✏️ Bearbeiten</button>
-        <button class="recipe-btn primary"   onclick="addRecipeToList('${id}')">🛒 Zur Liste</button>
+        <button class="recipe-btn-add" onclick="addRecipeToList('${id}')">🛒 Zur Einkaufsliste</button>
+        <button class="recipe-btn-edit" onclick="openRecipeBuilder('${id}')" title="Bearbeiten">✏️</button>
       </div>
     </div>`;
   }).join('');
@@ -4301,10 +4360,13 @@ function renderRecipes() {
 function deleteRecipe(id) {
   const r = recipes[id];
   if (!r) return;
-  if (!confirm(`"${r.name}" löschen?`)) return;
-  delete recipes[id];
-  saveRecipes();
-  renderRecipes();
+  showConfirm(`"${r.name}" löschen?`, 'Diese Aktion kann nicht rückgängig gemacht werden.', 'Löschen')
+    .then(ok => {
+      if (!ok) return;
+      delete recipes[id];
+      saveRecipes();
+      renderRecipes();
+    });
 }
 
 // ── Recipe Builder ──────────────────────────────────────────────
@@ -4338,8 +4400,7 @@ function openRecipeBuilder(id) {
   clearTimeout(rbApiDebounce);
   document.getElementById('rbTitle').textContent = id ? 'Rezept bearbeiten' : 'Zutaten wählen';
   document.getElementById('rbSearchInput').value = '';
-  document.getElementById('rbPriceBar').style.display = 'none';
-  document.getElementById('rbNutriBar').style.display = 'none';
+  document.getElementById('rbStatusBar').style.display = 'none';
   rbRenderCats();
   rbRenderTiles();
   rbRenderSelected();
@@ -4496,27 +4557,13 @@ function saveRbIngEdit() {
   rbRenderSelected();
 }
 
-function rbUpdateNutriBar() {
-  const bar = document.getElementById('rbNutriBar');
-  if (!rbIngredients.length) { bar.style.display = 'none'; return; }
-  let kcal = 0, p = 0, c = 0, f = 0;
-  rbIngredients.forEach(ing => {
-    const ag = ing.amountG || 0;
-    kcal += (ag / 100) * (ing.kcalPer100 || 0);
-    p    += (ag / 100) * (ing.proteinPer100 || 0);
-    c    += (ag / 100) * (ing.carbsPer100 || 0);
-    f    += (ag / 100) * (ing.fatPer100 || 0);
-  });
-  bar.style.display = 'block';
-  document.getElementById('rbNutriText').innerHTML =
-    `🔥 <b>${Math.round(kcal)} kcal</b> &nbsp;·&nbsp; E <b>${Math.round(p)}g</b> &nbsp;·&nbsp; KH <b>${Math.round(c)}g</b> &nbsp;·&nbsp; F <b>${Math.round(f)}g</b>`;
-}
+function rbUpdateNutriBar() { rbUpdateStatusBar(); } // legacy alias
 
 function rbRenderSort() {
   const sr = document.getElementById('rbSortRow');
   if (!sr) return;
   sr.innerHTML = '<span style="font-size:10px;color:var(--muted);flex-shrink:0;align-self:center;padding-right:2px">↕</span>'
-    + SORT_OPTIONS.map(o => {
+    + RB_SORT_OPTIONS.map(o => {
       const active = o.id === rbSortKey;
       const arrow = active ? (rbSortDir === 1 ? ' ↑' : ' ↓') : '';
       return `<button class="chip ${active ? 'on' : ''}" onclick="rbSetSort('${o.id}')">${o.label}${arrow}</button>`;
@@ -4596,19 +4643,31 @@ async function rbFetchOFF(query) {
   rbRenderTiles();
 }
 
-function rbUpdatePriceBar() {
-  const bar = document.getElementById('rbPriceBar');
+function rbUpdatePriceBar() { rbUpdateStatusBar(); } // legacy alias
+
+function rbUpdateStatusBar() {
+  const bar = document.getElementById('rbStatusBar');
   if (!rbIngredients.length) { bar.style.display = 'none'; return; }
   let total = 0, hasPrices = false;
+  let kcal = 0, p = 0, c = 0, f = 0;
   rbIngredients.forEach(ing => {
     if (ing.unitPrice && ing.unitG) {
       total += Math.ceil(ing.amountG / ing.unitG) * ing.unitPrice;
       hasPrices = true;
     }
+    const ag = ing.amountG || 0;
+    kcal += (ag / 100) * (ing.kcalPer100 || 0);
+    p    += (ag / 100) * (ing.proteinPer100 || 0);
+    c    += (ag / 100) * (ing.carbsPer100 || 0);
+    f    += (ag / 100) * (ing.fatPer100 || 0);
   });
-  bar.style.display = 'flex';
-  document.getElementById('rbPriceCount').textContent = rbIngredients.length + ' Zutaten';
-  document.getElementById('rbPriceTotal').textContent = hasPrices ? ('~' + fmtPrice(total)) : '–';
+  bar.style.display = 'block';
+  document.getElementById('rbPriceCount').textContent = rbIngredients.length + ' Zutat' + (rbIngredients.length !== 1 ? 'en' : '');
+  document.getElementById('rbPriceTotal').textContent = hasPrices ? ('~' + fmtPrice(total)) : '';
+  const hasNutri = rbIngredients.some(i => i.kcalPer100);
+  document.getElementById('rbNutriText').innerHTML = hasNutri
+    ? `🔥 <b>${Math.round(kcal)} kcal</b> &nbsp;·&nbsp; E <b>${Math.round(p)}g</b> &nbsp;·&nbsp; KH <b>${Math.round(c)}g</b> &nbsp;·&nbsp; F <b>${Math.round(f)}g</b>`
+    : '';
 }
 
 function rbRenderTiles() {
@@ -4639,8 +4698,8 @@ function rbRenderTiles() {
   function makeTile(s, isApi) {
     const sel = selectedNames.has(s.name.toLowerCase());
     const tile = document.createElement('div');
-    tile.className = 'tile sug' + (sel ? ' rb-sel' : '');
-    const kcalHint = isApi && s.kcal ? `<div class="tile-price" style="font-size:10px">${Math.round(s.kcal)} kcal</div>` : sugPriceHtml(s);
+    tile.className = 'tile sug' + (sel ? ' rb-sel' : '') + (isApi ? ' rb-api' : '');
+    const kcalHint = s.kcal ? `<div class="tile-price" style="font-size:10px">${Math.round(s.kcal)} kcal/100g</div>` : sugPriceHtml(s);
     tile.innerHTML = `<div class="tile-emoji">${s.emoji}</div><div class="tile-name">${s.name}</div>${kcalHint}`;
     tile.addEventListener('click', () => rbToggleItem(s));
     grid.appendChild(tile);
@@ -4652,14 +4711,16 @@ function rbRenderTiles() {
     const divider = document.createElement('div');
     divider.style.cssText = 'grid-column:1/-1;padding:10px 4px 4px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:8px;';
     if (rbApiLoading) {
-      divider.innerHTML = '<span>🌐 Open Food Facts</span><span style="font-weight:400;text-transform:none;letter-spacing:0">Wird geladen…</span>';
+      divider.style.cssText += 'opacity:.6;';
+      divider.innerHTML = '<span>🌐 Open Food Facts</span><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;">Wird geladen…</span>';
       grid.appendChild(divider);
     } else if (rbApiResults.length > 0) {
-      divider.innerHTML = `<span>🌐 Datenbank (${rbApiResults.length})</span>`;
+      divider.style.cssText += 'border-top:1px solid #3a6baa33;margin-top:4px;padding-top:14px;';
+      divider.innerHTML = `<span style="color:#3a8fd4">🌐 Open Food Facts</span><span style="font-weight:500;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted)">${rbApiResults.length} Treffer</span>`;
       grid.appendChild(divider);
       rbApiResults.forEach(s => makeTile(s, true));
     } else if (!rbApiLoading && rbSearchQuery.length >= 2) {
-      divider.innerHTML = '<span style="color:var(--muted)">Keine weiteren Ergebnisse aus Open Food Facts</span>';
+      divider.innerHTML = '<span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;font-size:12px">Keine weiteren Ergebnisse aus Open Food Facts</span>';
       grid.appendChild(divider);
     }
   }
@@ -4735,12 +4796,18 @@ function closeRecipeSaveSheet() {
 }
 
 function deleteFromBuilder() {
-  if (!rbEditId || !confirm('Rezept löschen?')) return;
-  delete recipes[rbEditId];
-  saveRecipes();
-  closeRecipeSaveSheet();
-  closeRecipeBuilder();
-  renderRecipes();
+  if (!rbEditId) return;
+  const r = recipes[rbEditId];
+  const name = r ? r.name : 'dieses Rezept';
+  showConfirm(`"${name}" löschen?`, 'Diese Aktion kann nicht rückgängig gemacht werden.', 'Löschen')
+    .then(ok => {
+      if (!ok) return;
+      delete recipes[rbEditId];
+      saveRecipes();
+      closeRecipeSaveSheet();
+      closeRecipeBuilder();
+      renderRecipes();
+    });
 }
 
 function saveRecipeFromBuilder() {
