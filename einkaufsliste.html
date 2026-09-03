@@ -4745,7 +4745,17 @@ function rbToggleItem(s) {
     rbIngredients.splice(idx, 1);
   } else {
     const unitG = parseUnitG(s.unit);
-    const { qty, unit } = parseCatalogUnit(s.unit);
+    const { qty: pkgQty, unit: pkgUnit } = parseCatalogUnit(s.unit);
+    // Recipe defaults: weight/volume → 100 g/ml; count items → 1 Stück
+    // Prevents a "1kg" package becoming 1000g as default recipe amount
+    let qty, unit;
+    if (pkgUnit === 'g' || pkgUnit === 'ml') {
+      qty = 100; unit = pkgUnit;
+    } else if (pkgUnit === 'kg' || pkgUnit === 'l') {
+      qty = 100; unit = pkgUnit === 'kg' ? 'g' : 'ml';
+    } else {
+      qty = 1; unit = pkgUnit; // Stück, Portion, etc.
+    }
     const amountG = rbQtyToG(qty, unit, unitG);
     rbIngredients.push({name:s.name,emoji:s.emoji,qty,unit,amountG,kcalPer100:s.kcal,proteinPer100:s.protein,carbsPer100:s.carbs,fatPer100:s.fat,unitPrice:s.price,unitG,catalogUnit:s.unit,custom:false});
   }
