@@ -1,6 +1,6 @@
-/* cache: 20260904T120000 */
+/* cache: 20260904T140000 */
 /* push: enabled */
-const CACHE = 'kt-v53';
+const CACHE = 'kt-v54';
 const PRECACHE = [
   './',
   './index.html',
@@ -13,7 +13,8 @@ const PRECACHE = [
   './tankstellen_finder.html',
   './manifest-tankstellen.json',
   './icon-tankstellen.svg',
-  './rezepte.html'
+  './rezepte.html',
+  './catalog.js'
 ];
 
 self.addEventListener('install', e => {
