@@ -698,9 +698,8 @@ html { height: 100%; }
     .plan-nav-label { text-align:center; }
     .plan-nav-kw { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
     .plan-nav-range { font-size:15px; font-weight:700; color:var(--text); }
-    .plan-table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; padding:0 12px 12px; }
-    .plan-table-scroll::-webkit-scrollbar { display:none; }
-    .plan-table { border-collapse:collapse; width:100%; min-width:520px; }
+    .plan-table-scroll { overflow-x:hidden; padding:0 10px 12px; }
+    .plan-table { border-collapse:collapse; width:100%; table-layout:fixed; }
     .plan-table th { font-size:11px; font-weight:700; text-align:center; padding:6px 3px 8px; color:var(--muted); border-bottom:2px solid var(--border); white-space:nowrap; }
     .plan-table th.plan-today { color:var(--active); }
     .plan-table th .plan-day-name { display:block; text-transform:uppercase; letter-spacing:.04em; }
@@ -715,7 +714,6 @@ html { height: 100%; }
     .plan-slot.empty .plan-plus { font-size:22px; color:var(--border); line-height:1; }
     .plan-slot.filled { background:var(--surface); border:1.5px solid var(--active); }
     .plan-slot-emoji { font-size:22px; line-height:1; }
-    .plan-slot-name { font-size:10px; font-weight:700; color:var(--text); max-width:68px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; line-height:1.2; }
     .plan-slot-srv { font-size:9px; color:var(--muted); }
     .plan-table tr + tr td { padding-top:3px; }
     .plan-table tr:not(:last-child) td.plan-row-label { border-bottom:1px solid var(--border); }
@@ -733,15 +731,16 @@ html { height: 100%; }
     .plan-srv-btn { width:34px; height:34px; border-radius:50%; border:1.5px solid var(--border); background:var(--surface); color:var(--active); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
     .plan-srv-val { font-size:22px; font-weight:800; min-width:32px; text-align:center; }
 
-    .plan-th-meal { width:62px; min-width:56px; padding:6px 4px; }
-    .plan-th-day { text-align:center; padding:6px 3px 8px; font-size:11px; font-weight:700; color:var(--muted); white-space:nowrap; }
+    .plan-th-meal { width:38px; padding:6px 2px; }
+    .plan-th-day { text-align:center; padding:6px 2px 8px; font-size:11px; font-weight:700; color:var(--muted); }
     .plan-th-day.plan-today { color:var(--active); }
     .plan-th-date { display:block; font-size:14px; font-weight:800; color:var(--text); }
     .plan-th-day.plan-today .plan-th-date { color:var(--active); }
-    .plan-td-meal { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; padding:6px 6px; vertical-align:middle; white-space:nowrap; border-right:1px solid var(--border); }
-    .plan-meal-emoji { display:block; font-size:16px; margin-bottom:2px; }
-    .plan-meal-label { display:block; }
-    .plan-slot-td { width:80px; min-width:72px; height:78px; vertical-align:top; padding:4px 3px; }
+    .plan-td-meal { width:38px; text-align:center; padding:6px 2px; vertical-align:middle; border-right:1px solid var(--border); }
+    .plan-meal-emoji { display:block; font-size:18px; }
+    .plan-meal-label { display:none; }
+    .plan-slot-td { height:78px; vertical-align:top; padding:4px 3px; overflow:hidden; }
+    .plan-slot-name { font-size:10px; font-weight:700; color:var(--text); width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; line-height:1.2; padding:0 2px; box-sizing:border-box; }
     .plan-slot.restaurant { background:var(--card); border:1.5px solid #e8a000; }
     .plan-slot.sent::after { content:'🛒'; position:absolute; top:2px; right:2px; font-size:9px; line-height:1; }
     .plan-slot.filled, .plan-slot.restaurant { position:relative; }
