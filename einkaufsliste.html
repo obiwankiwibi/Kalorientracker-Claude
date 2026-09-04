@@ -4307,6 +4307,149 @@ const RECIPE_STORE = 'rezepte_v2';
 let recipes = JSON.parse(localStorage.getItem(RECIPE_STORE) || '{}');
 // legacy aliases removed — builder state is rbEditId / rbIngredients
 
+function _initDefaultRecipes() {
+  if (Object.keys(recipes).length) return;
+  const mk = (id, name, emoji, servings, desc, steps, ings) => {
+    recipes[id] = { id, name, emoji, servings, description: desc, steps, ingredients: ings };
+  };
+  // shorthand: g(name,emoji,qty,unit,amountG, kcal,prot,carb,fat, price,unitG,catalogUnit)
+  const g = (name, emoji, qty, unit, amountG, kcal, prot, carb, fat, price, unitG, catalogUnit) => ({
+    name, emoji, qty, unit, amountG,
+    kcalPer100: kcal, proteinPer100: prot, carbsPer100: carb, fatPer100: fat,
+    unitPrice: price, unitG, catalogUnit, custom: false
+  });
+
+  mk('default_01','Spaghetti Bolognese','🍝',4,
+    'Klassiker aus der italienischen Küche — reichhaltige Hackfleisch-Tomatensauce auf Pasta.',
+    ['Zwiebeln und Knoblauch fein hacken, in Olivenöl anschwitzen.',
+     'Hackfleisch dazugeben und krümelig anbraten.',
+     'Tomaten einrühren, mit Salz und Pfeffer würzen, 20 Min. köcheln lassen.',
+     'Pasta al dente kochen, mit Sauce und Parmesan servieren.'],
+    [g('Nudeln','🍝',400,'g',400,350,12,68,1.7,1.09,500,'500g'),
+     g('Hackfleisch','🥩',500,'g',500,242,20,0,20,3.49,500,'500g'),
+     g('Tomaten','🍅',400,'g',400,18,0.9,3.5,0.2,1.49,500,'500g'),
+     g('Zwiebeln','🧅',150,'g',150,38,1.1,8.4,0.1,0.89,1000,'1kg'),
+     g('Knoblauch','🧄',3,'Stück',15,135,6,28,0.5,0.59,5,'Stück'),
+     g('Olivenöl','🫙',20,'ml',20,884,0,0,100,3.99,750,'750ml'),
+     g('Käse','🧀',50,'g',50,380,25,0.5,31,1.99,200,'200g')]);
+
+  mk('default_02','Hähnchen-Curry','🍛',4,
+    'Cremiges Curry mit zartem Hähnchen, Kokosmilch und Basmatireis.',
+    ['Zwiebeln und Knoblauch fein hacken, in Öl anschwitzen.',
+     'Hähnchen in Würfel schneiden und goldbraun anbraten.',
+     'Currypulver (1 EL) einrühren, dann Kokosmilch und Tomaten dazugeben.',
+     '20 Min. bei mittlerer Hitze köcheln. Reis separat kochen, zusammen servieren.'],
+    [g('Hähnchen','🍗',600,'g',600,165,31,0,3.6,4.99,1000,'1kg'),
+     g('Reis','🍚',300,'g',300,360,7.5,77,0.7,1.49,1000,'1kg'),
+     g('Kokosmilch Dose','🥥',400,'ml',400,230,2.3,6,24,1.29,400,'400ml'),
+     g('Tomaten','🍅',200,'g',200,18,0.9,3.5,0.2,1.49,500,'500g'),
+     g('Zwiebeln','🧅',120,'g',120,38,1.1,8.4,0.1,0.89,1000,'1kg'),
+     g('Knoblauch','🧄',2,'Stück',10,135,6,28,0.5,0.59,5,'Stück'),
+     g('Olivenöl','🫙',20,'ml',20,884,0,0,100,3.99,750,'750ml')]);
+
+  mk('default_03','Rührei','🍳',2,
+    'Cremiges Rührei — perfektes schnelles Frühstück.',
+    ['Eier mit einem Schuss Milch, Salz und Pfeffer verquirlen.',
+     'Butter in der Pfanne bei mittlerer Hitze schmelzen.',
+     'Eimasse eingießen und bei niedriger Hitze mit dem Spatel langsam stocken lassen.',
+     'Vom Herd nehmen, solange noch leicht glänzend — mit Toast servieren.'],
+    [g('Eier','🥚',4,'Stück',240,155,13,0.7,11,2.19,60,'10 St.'),
+     g('Milch','🥛',50,'ml',50,64,3.4,4.7,3.5,1.09,1000,'1L'),
+     g('Butter','🧈',15,'g',15,740,0.7,0.5,83,1.89,250,'250g')]);
+
+  mk('default_04','Gemüsesuppe','🥣',4,
+    'Wärmende Suppe aus frischem Gemüse — vielseitig und schnell gemacht.',
+    ['Gemüse schälen und in kleine Würfel schneiden.',
+     'Zwiebeln in Olivenöl glasig dünsten.',
+     'Gemüse und 1,2 L Gemüsebrühe dazugeben, 25 Min. köcheln.',
+     'Mit Salz, Pfeffer und frischer Petersilie abschmecken.'],
+    [g('Kartoffeln','🥔',300,'g',300,76,2,17,0.1,1.99,1000,'1kg'),
+     g('Möhren','🥕',200,'g',200,41,0.9,9,0.2,0.89,500,'500g'),
+     g('Sellerie','🥬',100,'g',100,13,0.7,2.5,0.1,0.99,100,'Stück'),
+     g('Lauch','🌿',100,'g',100,31,1.8,6.2,0.3,0.89,100,'Stück'),
+     g('Zwiebeln','🧅',100,'g',100,38,1.1,8.4,0.1,0.89,1000,'1kg'),
+     g('Olivenöl','🫙',15,'ml',15,884,0,0,100,3.99,750,'750ml')]);
+
+  mk('default_05','Lachsfilet mit Kartoffeln','🐟',2,
+    'Saftiges Lachsfilet mit knusprigen Bratkartoffeln.',
+    ['Kartoffeln schälen, vorkochen und in Scheiben schneiden.',
+     'Lachs mit Zitronensaft, Salz und Pfeffer würzen.',
+     'Butter in der Pfanne erhitzen, Lachs 3–4 Min. pro Seite braten.',
+     'Bratkartoffeln separat in Olivenöl goldbraun braten, zusammen servieren.'],
+    [g('Lachs','🐟',300,'g',300,208,20,0,13,4.99,300,'300g'),
+     g('Kartoffeln','🥔',400,'g',400,76,2,17,0.1,1.99,1000,'1kg'),
+     g('Zitrone','🍋',1,'Stück',80,29,0.9,6.5,0.3,0.39,80,'Stück'),
+     g('Butter','🧈',15,'g',15,740,0.7,0.5,83,1.89,250,'250g'),
+     g('Olivenöl','🫙',20,'ml',20,884,0,0,100,3.99,750,'750ml')]);
+
+  mk('default_06','Chili con Carne','🌶️',4,
+    'Würziges Tex-Mex-Gericht — ideal für kalte Abende.',
+    ['Zwiebeln und Paprika würfeln, in Olivenöl anschwitzen.',
+     'Hackfleisch dazugeben und krümelig braten.',
+     'Tomaten, Bohnen, Chilipulver (1 TL), Kreuzkümmel (1 TL) einrühren.',
+     '30 Min. bei niedriger Hitze köcheln, mit Salz abschmecken.'],
+    [g('Hackfleisch','🥩',500,'g',500,242,20,0,20,3.49,500,'500g'),
+     g('Tomaten','🍅',400,'g',400,18,0.9,3.5,0.2,1.49,500,'500g'),
+     g('Paprika','🫑',200,'g',200,27,1,5.9,0.3,1.29,100,'Stück'),
+     g('Zwiebeln','🧅',150,'g',150,38,1.1,8.4,0.1,0.89,1000,'1kg'),
+     g('Knoblauch','🧄',3,'Stück',15,135,6,28,0.5,0.59,5,'Stück'),
+     g('Rote Bohnen Dose','🫘',400,'g',400,128,8.5,22,0.5,0.79,400,'400g'),
+     g('Olivenöl','🫙',20,'ml',20,884,0,0,100,3.99,750,'750ml')]);
+
+  mk('default_07','Pfannkuchen','🥞',4,
+    'Fluffige Pfannkuchen für Frühstück oder Dessert — süß oder herzhaft.',
+    ['Mehl, Eier, Milch und eine Prise Salz zu einem glatten Teig verrühren, 15 Min. ruhen lassen.',
+     'Butter in der Pfanne erhitzen.',
+     'Je eine Kelle Teig eingießen, dünn verteilen und von beiden Seiten goldbraun backen.',
+     'Mit Marmelade, Ahornsirup oder Apfelmus servieren.'],
+    [g('Mehl','🌾',250,'g',250,342,10,71,1.1,0.89,1000,'1kg'),
+     g('Eier','🥚',3,'Stück',180,155,13,0.7,11,2.19,60,'10 St.'),
+     g('Milch','🥛',400,'ml',400,64,3.4,4.7,3.5,1.09,1000,'1L'),
+     g('Butter','🧈',30,'g',30,740,0.7,0.5,83,1.89,250,'250g')]);
+
+  mk('default_08','Hähnchensalat','🥗',2,
+    'Leichter, frischer Salat mit gegrilltem Hähnchen und Kräuterdressing.',
+    ['Hähnchenbrust würzen und in der Pfanne goldbraun braten, abkühlen lassen.',
+     'Salat, Tomaten und Gurke waschen und zerkleinern.',
+     'Dressing: Olivenöl, Zitronensaft, Salz, Pfeffer verrühren.',
+     'Hähnchen in Streifen schneiden und auf dem Salat anrichten.'],
+    [g('Hähnchen','🍗',300,'g',300,165,31,0,3.6,4.99,1000,'1kg'),
+     g('Salat','🥗',150,'g',150,14,1.2,2.2,0.2,0.89,100,'Stück'),
+     g('Tomaten','🍅',150,'g',150,18,0.9,3.5,0.2,1.49,500,'500g'),
+     g('Gurke','🥒',150,'g',150,12,0.7,2.2,0.1,0.69,100,'Stück'),
+     g('Olivenöl','🫙',30,'ml',30,884,0,0,100,3.99,750,'750ml'),
+     g('Zitrone','🍋',1,'Stück',80,29,0.9,6.5,0.3,0.39,80,'Stück')]);
+
+  mk('default_09','Pasta mit Pesto','🌿',2,
+    'Schnelles 20-Minuten-Gericht mit frischem Basilikum-Pesto.',
+    ['Pasta nach Packungsanweisung al dente kochen.',
+     'Basilikum, Knoblauch, Olivenöl und Käse mit einem Pürierstab oder Mörser zu Pesto verarbeiten.',
+     'Pasta abgießen, etwas Kochwasser auffangen.',
+     'Pesto mit Pasta und einem Schuss Kochwasser verrühren, sofort servieren.'],
+    [g('Nudeln','🍝',200,'g',200,350,12,68,1.7,1.09,500,'500g'),
+     g('Basilikum frisch','🌿',30,'g',30,23,3.1,2.6,0.6,0.99,100,'Topf'),
+     g('Käse','🧀',50,'g',50,380,25,0.5,31,1.99,200,'200g'),
+     g('Olivenöl','🫙',60,'ml',60,884,0,0,100,3.99,750,'750ml'),
+     g('Knoblauch','🧄',2,'Stück',10,135,6,28,0.5,0.59,5,'Stück'),
+     g('Pinienkerne','🌰',30,'g',30,690,14,13,68,2.99,100,'100g')]);
+
+  mk('default_10','Gemüseauflauf','🫕',4,
+    'Herzhafter Auflauf mit Kartoffeln, Brokkoli und Käse — vegetarisch und sättigend.',
+    ['Kartoffeln schälen und in dünne Scheiben schneiden, 5 Min. vorkochen.',
+     'Brokkoli in Röschen teilen, 3 Min. blanchieren.',
+     'Auflaufform buttern: Kartoffelschicht → Brokkoli → Käse → Sahne, wiederholen.',
+     'Bei 200 °C Umluft 25–30 Min. backen bis goldgelb.'],
+    [g('Kartoffeln','🥔',600,'g',600,76,2,17,0.1,1.99,1000,'1kg'),
+     g('Brokkoli','🥦',400,'g',400,34,2.8,4,0.4,0.99,300,'Stück'),
+     g('Käse','🧀',150,'g',150,380,25,0.5,31,1.99,200,'200g'),
+     g('Sahne','🥛',200,'ml',200,302,2.1,3.1,31,0.89,200,'Packung'),
+     g('Zwiebeln','🧅',100,'g',100,38,1.1,8.4,0.1,0.89,1000,'1kg'),
+     g('Butter','🧈',15,'g',15,740,0.7,0.5,83,1.89,250,'250g')]);
+
+  localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
+}
+_initDefaultRecipes();
+
 function saveRecipes() {
   localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
   if (activeTab === 'liste') renderListRecipes();
