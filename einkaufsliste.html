@@ -742,6 +742,16 @@ html { height: 100%; }
     .plan-meal-emoji { display:block; font-size:16px; margin-bottom:2px; }
     .plan-meal-label { display:block; }
     .plan-slot-td { width:80px; min-width:72px; height:78px; vertical-align:top; padding:4px 3px; }
+    .plan-slot.restaurant { background:var(--card); border:1.5px solid #e8a000; }
+    .plan-slot.sent::after { content:'🛒'; position:absolute; top:2px; right:2px; font-size:9px; line-height:1; }
+    .plan-slot.filled, .plan-slot.restaurant { position:relative; }
+    .plan-price-bar { margin:8px 12px 0; background:var(--card); border-radius:14px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted); }
+    .plan-price-bar strong { font-size:17px; font-weight:800; color:var(--active); }
+    .plan-restaurant-row { padding:6px 0 10px; }
+    .plan-restaurant-input-wrap { display:flex; gap:8px; align-items:center; }
+    .plan-restaurant-input { flex:1; padding:11px 12px; border-radius:12px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-family:inherit; outline:none; }
+    .plan-restaurant-input:focus { border-color:var(--active); }
+    .plan-restaurant-save { padding:10px 14px; border-radius:12px; border:none; background:var(--active); color:#fff; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; white-space:nowrap; }
     /* ── Cooking view (reader mode) ── */
     .cook-view { position:fixed; inset:0; z-index:300; background:#FDF8EE; display:flex; flex-direction:column; overflow:hidden; }
     .cook-header { display:flex; align-items:center; gap:8px; padding:14px 14px 12px; border-bottom:2px solid #D4B896; background:#F5EDD8; flex-shrink:0; }
@@ -1509,8 +1519,9 @@ html { height: 100%; }
     <div class="plan-table-scroll">
       <table class="plan-table" id="planTable"></table>
     </div>
+    <div class="plan-price-bar" id="planPriceBar" style="display:none;"></div>
     <div class="plan-cta">
-      <button class="plan-cta-btn primary" onclick="planToList()">🛒 Woche einkaufen</button>
+      <button class="plan-cta-btn primary" onclick="planToList()">🛒 Einkaufen</button>
       <button class="plan-cta-btn secondary" onclick="planClearWeek()">🗑</button>
     </div>
   </div>
@@ -1520,7 +1531,14 @@ html { height: 100%; }
 <div class="sheet-overlay" id="planPickerOverlay" onclick="if(event.target===this)closePlanPicker()" style="display:none;">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title" id="planPickerTitle">Rezept wählen</div>
+    <div class="sheet-title" id="planPickerTitle">Was planst du?</div>
+    <div class="plan-restaurant-row" id="planRestaurantRow">
+      <div class="plan-restaurant-input-wrap">
+        <input class="plan-restaurant-input" id="planRestaurantInput" placeholder="🍴 Restaurant / Auswärts essen …" oninput="planRestaurantInputChange(this.value)">
+        <button class="plan-restaurant-save" id="planRestaurantSaveBtn" onclick="saveRestaurantSlot()" style="display:none;">Eintragen</button>
+      </div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:10px 0 4px;">Rezepte</div>
     <div class="plan-recipe-list" id="planRecipeList"></div>
     <div class="sheet-btns" style="padding-top:8px;">
       <button class="sh-btn secondary" onclick="closePlanPicker()">Abbrechen</button>
@@ -1534,15 +1552,17 @@ html { height: 100%; }
     <div class="sheet-handle"></div>
     <div class="sheet-title" id="planSlotTitle"></div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:14px;" id="planSlotMeta"></div>
-    <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;">Portionen</div>
-    <div class="plan-srv-row">
-      <button class="plan-srv-btn" onclick="planAdjSrv(-1)">−</button>
-      <span class="plan-srv-val" id="planSrvVal">4</span>
-      <button class="plan-srv-btn" onclick="planAdjSrv(1)">+</button>
+    <div id="planSlotSrvSection">
+      <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;">Portionen</div>
+      <div class="plan-srv-row">
+        <button class="plan-srv-btn" onclick="planAdjSrv(-1)">−</button>
+        <span class="plan-srv-val" id="planSrvVal">4</span>
+        <button class="plan-srv-btn" onclick="planAdjSrv(1)">+</button>
+      </div>
     </div>
     <div class="sheet-btns" style="padding-top:4px;">
       <button class="sh-btn secondary" onclick="closePlanSlot()">Schließen</button>
-      <button class="sh-btn secondary" onclick="openPlanPickerFromSlot()">Ändern</button>
+      <button class="sh-btn secondary" id="planSlotChangeBtn" onclick="openPlanPickerFromSlot()">Ändern</button>
       <button class="sh-btn danger" style="flex:0 0 auto;padding:13px 16px;" onclick="planRemoveSlot()">🗑</button>
     </div>
   </div>
@@ -5354,22 +5374,14 @@ let weekPlan = {};
 let _planPickerTarget = null;
 let _planSlotTarget  = null;
 let _planSlotSrv     = 1;
+let _planListSent    = false; // tracks if current 4-day view was sent to list
 
 const PLAN_MEALS = [
   { id: 'breakfast', label: 'Frühstück', emoji: '🌅' },
   { id: 'lunch',     label: 'Mittag',    emoji: '☀️'  },
   { id: 'dinner',    label: 'Abend',     emoji: '🌙'  },
 ];
-const PLAN_DAYS_DE = ['Mo','Di','Mi','Do','Fr','Sa','So'];
-
-function planGetMonday(d) {
-  const dt = new Date(d);
-  const day = dt.getDay(); // 0=Sun
-  const diff = (day === 0) ? -6 : 1 - day;
-  dt.setDate(dt.getDate() + diff);
-  dt.setHours(0, 0, 0, 0);
-  return dt;
-}
+const PLAN_DAYS_DE = ['So','Mo','Di','Mi','Do','Fr','Sa']; // indexed by getDay()
 
 function planGetISOWeek(d) {
   const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -5386,7 +5398,7 @@ function planDateStr(d) {
 }
 
 function planGetWeekDates() {
-  return Array.from({length: 7}, (_, i) => {
+  return Array.from({length: 4}, (_, i) => {
     const d = new Date(planWeekStart);
     d.setDate(d.getDate() + i);
     return d;
@@ -5395,7 +5407,7 @@ function planGetWeekDates() {
 
 function planNavWeek(delta) {
   planWeekStart = new Date(planWeekStart);
-  planWeekStart.setDate(planWeekStart.getDate() + delta * 7);
+  planWeekStart.setDate(planWeekStart.getDate() + delta * 4);
   renderWochenplan();
 }
 
@@ -5410,15 +5422,80 @@ function savePlan() {
 
 function planKey(dateStr, meal) { return dateStr + '_' + meal; }
 
-// initialized after function declarations so planGetMonday is defined
-let planWeekStart = planGetMonday(new Date());
+// initialized after function declarations so helpers are defined
+let planWeekStart = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+
+function planFmtAmt(totalG, ing) {
+  const cu = ing.catalogUnit || '';
+  const lower = cu.toLowerCase().replace(/[^a-z]/g,'');
+  if (lower === 'g' || lower === 'ml') return Math.round(totalG) + ' ' + lower;
+  if (lower === 'kg') {
+    const kg = totalG / 1000;
+    return kg < 1 ? Math.round(totalG) + ' g' : kg.toFixed(1) + ' kg';
+  }
+  if (lower === 'l') {
+    const l = totalG / 1000;
+    return l < 0.1 ? Math.round(totalG) + ' ml' : l.toFixed(2) + ' l';
+  }
+  const unitG = ing.unitG || 100;
+  return Math.ceil(totalG / unitG) + ' ' + (cu || 'Stk');
+}
+
+function planItemKey(name) {
+  return 'plan_' + name.toLowerCase().replace(/\s+/g, '_');
+}
+
+function planCalcTotalPrice(days) {
+  let total = 0;
+  days.forEach(d => {
+    PLAN_MEALS.forEach(meal => {
+      const key = planKey(planDateStr(d), meal.id);
+      const slot = weekPlan[key];
+      if (!slot || slot.type === 'restaurant') return;
+      const r = recipes[slot.recipeId];
+      if (!r || !r.ingredients) return;
+      const scale = (slot.servings || 1) / (r.servings || 1);
+      r.ingredients.forEach(ing => {
+        if (!ing.unitPrice || !ing.unitG) return;
+        const totalG = (ing.amountG || 0) * scale;
+        const packs = Math.ceil(totalG / (ing.unitG || 100));
+        total += packs * (ing.unitPrice || 0);
+      });
+    });
+  });
+  return total;
+}
+
+function planIsSent(ds, mealId) {
+  return !!weekPlan['_sent_' + planKey(ds, mealId)];
+}
+
+function planMarkSent(days) {
+  days.forEach(d => {
+    const ds = planDateStr(d);
+    PLAN_MEALS.forEach(meal => {
+      const key = planKey(ds, meal.id);
+      if (weekPlan[key]) weekPlan['_sent_' + key] = true;
+    });
+  });
+  savePlan();
+}
+
+function planClearSentMarks(days) {
+  days.forEach(d => {
+    const ds = planDateStr(d);
+    PLAN_MEALS.forEach(meal => {
+      delete weekPlan['_sent_' + planKey(ds, meal.id)];
+    });
+  });
+}
 
 function renderWochenplan() {
   loadPlan();
-  const kw = planGetISOWeek(planWeekStart);
   const days = planGetWeekDates();
-  const endDate = days[6];
+  const kw = planGetISOWeek(days[0]);
   const fmt = d => String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0');
+  const endDate = days[days.length - 1];
   document.getElementById('planKwLabel').textContent = 'KW ' + kw;
   document.getElementById('planRangeLabel').textContent = fmt(days[0]) + ' – ' + fmt(endDate) + '.' + endDate.getFullYear();
   renderPlanTable(days);
@@ -5426,15 +5503,16 @@ function renderWochenplan() {
 
 function renderPlanTable(days) {
   const table = document.getElementById('planTable');
-  // Header
+  const todayStr = planDateStr(new Date());
+
   const thead = document.createElement('thead');
   thead.innerHTML = '<tr><th class="plan-th-meal"></th>' +
-    days.map((d, i) => {
-      const isToday = planDateStr(d) === planDateStr(new Date());
-      return `<th class="plan-th-day${isToday ? ' plan-today' : ''}">${PLAN_DAYS_DE[i]}<br><span class="plan-th-date">${d.getDate()}.${d.getMonth()+1}.</span></th>`;
+    days.map(d => {
+      const isToday = planDateStr(d) === todayStr;
+      return `<th class="plan-th-day${isToday ? ' plan-today' : ''}">` +
+        `${PLAN_DAYS_DE[d.getDay()]}<br><span class="plan-th-date">${d.getDate()}.${d.getMonth()+1}.</span></th>`;
     }).join('') + '</tr>';
 
-  // Body
   const tbody = document.createElement('tbody');
   PLAN_MEALS.forEach(meal => {
     const tr = document.createElement('tr');
@@ -5443,11 +5521,19 @@ function renderPlanTable(days) {
       const ds = planDateStr(d);
       const key = planKey(ds, meal.id);
       const slot = weekPlan[key];
+      const sent = planIsSent(ds, meal.id);
       const td = document.createElement('td');
       td.className = 'plan-slot-td';
-      if (slot && recipes[slot.recipeId]) {
+      if (slot && slot.type === 'restaurant') {
+        const sentClass = sent ? ' sent' : '';
+        td.innerHTML = `<div class="plan-slot restaurant${sentClass}" onclick="openSlotOptions('${ds}','${meal.id}')">
+          <div class="plan-slot-emoji">${slot.emoji || '🍴'}</div>
+          <div class="plan-slot-name">${slot.name}</div>
+        </div>`;
+      } else if (slot && recipes[slot.recipeId]) {
         const r = recipes[slot.recipeId];
-        td.innerHTML = `<div class="plan-slot filled" onclick="openSlotOptions('${ds}','${meal.id}')">
+        const sentClass = sent ? ' sent' : '';
+        td.innerHTML = `<div class="plan-slot filled${sentClass}" onclick="openSlotOptions('${ds}','${meal.id}')">
           <div class="plan-slot-emoji">${r.emoji || '🍽️'}</div>
           <div class="plan-slot-name">${r.name}</div>
           <div class="plan-slot-srv">${slot.servings} P.</div>
@@ -5463,17 +5549,29 @@ function renderPlanTable(days) {
   table.innerHTML = '';
   table.appendChild(thead);
   table.appendChild(tbody);
+
+  // Live price bar
+  const total = planCalcTotalPrice(days);
+  const bar = document.getElementById('planPriceBar');
+  if (total > 0) {
+    bar.style.display = 'flex';
+    bar.innerHTML = `<span>Geschätzte Kosten</span><strong>${total.toFixed(2)} €</strong>`;
+  } else {
+    bar.style.display = 'none';
+  }
 }
 
 function openPlanPicker(dateStr, meal) {
   _planPickerTarget = { dateStr, meal };
+  document.getElementById('planRestaurantInput').value = '';
+  document.getElementById('planRestaurantSaveBtn').style.display = 'none';
   const list = document.getElementById('planRecipeList');
   const rArr = Object.values(recipes);
   if (!rArr.length) {
     list.innerHTML = '<div style="padding:1rem;color:var(--muted);text-align:center;">Noch keine Rezepte vorhanden</div>';
   } else {
     list.innerHTML = rArr.map(r => `
-      <div class="plan-recipe-row" onclick="setPlanSlot('${dateStr}','${meal}','${r.id}')">
+      <div class="plan-recipe-row" onclick="setPlanSlot('${r.id}')">
         <span style="font-size:26px;line-height:1;">${r.emoji || '🍽️'}</span>
         <div style="flex:1;min-width:0;">
           <div style="font-size:15px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.name}</div>
@@ -5484,15 +5582,36 @@ function openPlanPicker(dateStr, meal) {
   document.getElementById('planPickerOverlay').style.display = 'flex';
 }
 
+function planRestaurantInputChange(val) {
+  document.getElementById('planRestaurantSaveBtn').style.display = val.trim() ? 'block' : 'none';
+}
+
+function saveRestaurantSlot() {
+  if (!_planPickerTarget) return;
+  const name = document.getElementById('planRestaurantInput').value.trim();
+  if (!name) return;
+  const { dateStr, meal } = _planPickerTarget;
+  const key = planKey(dateStr, meal);
+  weekPlan[key] = { type: 'restaurant', name, emoji: '🍴' };
+  delete weekPlan['_sent_' + key];
+  savePlan();
+  closePlanPicker();
+  renderPlanTable(planGetWeekDates());
+}
+
 function closePlanPicker() {
   document.getElementById('planPickerOverlay').style.display = 'none';
   _planPickerTarget = null;
 }
 
-function setPlanSlot(dateStr, meal, recipeId) {
+function setPlanSlot(recipeId) {
+  if (!_planPickerTarget) return;
+  const { dateStr, meal } = _planPickerTarget;
   const key = planKey(dateStr, meal);
   const existing = weekPlan[key];
-  weekPlan[key] = { recipeId, servings: existing ? existing.servings : (recipes[recipeId] ? (recipes[recipeId].servings || 1) : 1) };
+  const prevSrv = (existing && existing.servings) ? existing.servings : (recipes[recipeId] ? (recipes[recipeId].servings || 1) : 1);
+  weekPlan[key] = { recipeId, servings: prevSrv };
+  delete weekPlan['_sent_' + key];
   savePlan();
   closePlanPicker();
   closePlanSlot();
@@ -5504,10 +5623,23 @@ function openSlotOptions(dateStr, meal) {
   const key = planKey(dateStr, meal);
   const slot = weekPlan[key];
   if (!slot) return;
-  _planSlotSrv = slot.servings || 1;
-  const r = recipes[slot.recipeId];
-  document.getElementById('planSlotTitle').textContent = r ? (r.emoji + ' ' + r.name) : 'Rezept';
-  document.getElementById('planSrvVal').textContent = _planSlotSrv;
+  const isRestaurant = slot.type === 'restaurant';
+  const srvSection = document.getElementById('planSlotSrvSection');
+  const changeBtn = document.getElementById('planSlotChangeBtn');
+  if (isRestaurant) {
+    document.getElementById('planSlotTitle').textContent = (slot.emoji || '🍴') + ' ' + slot.name;
+    document.getElementById('planSlotMeta').textContent = 'Auswärts essen';
+    srvSection.style.display = 'none';
+    changeBtn.style.display = 'none';
+  } else {
+    const r = recipes[slot.recipeId];
+    _planSlotSrv = slot.servings || 1;
+    document.getElementById('planSlotTitle').textContent = r ? (r.emoji + ' ' + r.name) : 'Rezept';
+    document.getElementById('planSlotMeta').textContent = '';
+    document.getElementById('planSrvVal').textContent = _planSlotSrv;
+    srvSection.style.display = '';
+    changeBtn.style.display = '';
+  }
   document.getElementById('planSlotOverlay').style.display = 'flex';
 }
 
@@ -5521,16 +5653,39 @@ function planAdjSrv(delta) {
   document.getElementById('planSrvVal').textContent = _planSlotSrv;
   if (_planSlotTarget) {
     const key = planKey(_planSlotTarget.dateStr, _planSlotTarget.meal);
-    if (weekPlan[key]) { weekPlan[key].servings = _planSlotSrv; savePlan(); }
+    if (weekPlan[key]) {
+      weekPlan[key].servings = _planSlotSrv;
+      delete weekPlan['_sent_' + key];
+      savePlan();
+      renderPlanTable(planGetWeekDates());
+    }
   }
 }
 
 function planRemoveSlot() {
   if (!_planSlotTarget) return;
-  delete weekPlan[planKey(_planSlotTarget.dateStr, _planSlotTarget.meal)];
+  const { dateStr, meal } = _planSlotTarget;
+  const key = planKey(dateStr, meal);
+  const wasSent = planIsSent(dateStr, meal);
+  delete weekPlan[key];
+  delete weekPlan['_sent_' + key];
   savePlan();
   closePlanSlot();
   renderPlanTable(planGetWeekDates());
+  if (wasSent) planRefreshList();
+}
+
+function planRefreshList() {
+  // Remove all items that were added from the plan
+  Object.keys(items).forEach(id => {
+    if (items[id] && items[id]._fromPlan) persist(id, null);
+  });
+  // Re-add from current plan if anything was previously sent
+  const days = planGetWeekDates();
+  const hasSent = days.some(d =>
+    PLAN_MEALS.some(m => planIsSent(planDateStr(d), m.id))
+  );
+  if (hasSent) _doAddToList(days, false);
 }
 
 function openPlanPickerFromSlot() {
@@ -5539,19 +5694,18 @@ function openPlanPickerFromSlot() {
   if (target) openPlanPicker(target.dateStr, target.meal);
 }
 
-function planToList() {
-  const days = planGetWeekDates();
-  const agg = {}; // name.lower → {ing object, totalG}
+function _doAddToList(days, markSent) {
+  const agg = {};
   days.forEach(d => {
     PLAN_MEALS.forEach(meal => {
       const key = planKey(planDateStr(d), meal.id);
       const slot = weekPlan[key];
-      if (!slot) return;
+      if (!slot || slot.type === 'restaurant') return;
       const r = recipes[slot.recipeId];
       if (!r || !r.ingredients) return;
       const scale = (slot.servings || 1) / (r.servings || 1);
       r.ingredients.forEach(ing => {
-        const k = ing.name.toLowerCase();
+        const k = ing.name.toLowerCase().trim();
         if (agg[k]) {
           agg[k].totalG += (ing.amountG || 0) * scale;
         } else {
@@ -5562,41 +5716,52 @@ function planToList() {
   });
 
   const entries = Object.values(agg);
-  if (!entries.length) { showToast('Keine Rezepte diese Woche'); return; }
-
   entries.forEach(({ ing, totalG }) => {
-    const unitG = ing.unitG || 100;
-    const packs = Math.ceil(totalG / unitG);
-    persist(ing.name, {
+    const id = planItemKey(ing.name);
+    persist(id, {
       name: ing.name,
       emoji: ing.emoji || '🛒',
-      qty: packs,
-      unit: ing.catalogUnit || ing.unit || 'Stk',
-      amountG: packs * unitG,
+      amount: planFmtAmt(totalG, ing),
       kcalPer100: ing.kcalPer100,
       proteinPer100: ing.proteinPer100,
       carbsPer100: ing.carbsPer100,
       fatPer100: ing.fatPer100,
       unitPrice: ing.unitPrice,
-      unitG,
+      unitG: ing.unitG,
       catalogUnit: ing.catalogUnit,
       checked: false,
+      _fromPlan: true,
     });
   });
 
-  showToast(entries.length + ' Zutaten zur Einkaufsliste hinzugefügt');
+  if (markSent) planMarkSent(days);
+  return entries.length;
+}
+
+function planToList() {
+  const days = planGetWeekDates();
+  const count = _doAddToList(days, true);
+  if (!count) { showToast('Keine Rezepte in diesem Zeitraum'); return; }
+  renderPlanTable(days);
+  showToast(count + ' Zutaten zur Einkaufsliste hinzugefügt');
   showTab('liste');
 }
 
 function planClearWeek() {
   const days = planGetWeekDates();
+  const hasSent = days.some(d =>
+    PLAN_MEALS.some(m => planIsSent(planDateStr(d), m.id))
+  );
   days.forEach(d => {
+    const ds = planDateStr(d);
     PLAN_MEALS.forEach(meal => {
-      delete weekPlan[planKey(planDateStr(d), meal.id)];
+      delete weekPlan[planKey(ds, meal.id)];
+      delete weekPlan['_sent_' + planKey(ds, meal.id)];
     });
   });
   savePlan();
   renderPlanTable(planGetWeekDates());
+  if (hasSent) planRefreshList();
 }
 
 // init
