@@ -2117,6 +2117,9 @@ function calcMultiplier(amount, unit) {
   if (aG !== null && uG !== null) return aG / uG;
   const aL = parseLiters(amount), uL = parseLiters(unit);
   if (aL !== null && uL !== null) return aL / uL;
+  // Non-metric units (Stück, Bund, Knolle, …): parse leading number
+  const m = amount.trim().match(/^([\d,]+)\s+.+$/);
+  if (m) return parseFloat(m[1].replace(',', '.')) || 1;
   return 1;
 }
 
@@ -5258,11 +5261,26 @@ function importSuggestedRecipes() {
     const id = 'ki_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
     const validCats = ['Frühstück','Nudelgericht','Salat','Suppe','Auflauf','Pfannengericht','Curry','Fisch','Dessert','Snack','Sonstiges'];
     const cat = validCats.includes(v.kategorie) ? v.kategorie : 'Sonstiges';
-    const ings = (v.zutaten || []).map(z => ({
-      name: z.name, qty: z.menge, unit: z.einheit, amountG: z.menge,
-      unitG: z.menge, catalogUnit: z.einheit, custom: false,
-      emoji: '🛒', kcalPer100: 0
-    }));
+    const ings = (v.zutaten || []).map(z => {
+      const sug = getSug(z.name);                          // catalog lookup by name
+      const catalogUnitG = sug ? parseUnitG(sug.unit) : 100;
+      const amountG = rbQtyToG(z.menge, z.einheit, catalogUnitG);
+      return {
+        name: z.name,
+        emoji: sug?.emoji || '🛒',
+        qty: z.menge,
+        unit: z.einheit,
+        amountG,
+        unitG: catalogUnitG,
+        catalogUnit: sug?.unit || z.einheit,
+        unitPrice: sug?.price ?? null,
+        kcalPer100: sug?.kcal || 0,
+        proteinPer100: sug?.protein || 0,
+        carbsPer100: sug?.carbs || 0,
+        fatPer100: sug?.fat || 0,
+        custom: false
+      };
+    });
     recipes[id] = {
       id, name: v.name, emoji: v.emoji || '🍽',
       category: cat, servings: v.portionen || 2,
@@ -5280,24 +5298,36 @@ function importSuggestedRecipes() {
 }
 
 // Adds recipe ingredients to the active shopping list without UI navigation
-function _addRecipeIngredientsToList(recipeId) {
+function _addRecipeIngredientsToList(recipeId, servingsScale) {
   const r = recipes[recipeId];
   if (!r) return;
+  const scale = typeof servingsScale === 'number' ? servingsScale : 1;
   (r.ingredients || []).filter(i => !i.custom).forEach(ing => {
     const name = ing.name;
-    const existing = Object.entries(items).find(([,v]) => v.name.toLowerCase() === name.toLowerCase());
-    if (existing) {
-      const [key, val] = existing;
-      const prevQty = parseFloat(val.qty) || 0;
-      items[key].qty = (prevQty + (ing.qty || 1)).toString();
+    const qty = (ing.qty || 1) * scale;
+    const unit = ing.unit || ing.catalogUnit || 'g';
+    const q = qty === Math.floor(qty) ? qty : parseFloat(qty.toFixed(1));
+    const amtStr = `${q} ${unit}`;
+
+    const existingEntry = Object.entries(items).find(([,v]) => v.name.toLowerCase() === name.toLowerCase());
+    if (existingEntry) {
+      const [key, val] = existingEntry;
+      // Parse existing amount string and add if same unit
+      const existAmt = val.amount || '';
+      const m = existAmt.match(/^([\d,.]+)\s+(.+)$/);
+      if (m) {
+        const existNum = parseFloat(m[1].replace(',', '.')) || 0;
+        const existUnit = m[2].trim();
+        if (existUnit.toLowerCase() === unit.toLowerCase()) {
+          const newNum = existNum + qty;
+          const nq = newNum === Math.floor(newNum) ? newNum : parseFloat(newNum.toFixed(1));
+          items[key].amount = `${nq} ${unit}`;
+        }
+        // Different units → leave existing unchanged (can't safely merge)
+      }
     } else {
-      const newKey = Date.now() + Math.random().toString(36).slice(2);
-      items[newKey] = {
-        name, emoji: ing.emoji || '🛒',
-        qty: (ing.qty || 1).toString(),
-        unit: ing.unit || ing.catalogUnit || 'Stück',
-        checked: false, listId
-      };
+      const newKey = 'i_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+      items[newKey] = { name, emoji: ing.emoji || '🛒', amount: amtStr, store: '', checked: false, addedAt: Date.now() };
     }
   });
   try { localStorage.setItem('list_' + listId, JSON.stringify(items)); } catch(e) {}
