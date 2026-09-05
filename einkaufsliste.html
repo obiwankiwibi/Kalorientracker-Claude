@@ -2195,13 +2195,13 @@ function calcTotal() {
   const bar = document.getElementById('priceBar');
   if (!bar) return;
 
-  if (allItems.length === 0) {
+  const activeItems = Object.values(items).filter(it => !it.checked);
+  if (activeItems.length === 0) {
     bar.style.display = 'none';
     return;
   }
   bar.style.display = 'flex';
-  const n = allItems.length;
-  document.getElementById('priceCount').textContent = n + ' Artikel';
+  document.getElementById('priceCount').textContent = activeItems.length + ' Artikel';
   document.getElementById('priceTotal').textContent = hasPrices ? ('~' + fmtPrice(total)) : '–';
 }
 
@@ -2828,7 +2828,13 @@ function tapSuggestion(name, emoji) {
   }
   // Noch nicht drin → hinzufügen
   const id = 'i_' + Date.now();
-  persist(id, { name, emoji, amount: '', checked: false, addedAt: Date.now() });
+  const sug = getSug(name);
+  persist(id, {
+    name, emoji, amount: '', checked: false, addedAt: Date.now(),
+    unitPrice:   sug?.price  ?? null,
+    unitG:       sug?.unit   ? parseUnitG(sug.unit) : null,
+    catalogUnit: sug?.unit   ?? null,
+  });
   trackUsage(name);
   toast(`${emoji} ${name} hinzugefügt`);
 }
@@ -2922,7 +2928,15 @@ function confirmPicker() {
   if (freeText) picker.store = freeText;
   if (picker.isNew) {
     const id = 'i_' + Date.now();
-    persist(id, { name: picker.name, emoji: picker.emoji, amount: picker.amount, store: picker.store || null, checked: false, addedAt: Date.now() });
+    const sug = getSug(picker.name);
+    persist(id, {
+      name: picker.name, emoji: picker.emoji,
+      amount: picker.amount, store: picker.store || null,
+      checked: false, addedAt: Date.now(),
+      unitPrice:   sug?.price  ?? null,
+      unitG:       sug?.unit   ? parseUnitG(sug.unit) : null,
+      catalogUnit: sug?.unit   ?? null,
+    });
     trackUsage(picker.name);
   } else {
     const it = items[picker.id];
