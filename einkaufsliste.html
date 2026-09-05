@@ -3144,18 +3144,7 @@ function renderListRecipes() {
 function renderListRecipesGrid() {
   const grid = document.getElementById('listRecipesGrid');
   const recs = Object.entries(recipes || {});
-  grid.innerHTML = recs.map(([id, r]) => {
-    const s = r.servings || 4;
-    const ings = (r.ingredients || []).filter(i => !i.custom).length;
-    return `<div class="list-recipe-tile" onclick="addRecipeToList('${id}')">
-      <span style="font-size:28px;flex-shrink:0;">${r.emoji || '🍽️'}</span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name}</div>
-        <div style="font-size:12px;color:var(--muted);">${ings} Zutat${ings !== 1 ? 'en' : ''} · ${s} Portion${s !== 1 ? 'en' : ''}</div>
-      </div>
-      <span style="font-size:20px;flex-shrink:0;color:var(--active);">🛒</span>
-    </div>`;
-  }).join('');
+  grid.innerHTML = recs.map(([id, r]) => recipeTileHTML(id, r)).join('');
 }
 
 function toggleListRecipes() {
@@ -5444,6 +5433,66 @@ function recipeStats(r) {
   return {kcal, p, c, f, price};
 }
 
+// ── Recipe card helpers ──────────────────────────────────────────
+function recipeCardHTML(id, r) {
+  const s = r.servings || 1;
+  const {kcal:totalKcal, p:totalP, c:totalC, f:totalF, price:totalPrice} = recipeStats(r);
+  const perServing = v => Math.round(v / s);
+  const hasNutrition = r.ingredients.some(i => !i.custom);
+  const ingrCount = r.ingredients.length;
+  const priceStr = totalPrice ? ` · ca. ${totalPrice.toFixed(2).replace('.',',')} €` : '';
+  const catLabel = r.category ? `<span class="recipe-cat-badge">${r.category}</span>` : '';
+  const cardImgs = recipeImageCache[id] || [];
+  const imgStrip = cardImgs.length
+    ? `<div class="recipe-img-strip">${cardImgs.map((img,i) => `<img src="${img.dataUrl}" loading="lazy" onclick="openLightbox('${id}',${i})">`).join('')}</div>`
+    : '';
+  return `<div class="recipe-card">
+    <div class="recipe-header">
+      <div class="recipe-emoji">${r.emoji || '🍽️'}</div>
+      <div style="flex:1">
+        <div class="recipe-name">${r.name}${catLabel}</div>
+        <div class="recipe-portions">${s} Portion${s!==1?'en':''} · ${ingrCount} Zutat${ingrCount!==1?'en':''}${priceStr}</div>
+      </div>
+    </div>
+    ${hasNutrition ? `<div class="recipe-macros">
+      <div class="recipe-macro"><span class="macro-val" style="color:var(--active)">${perServing(totalKcal)}</span><span class="macro-lbl">kcal</span></div>
+      <div class="recipe-macro"><span class="macro-val" style="color:#5bbf7e">${perServing(totalP)}g</span><span class="macro-lbl">Eiweiß</span></div>
+      <div class="recipe-macro"><span class="macro-val" style="color:#d4a017">${perServing(totalC)}g</span><span class="macro-lbl">Kohlenh.</span></div>
+      <div class="recipe-macro"><span class="macro-val" style="color:#e07060">${perServing(totalF)}g</span><span class="macro-lbl">Fett</span></div>
+    </div>` : ''}
+    ${imgStrip}
+    <div class="recipe-actions">
+      <button class="recipe-btn-add" onclick="addRecipeToList('${id}')">🛒 Zur Einkaufsliste</button>
+      <button class="recipe-btn-cook" onclick="openCookView('${id}')" title="Kochansicht">📖</button>
+      <button class="recipe-btn-edit" onclick="openRecipeBuilder('${id}')" title="Bearbeiten">✏️</button>
+      <button class="recipe-btn-del" onclick="deleteRecipe('${id}')" title="Löschen">🗑️</button>
+    </div>
+  </div>`;
+}
+
+function recipeTileHTML(id, r) {
+  const s = r.servings || 4;
+  const ings = (r.ingredients || []).filter(i => !i.custom).length;
+  return `<div class="list-recipe-tile" onclick="addRecipeToList('${id}')">
+    <span style="font-size:28px;flex-shrink:0;">${r.emoji || '🍽️'}</span>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name}</div>
+      <div style="font-size:12px;color:var(--muted);">${ings} Zutat${ings !== 1 ? 'en' : ''} · ${s} Portion${s !== 1 ? 'en' : ''}</div>
+    </div>
+    <span style="font-size:20px;flex-shrink:0;color:var(--active);">🛒</span>
+  </div>`;
+}
+
+function recipePickerRowHTML(r) {
+  return `<div class="plan-recipe-row" onclick="setPlanSlot('${r.id}')">
+    <span style="font-size:26px;line-height:1;">${r.emoji || '🍽️'}</span>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:15px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.name}</div>
+      <div style="font-size:12px;color:var(--muted);">${r.ingredients ? r.ingredients.length : 0} Zutaten · ${r.servings || 1} Port.</div>
+    </div>
+  </div>`;
+}
+
 function renderRecipes() {
   renderRecipeCatFilterRow();
   renderRecipeSortRow();
@@ -5474,43 +5523,7 @@ function renderRecipes() {
       return 0;
     });
   }
-  list.innerHTML = ids.map(id => {
-    const r = recipes[id];
-    const s = r.servings || 1;
-    const {kcal:totalKcal, p:totalP, c:totalC, f:totalF, price:totalPrice} = recipeStats(r);
-    const perServing = v => Math.round(v / s);
-    const hasNutrition = r.ingredients.some(i => !i.custom);
-    const ingrCount = r.ingredients.length;
-    const priceStr = totalPrice ? ` · ca. ${totalPrice.toFixed(2).replace('.',',')} €` : '';
-
-    const catLabel = r.category ? `<span class="recipe-cat-badge">${r.category}</span>` : '';
-    const cardImgs = recipeImageCache[id] || [];
-    const imgStrip = cardImgs.length
-      ? `<div class="recipe-img-strip">${cardImgs.map((img,i) => `<img src="${img.dataUrl}" loading="lazy" onclick="openLightbox('${id}',${i})">`).join('')}</div>`
-      : '';
-    return `<div class="recipe-card">
-      <div class="recipe-header">
-        <div class="recipe-emoji">${r.emoji || '🍽️'}</div>
-        <div style="flex:1">
-          <div class="recipe-name">${r.name}${catLabel}</div>
-          <div class="recipe-portions">${s} Portion${s!==1?'en':''} · ${ingrCount} Zutat${ingrCount!==1?'en':''}${priceStr}</div>
-        </div>
-      </div>
-      ${hasNutrition ? `<div class="recipe-macros">
-        <div class="recipe-macro"><span class="macro-val" style="color:var(--active)">${perServing(totalKcal)}</span><span class="macro-lbl">kcal</span></div>
-        <div class="recipe-macro"><span class="macro-val" style="color:#5bbf7e">${perServing(totalP)}g</span><span class="macro-lbl">Eiweiß</span></div>
-        <div class="recipe-macro"><span class="macro-val" style="color:#d4a017">${perServing(totalC)}g</span><span class="macro-lbl">Kohlenh.</span></div>
-        <div class="recipe-macro"><span class="macro-val" style="color:#e07060">${perServing(totalF)}g</span><span class="macro-lbl">Fett</span></div>
-      </div>` : ''}
-      ${imgStrip}
-      <div class="recipe-actions">
-        <button class="recipe-btn-add" onclick="addRecipeToList('${id}')">🛒 Zur Einkaufsliste</button>
-        <button class="recipe-btn-cook" onclick="openCookView('${id}')" title="Kochansicht">📖</button>
-        <button class="recipe-btn-edit" onclick="openRecipeBuilder('${id}')" title="Bearbeiten">✏️</button>
-        <button class="recipe-btn-del" onclick="deleteRecipe('${id}')" title="Löschen">🗑️</button>
-      </div>
-    </div>`;
-  }).join('');
+  list.innerHTML = ids.map(id => recipeCardHTML(id, recipes[id])).join('');
 }
 
 function deleteRecipe(id) {
@@ -6613,14 +6626,7 @@ function openPlanPicker(dateStr, meal) {
   if (!rArr.length) {
     list.innerHTML = '<div style="padding:1rem;color:var(--muted);text-align:center;">Noch keine Rezepte vorhanden</div>';
   } else {
-    list.innerHTML = rArr.map(r => `
-      <div class="plan-recipe-row" onclick="setPlanSlot('${r.id}')">
-        <span style="font-size:26px;line-height:1;">${r.emoji || '🍽️'}</span>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:15px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.name}</div>
-          <div style="font-size:12px;color:var(--muted);">${r.ingredients ? r.ingredients.length : 0} Zutaten · ${r.servings || 1} Port.</div>
-        </div>
-      </div>`).join('');
+    list.innerHTML = rArr.map(r => recipePickerRowHTML(r)).join('');
   }
   document.getElementById('planPickerOverlay').style.display = 'flex';
 }
