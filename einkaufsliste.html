@@ -617,7 +617,8 @@ html { height: 100%; }
     .recipe-card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:16px; margin-bottom:12px; box-shadow:var(--shadow); position:relative; }
     .recipe-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
     .recipe-emoji { font-size:28px; line-height:1; }
-    .recipe-name { flex:1; font-size:16px; font-weight:700; }
+    .recipe-name { flex:1; font-size:16px; font-weight:700; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .recipe-cat-badge { font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px; background:var(--active); color:#fff; opacity:.85; white-space:nowrap; }
     .recipe-portions { font-size:12px; color:var(--muted); }
     .recipe-macros { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; background:var(--card); border-radius:12px; padding:10px 8px; margin-bottom:12px; }
     .recipe-macro { display:flex; flex-direction:column; align-items:center; gap:2px; }
@@ -1695,6 +1696,7 @@ html { height: 100%; }
       <input id="recipeSearchInput" placeholder="Rezept suchen…" oninput="recipeOnSearch()" autocomplete="off" autocorrect="off">
     </div>
   </div>
+  <div class="cat-row" id="recipeCatFilterRow" style="margin-bottom:4px;"></div>
   <div class="cat-row sort-row" id="recipeSortRow" style="margin-bottom:10px;"></div>
   <div id="recipeList"></div>
 </div>
@@ -1754,6 +1756,8 @@ html { height: 100%; }
       <input class="sheet-input" id="rbPortionsIn" type="number" min="1" value="4" style="width:90px;flex:none;margin-bottom:0;">
       <span style="font-size:13px;color:var(--muted);">Portionen</span>
     </div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Kategorie</div>
+    <div id="rbCategoryChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
     <textarea class="sheet-input" id="rbDescIn" rows="2" placeholder="Kurze Beschreibung (optional)…" style="resize:vertical;font-family:inherit;"></textarea>
     <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 8px;">Kochschritte</div>
     <div id="rbStepsList"></div>
@@ -4503,6 +4507,19 @@ _initDefaultRecipes();
     };
     localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
   }
+
+  // Stamp categories on existing defaults that don't have one yet
+  const DEFAULT_CATS = {
+    default_01:'Abendessen', default_02:'Abendessen', default_03:'Frühstück',
+    default_04:'Mittagessen', default_05:'Abendessen', default_06:'Abendessen',
+    default_07:'Frühstück', default_08:'Mittagessen', default_09:'Abendessen',
+    default_10:'Abendessen', default_11:'Frühstück', default_12:'Abendessen'
+  };
+  let catPatched = false;
+  Object.entries(DEFAULT_CATS).forEach(([id, cat]) => {
+    if (recipes[id] && !recipes[id].category) { recipes[id].category = cat; catPatched = true; }
+  });
+  if (catPatched) localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
 })();
 
 function saveRecipes() {
@@ -4520,6 +4537,9 @@ function parseUnitG(unit) {
 let recipeSearch = '';
 let recipeSort = '';
 let recipeSortDir = 1;
+let recipeCatFilter = null;
+
+const RECIPE_CATEGORIES = ['Frühstück','Mittagessen','Abendessen','Snack','Dessert','Sonstiges'];
 
 const RECIPE_SORT_OPTIONS = [
   { id:'az',      label:'A–Z'     },
@@ -4542,6 +4562,22 @@ function recipeSetSort(id) {
     recipeSortDir = 1;
   }
   renderRecipes();
+}
+
+function recipeSetCatFilter(cat) {
+  recipeCatFilter = (recipeCatFilter === cat) ? null : cat;
+  renderRecipes();
+}
+
+function renderRecipeCatFilterRow() {
+  const cr = document.getElementById('recipeCatFilterRow');
+  if (!cr) return;
+  const used = new Set(Object.values(recipes).map(r => r.category || 'Sonstiges'));
+  if (used.size <= 1) { cr.innerHTML = ''; return; }
+  cr.innerHTML = RECIPE_CATEGORIES.filter(c => used.has(c)).map(c => {
+    const active = c === recipeCatFilter;
+    return `<button class="chip ${active ? 'on' : ''}" onclick="recipeSetCatFilter('${c}')">${c}</button>`;
+  }).join('');
 }
 
 function renderRecipeSortRow() {
@@ -4570,10 +4606,12 @@ function recipeStats(r) {
 }
 
 function renderRecipes() {
+  renderRecipeCatFilterRow();
   renderRecipeSortRow();
   const list = document.getElementById('recipeList');
   let ids = Object.keys(recipes);
   if (recipeSearch) ids = ids.filter(id => recipes[id].name.toLowerCase().includes(recipeSearch));
+  if (recipeCatFilter) ids = ids.filter(id => (recipes[id].category || 'Sonstiges') === recipeCatFilter);
   if (!ids.length) {
     list.innerHTML = Object.keys(recipes).length
       ? '<div class="recipe-empty">Kein Rezept gefunden.</div>'
@@ -4601,11 +4639,12 @@ function renderRecipes() {
     const ingrCount = r.ingredients.length;
     const priceStr = totalPrice ? ` · ca. ${totalPrice.toFixed(2).replace('.',',')} €` : '';
 
+    const catLabel = r.category ? `<span class="recipe-cat-badge">${r.category}</span>` : '';
     return `<div class="recipe-card">
       <div class="recipe-header">
         <div class="recipe-emoji">${r.emoji || '🍽️'}</div>
         <div style="flex:1">
-          <div class="recipe-name">${r.name}</div>
+          <div class="recipe-name">${r.name}${catLabel}</div>
           <div class="recipe-portions">${s} Portion${s!==1?'en':''} · ${ingrCount} Zutat${ingrCount!==1?'en':''}${priceStr}</div>
         </div>
       </div>
@@ -5057,6 +5096,16 @@ function rbRemove(i) {
   rbRenderSelected();
 }
 
+let rbSelectedCategory = 'Sonstiges';
+
+function renderRbCategoryChips() {
+  const el = document.getElementById('rbCategoryChips');
+  if (!el) return;
+  el.innerHTML = RECIPE_CATEGORIES.map(c =>
+    `<button class="chip${rbSelectedCategory===c?' on':''}" onclick="rbSelectedCategory='${c}';renderRbCategoryChips()">${c}</button>`
+  ).join('');
+}
+
 function openRecipeSaveSheet() {
   if (!rbIngredients.length) { showToast('Bitte mindestens eine Zutat wählen'); return; }
   const r = rbEditId ? recipes[rbEditId] : null;
@@ -5064,6 +5113,8 @@ function openRecipeSaveSheet() {
   document.getElementById('rbEmojiIn').value    = r ? r.emoji       : '';
   document.getElementById('rbPortionsIn').value = r ? r.servings    : 4;
   document.getElementById('rbDescIn').value     = r ? (r.description || '') : '';
+  rbSelectedCategory = (r && r.category) ? r.category : 'Sonstiges';
+  renderRbCategoryChips();
   initRbSteps(r ? (r.steps || []) : []);
   document.getElementById('rbDeleteBtn').style.display = rbEditId ? '' : 'none';
   document.getElementById('recipeSaveOverlay').style.display = 'flex';
@@ -5211,6 +5262,7 @@ function saveRecipeFromBuilder() {
     id, name,
     emoji:       document.getElementById('rbEmojiIn').value.trim() || '🍽️',
     servings:    parseInt(document.getElementById('rbPortionsIn').value) || 4,
+    category:    rbSelectedCategory || 'Sonstiges',
     description: document.getElementById('rbDescIn').value.trim(),
     steps:       rbSteps.filter(s => s.trim()),
     ingredients: rbIngredients
