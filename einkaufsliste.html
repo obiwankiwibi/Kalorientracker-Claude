@@ -1703,6 +1703,10 @@ html { height: 100%; }
     <button class="recipe-tool-btn primary" onclick="openRecipeBuilder()">+ Rezept erstellen</button>
     <button class="recipe-tool-btn" onclick="openChefkochSheet()" style="display:flex;align-items:center;gap:5px;">📥 Chefkoch</button>
   </div>
+  <div style="display:flex;gap:8px;margin:8px 0 2px;">
+    <button class="recipe-tool-btn" onclick="openKiExport()" style="flex:1;justify-content:center;">🤖 Exportieren für KI</button>
+    <button class="recipe-tool-btn" onclick="openKiImport()" style="flex:1;justify-content:center;">📥 Wochenplan importieren</button>
+  </div>
   <div class="search-wrap" style="margin:10px 0 6px;">
     <div class="search-inner">
       <span style="color:var(--muted);font-size:15px">🔍</span>
@@ -1712,6 +1716,41 @@ html { height: 100%; }
   <div class="cat-row" id="recipeCatFilterRow" style="margin-bottom:4px;"></div>
   <div class="cat-row sort-row" id="recipeSortRow" style="margin-bottom:10px;"></div>
   <div id="recipeList"></div>
+</div>
+
+<!-- ══ KI EXPORT SHEET ══ -->
+<div class="sheet-overlay" id="kiExportOverlay" onclick="if(event.target===this)closeKiExport()" style="display:none;">
+  <div class="sheet" style="max-height:92vh;overflow-y:auto;">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🤖 KI-Wochenplan Export</div>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 12px;">Kopiere den Text unten und füge ihn in ChatGPT, Copilot oder Claude ein.</p>
+    <button onclick="kiCopyExport()" style="width:100%;padding:13px;border-radius:14px;border:none;background:var(--active);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px;">📋 Text kopieren</button>
+    <textarea id="kiExportText" readonly style="width:100%;min-height:260px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:11px;font-family:monospace;padding:10px;resize:vertical;box-sizing:border-box;line-height:1.5;"></textarea>
+    <div class="sheet-btns" style="margin-top:10px;">
+      <button class="sh-btn secondary" onclick="closeKiExport()">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ KI IMPORT SHEET ══ -->
+<div class="sheet-overlay" id="kiImportOverlay" onclick="if(event.target===this)closeKiImport()" style="display:none;">
+  <div class="sheet" style="max-height:92vh;overflow-y:auto;">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📥 Wochenplan importieren</div>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 4px;">Füge die JSON-Antwort der KI hier ein:</p>
+    <textarea id="kiImportText" placeholder='{"wochenplan":[...]}' style="width:100%;min-height:200px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:12px;font-family:monospace;padding:10px;resize:vertical;box-sizing:border-box;line-height:1.5;margin-bottom:10px;"></textarea>
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Startdatum (Tag 1):</div>
+    <input type="date" id="kiImportDate" style="width:100%;padding:11px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;margin-bottom:12px;box-sizing:border-box;">
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:14px;cursor:pointer;">
+      <input type="checkbox" id="kiAddToList" checked style="width:18px;height:18px;">
+      Alle Zutaten zur Einkaufsliste hinzufügen
+    </label>
+    <div id="kiImportMsg" style="font-size:13px;color:var(--muted);margin-bottom:8px;min-height:18px;"></div>
+    <div class="sheet-btns">
+      <button class="sh-btn secondary" onclick="closeKiImport()">Abbrechen</button>
+      <button class="sh-btn primary" onclick="doKiImport()">Importieren</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══ RECIPE BUILDER VIEW (full-screen) ══ -->
@@ -4940,6 +4979,194 @@ function lbNav(dir) {
   const imgs = recipeImageCache[_lbRecipeId] || [];
   _lbIndex = (_lbIndex + dir + imgs.length) % imgs.length;
   renderLightbox();
+}
+
+// ── KI Wochenplan Export / Import ──────────────────────────────────────────
+
+function generateKiExportText() {
+  const allRecipes = Object.values(recipes).filter(r => r && r.name);
+  const recipeLines = allRecipes.map(r => {
+    const ings = (r.ingredients || [])
+      .filter(i => !i.custom)
+      .map(i => {
+        const qty = i.qty || 1;
+        const unit = i.unit || i.catalogUnit || '';
+        const unitG = i.unitG || 1;
+        const totalG = Math.round(qty * unitG);
+        return `${i.name} (${totalG > 0 && unit !== 'g' && unit !== 'ml' ? qty + ' ' + unit + ' / ' + totalG + 'g' : totalG + (unit === 'ml' ? 'ml' : 'g')})`;
+      }).join(', ');
+    const kcalP = (() => {
+      const total = (r.ingredients || []).reduce((s, i) => {
+        const amtG = (i.qty || 1) * (i.unitG || i.amountG || 100);
+        return s + (i.kcalPer100 || 0) * amtG / 100;
+      }, 0);
+      return r.servings ? Math.round(total / r.servings) : null;
+    })();
+    return [
+      `[ID: ${r.id}]`,
+      `Name: ${r.name}`,
+      `Kategorie: ${r.category || 'Sonstiges'} | Portionen: ${r.servings || '?'}${kcalP ? ' | kcal/Portion: ' + kcalP : ''}`,
+      ings ? `Hauptzutaten: ${ings}` : '',
+      r.description ? `Beschreibung: ${r.description}` : '',
+    ].filter(Boolean).join('\n');
+  }).join('\n\n');
+
+  return `=== KALORIENTRACKER – KI-WOCHENPLANER ===
+
+Du bist ein Ernährungsplaner. Erstelle einen sinnvollen 3-Tage-Plan aus den unten aufgelisteten Rezepten.
+
+ZIELE:
+• Wähle Rezepte so, dass Zutaten MÖGLICHST OFT geteilt werden → minimale Lebensmittelverschwendung
+• Erkläre konkret, welche Zutaten zwischen den Rezepten geteilt werden
+• Jedes Rezept darf nur einmal verwendet werden
+• Abwechslung: nicht zweimal hintereinander dieselbe Kategorie beim selben Mahlzeit-Slot
+• Pro Tag kannst du 1–3 Mahlzeiten belegen (Frühstück, Mittag, Abend)
+• Setze nicht benötigte Slots auf null
+
+════════════════════════════════════════
+WICHTIG: Antworte NUR mit dem folgenden JSON (kein Text davor oder danach, kein Markdown-Codeblock):
+════════════════════════════════════════
+
+{
+  "wochenplan": [
+    { "tag": 1, "fruehstueck": null, "mittag": "REZEPT_ID", "abend": "REZEPT_ID" },
+    { "tag": 2, "fruehstueck": "REZEPT_ID", "mittag": "REZEPT_ID", "abend": null },
+    { "tag": 3, "fruehstueck": null, "mittag": "REZEPT_ID", "abend": "REZEPT_ID" }
+  ],
+  "geteilte_zutaten": ["Zutat A wird in Tag 1 Mittag und Tag 2 Abend verwendet", "..."],
+  "begruendung": "Warum diese Kombination Lebensmittelverschwendung minimiert"
+}
+
+Verwende für REZEPT_ID AUSSCHLIESSLICH die exakten IDs in den eckigen Klammern unten (z.B. "default_01"). null bedeutet kein Rezept für diesen Slot.
+
+════════════════════════════════════════
+VERFÜGBARE REZEPTE (${allRecipes.length} Stück)
+════════════════════════════════════════
+
+${recipeLines}`;
+}
+
+function openKiExport() {
+  const text = generateKiExportText();
+  document.getElementById('kiExportText').value = text;
+  document.getElementById('kiExportOverlay').style.display = 'flex';
+}
+
+function closeKiExport() {
+  document.getElementById('kiExportOverlay').style.display = 'none';
+}
+
+function kiCopyExport() {
+  const text = document.getElementById('kiExportText').value;
+  navigator.clipboard.writeText(text).then(
+    () => showToast('Text kopiert ✓'),
+    () => {
+      document.getElementById('kiExportText').select();
+      document.execCommand('copy');
+      showToast('Text kopiert ✓');
+    }
+  );
+}
+
+function openKiImport() {
+  document.getElementById('kiImportText').value = '';
+  document.getElementById('kiImportMsg').textContent = '';
+  // default date = today
+  const today = new Date();
+  document.getElementById('kiImportDate').value = planDateStr(today);
+  document.getElementById('kiImportOverlay').style.display = 'flex';
+}
+
+function closeKiImport() {
+  document.getElementById('kiImportOverlay').style.display = 'none';
+}
+
+function doKiImport() {
+  const raw = document.getElementById('kiImportText').value.trim();
+  const msgEl = document.getElementById('kiImportMsg');
+  if (!raw) { msgEl.textContent = '⚠️ Bitte KI-Antwort einfügen.'; return; }
+
+  let data;
+  try {
+    // strip possible markdown code fence
+    const cleaned = raw.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
+    data = JSON.parse(cleaned);
+  } catch(e) {
+    msgEl.textContent = '❌ Ungültiges JSON. Bitte nur den JSON-Block der KI einfügen.';
+    return;
+  }
+
+  const plan = data.wochenplan;
+  if (!Array.isArray(plan) || !plan.length) {
+    msgEl.textContent = '❌ Kein "wochenplan"-Array gefunden.';
+    return;
+  }
+
+  const mealMap = { fruehstueck:'breakfast', mittag:'lunch', abend:'dinner' };
+  const startDateStr = document.getElementById('kiImportDate').value;
+  if (!startDateStr) { msgEl.textContent = '⚠️ Bitte Startdatum wählen.'; return; }
+
+  const startDate = new Date(startDateStr + 'T00:00:00');
+  let imported = 0, skipped = 0;
+  const recipesToAdd = [];
+
+  plan.forEach((dayObj, idx) => {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + idx);
+    const ds = planDateStr(d);
+
+    Object.entries(mealMap).forEach(([kiKey, mealId]) => {
+      const rid = dayObj[kiKey];
+      if (!rid || rid === 'null') return;
+      if (!recipes[rid]) { skipped++; return; }
+      const key = planKey(ds, mealId);
+      weekPlan[key] = { recipeId: rid, servings: recipes[rid].servings || 1 };
+      delete weekPlan['_sent_' + key];
+      imported++;
+      recipesToAdd.push(rid);
+    });
+  });
+
+  savePlan();
+
+  if (document.getElementById('kiAddToList').checked) {
+    recipesToAdd.forEach(rid => _addRecipeIngredientsToList(rid));
+  }
+
+  msgEl.style.color = 'var(--active)';
+  msgEl.textContent = `✓ ${imported} Mahlzeit${imported!==1?'en':''} importiert${skipped?' · '+skipped+' unbekannte ID(s) übersprungen':''}.`;
+
+  if (data.begruendung) {
+    msgEl.textContent += ' Begründung: ' + data.begruendung;
+  }
+
+  renderWochenplan && renderWochenplan();
+  setTimeout(() => { closeKiImport(); showTab('woche'); }, 1800);
+}
+
+// Adds recipe ingredients to the active shopping list without UI navigation
+function _addRecipeIngredientsToList(recipeId) {
+  const r = recipes[recipeId];
+  if (!r) return;
+  (r.ingredients || []).filter(i => !i.custom).forEach(ing => {
+    const name = ing.name;
+    const existing = Object.entries(items).find(([,v]) => v.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      const [key, val] = existing;
+      const prevQty = parseFloat(val.qty) || 0;
+      items[key].qty = (prevQty + (ing.qty || 1)).toString();
+    } else {
+      const newKey = Date.now() + Math.random().toString(36).slice(2);
+      items[newKey] = {
+        name, emoji: ing.emoji || '🛒',
+        qty: (ing.qty || 1).toString(),
+        unit: ing.unit || ing.catalogUnit || 'Stück',
+        checked: false, listId
+      };
+    }
+  });
+  try { localStorage.setItem('list_' + listId, JSON.stringify(items)); } catch(e) {}
+  if (activeTab === 'liste') renderAll();
 }
 
 function saveRecipes() {
