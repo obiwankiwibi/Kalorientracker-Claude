@@ -463,13 +463,16 @@ html { height: 100%; }
     }
     .tile.sug.in-list { opacity: 0.45; filter: grayscale(30%); }
     .sug-offer-badge {
-      display: inline-flex; align-items: center; gap: 3px;
-      font-size: 10px; font-weight: 700;
-      background: rgba(255,80,60,0.85); color: #fff;
-      border-radius: 8px; padding: 2px 7px; margin-top: 3px;
+      position: absolute; bottom: 5px; right: 5px;
+      display: inline-flex; align-items: center; gap: 2px;
+      font-size: 9px; font-weight: 700;
+      background: rgba(220,50,30,0.92); color: #fff;
+      border-radius: 6px; padding: 2px 5px;
       cursor: pointer; white-space: nowrap;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.25);
     }
     .sug-offer-badge:active { opacity: 0.75; }
+    .tile.sug:has(.sug-offer-badge) { padding-bottom: 22px; }
 
     /* Empty state */
     .empty {
@@ -2558,6 +2561,8 @@ function renderSuggestions() {
     list = list
       .filter(s => (usageCounts[usageKey(s.name)] || 0) > 0)
       .sort((a, b) => (usageCounts[usageKey(b.name)] || 0) - (usageCounts[usageKey(a.name)] || 0));
+  } else if (activeCat === '🏷️ Angebote') {
+    list = list.filter(s => getMatchingOffer(s.name) !== null);
   } else if (activeCat !== 'Alle') {
     list = list.filter(s => s.cat === activeCat);
   }
@@ -2597,7 +2602,7 @@ function renderSuggestions() {
       const offerBadge = offer
         ? `<div class="sug-offer-badge" onclick="event.stopPropagation();addOfferToList('${offer.id}')"
             title="${esc(offer.haendler)}: ${Number(offer.preis).toFixed(2).replace('.',',')} €">
-            🏷️ ${Number(offer.preis).toFixed(2).replace('.',',')} € ${esc(offer.haendler)}</div>`
+            🏷️ ${Number(offer.preis).toFixed(2).replace('.',',')} €</div>`
         : '';
       return `<div class="tile sug ${isScanned ? 'scanned' : ''} ${inList ? 'in-list' : ''}"
         onclick="tapSuggestion('${esc(s.name)}','${s.emoji}')">
@@ -2664,9 +2669,11 @@ function renderCats() {
   const cr = document.getElementById('catRow');
   const hasScanned = Object.keys(scannedSuggestions).length > 0;
   const hasUsage   = Object.keys(usageCounts).length > 0;
+  const hasOffers = allOffers.length > 0;
   const cats = [
     'Alle',
     ...(hasUsage ? ['⭐ Häufig'] : []),
+    ...(hasOffers ? ['🏷️ Angebote'] : []),
     ...new Set(SUGGESTIONS.map(s => s.cat)),
     ...(hasScanned ? ['Gescannt'] : [])
   ];
