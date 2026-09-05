@@ -4482,6 +4482,27 @@ _initDefaultRecipes();
     };
     localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
   }
+  if (!recipes['default_12']) {
+    recipes['default_12'] = {
+      id: 'default_12', name: 'Zucchini-Hack-Pfanne mit Feta', emoji: '🥒', servings: 2,
+      description: 'Schnelle Low-Carb-Pfanne mit Rinderhack, Zucchini, Champignons und cremigem Feta – fertig in 25 Minuten.',
+      steps: [
+        'Zucchini und Champignons in Scheiben schneiden, Feta in Würfel schneiden.',
+        'Hackfleisch in einer großen Pfanne bei hoher Hitze krümelig anbraten, dann herausnehmen.',
+        'Zucchini und Champignons im Bratfett 5–7 Minuten anbraten.',
+        'Hackfleisch zurück in die Pfanne geben, mit Salz, Pfeffer und Knoblauch kräftig würzen.',
+        'Fetawürfel unterheben, kurz erhitzen bis der Feta leicht schmilzt, sofort servieren.'
+      ],
+      ingredients: [
+        g('Rinderhackfleisch','🥩',500,'g',500,234,17,0,18,4.99,500,'500g'),
+        g('Zucchini','🥒',500,'g',500,17,1.2,2.7,0.3,0.99,500,'500g'),
+        g('Feta','🧀',250,'g',250,264,14,4,22,1.99,200,'200g'),
+        g('Champignons','🍄',250,'g',250,22,3.1,0.5,0.3,1.49,500,'500g'),
+        g('Knoblauch','🧄',5,'g',5,149,6.4,33,0.5,0.49,100,'100g'),
+      ]
+    };
+    localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
+  }
 })();
 
 function saveRecipes() {
