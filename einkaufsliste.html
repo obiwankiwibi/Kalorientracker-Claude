@@ -4308,7 +4308,7 @@ let recipes = JSON.parse(localStorage.getItem(RECIPE_STORE) || '{}');
 // legacy aliases removed — builder state is rbEditId / rbIngredients
 
 function _initDefaultRecipes() {
-  if (Object.keys(recipes).length) return;
+  if (recipes['default_01']) return;
   const mk = (id, name, emoji, servings, desc, steps, ings) => {
     recipes[id] = { id, name, emoji, servings, description: desc, steps, ingredients: ings };
   };
