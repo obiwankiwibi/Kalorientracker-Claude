@@ -462,6 +462,14 @@ html { height: 100%; }
       color: var(--text);
     }
     .tile.sug.in-list { opacity: 0.45; filter: grayscale(30%); }
+    .sug-offer-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 10px; font-weight: 700;
+      background: rgba(255,80,60,0.85); color: #fff;
+      border-radius: 8px; padding: 2px 7px; margin-top: 3px;
+      cursor: pointer; white-space: nowrap;
+    }
+    .sug-offer-badge:active { opacity: 0.75; }
 
     /* Empty state */
     .empty {
@@ -1382,6 +1390,7 @@ html { height: 100%; }
     <div class="header-menu" id="headerMenu">
       <a href="index.html" class="header-menu-item">⌂ Startseite</a>
       <button class="header-menu-item" id="clearDoneMenuItem" onclick="clearDone();closeHeaderMenu()">✓ Erledigte löschen</button>
+      <button class="header-menu-item" onclick="openImportSheet();closeHeaderMenu()">🏷️ Angebote</button>
       <button class="header-menu-item" onclick="doQuickBackup();closeHeaderMenu()">💾 Backup</button>
       <button class="header-menu-item" onclick="shareList();closeHeaderMenu()">⎘ Teilen</button>
     </div>
@@ -1585,42 +1594,6 @@ html { height: 100%; }
 </div>
 
 <!-- ══ ANGEBOTE VIEW ══ -->
-<div id="offersView" class="offers-view" style="display:none">
-
-  <div class="offers-topbar">
-    <div class="offers-topbar-left">
-      <h2>Angebote</h2>
-      <span id="offersCount"></span>
-    </div>
-  </div>
-
-  <div class="offers-search-wrap">
-    <div class="offers-search-inner">
-      <span style="color:var(--muted)">🔍</span>
-      <input id="offersSearch" placeholder="Produkt, Händler oder Kategorie…" oninput="renderOffers()">
-    </div>
-  </div>
-
-  <!-- Schnellzugriff auf Markt-Angebotsseiten -->
-  <div class="offers-section-label" style="padding-bottom:4px">Direkt zu den Märkten</div>
-  <div style="padding:0 12px 8px" class="store-grid-outer"><div id="storeGrid" class="store-grid"></div></div>
-  <div class="offers-divider"></div>
-
-  <div style="display:flex;align-items:center;gap:6px;padding:8px 14px 2px">
-    <span class="offers-section-label" style="padding:0;margin:0;flex:1">Aktuelle Angebote</span>
-    <span id="offersSectionCount" style="font-size:11px;color:var(--muted);font-weight:500;margin-right:4px"></span>
-    <button class="offers-action-btn" onclick="refreshOffers()" id="offersLadenBtn">↻ Laden</button>
-    <button class="offers-action-btn" onclick="openImportSheet()" id="offersPlzBtn">📍 PLZ eingeben</button>
-  </div>
-  <div id="offersPlzHint" style="display:none;font-size:11px;color:var(--muted);padding:0 14px 6px;text-align:right">
-    ① PLZ eingeben &nbsp;→&nbsp; ② Laden antippen
-  </div>
-
-  <div class="cat-row" id="offersHaendlerRow" style="padding-top:4px"></div>
-  <div class="sort-row" id="offersSortRow" style="padding:4px 12px 6px"></div>
-
-  <div class="offers-grid" id="offersGrid"></div>
-</div>
 
 <!-- ══ IMPORT SHEET ══ -->
 <div class="sheet-overlay" id="importOverlay" onclick="importOverlayClick(event)">
@@ -1974,10 +1947,6 @@ html { height: 100%; }
     <div class="nav-icon">≡</div>
     <div>Liste</div>
     <div class="badge" id="badge">0</div>
-  </div>
-  <div class="nav-item" id="navAngebote" onclick="showTab('angebote')">
-    <div class="nav-icon">🏷️</div>
-    <div>Angebote</div>
   </div>
   <div class="nav-item" id="navWoche" onclick="showTab('woche')">
     <div class="nav-icon">🗓️</div>
@@ -2624,12 +2593,19 @@ function renderSuggestions() {
       const delBtn = activeCat === '⭐ Häufig'
         ? `<button class="usage-del" onclick="event.stopPropagation();resetUsage('${esc(s.name)}')" title="Aus Häufig entfernen">×</button>`
         : '';
+      const offer = getMatchingOffer(s.name);
+      const offerBadge = offer
+        ? `<div class="sug-offer-badge" onclick="event.stopPropagation();addOfferToList('${offer.id}')"
+            title="${esc(offer.haendler)}: ${Number(offer.preis).toFixed(2).replace('.',',')} €">
+            🏷️ ${Number(offer.preis).toFixed(2).replace('.',',')} € ${esc(offer.haendler)}</div>`
+        : '';
       return `<div class="tile sug ${isScanned ? 'scanned' : ''} ${inList ? 'in-list' : ''}"
         onclick="tapSuggestion('${esc(s.name)}','${s.emoji}')">
         ${delBtn}
         <div class="tile-emoji">${s.emoji}</div>
         <div class="tile-name">${esc(s.name)}</div>
         ${priceHtml}
+        ${offerBadge}
       </div>`;
     }).join('');
   }
@@ -3169,10 +3145,9 @@ let activeTab = 'liste';
 
 function showTab(tab) {
   activeTab = tab;
-  const isListe       = tab === 'liste';
-  const isAngebote    = tab === 'angebote';
-  const isWoche       = tab === 'woche';
-  const isRezepte     = tab === 'rezepte';
+  const isListe   = tab === 'liste';
+  const isWoche   = tab === 'woche';
+  const isRezepte = tab === 'rezepte';
 
   // Liste-Elemente
   ['connBar','activeSection','doneSection','sugSection'].forEach(id => {
@@ -3195,23 +3170,20 @@ function showTab(tab) {
   }
 
   // Andere Views
-  document.getElementById('offersView').style.display  = isAngebote ? 'block' : 'none';
-  document.getElementById('wocheView').style.display   = isWoche    ? 'block' : 'none';
-  document.getElementById('recipesView').style.display = isRezepte  ? 'block' : 'none';
+  document.getElementById('wocheView').style.display   = isWoche   ? 'block' : 'none';
+  document.getElementById('recipesView').style.display = isRezepte ? 'block' : 'none';
   const stb = document.getElementById('scrollTopBtn');
-  if (stb && !isAngebote) stb.classList.remove('visible');
+  if (stb) stb.classList.remove('visible');
 
   // Nav
-  document.getElementById('navListe').classList.toggle('on',    isListe);
-  document.getElementById('navAngebote').classList.toggle('on', isAngebote);
-  document.getElementById('navWoche').classList.toggle('on',    isWoche);
-  document.getElementById('navRezepte').classList.toggle('on',  isRezepte);
+  document.getElementById('navListe').classList.toggle('on',   isListe);
+  document.getElementById('navWoche').classList.toggle('on',   isWoche);
+  document.getElementById('navRezepte').classList.toggle('on', isRezepte);
 
   const clearMenuItem = document.getElementById('clearDoneMenuItem');
   if (clearMenuItem) clearMenuItem.style.display = isListe ? '' : 'none';
-  if (isAngebote) { renderStores(); renderOffers(); updatePlzBtn(); }
-  if (isWoche)    renderWochenplan();
-  if (isRezepte)  renderRecipes();
+  if (isWoche)   renderWochenplan();
+  if (isRezepte) renderRecipes();
 }
 
 function renderStores() {
@@ -3867,7 +3839,30 @@ function closeImportSheet() { document.getElementById('importOverlay').classList
 function importOverlayClick(e) { if (e.target === document.getElementById('importOverlay')) closeImportSheet(); }
 
 // ── Render ──
-function renderOffers() {
+// Offer-matching helper for catalog tiles
+function getMatchingOffer(name) {
+  if (!allOffers.length) return null;
+  const lower = name.toLowerCase().trim();
+  let found = allOffers.find(o => o.name.toLowerCase().includes(lower));
+  if (!found) {
+    const words = lower.split(/\s+/).filter(w => w.length > 3);
+    found = allOffers.find(o => {
+      const oL = o.name.toLowerCase();
+      return words.some(w => oL.includes(w));
+    });
+  }
+  return found || null;
+}
+
+function renderOffers() { renderSuggestions(); }
+function renderStores() {}
+function renderHaendlerChips() {}
+function renderOffersSortRow() {}
+function updatePlzBtn() {}
+function setOfferHaendler(h) { activeHaendler = h; }
+
+// Dead renderOffers — replaced above; keep old body for reference ——
+function _renderOffers_unused() {
   const search = (document.getElementById('offersSearch')?.value || '').toLowerCase().trim();
 
   let filtered = [...allOffers];
@@ -4170,7 +4165,7 @@ function addOfferToList(id) {
     isOffer: true,
   });
   toast(`🏷️ ${offer.name} von ${offer.haendler} hinzugefügt`);
-  renderOffers();
+  renderSuggestions();
 }
 
 // ═══════════════════════════════════════════════
