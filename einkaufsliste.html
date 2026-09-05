@@ -628,6 +628,8 @@ html { height: 100%; }
     .recipe-btn-add:active { opacity:.75; }
     .recipe-btn-edit { width:42px; height:42px; border-radius:12px; border:1.5px solid var(--border); background:var(--card); color:var(--text); font-size:18px; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; flex-shrink:0; -webkit-tap-highlight-color:transparent; transition:opacity .15s; }
     .recipe-btn-edit:active { opacity:.75; }
+    .recipe-btn-del { width:42px; height:42px; border-radius:12px; border:1.5px solid #e05050; background:#fff0f0; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; -webkit-tap-highlight-color:transparent; transition:opacity .15s; }
+    .recipe-btn-del:active { opacity:.75; }
     .recipe-empty { text-align:center; padding:48px 24px; color:var(--muted); font-size:14px; }
     .list-recipe-tile { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px; display:flex; align-items:center; gap:10px; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:opacity .15s; }
     .list-recipe-tile:active { opacity:.7; }
@@ -4564,6 +4566,7 @@ function renderRecipes() {
         <button class="recipe-btn-add" onclick="addRecipeToList('${id}')">🛒 Zur Einkaufsliste</button>
         <button class="recipe-btn-cook" onclick="openCookView('${id}')" title="Kochansicht">📖</button>
         <button class="recipe-btn-edit" onclick="openRecipeBuilder('${id}')" title="Bearbeiten">✏️</button>
+        <button class="recipe-btn-del" onclick="deleteRecipe('${id}')" title="Löschen">🗑️</button>
       </div>
     </div>`;
   }).join('');
