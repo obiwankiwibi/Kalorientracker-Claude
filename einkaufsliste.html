@@ -2510,7 +2510,7 @@ function tile(type, it) {
   const storeBadge = it.store ? `<div class="tile-store">${esc(it.store)}</div>` : '';
   if (type === 'active') {
     return `<div class="tile active"
-      ontouchstart="pressStart('${it.id}')" ontouchend="pressEnd('${it.id}');event.preventDefault()" ontouchcancel="pressCancel()"
+      ontouchstart="pressStart('${it.id}',event)" ontouchend="pressEnd('${it.id}',event);event.preventDefault()" ontouchcancel="pressCancel()"
       onmousedown="pressStart('${it.id}')" onmouseup="pressEnd('${it.id}')" onmouseleave="pressCancel()">
       <div class="tile-emoji">${it.emoji || '🛒'}</div>
       <div class="tile-name">${esc(it.name)}</div>
