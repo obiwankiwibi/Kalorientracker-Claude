@@ -1747,9 +1747,14 @@ html { height: 100%; }
       Alle Zutaten zur Einkaufsliste hinzufügen
     </label>
     <div id="kiImportMsg" style="font-size:13px;color:var(--muted);margin-bottom:8px;min-height:18px;"></div>
+    <div id="kiSuggestSection" style="display:none;margin-top:8px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">🌿 Neue Rezeptvorschläge der KI:</div>
+      <div id="kiSuggestList"></div>
+      <button class="sh-btn primary" onclick="importSuggestedRecipes()" style="width:100%;margin-top:10px;">Ausgewählte Rezepte importieren</button>
+    </div>
     <div class="sheet-btns">
       <button class="sh-btn secondary" onclick="closeKiImport()">Abbrechen</button>
-      <button class="sh-btn primary" onclick="doKiImport()">Importieren</button>
+      <button class="sh-btn primary" onclick="doKiImport()">Wochenplan importieren</button>
     </div>
   </div>
 </div>
@@ -5080,17 +5085,36 @@ WICHTIG: Antworte NUR mit dem folgenden JSON (kein Text davor oder danach, kein 
   "geteilte_zutaten": ["Zutat A wird in Tag 1 Mittag und Tag 2 Abend verwendet", "..."],
   "begruendung": "Warum diese Kombination zur Jahreszeit passt und Lebensmittelverschwendung minimiert",
   "zusaetzliche_vorschlaege": [
-    { "name": "Kürbiscremesuppe", "kategorie": "Suppe", "grund": "Typisches Herbstgericht, passt gut zur Jahreszeit" },
-    { "name": "Maronen-Risotto",  "kategorie": "Nudelgericht", "grund": "Saisonale Herbstzutaten" }
+    {
+      "name": "Kürbiscremesuppe",
+      "emoji": "🎃",
+      "kategorie": "Suppe",
+      "portionen": 4,
+      "beschreibung": "Cremige Suppe aus Hokkaido-Kürbis — einfach und saisonal.",
+      "grund": "Typisches Herbstgericht, passt gut zur Jahreszeit",
+      "schritte": [
+        "Kürbis und Möhren würfeln, in Öl anschwitzen.",
+        "Mit Brühe aufgießen, 20 Min. köcheln.",
+        "Alles pürieren, mit Sahne und Muskat abschmecken."
+      ],
+      "zutaten": [
+        { "name": "Hokkaido-Kürbis", "menge": 800, "einheit": "g" },
+        { "name": "Möhren", "menge": 2, "einheit": "Stück" },
+        { "name": "Gemüsebrühe", "menge": 800, "einheit": "ml" },
+        { "name": "Sahne", "menge": 100, "einheit": "ml" },
+        { "name": "Olivenöl", "menge": 20, "einheit": "ml" }
+      ]
+    }
   ]
 }
 
 HINWEIS zu zusaetzliche_vorschlaege:
-• Das sind INSPIRATIONEN für Rezepte, die noch NICHT in meiner Liste sind
-• Passen zur aktuellen Jahreszeit / Wetterlage
-• Nur Name + Kategorie + kurze Begründung — KEINE Zutaten oder Mengen
-• Diese werden NICHT importiert, sondern nur als Anregung angezeigt
-• 2–4 Vorschläge, die gut zur Jahreszeit passen
+• Das sind 2–4 neue Rezepte, die NOCH NICHT in meiner Liste sind und zur Jahreszeit passen
+• Sie enthalten VOLLSTÄNDIGE Daten (name, emoji, kategorie, portionen, beschreibung, schritte, zutaten)
+• "kategorie" muss EXAKT einer dieser Werte sein: Frühstück, Nudelgericht, Salat, Suppe, Auflauf, Pfannengericht, Curry, Fisch, Dessert, Snack, Sonstiges
+• "emoji" soll zum Gericht passen (ein einzelnes Emoji)
+• "zutaten" enthält nur die wichtigsten Zutaten mit realistischen Mengen (menge als Zahl, einheit als Text)
+• Diese Rezepte können direkt in die App importiert werden
 
 Verwende für REZEPT_ID im "wochenplan" AUSSCHLIESSLICH die exakten IDs in den eckigen Klammern unten (z.B. "default_01"). null bedeutet kein Rezept für diesen Slot.
 
@@ -5191,19 +5215,68 @@ function doKiImport() {
   msgEl.style.color = 'var(--active)';
   let msg = `✓ ${imported} Mahlzeit${imported!==1?'en':''} importiert${skipped?' · '+skipped+' unbekannte ID(s) übersprungen':''}.`;
   if (data.begruendung) msg += '\n\n💡 ' + data.begruendung;
-
-  const vorschlaege = data.zusaetzliche_vorschlaege;
-  if (Array.isArray(vorschlaege) && vorschlaege.length) {
-    msg += '\n\n🌿 Saisonale Inspirationen (noch nicht in deinen Rezepten):';
-    vorschlaege.forEach(v => {
-      msg += `\n• ${v.name}${v.kategorie ? ' ('+v.kategorie+')' : ''} — ${v.grund || ''}`;
-    });
-  }
   msgEl.style.whiteSpace = 'pre-line';
   msgEl.textContent = msg;
 
+  const vorschlaege = data.zusaetzliche_vorschlaege;
+  const suggEl = document.getElementById('kiSuggestSection');
+  const suggList = document.getElementById('kiSuggestList');
+  if (Array.isArray(vorschlaege) && vorschlaege.length) {
+    suggList.innerHTML = '';
+    vorschlaege.forEach((v, i) => {
+      const li = document.createElement('label');
+      li.style.cssText = 'display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;';
+      li.innerHTML = `
+        <input type="checkbox" data-vi="${i}" checked style="width:18px;height:18px;margin-top:2px;flex-shrink:0;">
+        <span>
+          <strong>${v.emoji||'🍽'} ${v.name}</strong>
+          ${v.kategorie ? `<span style="font-size:11px;color:var(--muted);margin-left:6px;">${v.kategorie}</span>` : ''}
+          <br><span style="font-size:12px;color:var(--muted);">${v.grund||v.beschreibung||''}</span>
+          ${Array.isArray(v.zutaten)&&v.zutaten.length ? `<br><span style="font-size:11px;color:var(--muted);">${v.zutaten.map(z=>`${z.menge} ${z.einheit} ${z.name}`).join(', ')}</span>` : ''}
+        </span>`;
+      suggList.appendChild(li);
+    });
+    suggEl.style.display = 'block';
+    window._kiSuggestedRecipes = vorschlaege;
+  } else {
+    suggEl.style.display = 'none';
+    window._kiSuggestedRecipes = [];
+  }
+
   renderWochenplan && renderWochenplan();
-  setTimeout(() => { closeKiImport(); showTab('woche'); }, vorschlaege?.length ? 4000 : 1800);
+  setTimeout(() => { closeKiImport(); showTab('woche'); }, vorschlaege?.length ? 5000 : 1800);
+}
+
+function importSuggestedRecipes() {
+  const vorschlaege = window._kiSuggestedRecipes || [];
+  const checks = document.querySelectorAll('#kiSuggestList input[type=checkbox]');
+  let count = 0;
+  checks.forEach(cb => {
+    if (!cb.checked) return;
+    const v = vorschlaege[parseInt(cb.dataset.vi)];
+    if (!v || !v.name) return;
+    const id = 'ki_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    const validCats = ['Frühstück','Nudelgericht','Salat','Suppe','Auflauf','Pfannengericht','Curry','Fisch','Dessert','Snack','Sonstiges'];
+    const cat = validCats.includes(v.kategorie) ? v.kategorie : 'Sonstiges';
+    const ings = (v.zutaten || []).map(z => ({
+      name: z.name, qty: z.menge, unit: z.einheit, amountG: z.menge,
+      unitG: z.menge, catalogUnit: z.einheit, custom: false,
+      emoji: '🛒', kcalPer100: 0
+    }));
+    recipes[id] = {
+      id, name: v.name, emoji: v.emoji || '🍽',
+      category: cat, servings: v.portionen || 2,
+      description: v.beschreibung || v.grund || '',
+      steps: v.schritte || [],
+      ingredients: ings
+    };
+    count++;
+  });
+  if (!count) { showToast('Keine Rezepte ausgewählt'); return; }
+  saveRecipes();
+  showToast(`✅ ${count} Rezept${count!==1?'e':''} importiert`);
+  closeKiImport();
+  showTab('rezepte');
 }
 
 // Adds recipe ingredients to the active shopping list without UI navigation
