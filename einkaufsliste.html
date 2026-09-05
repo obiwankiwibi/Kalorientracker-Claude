@@ -2990,6 +2990,15 @@ function clearAllItems() {
   if (!Object.keys(items).length) return;
   if (!confirm('Alle Artikel aus der Liste löschen?')) return;
   Object.keys(items).forEach(id => persist(id, null));
+  // reset weekly-plan "sent" markers so the plan can be re-sent
+  const days = planGetWeekDates ? planGetWeekDates() : [];
+  days.forEach(d => {
+    const ds = planDateStr(d);
+    PLAN_MEALS.forEach(meal => {
+      delete weekPlan['_sent_' + planKey(ds, meal.id)];
+    });
+  });
+  if (days.length) { savePlan(); if (activeTab === 'woche') renderPlanTable(days); }
   toast('🗑 Liste geleert');
 }
 
