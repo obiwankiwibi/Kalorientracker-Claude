@@ -2458,7 +2458,7 @@ function tile(type, it) {
     const doneCheck = type === 'done' ? '<div class="photo-done-check">✓</div>' : '';
     if (type === 'active') {
       return `<div class="tile active photo"
-        ontouchstart="pressStart('${it.id}')" ontouchend="pressEnd('${it.id}');event.preventDefault()" ontouchcancel="pressCancel()"
+        ontouchstart="pressStart('${it.id}',event)" ontouchend="pressEnd('${it.id}',event);event.preventDefault()" ontouchcancel="pressCancel()"
         onmousedown="pressStart('${it.id}')" onmouseup="pressEnd('${it.id}')" onmouseleave="pressCancel()">
         <img class="photo-tile-img" src="${it.photo}" alt="${esc(it.name || '')}">
         ${overlay}
@@ -2527,18 +2527,30 @@ function tile(type, it) {
 
 // ── Long-press Erkennung ──
 let _pt = null, _pid = null, _fired = false;
+let _startX = 0, _startY = 0;
+const SCROLL_THRESHOLD = 8; // px — mehr als das gilt als Scroll, nicht Tap
 
-function pressStart(id) {
+function pressStart(id, e) {
   _pid = id; _fired = false;
+  if (e && e.touches) { _startX = e.touches[0].clientX; _startY = e.touches[0].clientY; }
+  else { _startX = 0; _startY = 0; }
   _pt = setTimeout(() => {
     _fired = true;
     openPicker(id);
   }, 500);
 }
 
-function pressEnd(id) {
+function pressEnd(id, e) {
   clearTimeout(_pt);
-  if (!_fired && _pid === id) toggleItem(id);
+  if (!_fired && _pid === id) {
+    let scrolled = false;
+    if (e && e.changedTouches) {
+      const dx = e.changedTouches[0].clientX - _startX;
+      const dy = e.changedTouches[0].clientY - _startY;
+      scrolled = (dx * dx + dy * dy) > SCROLL_THRESHOLD * SCROLL_THRESHOLD;
+    }
+    if (!scrolled) toggleItem(id);
+  }
   _pid = null;
 }
 
@@ -4989,6 +5001,19 @@ function lbNav(dir) {
 
 // ── KI Wochenplan Export / Import ──────────────────────────────────────────
 
+function getSeasonInfo() {
+  const month = new Date().getMonth() + 1; // 1–12
+  const monthNames = ['Januar','Februar','März','April','Mai','Juni',
+                      'Juli','August','September','Oktober','November','Dezember'];
+  const monthName = monthNames[month - 1];
+  let season, hint;
+  if (month >= 3 && month <= 5)  { season = 'Frühling'; hint = 'leichte Gerichte, frisches Gemüse, Spargel, Erdbeeren'; }
+  else if (month >= 6 && month <= 8) { season = 'Sommer';    hint = 'leichte, frische Gerichte, Salate, gegrilltes — keine schweren Eintöpfe'; }
+  else if (month >= 9 && month <= 11){ season = 'Herbst';    hint = 'wärmende Suppen, Eintöpfe, Kürbis, Wurzelgemüse, herzhafte Auflauf-Gerichte'; }
+  else                               { season = 'Winter';    hint = 'herzhafte wärmende Gerichte, Eintöpfe, Aufläufe — keine Salate als Hauptgericht'; }
+  return { season, month: monthName, hint };
+}
+
 function generateKiExportText() {
   const allRecipes = Object.values(recipes).filter(r => r && r.name);
   const recipeLines = allRecipes.map(r => {
@@ -5017,9 +5042,14 @@ function generateKiExportText() {
     ].filter(Boolean).join('\n');
   }).join('\n\n');
 
+  const si = getSeasonInfo();
   return `=== KALORIENTRACKER – KI-WOCHENPLANER ===
 
 Du bist ein Ernährungsplaner. Erstelle einen sinnvollen 3-Tage-Plan aus den unten aufgelisteten Rezepten.
+
+AKTUELLE JAHRESZEIT: ${si.season} (${si.month})
+Berücksichtige das beim Auswählen: ${si.hint}.
+Wähle bevorzugt Rezepte, die zur Jahreszeit passen — gibt es keine passenden, nimm die sinnvollsten verfügbaren.
 
 ZIELE:
 • Wähle Rezepte so, dass Zutaten MÖGLICHST OFT geteilt werden → minimale Lebensmittelverschwendung
@@ -5040,10 +5070,21 @@ WICHTIG: Antworte NUR mit dem folgenden JSON (kein Text davor oder danach, kein 
     { "tag": 3, "fruehstueck": null, "mittag": "REZEPT_ID", "abend": "REZEPT_ID" }
   ],
   "geteilte_zutaten": ["Zutat A wird in Tag 1 Mittag und Tag 2 Abend verwendet", "..."],
-  "begruendung": "Warum diese Kombination Lebensmittelverschwendung minimiert"
+  "begruendung": "Warum diese Kombination zur Jahreszeit passt und Lebensmittelverschwendung minimiert",
+  "zusaetzliche_vorschlaege": [
+    { "name": "Kürbiscremesuppe", "kategorie": "Suppe", "grund": "Typisches Herbstgericht, passt gut zur Jahreszeit" },
+    { "name": "Maronen-Risotto",  "kategorie": "Nudelgericht", "grund": "Saisonale Herbstzutaten" }
+  ]
 }
 
-Verwende für REZEPT_ID AUSSCHLIESSLICH die exakten IDs in den eckigen Klammern unten (z.B. "default_01"). null bedeutet kein Rezept für diesen Slot.
+HINWEIS zu zusaetzliche_vorschlaege:
+• Das sind INSPIRATIONEN für Rezepte, die noch NICHT in meiner Liste sind
+• Passen zur aktuellen Jahreszeit / Wetterlage
+• Nur Name + Kategorie + kurze Begründung — KEINE Zutaten oder Mengen
+• Diese werden NICHT importiert, sondern nur als Anregung angezeigt
+• 2–4 Vorschläge, die gut zur Jahreszeit passen
+
+Verwende für REZEPT_ID im "wochenplan" AUSSCHLIESSLICH die exakten IDs in den eckigen Klammern unten (z.B. "default_01"). null bedeutet kein Rezept für diesen Slot.
 
 ════════════════════════════════════════
 VERFÜGBARE REZEPTE (${allRecipes.length} Stück)
@@ -5140,14 +5181,21 @@ function doKiImport() {
   }
 
   msgEl.style.color = 'var(--active)';
-  msgEl.textContent = `✓ ${imported} Mahlzeit${imported!==1?'en':''} importiert${skipped?' · '+skipped+' unbekannte ID(s) übersprungen':''}.`;
+  let msg = `✓ ${imported} Mahlzeit${imported!==1?'en':''} importiert${skipped?' · '+skipped+' unbekannte ID(s) übersprungen':''}.`;
+  if (data.begruendung) msg += '\n\n💡 ' + data.begruendung;
 
-  if (data.begruendung) {
-    msgEl.textContent += ' Begründung: ' + data.begruendung;
+  const vorschlaege = data.zusaetzliche_vorschlaege;
+  if (Array.isArray(vorschlaege) && vorschlaege.length) {
+    msg += '\n\n🌿 Saisonale Inspirationen (noch nicht in deinen Rezepten):';
+    vorschlaege.forEach(v => {
+      msg += `\n• ${v.name}${v.kategorie ? ' ('+v.kategorie+')' : ''} — ${v.grund || ''}`;
+    });
   }
+  msgEl.style.whiteSpace = 'pre-line';
+  msgEl.textContent = msg;
 
   renderWochenplan && renderWochenplan();
-  setTimeout(() => { closeKiImport(); showTab('woche'); }, 1800);
+  setTimeout(() => { closeKiImport(); showTab('woche'); }, vorschlaege?.length ? 4000 : 1800);
 }
 
 // Adds recipe ingredients to the active shopping list without UI navigation
