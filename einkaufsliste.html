@@ -1759,6 +1759,7 @@ html { height: 100%; }
     <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Kategorie</div>
     <div id="rbCategoryChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
     <textarea class="sheet-input" id="rbDescIn" rows="2" placeholder="Kurze Beschreibung (optional)…" style="resize:vertical;font-family:inherit;"></textarea>
+    <input class="sheet-input" id="rbImageIn" type="url" placeholder="Bild-URL (optional, z.B. von Chefkoch)…" style="margin-top:8px;">
     <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 8px;">Kochschritte</div>
     <div id="rbStepsList"></div>
     <button class="rb-add-step-btn" onclick="rbAddStep()">+ Schritt hinzufügen</button>
@@ -1870,6 +1871,7 @@ html { height: 100%; }
     <div style="width:60px;"></div>
   </div>
   <div class="cook-body">
+    <div id="cookImgWrap" style="display:none;margin-bottom:16px;"><img id="cookImg" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:16px;" onerror="this.parentElement.style.display='none'"></div>
     <div class="cook-emoji-line" id="cookEmoji"></div>
     <div class="cook-title" id="cookTitle"></div>
     <div class="cook-meta" id="cookMeta"></div>
@@ -4892,6 +4894,7 @@ function renderRecipes() {
 
     const catLabel = r.category ? `<span class="recipe-cat-badge">${r.category}</span>` : '';
     return `<div class="recipe-card">
+      ${r.imageUrl ? `<img src="${esc(r.imageUrl)}" alt="" style="width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:12px;display:block;" onerror="this.style.display='none'">` : ''}
       <div class="recipe-header">
         <div class="recipe-emoji">${r.emoji || '🍽️'}</div>
         <div style="flex:1">
@@ -5373,6 +5376,7 @@ function openRecipeSaveSheet() {
   document.getElementById('rbEmojiIn').value    = r ? r.emoji       : '';
   document.getElementById('rbPortionsIn').value = r ? r.servings    : 4;
   document.getElementById('rbDescIn').value     = r ? (r.description || '') : '';
+  document.getElementById('rbImageIn').value    = r ? (r.imageUrl   || '') : '';
   rbCategoryManuallySet = !!(r && r.category);
   rbSelectedCategory = (r && r.category) ? r.category : guessRecipeCategory(r ? r.name : '', r ? r.description : '');
   renderRbCategoryChips();
@@ -5451,6 +5455,10 @@ function openCookView(id) {
   document.getElementById('cookHeaderTitle').textContent = r.name;
   document.getElementById('cookEmoji').textContent = r.emoji || '🍽️';
   document.getElementById('cookTitle').textContent = r.name;
+  const cookImgWrap = document.getElementById('cookImgWrap');
+  const cookImg     = document.getElementById('cookImg');
+  if (r.imageUrl) { cookImg.src = r.imageUrl; cookImgWrap.style.display = ''; }
+  else { cookImgWrap.style.display = 'none'; }
   document.getElementById('cookPortionsVal').textContent = cookPortions;
   renderCookIngredients();
   // description
@@ -5525,6 +5533,7 @@ function saveRecipeFromBuilder() {
     servings:    parseInt(document.getElementById('rbPortionsIn').value) || 4,
     category:    rbSelectedCategory || 'Sonstiges',
     description: document.getElementById('rbDescIn').value.trim(),
+    imageUrl:    document.getElementById('rbImageIn').value.trim() || undefined,
     steps:       rbSteps.filter(s => s.trim()),
     ingredients: rbIngredients
   };
