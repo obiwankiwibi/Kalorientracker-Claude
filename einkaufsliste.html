@@ -1750,7 +1750,7 @@ html { height: 100%; }
     <div class="sheet-title">🍽️ Rezept speichern</div>
     <div style="display:flex;gap:8px;margin-bottom:10px;">
       <input class="sheet-input" id="rbEmojiIn" placeholder="🍽️" style="width:62px;flex:none;text-align:center;font-size:20px;margin-bottom:0;">
-      <input class="sheet-input" id="rbNameIn" placeholder="Rezeptname *" style="flex:1;margin-bottom:0;">
+      <input class="sheet-input" id="rbNameIn" placeholder="Rezeptname *" style="flex:1;margin-bottom:0;" oninput="rbAutoCategory()">
     </div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
       <input class="sheet-input" id="rbPortionsIn" type="number" min="1" value="4" style="width:90px;flex:none;margin-bottom:0;">
@@ -4465,7 +4465,7 @@ _initDefaultRecipes();
   });
   if (!recipes['default_11']) {
     recipes['default_11'] = {
-      id: 'default_11', name: 'Snickers Overnight Oats', emoji: '🍫', servings: 1,
+      id: 'default_11', name: 'Snickers Overnight Oats', emoji: '🍫', servings: 1, category: 'Frühstück',
       description: 'Overnight Oats im Snickers-Style – gesund, günstig und für unter 2 €.',
       steps: [
         'Haferflocken, Chiasamen, Kakaopulver, Agavendicksaft, Erdnüsse, Erdnussmus und eine Prise Salz vermengen.',
@@ -4488,7 +4488,7 @@ _initDefaultRecipes();
   }
   if (!recipes['default_12']) {
     recipes['default_12'] = {
-      id: 'default_12', name: 'Zucchini-Hack-Pfanne mit Feta', emoji: '🥒', servings: 2,
+      id: 'default_12', name: 'Zucchini-Hack-Pfanne mit Feta', emoji: '🥒', servings: 2, category: 'Pfannengericht',
       description: 'Schnelle Low-Carb-Pfanne mit Rinderhack, Zucchini, Champignons und cremigem Feta – fertig in 25 Minuten.',
       steps: [
         'Zucchini und Champignons in Scheiben schneiden, Feta in Würfel schneiden.',
@@ -4508,16 +4508,20 @@ _initDefaultRecipes();
     localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
   }
 
-  // Stamp categories on existing defaults that don't have one yet
+  // Stamp / upgrade categories on default recipes
   const DEFAULT_CATS = {
-    default_01:'Abendessen', default_02:'Abendessen', default_03:'Frühstück',
-    default_04:'Mittagessen', default_05:'Abendessen', default_06:'Abendessen',
-    default_07:'Frühstück', default_08:'Mittagessen', default_09:'Abendessen',
-    default_10:'Abendessen', default_11:'Frühstück', default_12:'Abendessen'
+    default_01:'Nudelgericht', default_02:'Curry',        default_03:'Frühstück',
+    default_04:'Suppe',        default_05:'Fisch',        default_06:'Pfannengericht',
+    default_07:'Frühstück',   default_08:'Salat',        default_09:'Nudelgericht',
+    default_10:'Auflauf',     default_11:'Frühstück',   default_12:'Pfannengericht'
   };
+  // Replace old time-based categories (Mittagessen/Abendessen no longer in the list)
+  const OLD_TIME_CATS = new Set(['Mittagessen','Abendessen']);
   let catPatched = false;
   Object.entries(DEFAULT_CATS).forEach(([id, cat]) => {
-    if (recipes[id] && !recipes[id].category) { recipes[id].category = cat; catPatched = true; }
+    if (recipes[id] && (!recipes[id].category || OLD_TIME_CATS.has(recipes[id].category))) {
+      recipes[id].category = cat; catPatched = true;
+    }
   });
   if (catPatched) localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
 })();
@@ -4539,7 +4543,22 @@ let recipeSort = '';
 let recipeSortDir = 1;
 let recipeCatFilter = null;
 
-const RECIPE_CATEGORIES = ['Frühstück','Mittagessen','Abendessen','Snack','Dessert','Sonstiges'];
+const RECIPE_CATEGORIES = ['Frühstück','Nudelgericht','Salat','Suppe','Auflauf','Pfannengericht','Curry','Fisch','Dessert','Snack','Sonstiges'];
+
+function guessRecipeCategory(name, desc) {
+  const t = ((name || '') + ' ' + (desc || '')).toLowerCase();
+  if (/pfannkuchen|pancake|oats|rührei|müsli|porridge|granola|toast|brötchen/.test(t)) return 'Frühstück';
+  if (/pasta|nudel|spaghetti|penne|lasagne|pesto|tagliatelle|gnocchi|fettuccine/.test(t)) return 'Nudelgericht';
+  if (/salat|bowl|coleslaw|vinaigrette/.test(t)) return 'Salat';
+  if (/suppe|eintopf|brühe|chowder|bisque/.test(t)) return 'Suppe';
+  if (/auflauf|gratin|ofengericht|casserole/.test(t)) return 'Auflauf';
+  if (/curry/.test(t)) return 'Curry';
+  if (/pfanne|wok|stir.fry|hack.pfanne|gemüse.pfanne/.test(t)) return 'Pfannengericht';
+  if (/lachs|fisch|thunfisch|garnele|shrimp|forelle|dorsch|tilapia/.test(t)) return 'Fisch';
+  if (/dessert|kuchen|torte|muffin|brownies|eis|pudding|mousse|cheesecake/.test(t)) return 'Dessert';
+  if (/snack|riegel|dip|hummus|chips/.test(t)) return 'Snack';
+  return 'Sonstiges';
+}
 
 const RECIPE_SORT_OPTIONS = [
   { id:'az',      label:'A–Z'     },
@@ -5097,13 +5116,22 @@ function rbRemove(i) {
 }
 
 let rbSelectedCategory = 'Sonstiges';
+let rbCategoryManuallySet = false;
 
 function renderRbCategoryChips() {
   const el = document.getElementById('rbCategoryChips');
   if (!el) return;
   el.innerHTML = RECIPE_CATEGORIES.map(c =>
-    `<button class="chip${rbSelectedCategory===c?' on':''}" onclick="rbSelectedCategory='${c}';renderRbCategoryChips()">${c}</button>`
+    `<button class="chip${rbSelectedCategory===c?' on':''}" onclick="rbSelectedCategory='${c}';rbCategoryManuallySet=true;renderRbCategoryChips()">${c}</button>`
   ).join('');
+}
+
+function rbAutoCategory() {
+  if (rbCategoryManuallySet) return;
+  const name = (document.getElementById('rbNameIn') || {}).value || '';
+  const desc = (document.getElementById('rbDescIn') || {}).value || '';
+  rbSelectedCategory = guessRecipeCategory(name, desc);
+  renderRbCategoryChips();
 }
 
 function openRecipeSaveSheet() {
@@ -5113,7 +5141,8 @@ function openRecipeSaveSheet() {
   document.getElementById('rbEmojiIn').value    = r ? r.emoji       : '';
   document.getElementById('rbPortionsIn').value = r ? r.servings    : 4;
   document.getElementById('rbDescIn').value     = r ? (r.description || '') : '';
-  rbSelectedCategory = (r && r.category) ? r.category : 'Sonstiges';
+  rbCategoryManuallySet = !!(r && r.category);
+  rbSelectedCategory = (r && r.category) ? r.category : guessRecipeCategory(r ? r.name : '', r ? r.description : '');
   renderRbCategoryChips();
   initRbSteps(r ? (r.steps || []) : []);
   document.getElementById('rbDeleteBtn').style.display = rbEditId ? '' : 'none';
