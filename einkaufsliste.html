@@ -4452,6 +4452,38 @@ function _initDefaultRecipes() {
 }
 _initDefaultRecipes();
 
+// Neue Default-Rezepte einzeln nachrüsten (läuft auch wenn defaults bereits vorhanden)
+(function _addNewDefaults() {
+  const g = (name, emoji, qty, unit, amountG, kcal, prot, carb, fat, price, unitG, catalogUnit) => ({
+    name, emoji, qty, unit, amountG,
+    kcalPer100: kcal, proteinPer100: prot, carbsPer100: carb, fatPer100: fat,
+    unitPrice: price, unitG, catalogUnit, custom: false
+  });
+  if (!recipes['default_11']) {
+    recipes['default_11'] = {
+      id: 'default_11', name: 'Snickers Overnight Oats', emoji: '🍫', servings: 1,
+      description: 'Overnight Oats im Snickers-Style – gesund, günstig und für unter 2 €.',
+      steps: [
+        'Haferflocken, Chiasamen, Kakaopulver, Agavendicksaft, Erdnüsse, Erdnussmus und eine Prise Salz vermengen.',
+        'Alles in ein Glas füllen.',
+        'Schokolade mit Kokosöl schmelzen, zusammen mit Erdnussmus als Topping draufgeben.',
+        'Mindestens 1 Stunde oder über Nacht im Kühlschrank ziehen lassen.'
+      ],
+      ingredients: [
+        g('Haferflocken','🌾',55,'g',55,357,13,61,7.0,1.19,500,'500g'),
+        g('Chiasamen','🌱',8,'g',8,486,17,42,31,2.99,100,'100g'),
+        g('Kakaopulver','🍫',8,'g',8,228,21,27,11,2.99,250,'250g'),
+        {name:'Agavendicksaft',emoji:'🍯',qty:22,unit:'g',amountG:22,kcalPer100:310,proteinPer100:0.1,carbsPer100:76,fatPer100:0.1,unitPrice:2.99,unitG:350,catalogUnit:'350g',custom:false},
+        g('Erdnüsse','🥜',10,'g',10,567,26,18,50,1.49,200,'200g'),
+        g('Erdnussbutter','🥜',23,'g',23,588,25,20,50,2.49,500,'500g'),
+        g('Zartbitterschokolade','🍫',20,'g',20,535,5.2,54,33,1.49,200,'200g'),
+        g('Kokosfett','🥥',2,'g',2,884,0,0,100,2.99,500,'500ml'),
+      ]
+    };
+    localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
+  }
+})();
+
 function saveRecipes() {
   localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
   if (activeTab === 'liste') renderListRecipes();
