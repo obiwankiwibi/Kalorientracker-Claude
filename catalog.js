@@ -1121,5 +1121,16 @@ const SUGGESTIONS = [
 {name:'Matcha Pulver',      emoji:'🍵',cat:'Kaffee',    price:7.99,unit:'100g',    kcal:324,protein:30, carbs:38,  fat:5.3},
 {name:'Kakao Pulver',       emoji:'🍫',cat:'Kaffee',    price:2.99,unit:'250g',    kcal:228,protein:21, carbs:27,  fat:11},
 {name:'Heiße Schokolade Px',emoji:'🍫',cat:'Kaffee',    price:2.49,unit:'250g',    kcal:381,protein:5.5,carbs:68,  fat:8.5},
+// ── Neu: Rezeptzutaten ────────────────────────────────────────────────────
+{name:'Spiralnudeln',       emoji:'🍝',cat:'Grundnahrung',price:0.99,unit:'500g',   kcal:350,protein:12, carbs:70,  fat:1.5},
+{name:'Bandnudeln',         emoji:'🍝',cat:'Grundnahrung',price:1.29,unit:'500g',   kcal:350,protein:12, carbs:70,  fat:1.5},
+{name:'Mettwürstchen',      emoji:'🌭',cat:'Fleisch',     price:1.99,unit:'250g',   kcal:310,protein:13, carbs:1.0, fat:28},
+{name:'Paprikawurst',       emoji:'🌭',cat:'Fleisch',     price:1.99,unit:'200g',   kcal:350,protein:14, carbs:1.5, fat:32},
+{name:'Kochschinken',       emoji:'🥩',cat:'Fleisch',     price:1.49,unit:'200g',   kcal:118,protein:18, carbs:1.0, fat:4.5},
+{name:'Schinkenwürfel',     emoji:'🥩',cat:'Fleisch',     price:1.29,unit:'150g',   kcal:170,protein:18, carbs:1.5, fat:10},
+{name:'Cremefine',          emoji:'🥛',cat:'Milch',       price:0.99,unit:'200g',   kcal:155,protein:2.5,carbs:4.5, fat:14},
+{name:'Fleischbrühe',       emoji:'🍲',cat:'Grundnahrung',price:0.89,unit:'500ml',  kcal:8,  protein:0.8,carbs:0.8, fat:0.2},
+{name:'Brühepulver',        emoji:'🍲',cat:'Grundnahrung',price:1.29,unit:'150g',   kcal:220,protein:8.0,carbs:35,  fat:6.0},
+{name:'Thunfisch im eigenen Saft',emoji:'🐟',cat:'Konserven',price:0.99,unit:'185g',kcal:116,protein:26, carbs:0.0, fat:1.0},
 ];
 
