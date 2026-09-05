@@ -4856,7 +4856,12 @@ function renderRecipes() {
   renderRecipeSortRow();
   const list = document.getElementById('recipeList');
   let ids = Object.keys(recipes);
-  if (recipeSearch) ids = ids.filter(id => recipes[id].name.toLowerCase().includes(recipeSearch));
+  if (recipeSearch) ids = ids.filter(id => {
+    const r = recipes[id];
+    if (r.name.toLowerCase().includes(recipeSearch)) return true;
+    if (r.description && r.description.toLowerCase().includes(recipeSearch)) return true;
+    return (r.ingredients || []).some(ing => ing.name.toLowerCase().includes(recipeSearch));
+  });
   if (recipeCatFilter) ids = ids.filter(id => (recipes[id].category || 'Sonstiges') === recipeCatFilter);
   if (!ids.length) {
     list.innerHTML = Object.keys(recipes).length
