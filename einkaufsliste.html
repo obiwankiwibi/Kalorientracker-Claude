@@ -2116,13 +2116,19 @@ function calcMultiplier(amount, unit) {
 
 function calcTotal() {
   let total = 0, hasPrices = false;
-  const allItems = Object.values(items);
-  allItems.forEach(it => {
+  // Group same-named items so shared ingredients count as one purchase
+  const grouped = {};
+  Object.values(items).forEach(it => {
     const sug = getSug(it.name);
-    if (sug?.price != null) {
-      total += sug.price * calcMultiplier(it.amount, sug.unit);
-      hasPrices = true;
-    }
+    if (sug?.price == null) return;
+    const k = it.name.toLowerCase().trim();
+    if (!grouped[k]) grouped[k] = { sug, rawMult: 0 };
+    grouped[k].rawMult += calcMultiplier(it.amount, sug.unit);
+  });
+  Object.values(grouped).forEach(({ sug, rawMult }) => {
+    // Round up to whole packs — can't buy a fraction of a package
+    total += sug.price * Math.ceil(rawMult);
+    hasPrices = true;
   });
 
   const bar = document.getElementById('priceBar');
@@ -6305,7 +6311,9 @@ function planItemKey(name) {
 }
 
 function planCalcTotalPrice(days) {
-  let total = 0;
+  // Combine shared ingredients across all recipes first, then round up to whole packs.
+  // This avoids counting "1 bottle of olive oil per recipe" when one bottle covers all.
+  const combined = {}; // normalized name → {amountG, unitG, unitPrice}
   days.forEach(d => {
     PLAN_MEALS.forEach(meal => {
       const key = planKey(planDateStr(d), meal.id);
@@ -6316,11 +6324,16 @@ function planCalcTotalPrice(days) {
       const scale = (slot.servings || 1) / (r.servings || 1);
       r.ingredients.forEach(ing => {
         if (!ing.unitPrice || !ing.unitG) return;
-        const totalG = (ing.amountG || 0) * scale;
-        const packs = Math.ceil(totalG / (ing.unitG || 100));
-        total += packs * (ing.unitPrice || 0);
+        const k = ing.name.toLowerCase().trim();
+        const g = (ing.amountG || 0) * scale;
+        if (!combined[k]) combined[k] = { amountG: 0, unitG: ing.unitG, unitPrice: ing.unitPrice };
+        combined[k].amountG += g;
       });
     });
+  });
+  let total = 0;
+  Object.values(combined).forEach(c => {
+    total += Math.ceil(c.amountG / c.unitG) * c.unitPrice;
   });
   return total;
 }
