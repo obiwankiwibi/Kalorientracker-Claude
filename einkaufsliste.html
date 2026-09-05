@@ -691,6 +691,9 @@ html { height: 100%; }
     .recipe-name { flex:1; font-size:16px; font-weight:700; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
     .recipe-cat-badge { font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px; background:var(--active); color:#fff; opacity:.85; white-space:nowrap; }
     .recipe-portions { font-size:12px; color:var(--muted); }
+    .recipe-offer-hint { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:600; color:#cd2814; background:rgba(205,40,20,0.1); border-radius:8px; padding:4px 8px; margin:6px 0 2px; flex-wrap:wrap; }
+    .recipe-offer-hint-count { background:rgba(205,40,20,0.85); color:#fff; border-radius:5px; padding:1px 5px; font-size:10px; }
+    .list-recipe-tile-offer { font-size:10px; font-weight:700; color:#cd2814; margin-top:1px; }
     .recipe-macros { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; background:var(--card); border-radius:12px; padding:10px 8px; margin-bottom:12px; }
     .recipe-macro { display:flex; flex-direction:column; align-items:center; gap:2px; }
     .macro-val { font-size:15px; font-weight:700; }
@@ -5592,6 +5595,13 @@ function recipeStats(r) {
 }
 
 // ── Recipe card helpers ──────────────────────────────────────────
+function recipeOfferIngredients(r) {
+  if (!allOffers.length) return [];
+  return (r.ingredients || [])
+    .filter(i => !i.custom && getMatchingOffer(i.name))
+    .map(i => ({ name: i.name, offer: getMatchingOffer(i.name) }));
+}
+
 function recipeCardHTML(id, r) {
   const s = r.servings || 1;
   const {kcal:totalKcal, p:totalP, c:totalC, f:totalF, price:totalPrice} = recipeStats(r);
@@ -5600,6 +5610,13 @@ function recipeCardHTML(id, r) {
   const ingrCount = r.ingredients.length;
   const priceStr = totalPrice ? ` · ca. ${totalPrice.toFixed(2).replace('.',',')} €` : '';
   const catLabel = r.category ? `<span class="recipe-cat-badge">${r.category}</span>` : '';
+  const offerIngs = recipeOfferIngredients(r);
+  const offerHint = offerIngs.length
+    ? `<div class="recipe-offer-hint">
+        <span class="recipe-offer-hint-count">🏷️ ${offerIngs.length}</span>
+        <span>${offerIngs.map(o => esc(o.name)).join(', ')} im Angebot</span>
+       </div>`
+    : '';
   const cardImgs = recipeImageCache[id] || [];
   const imgStrip = cardImgs.length
     ? `<div class="recipe-img-strip">${cardImgs.map((img,i) => `<img src="${img.dataUrl}" loading="lazy" onclick="openLightbox('${id}',${i})">`).join('')}</div>`
@@ -5612,6 +5629,7 @@ function recipeCardHTML(id, r) {
         <div class="recipe-portions">${s} Portion${s!==1?'en':''} · ${ingrCount} Zutat${ingrCount!==1?'en':''}${priceStr}</div>
       </div>
     </div>
+    ${offerHint}
     ${hasNutrition ? `<div class="recipe-macros">
       <div class="recipe-macro"><span class="macro-val" style="color:var(--active)">${perServing(totalKcal)}</span><span class="macro-lbl">kcal</span></div>
       <div class="recipe-macro"><span class="macro-val" style="color:#5bbf7e">${perServing(totalP)}g</span><span class="macro-lbl">Eiweiß</span></div>
@@ -5631,11 +5649,14 @@ function recipeCardHTML(id, r) {
 function recipeTileHTML(id, r) {
   const s = r.servings || 4;
   const ings = (r.ingredients || []).filter(i => !i.custom).length;
+  const offerCount = recipeOfferIngredients(r).length;
+  const offerTag = offerCount ? `<div class="list-recipe-tile-offer">🏷️ ${offerCount} im Angebot</div>` : '';
   return `<div class="list-recipe-tile" onclick="addRecipeToList('${id}')">
     <span style="font-size:28px;flex-shrink:0;">${r.emoji || '🍽️'}</span>
     <div style="flex:1;min-width:0;">
       <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name}</div>
       <div style="font-size:12px;color:var(--muted);">${ings} Zutat${ings !== 1 ? 'en' : ''} · ${s} Portion${s !== 1 ? 'en' : ''}</div>
+      ${offerTag}
     </div>
     <span style="font-size:20px;flex-shrink:0;color:var(--active);">🛒</span>
   </div>`;
