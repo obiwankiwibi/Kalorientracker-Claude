@@ -6777,17 +6777,21 @@ function _doAddToList(days, markSent) {
   const entries = Object.values(agg);
   entries.forEach(({ ing, totalG }) => {
     const id = planItemKey(ing.name);
+    const sug = getSug(ing.name);
+    const unitPrice   = sug?.price    ?? ing.unitPrice   ?? null;
+    const unitG       = sug ? parseUnitG(sug.unit) : (ing.unitG || 100);
+    const catalogUnit = sug?.unit     ?? ing.catalogUnit ?? null;
     persist(id, {
       name: ing.name,
-      emoji: ing.emoji || '🛒',
-      amount: planFmtAmt(totalG, ing),
-      kcalPer100: ing.kcalPer100,
-      proteinPer100: ing.proteinPer100,
-      carbsPer100: ing.carbsPer100,
-      fatPer100: ing.fatPer100,
-      unitPrice: ing.unitPrice,
-      unitG: ing.unitG,
-      catalogUnit: ing.catalogUnit,
+      emoji: sug?.emoji ?? ing.emoji ?? '🛒',
+      amount: planFmtAmt(totalG, { unitG, catalogUnit }),
+      kcalPer100:    sug?.kcal    ?? ing.kcalPer100    ?? 0,
+      proteinPer100: sug?.protein ?? ing.proteinPer100 ?? 0,
+      carbsPer100:   sug?.carbs   ?? ing.carbsPer100   ?? 0,
+      fatPer100:     sug?.fat     ?? ing.fatPer100     ?? 0,
+      unitPrice,
+      unitG,
+      catalogUnit,
       checked: false,
       _fromPlan: true,
     });
