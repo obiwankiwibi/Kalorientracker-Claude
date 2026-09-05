@@ -2129,14 +2129,17 @@ function calcTotal() {
   const grouped = {};
   Object.values(items).forEach(it => {
     const sug = getSug(it.name);
-    if (sug?.price == null) return;
+    // Use catalog price first; fall back to stored unitPrice (from plan-sourced items)
+    const price = sug?.price ?? it.unitPrice ?? null;
+    const unit  = sug?.unit  ?? it.catalogUnit ?? null;
+    if (price == null) return;
     const k = it.name.toLowerCase().trim();
-    if (!grouped[k]) grouped[k] = { sug, rawMult: 0 };
-    grouped[k].rawMult += calcMultiplier(it.amount, sug.unit);
+    if (!grouped[k]) grouped[k] = { price, unit, rawMult: 0 };
+    grouped[k].rawMult += calcMultiplier(it.amount, unit || '');
   });
-  Object.values(grouped).forEach(({ sug, rawMult }) => {
+  Object.values(grouped).forEach(({ price, rawMult }) => {
     // Round up to whole packs — can't buy a fraction of a package
-    total += sug.price * Math.ceil(rawMult);
+    total += price * Math.ceil(rawMult);
     hasPrices = true;
   });
 
@@ -2488,16 +2491,20 @@ function tile(type, it) {
 
   // ── Normale Kachel ──
   const sug = getSug(it.name);
+  const tilePrice = sug?.price ?? it.unitPrice ?? null;
+  const tileUnit  = sug?.unit  ?? it.catalogUnit ?? null;
   let priceHtml = '';
   if (it.isOffer && it.offerPrice != null) {
     const col = HAENDLER_COLORS[it.offerHaendler] || '#fff';
     priceHtml = `<div class="tile-offer-badge">${esc(it.offerHaendler || '')} ${Number(it.offerPrice).toFixed(2).replace('.',',')} €</div>`;
-  } else if (sug?.price != null) {
-    const mult = calcMultiplier(it.amount, sug.unit);
+  } else if (tilePrice != null) {
+    const mult = calcMultiplier(it.amount, tileUnit || '');
     if (mult > 1) {
-      priceHtml = `<div class="tile-price">${fmtPrice(sug.price * mult)}</div>`;
-    } else {
+      priceHtml = `<div class="tile-price">${fmtPrice(tilePrice * mult)}</div>`;
+    } else if (sug) {
       priceHtml = sugPriceHtml(sug);
+    } else {
+      priceHtml = `<div class="tile-price">${fmtPrice(tilePrice)}/${tileUnit || 'Pkg'}</div>`;
     }
   }
   const storeBadge = it.store ? `<div class="tile-store">${esc(it.store)}</div>` : '';
@@ -5247,7 +5254,12 @@ function doKiImport() {
   }
 
   renderWochenplan && renderWochenplan();
-  setTimeout(() => { closeKiImport(); showTab('woche'); }, vorschlaege?.length ? 5000 : 1800);
+  if (Array.isArray(vorschlaege) && vorschlaege.length) {
+    // Don't auto-close — user may want to import the suggested recipes first
+    showTab('woche');
+  } else {
+    setTimeout(() => { closeKiImport(); showTab('woche'); }, 1800);
+  }
 }
 
 function importSuggestedRecipes() {
@@ -6736,6 +6748,7 @@ function _doAddToList(days, markSent) {
       if (!r || !r.ingredients) return;
       const scale = (slot.servings || 1) / (r.servings || 1);
       r.ingredients.forEach(ing => {
+        if (ing.custom) return;
         const k = ing.name.toLowerCase().trim();
         if (agg[k]) {
           agg[k].totalG += (ing.amountG || 0) * scale;
