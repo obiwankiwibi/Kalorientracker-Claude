@@ -1416,6 +1416,7 @@ html { height: 100%; }
   <div style="display:flex;align-items:center;gap:6px">
     <span>🛒</span>
     <span id="priceCount"></span>
+    <button onclick="clearAllItems()" title="Liste leeren" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:0 2px;opacity:0.6;line-height:1;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🗑</button>
   </div>
   <span id="priceTotal">0,00 €</span>
 </div>
@@ -2968,6 +2969,13 @@ function confirmShoppingDone() {
   closeShoppingDonePrompt();
   Object.keys(items).forEach(id => persist(id, null));
   toast('✅ Einkauf erledigt – Liste geleert!');
+}
+
+function clearAllItems() {
+  if (!Object.keys(items).length) return;
+  if (!confirm('Alle Artikel aus der Liste löschen?')) return;
+  Object.keys(items).forEach(id => persist(id, null));
+  toast('🗑 Liste geleert');
 }
 
 function addCustom() {
