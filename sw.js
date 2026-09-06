@@ -1,6 +1,6 @@
-/* cache: 20260906T163000 */
+/* cache: 20260906T165000 */
 /* push: enabled */
-const CACHE = 'kt-v60';
+const CACHE = 'kt-v61';
 const PRECACHE = [
   './',
   './index.html',
@@ -28,7 +28,9 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      Promise.all(keys
+        .filter(k => k !== CACHE && !k.startsWith('transformers'))
+        .map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
