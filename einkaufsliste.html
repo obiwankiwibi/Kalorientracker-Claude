@@ -2158,7 +2158,18 @@ function parseGrams(s) {
 }
 function parseLiters(s) {
   if (!s) return null;
-  const m = s.trim().match(/^([\d,]+)\s*[Ll]$/);
+  const m = s.trim().match(/^([\d,]+)\s*(ml|cl|dl|[Ll])$/i);
+  if (!m) return null;
+  const v = parseFloat(m[1].replace(',', '.'));
+  const u = m[2].toLowerCase();
+  if (u === 'ml') return v / 1000;
+  if (u === 'cl') return v / 100;
+  if (u === 'dl') return v / 10;
+  return v;
+}
+function parsePieces(s) {
+  if (!s) return null;
+  const m = s.trim().match(/^([\d,]+)\s*(st\.?|stk\.?|stück)$/i);
   if (!m) return null;
   return parseFloat(m[1].replace(',', '.'));
 }
@@ -2169,7 +2180,9 @@ function calcMultiplier(amount, unit) {
   if (aG !== null && uG !== null) return aG / uG;
   const aL = parseLiters(amount), uL = parseLiters(unit);
   if (aL !== null && uL !== null) return aL / uL;
-  // Non-metric units (Stück, Bund, Knolle, …): parse leading number
+  const aP = parsePieces(amount), uP = parsePieces(unit);
+  if (aP !== null && uP !== null) return aP / uP;
+  // Non-metric units (Bund, Knolle, …): parse leading number
   const m = amount.trim().match(/^([\d,]+)\s+.+$/);
   if (m) return parseFloat(m[1].replace(',', '.')) || 1;
   return 1;
