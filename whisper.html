@@ -1136,6 +1136,21 @@ function stopLocalRecord() {
   clearLocalWave();
 }
 
+// Whisper requires audio at exactly 16 kHz – resample here rather than
+// relying on Transformers.js internal resampling (unreliable in WASM builds).
+async function resampleTo16k(audioBuffer) {
+  const TARGET = 16000;
+  if (audioBuffer.sampleRate === TARGET) return audioBuffer.getChannelData(0);
+  const frames = Math.ceil(audioBuffer.duration * TARGET);
+  const offCtx = new OfflineAudioContext(1, frames, TARGET);
+  const src = offCtx.createBufferSource();
+  src.buffer = audioBuffer;
+  src.connect(offCtx.destination);
+  src.start(0);
+  const rendered = await offCtx.startRendering();
+  return rendered.getChannelData(0);
+}
+
 async function runLocalTranscription(chunks, mime) {
   if (!localTranscriber) return;
   document.getElementById('localMicStatus').textContent = 'Transkribiert lokal…';
@@ -1144,29 +1159,46 @@ async function runLocalTranscription(chunks, mime) {
 
   try {
     const blob = new Blob(chunks, { type: mime || 'audio/webm' });
-    const arrayBuf = await blob.arrayBuffer();
 
-    // Decode to Float32 at original sample rate
+    if (blob.size < 1000) {
+      showToast('Aufnahme zu kurz oder leer', 'error');
+      return;
+    }
+
+    const arrayBuf = await blob.arrayBuffer();
     const decCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const audioBuf = await decCtx.decodeAudioData(arrayBuf);
-    decCtx.close();
-    const float32 = audioBuf.getChannelData(0);
+    let audioBuf;
+    try {
+      audioBuf = await decCtx.decodeAudioData(arrayBuf);
+    } finally {
+      decCtx.close();
+    }
+
+    if (audioBuf.duration < 0.3) {
+      showToast('Aufnahme zu kurz (min. 0,3 s)', 'error');
+      return;
+    }
+
+    document.getElementById('localMicStatus').textContent = 'Resample & Erkennung…';
+    const float32 = await resampleTo16k(audioBuf);
 
     const lang = document.getElementById('langSelect').value;
     const langCode = lang === 'auto' ? null : lang.split('-')[0];
 
-    const opts = { sampling_rate: audioBuf.sampleRate, task: 'transcribe' };
+    const opts = { sampling_rate: 16000, task: 'transcribe' };
     if (langCode) opts.language = langCode;
 
     const result = await localTranscriber(float32, opts);
-    const text = (Array.isArray(result) ? result[0]?.text : result?.text)?.trim() || '';
+    const raw = (Array.isArray(result) ? result[0]?.text : result?.text) || '';
+    // Whisper sometimes returns only punctuation/whitespace for silence
+    const text = raw.replace(/^[\s.,!?…]+$/, '').trim();
 
     if (text) {
       const cur = getTranscriptText();
       setTranscriptText(cur ? cur + '\n' + text : text);
       showToast('Lokal transkribiert ✓', 'success');
     } else {
-      showToast('Keine Sprache erkannt', 'error');
+      showToast('Keine Sprache erkannt – lauter sprechen oder Auto-Sprache wählen', 'error');
     }
   } catch(e) {
     showToast('Fehler: ' + e.message, 'error');
