@@ -701,7 +701,10 @@
     <!-- Wochenplan Vorschläge -->
     <div id="planHint" style="display:none;margin-bottom:10px;"></div>
     <!-- Kachel-Auswahl -->
-    <div class="kal-cat-chips" id="kalCatChips"></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:0;">
+      <div class="kal-cat-chips" id="kalCatChips" style="flex:1;min-width:0;margin-bottom:0;"></div>
+      <button id="kalSortBtn" class="kal-cat-chip kal-sort-btn" onclick="cycleKalSort()" style="flex-shrink:0;margin-bottom:8px;">⇅</button>
+    </div>
     <div class="kal-tile-grid" id="kalTileGrid"></div>
     <div class="kal-foto-row">
       <button class="kal-foto-btn" type="button" onclick="openKalFoto()">📷 Foto aufnehmen</button>
@@ -1695,7 +1698,7 @@ function closeModal(id){ document.getElementById(id).classList.remove('open'); i
 /* ---------- Kalorien-Kachelraster ---------- */
 let kalActiveCat = null;
 let kalSortMode  = null; // null | 'name' | 'kcal-asc' | 'kcal-desc'
-const KAL_SORT_LABELS = { null: '↕', name: 'A–Z', 'kcal-asc': 'kcal ↑', 'kcal-desc': 'kcal ↓' };
+const KAL_SORT_LABELS = { null: '⇅', name: 'A–Z', 'kcal-asc': 'kcal↑', 'kcal-desc': 'kcal↓' };
 
 function cycleKalSort() {
   const states = [null, 'name', 'kcal-asc', 'kcal-desc'];
@@ -1707,13 +1710,15 @@ function renderKalTiles(filter) {
   kalActiveCat = filter;
   const cats = ['Alle', ...new Set(FOOD_DB.map(f => f.cat))];
   const chipsEl = document.getElementById('kalCatChips');
-  const sortLabel = KAL_SORT_LABELS[kalSortMode] ?? '↕';
-  chipsEl.innerHTML =
-    cats.map(c =>
-      `<button class="kal-cat-chip${(!filter && c==='Alle') || filter===c ? ' active' : ''}" onclick="renderKalTiles(${c==='Alle' ? 'null' : `'${c}'`})">${c}</button>`
-    ).join('') +
-    `<span class="kal-sort-sep"></span>` +
-    `<button class="kal-cat-chip kal-sort-btn${kalSortMode ? ' active' : ''}" onclick="cycleKalSort()">⇅ ${sortLabel}</button>`;
+  chipsEl.innerHTML = cats.map(c =>
+    `<button class="kal-cat-chip${(!filter && c==='Alle') || filter===c ? ' active' : ''}" onclick="renderKalTiles(${c==='Alle' ? 'null' : `'${c}'`})">${c}</button>`
+  ).join('');
+  const sortBtn = document.getElementById('kalSortBtn');
+  if (sortBtn) {
+    const sortLabel = KAL_SORT_LABELS[kalSortMode] ?? '⇅';
+    sortBtn.textContent = sortLabel;
+    sortBtn.classList.toggle('active', !!kalSortMode);
+  }
 
   let items = filter ? FOOD_DB.filter(f => f.cat === filter) : FOOD_DB;
   if (kalSortMode === 'name')      items = [...items].sort((a,b) => a.name.localeCompare(b.name, 'de'));
