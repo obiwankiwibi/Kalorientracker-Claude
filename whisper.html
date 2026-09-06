@@ -511,7 +511,7 @@
         <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
       </div>
 
-      <button class="init-btn" id="initBtn" onclick="initLocalModel()">Modell laden</button>
+      <button class="init-btn" id="initBtn" onclick="initLocalModel(true)" style="display:none">Nochmal versuchen</button>
 
       <!-- Local mic (shown once model is ready) -->
       <div class="local-mic-zone" id="localMicZone">
@@ -706,6 +706,7 @@ function setMode(mode) {
 
   if (mode === 'browser') setMicStatus('Tippen zum Aufnehmen', '');
   else if (mode === 'whisper') setMicStatus('Aufnehmen → Whisper API transkribiert', '');
+  else if (mode === 'local') initLocalModel();
 }
 
 // ── Local model ──
@@ -715,17 +716,16 @@ function selectModel(name, save = true) {
   document.getElementById('optBase').classList.toggle('selected', name === 'base');
   if (save) localStorage.setItem(LS_MODEL, name);
   // If a different model is now selected and one was loaded, reset
-  if (localModelReady && localTranscriber && localTranscriber._modelId !== name) {
+  if (localTranscriber && localTranscriber._modelId !== name) {
     localModelReady = false;
     localTranscriber = null;
-    setLocalStatus('dot', '');
-    setLocalStatus('text', 'Anderes Modell gewählt – neu laden');
-    document.getElementById('initBtn').style.display = 'block';
     document.getElementById('localMicZone').classList.remove('ready');
+    if (currentMode === 'local') initLocalModel();
   }
 }
 
-async function initLocalModel() {
+async function initLocalModel(force = false) {
+  if (localModelReady && !force) return;
   if (localModelLoading) return;
   localModelLoading = true;
   document.getElementById('initBtn').disabled = true;
@@ -776,7 +776,7 @@ async function initLocalModel() {
     setLocalStatus('text', 'Fehler: ' + e.message);
     showProgress(false, '', 0);
     document.getElementById('initBtn').disabled = false;
-    document.getElementById('initBtn').textContent = 'Nochmal versuchen';
+    document.getElementById('initBtn').style.display = 'block';
     showToast('Fehler beim Laden: ' + e.message, 'error');
   } finally {
     localModelLoading = false;
