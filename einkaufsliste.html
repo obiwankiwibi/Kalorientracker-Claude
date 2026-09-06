@@ -6367,12 +6367,18 @@ function rtlRenderIngredients(portions, baseServings) {
   document.getElementById('rtlInfo').textContent =
     `${ings.length} Zutat${ings.length !== 1 ? 'en' : ''} · Basis: ${baseServings} Portion${baseServings !== 1 ? 'en' : ''}`;
   document.getElementById('rtlIngList').innerHTML = ings.map(ing => {
-    const scaledG = (ing.amountG || 0) * scale;
     const amtStr = rtlFormatAmt(ing, scale);
+    const offer  = getMatchingOffer(ing.name);
+    const offerTag = offer
+      ? `<span style="font-size:10px;font-weight:700;color:#fff;background:rgba(205,40,20,0.88);border-radius:5px;padding:1px 5px;white-space:nowrap;">🏷️ ${esc(offer.haendler)} ${Number(offer.preis).toFixed(2).replace('.',',')} €</span>`
+      : '';
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);">
       <span style="font-size:20px;flex-shrink:0;">${ing.emoji || '🥗'}</span>
-      <span style="flex:1;font-size:13px;">${ing.name}</span>
-      <span style="font-size:12px;color:var(--muted);font-weight:600;">${amtStr}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;">${ing.name}</div>
+        ${offerTag ? `<div style="margin-top:2px;">${offerTag}</div>` : ''}
+      </div>
+      <span style="font-size:12px;color:var(--muted);font-weight:600;flex-shrink:0;">${amtStr}</span>
     </div>`;
   }).join('');
 }
@@ -6404,7 +6410,13 @@ function confirmRecipeToList() {
     if (ing.custom) return;
     const amtStr = rtlFormatAmt(ing, scale);
     const id = 'i_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
-    persist(id, { name: ing.name, emoji: ing.emoji || '', amount: amtStr, store: '', checked: false, addedAt: Date.now() });
+    const sug = getSug(ing.name);
+    persist(id, {
+      name: ing.name, emoji: ing.emoji || '', amount: amtStr, store: '', checked: false, addedAt: Date.now(),
+      unitPrice:   ing.unitPrice ?? sug?.price  ?? null,
+      unitG:       ing.unitG     ?? (sug?.unit ? parseUnitG(sug.unit) : null),
+      catalogUnit: ing.catalogUnit ?? sug?.unit ?? null,
+    });
     added++;
   });
   closeRecipeToList();
