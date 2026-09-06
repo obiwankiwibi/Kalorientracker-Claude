@@ -5631,7 +5631,8 @@ function recipeCardHTML(id, r) {
   const perServing = v => Math.round(v / s);
   const hasNutrition = r.ingredients.some(i => !i.custom);
   const ingrCount = r.ingredients.length;
-  const priceStr = totalPrice ? ` · ca. ${totalPrice.toFixed(2).replace('.',',')} €` : '';
+  const pricePerServing = totalPrice && s ? totalPrice / s : 0;
+  const priceStr = pricePerServing ? ` · ca. ${pricePerServing.toFixed(2).replace('.',',')} €/Port.` : '';
   const catLabel = r.category ? `<span class="recipe-cat-badge">${r.category}</span>` : '';
   const offerIngs = recipeOfferIngredients(r);
   const offerHint = offerIngs.length
@@ -5672,13 +5673,15 @@ function recipeCardHTML(id, r) {
 function recipeTileHTML(id, r) {
   const s = r.servings || 4;
   const ings = (r.ingredients || []).filter(i => !i.custom).length;
+  const stats = recipeStats(r);
   const offerCount = recipeOfferIngredients(r).length;
   const offerTag = offerCount ? `<div class="list-recipe-tile-offer">🏷️ ${offerCount} im Angebot</div>` : '';
+  const priceTag = stats.price ? ` · ca. ${(stats.price / s).toFixed(2).replace('.',',')} €/Port.` : '';
   return `<div class="list-recipe-tile" onclick="addRecipeToList('${id}')">
     <span style="font-size:28px;flex-shrink:0;">${r.emoji || '🍽️'}</span>
     <div style="flex:1;min-width:0;">
       <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name}</div>
-      <div style="font-size:12px;color:var(--muted);">${ings} Zutat${ings !== 1 ? 'en' : ''} · ${s} Portion${s !== 1 ? 'en' : ''}</div>
+      <div style="font-size:12px;color:var(--muted);">${ings} Zutat${ings !== 1 ? 'en' : ''} · ${s} Port.${priceTag}</div>
       ${offerTag}
     </div>
     <span style="font-size:20px;flex-shrink:0;color:var(--active);">🛒</span>
@@ -5720,7 +5723,7 @@ function renderRecipes() {
       const s = recipeSortDir;
       if (recipeSort === 'az')      return ra.name.localeCompare(rb.name) * s;
       if (recipeSort === 'kcal')    return (sa.kcal - sb.kcal) * s;
-      if (recipeSort === 'preis')   return (sa.price - sb.price) * s;
+      if (recipeSort === 'preis')   return (sa.price / (ra.servings || 1) - sb.price / (rb.servings || 1)) * s;
       if (recipeSort === 'zutaten') return (ra.ingredients.length - rb.ingredients.length) * s;
       return 0;
     });
