@@ -469,10 +469,12 @@
   .qfc-kcal{font-size:10.5px;color:var(--amber);font-weight:700;opacity:0.85;}
   .quick-favs-label{width:100%;font-size:10px;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-faint);font-weight:700;padding:0 2px;}
   /* ── Kalorien Kachel-Grid (manuell modal) ── */
-  .kal-cat-chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .kal-cat-chips{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
   .kal-cat-chips::-webkit-scrollbar{display:none;}
   .kal-cat-chip{border:1px solid var(--line);background:rgba(0,0,0,0.03);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-soft);white-space:nowrap;transition:background .12s,border-color .12s,color .12s;font-family:inherit;flex-shrink:0;}
   .kal-cat-chip.active{background:rgba(42,140,84,0.14);border-color:rgba(42,140,84,0.45);color:var(--mint);}
+  .kal-sort-sep{display:inline-block;width:1px;background:var(--line);align-self:stretch;margin:2px 2px;flex-shrink:0;}
+  .kal-sort-btn.active{background:rgba(200,75,50,0.10);border-color:rgba(200,75,50,0.35);color:var(--coral);}
   .kal-tile-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px;max-height:220px;overflow-y:auto;scrollbar-width:thin;}
   .kal-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 4px 7px;background:var(--card);border:1px solid var(--line);border-radius:14px;cursor:pointer;transition:border-color .12s,background .12s;-webkit-tap-highlight-color:transparent;}
   .kal-tile:active{background:rgba(42,140,84,0.09);border-color:rgba(42,140,84,0.4);}
@@ -1692,15 +1694,32 @@ function closeModal(id){ document.getElementById(id).classList.remove('open'); i
 
 /* ---------- Kalorien-Kachelraster ---------- */
 let kalActiveCat = null;
+let kalSortMode  = null; // null | 'name' | 'kcal-asc' | 'kcal-desc'
+const KAL_SORT_LABELS = { null: '↕', name: 'A–Z', 'kcal-asc': 'kcal ↑', 'kcal-desc': 'kcal ↓' };
+
+function cycleKalSort() {
+  const states = [null, 'name', 'kcal-asc', 'kcal-desc'];
+  kalSortMode = states[(states.indexOf(kalSortMode) + 1) % states.length];
+  renderKalTiles(kalActiveCat);
+}
 
 function renderKalTiles(filter) {
   kalActiveCat = filter;
   const cats = ['Alle', ...new Set(FOOD_DB.map(f => f.cat))];
   const chipsEl = document.getElementById('kalCatChips');
-  chipsEl.innerHTML = cats.map(c =>
-    `<button class="kal-cat-chip${(!filter && c==='Alle') || filter===c ? ' active' : ''}" onclick="renderKalTiles(${c==='Alle' ? 'null' : `'${c}'`})">${c}</button>`
-  ).join('');
-  const items = filter ? FOOD_DB.filter(f => f.cat === filter) : FOOD_DB;
+  const sortLabel = KAL_SORT_LABELS[kalSortMode] ?? '↕';
+  chipsEl.innerHTML =
+    cats.map(c =>
+      `<button class="kal-cat-chip${(!filter && c==='Alle') || filter===c ? ' active' : ''}" onclick="renderKalTiles(${c==='Alle' ? 'null' : `'${c}'`})">${c}</button>`
+    ).join('') +
+    `<span class="kal-sort-sep"></span>` +
+    `<button class="kal-cat-chip kal-sort-btn${kalSortMode ? ' active' : ''}" onclick="cycleKalSort()">⇅ ${sortLabel}</button>`;
+
+  let items = filter ? FOOD_DB.filter(f => f.cat === filter) : FOOD_DB;
+  if (kalSortMode === 'name')      items = [...items].sort((a,b) => a.name.localeCompare(b.name, 'de'));
+  else if (kalSortMode === 'kcal-asc')  items = [...items].sort((a,b) => a.kcal - b.kcal);
+  else if (kalSortMode === 'kcal-desc') items = [...items].sort((a,b) => b.kcal - a.kcal);
+
   const grid = document.getElementById('kalTileGrid');
   grid.innerHTML = '';
   items.forEach(item => {
@@ -1768,6 +1787,7 @@ function openManual(){
   selectedNutriscore=null;
   document.querySelectorAll('.ns-btn').forEach(b=>b.classList.remove('selected'));
   updateKcalLabel();
+  kalSortMode = null;
   renderKalTiles(null);
   const ft=document.getElementById('kalFotoThumb'); ft.src=''; ft.style.display='none';
   document.getElementById('kalFotoInput').value='';
