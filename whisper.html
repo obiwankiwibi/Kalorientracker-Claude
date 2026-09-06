@@ -422,6 +422,40 @@
       cursor: pointer; text-align: center; font-family: inherit; transition: all 0.15s;
     }
     .fmt-opt.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+    .speed-row {
+      display: flex; gap: 5px; width: 100%; margin-top: 10px;
+    }
+    .speed-btn {
+      flex: 1; padding: 7px 2px; border-radius: 10px;
+      border: 1.5px solid var(--border2); background: var(--layer2);
+      color: var(--muted); font-size: 11px; font-weight: 700;
+      cursor: pointer; text-align: center; font-family: inherit; transition: all 0.15s;
+    }
+    .speed-btn.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+    .loop-btn {
+      width: 100%; padding: 8px; border-radius: 12px; margin-top: 8px;
+      border: 1.5px solid var(--border2); background: var(--layer2);
+      color: var(--muted); font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all 0.15s; text-align: center;
+    }
+    .loop-btn.on { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+    .audd-section {
+      width: 100%; margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid var(--border2);
+    }
+    .audd-key-row { display: flex; gap: 6px; margin-bottom: 8px; }
+    .audd-result {
+      background: var(--layer2); border: 1px solid var(--border2);
+      border-radius: 14px; padding: 14px; margin-top: 8px;
+    }
+    .audd-song-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .audd-song-artist { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .audd-song-meta { font-size: 11px; color: var(--muted); }
+    .audd-link {
+      display: inline-block; margin-top: 8px; padding: 7px 14px;
+      border-radius: 10px; background: var(--accent); color: #fff;
+      font-size: 12px; font-weight: 700; text-decoration: none;
+    }
 
     /* History */
     .history-wrap { width: 100%; max-width: 480px; padding: 14px 16px 0; }
@@ -617,7 +651,30 @@
     <div class="audio-player-wrap" id="audioPlayerWrap" style="display:none;width:100%">
       <div class="audio-player-label">Aufnahme</div>
       <audio id="audioPlayer" controls></audio>
-      <button class="audio-dl-btn" id="audioDlBtn" onclick="downloadAudio()">📥 Aufnahme herunterladen</button>
+
+      <!-- Speed control -->
+      <div class="speed-row" id="speedRow">
+        <button class="speed-btn" onclick="setSpeed(0.5)">0.5×</button>
+        <button class="speed-btn" onclick="setSpeed(0.75)">0.75×</button>
+        <button class="speed-btn selected" id="speed1x" onclick="setSpeed(1)">1×</button>
+        <button class="speed-btn" onclick="setSpeed(1.25)">1.25×</button>
+        <button class="speed-btn" onclick="setSpeed(1.5)">1.5×</button>
+        <button class="speed-btn" onclick="setSpeed(2)">2×</button>
+      </div>
+      <button class="loop-btn" id="loopBtn" onclick="toggleLoop()">🔁 Loop aus</button>
+
+      <!-- AudD music recognition -->
+      <div class="audd-section">
+        <div class="audio-player-label">🎵 Song erkennen (AudD)</div>
+        <div class="audd-key-row">
+          <input class="ollama-input" id="auddKey" placeholder="API-Key (optional, kostenlos bei audd.io)" type="password">
+          <button class="ollama-test-btn" onclick="auddRecognize()">Erkennen</button>
+        </div>
+        <div id="auddStatus" style="font-size:11px;color:var(--muted);min-height:14px"></div>
+        <div id="auddResult" style="display:none"></div>
+      </div>
+
+      <button class="audio-dl-btn" id="audioDlBtn" onclick="downloadAudio()" style="margin-top:10px">📥 Aufnahme herunterladen</button>
     </div>
   </div>
 
@@ -731,6 +788,7 @@ const LS_API  = 'whisper_apikey';
 const LS_MODEL = 'whisper_local_model';
 const LS_OLLAMA_MODEL = 'whisper_ollama_model';
 const LS_OLLAMA_URL   = 'whisper_ollama_url';
+const LS_AUDD         = 'whisper_audd_key';
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
@@ -773,6 +831,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('ollamaUrl').addEventListener('change', () => {
     localStorage.setItem(LS_OLLAMA_URL, document.getElementById('ollamaUrl').value.trim());
     setOllamaConn('', '');
+  });
+
+  // AudD persisted key
+  const savedAudd = localStorage.getItem(LS_AUDD);
+  if (savedAudd) document.getElementById('auddKey').value = savedAudd;
+  document.getElementById('auddKey').addEventListener('change', () => {
+    localStorage.setItem(LS_AUDD, document.getElementById('auddKey').value.trim());
   });
 });
 
@@ -1639,6 +1704,75 @@ function copyOllamaResult() {
   const box = document.getElementById('ollamaResultBox');
   navigator.clipboard.writeText(box.innerText).then(() => showToast('Kopiert ✓', 'success'))
     .catch(() => showToast('Kopieren fehlgeschlagen', 'error'));
+}
+
+// ── Playback speed & loop ──
+
+function setSpeed(rate) {
+  const player = document.getElementById('audioPlayer');
+  if (player) player.playbackRate = rate;
+  document.querySelectorAll('.speed-btn').forEach(b => {
+    b.classList.toggle('selected', parseFloat(b.textContent) === rate);
+  });
+}
+
+function toggleLoop() {
+  const player = document.getElementById('audioPlayer');
+  const btn = document.getElementById('loopBtn');
+  if (!player) return;
+  player.loop = !player.loop;
+  btn.classList.toggle('on', player.loop);
+  btn.textContent = player.loop ? '🔁 Loop an' : '🔁 Loop aus';
+}
+
+// ── AudD music recognition ──
+async function auddRecognize() {
+  if (!audioRecBlob) { showToast('Erst eine Aufnahme erstellen', 'error'); return; }
+  const key = document.getElementById('auddKey').value.trim();
+  if (key) localStorage.setItem(LS_AUDD, key);
+
+  const statusEl = document.getElementById('auddStatus');
+  const resultEl = document.getElementById('auddResult');
+  statusEl.textContent = '🔍 Analysiere…';
+  resultEl.style.display = 'none';
+
+  try {
+    const form = new FormData();
+    const ext = document.getElementById('audioDlBtn').dataset.ext || 'webm';
+    form.append('file', audioRecBlob, 'recording.' + ext);
+    if (key) form.append('api_token', key);
+    form.append('return', 'spotify,apple_music');
+
+    const res = await fetch('https://api.audd.io/', { method: 'POST', body: form });
+    const data = await res.json();
+
+    if (data.status === 'error') {
+      statusEl.textContent = '✗ ' + (data.error?.error_message || 'Fehler');
+      return;
+    }
+    if (!data.result) {
+      statusEl.textContent = '🤷 Kein Song erkannt';
+      return;
+    }
+
+    statusEl.textContent = '';
+    const r = data.result;
+    const spotifyUrl = r.spotify?.external_urls?.spotify;
+    const appleUrl   = r.apple_music?.url;
+
+    resultEl.innerHTML = `
+      <div class="audd-result">
+        <div class="audd-song-title">${r.title || '–'}</div>
+        <div class="audd-song-artist">${r.artist || '–'}</div>
+        <div class="audd-song-meta">${[r.album, r.release_date?.slice(0,4)].filter(Boolean).join(' · ')}</div>
+        ${spotifyUrl ? `<a class="audd-link" href="${spotifyUrl}" target="_blank">🎵 Spotify</a>` : ''}
+        ${appleUrl   ? `<a class="audd-link" href="${appleUrl}"   target="_blank" style="margin-left:6px">🍎 Apple Music</a>` : ''}
+      </div>`;
+    resultEl.style.display = 'block';
+    showToast('Song erkannt ✓', 'success');
+  } catch(e) {
+    statusEl.textContent = '✗ Netzwerkfehler: ' + e.message;
+  }
 }
 </script>
 </body>
