@@ -1430,14 +1430,25 @@ function renderHistory() {
       </div>
       <div class="history-item-actions">
         <button class="hist-btn" onclick="histLoad(${i})">📄 Laden</button>
+        <button class="hist-btn" onclick="histShare(${i})">↗ Teilen</button>
         <button class="hist-btn" onclick="histDownload(${i})">📥 TXT</button>
-        <button class="hist-btn danger" onclick="histDelete(${i})">🗑 Löschen</button>
+        <button class="hist-btn danger" onclick="histDelete(${i})">🗑</button>
       </div>
     </div>`;
   }).join('');
 }
 function loadHistoryItem(i) { const h = loadHistory(); if (h[i]) setTranscriptText(h[i].text); }
 function histLoad(i) { loadHistoryItem(i); showToast('Transkript geladen ✓', 'success'); }
+function histShare(i) {
+  const h = loadHistory(); if (!h[i]) return;
+  const text = h[i].text;
+  if (navigator.share) {
+    navigator.share({ text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('In Zwischenablage kopiert ✓', 'success'))
+      .catch(() => showToast('Teilen nicht verfügbar', 'error'));
+  }
+}
 function histDownload(i) {
   const h = loadHistory(); if (!h[i]) return;
   const d   = new Date(h[i].ts);
