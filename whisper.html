@@ -344,6 +344,47 @@
     .ai-btn.secondary:hover { color: var(--accent); border-color: var(--accent); }
     .ai-btn.ok { background: var(--green); }
 
+    /* Ollama */
+    .ollama-card {
+      width: calc(100% - 32px); max-width: 480px;
+      background: var(--layer1); border: 1.5px solid var(--border);
+      border-radius: 18px; margin: 12px 16px 0; overflow: hidden;
+    }
+    .ollama-url-row { display: flex; gap: 6px; margin-bottom: 8px; }
+    .ollama-input {
+      flex: 1; background: var(--layer2); border: 1px solid var(--border2);
+      border-radius: 10px; padding: 8px 10px; font-size: 12px;
+      color: var(--text); font-family: inherit; outline: none;
+    }
+    .ollama-input:focus { border-color: var(--accent); }
+    .ollama-test-btn {
+      padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border2);
+      background: var(--layer2); color: var(--muted); font-size: 11px;
+      font-weight: 700; cursor: pointer; white-space: nowrap;
+      font-family: inherit; transition: color 0.15s, border-color 0.15s;
+    }
+    .ollama-test-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .ollama-conn { font-size: 11px; color: var(--muted); margin-bottom: 10px; min-height: 16px; }
+    .ollama-conn.ok  { color: #4ade80; }
+    .ollama-conn.err { color: #f87171; }
+    .ollama-result-wrap {
+      width: calc(100% - 32px); max-width: 480px;
+      margin: 12px 16px 0;
+    }
+    .ollama-result-label {
+      font-size: 11px; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+    }
+    .ollama-result-box {
+      background: var(--layer1); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 14px 16px;
+      font-size: 13px; line-height: 1.7; color: var(--text);
+      word-break: break-word; white-space: pre-wrap;
+    }
+    .ollama-result-box strong { font-weight: 700; color: var(--accent); }
+    .ollama-result-actions { display: flex; gap: 8px; margin-top: 10px; }
+
     /* Audio recorder */
     .audio-zone {
       width: 100%; max-width: 480px;
@@ -552,6 +593,16 @@
     <div class="word-count" id="wordCount">0 Wörter · 0 Zeichen</div>
   </div>
 
+  <!-- Ollama result -->
+  <div class="ollama-result-wrap" id="ollamaResultWrap" style="display:none">
+    <div class="ollama-result-label">🦙 Strukturiert (Ollama)</div>
+    <div class="ollama-result-box" id="ollamaResultBox"></div>
+    <div class="ollama-result-actions">
+      <button class="action-btn" onclick="copyOllamaResult()">📋 Kopieren</button>
+      <button class="action-btn" onclick="document.getElementById('ollamaResultWrap').style.display='none'">✕ Schließen</button>
+    </div>
+  </div>
+
   <!-- Audio recorder zone -->
   <div class="audio-zone" id="audioZone">
     <div class="audio-format-row">
@@ -584,6 +635,31 @@
       <div class="ai-btns">
         <button class="ai-btn secondary" onclick="copyPromptOnly()" id="copyPromptBtn">📋 Nur Prompt</button>
         <button class="ai-btn" onclick="copyPromptWithText()" id="copyFullBtn">📋 Prompt + Transkript</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ollama card -->
+  <div class="ollama-card" id="ollamaCard">
+    <div class="ai-card-head" onclick="toggleOllamaCard()">
+      <div class="ai-card-title">
+        🦙 Lokal strukturieren
+        <span class="ai-card-badge">Ollama</span>
+      </div>
+      <span class="ai-card-chevron" id="ollamaChevron">▾</span>
+    </div>
+    <div class="ai-card-body" id="ollamaCardBody">
+      <div class="ai-card-sub">Sendet das Transkript an Ollama auf deinem Gerät. Ollama muss laufen und CORS erlauben: <code style="font-size:10px">OLLAMA_ORIGINS=* ollama serve</code></div>
+      <div class="ollama-url-row">
+        <input class="ollama-input" id="ollamaUrl" placeholder="http://localhost:11434" value="http://localhost:11434">
+        <button class="ollama-test-btn" onclick="ollamaTest()">Verbinden</button>
+      </div>
+      <div class="ollama-url-row" style="margin-bottom:10px">
+        <input class="ollama-input" id="ollamaModel" placeholder="Modell, z.B. llama3.2">
+      </div>
+      <div class="ollama-conn" id="ollamaConn"></div>
+      <div class="ai-btns">
+        <button class="ai-btn" id="ollamaRunBtn" onclick="ollamaStructure()" disabled>🦙 Transkript strukturieren</button>
       </div>
     </div>
   </div>
@@ -652,6 +728,8 @@ const LS_KEY  = 'whisper_history_v1';
 const LS_LANG = 'whisper_lang';
 const LS_API  = 'whisper_apikey';
 const LS_MODEL = 'whisper_local_model';
+const LS_OLLAMA_MODEL = 'whisper_ollama_model';
+const LS_OLLAMA_URL   = 'whisper_ollama_url';
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
@@ -682,6 +760,19 @@ document.addEventListener('DOMContentLoaded', () => {
       transcribeBlob(file, file.name.split('.').pop().toLowerCase(), key);
     });
   }
+
+  // Ollama persisted settings
+  const savedOllamaModel = localStorage.getItem(LS_OLLAMA_MODEL);
+  const savedOllamaUrl   = localStorage.getItem(LS_OLLAMA_URL);
+  if (savedOllamaModel) document.getElementById('ollamaModel').value = savedOllamaModel;
+  if (savedOllamaUrl)   document.getElementById('ollamaUrl').value   = savedOllamaUrl;
+  document.getElementById('ollamaModel').addEventListener('change', () => {
+    localStorage.setItem(LS_OLLAMA_MODEL, document.getElementById('ollamaModel').value.trim());
+  });
+  document.getElementById('ollamaUrl').addEventListener('change', () => {
+    localStorage.setItem(LS_OLLAMA_URL, document.getElementById('ollamaUrl').value.trim());
+    setOllamaConn('', '');
+  });
 });
 
 // ── Mode switching ──
@@ -701,8 +792,11 @@ function setMode(mode) {
   document.getElementById('audioZone').classList.toggle('visible', mode === 'audio');
   if (mode !== 'audio') stopAudioRecord();
   // hide transcript area in audio mode
-  document.querySelector('.transcript-wrap').style.display = mode === 'audio' ? 'none' : '';
-  document.querySelector('.ai-card').style.display = mode === 'audio' ? 'none' : '';
+  const hideInAudio = mode === 'audio' ? 'none' : '';
+  document.querySelector('.transcript-wrap').style.display = hideInAudio;
+  document.querySelector('.ai-card').style.display = hideInAudio;
+  document.getElementById('ollamaCard').style.display = hideInAudio;
+  document.getElementById('ollamaResultWrap').style.display = mode === 'audio' ? 'none' : document.getElementById('ollamaResultWrap').dataset.hasResult ? '' : 'none';
 
   if (mode === 'browser') setMicStatus('Tippen zum Aufnehmen', '');
   else if (mode === 'whisper') setMicStatus('Aufnehmen → Whisper API transkribiert', '');
@@ -1415,6 +1509,131 @@ function showToast(msg, type) {
   el.className = 'toast show' + (type ? ' ' + type : '');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── Ollama ──
+function toggleOllamaCard() {
+  const body = document.getElementById('ollamaCardBody');
+  const chev = document.getElementById('ollamaChevron');
+  body.classList.toggle('open');
+  chev.classList.toggle('open', body.classList.contains('open'));
+}
+
+function setOllamaConn(msg, type) {
+  const el = document.getElementById('ollamaConn');
+  el.textContent = msg;
+  el.className = 'ollama-conn' + (type ? ' ' + type : '');
+  document.getElementById('ollamaRunBtn').disabled = type !== 'ok';
+}
+
+async function ollamaTest() {
+  const url = document.getElementById('ollamaUrl').value.trim() || 'http://localhost:11434';
+  setOllamaConn('Verbinde…', '');
+  try {
+    const res = await fetch(url + '/api/tags', { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const models = (data.models || []).map(m => m.name);
+    const cur = document.getElementById('ollamaModel').value.trim();
+    if (!cur && models.length) document.getElementById('ollamaModel').value = models[0];
+    setOllamaConn('✓ Verbunden' + (models.length ? ' · ' + models.length + ' Modell(e) verfügbar' : ''), 'ok');
+    localStorage.setItem(LS_OLLAMA_URL, url);
+  } catch(e) {
+    setOllamaConn('✗ Nicht erreichbar – läuft Ollama? (OLLAMA_ORIGINS=* ollama serve)', 'err');
+  }
+}
+
+function renderOllamaMarkdown(text) {
+  const el = document.getElementById('ollamaResultBox');
+  el.innerHTML = '';
+  const lines = text.split('\n');
+  let buf = '';
+  function flush() {
+    if (!buf.trim()) return;
+    const p = document.createElement('p');
+    p.style.margin = '0 0 8px';
+    p.innerHTML = buf.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    el.appendChild(p);
+    buf = '';
+  }
+  for (const line of lines) {
+    const h = line.match(/^(#{1,3})\s+(.+)/);
+    if (h) {
+      flush();
+      const heading = document.createElement('h3');
+      heading.style.cssText = 'font-size:13px;font-weight:700;margin:14px 0 4px;color:var(--text)';
+      heading.textContent = h[2];
+      el.appendChild(heading);
+    } else if (line.trim() === '') {
+      flush();
+    } else {
+      buf += (buf ? '\n' : '') + line;
+    }
+  }
+  flush();
+}
+
+async function ollamaStructure() {
+  const text = getTranscriptText();
+  if (!text) { showToast('Erst Transkript aufnehmen', 'error'); return; }
+  const url   = document.getElementById('ollamaUrl').value.trim() || 'http://localhost:11434';
+  const model = document.getElementById('ollamaModel').value.trim();
+  if (!model) { showToast('Bitte Modellname eingeben', 'error'); return; }
+  localStorage.setItem(LS_OLLAMA_MODEL, model);
+  localStorage.setItem(LS_OLLAMA_URL, url);
+
+  const btn = document.getElementById('ollamaRunBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Läuft…';
+
+  const resultWrap = document.getElementById('ollamaResultWrap');
+  const resultBox  = document.getElementById('ollamaResultBox');
+  resultBox.textContent = '';
+  resultWrap.style.display = '';
+  resultWrap.dataset.hasResult = '1';
+  resultWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  try {
+    const res = await fetch(url + '/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, prompt: AI_PROMPT + text + '\n---', stream: true })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let full = '';
+    let buf  = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const chunk = JSON.parse(line);
+          full += chunk.response || '';
+          renderOllamaMarkdown(full);
+        } catch {}
+      }
+    }
+    showToast('Ollama fertig ✓', 'success');
+  } catch(e) {
+    resultBox.textContent = 'Fehler: ' + e.message;
+    showToast('Ollama-Fehler: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🦙 Transkript strukturieren';
+  }
+}
+
+function copyOllamaResult() {
+  const box = document.getElementById('ollamaResultBox');
+  navigator.clipboard.writeText(box.innerText).then(() => showToast('Kopiert ✓', 'success'))
+    .catch(() => showToast('Kopieren fehlgeschlagen', 'error'));
 }
 </script>
 </body>
