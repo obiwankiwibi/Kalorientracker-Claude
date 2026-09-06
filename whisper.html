@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Whisper Transkription</title>
   <link rel="manifest" href="manifest-whisper.json">
-  <meta name="theme-color" content="#7c3aed">
+  <meta name="theme-color" content="#a84f22">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,54 +16,54 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:         #f0eeff;
-      --layer1:     #ffffff;
-      --layer2:     #ede9ff;
-      --border:     rgba(100,60,220,0.12);
-      --border2:    rgba(100,60,220,0.20);
-      --text:       #1a1030;
-      --muted:      #7060a0;
-      --accent:     #7c3aed;
-      --accent-dim: rgba(124,58,237,0.12);
-      --green:      #059669;
-      --red:        #dc2626;
-      --red-dim:    rgba(220,38,38,0.12);
-      --amber:      #d97706;
-      --amber-dim:  rgba(217,119,6,0.12);
+      --bg:         #faf6ef;
+      --layer1:     #fffef8;
+      --layer2:     #f2ead8;
+      --border:     rgba(150,105,50,0.10);
+      --border2:    rgba(150,105,50,0.18);
+      --text:       #2a1e0e;
+      --muted:      #8a7058;
+      --accent:     #a84f22;
+      --accent-dim: rgba(168,79,34,0.12);
+      --green:      #4a875c;
+      --red:        #c03428;
+      --red-dim:    rgba(192,52,40,0.12);
+      --amber:      #c08020;
+      --amber-dim:  rgba(192,128,32,0.12);
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
-        --bg:         #0d0b18;
-        --layer1:     #14101f;
-        --layer2:     #1e1830;
-        --border:     rgba(160,120,255,0.12);
-        --border2:    rgba(160,120,255,0.22);
-        --text:       #e8e0ff;
-        --muted:      #8a7ab0;
-        --accent:     #a78bfa;
-        --accent-dim: rgba(167,139,250,0.15);
-        --green:      #34d399;
-        --red:        #f87171;
-        --red-dim:    rgba(248,113,113,0.14);
-        --amber:      #fbbf24;
-        --amber-dim:  rgba(251,191,36,0.12);
+        --bg:         #1a1208;
+        --layer1:     #241a0c;
+        --layer2:     #2f2214;
+        --border:     rgba(225,185,120,0.10);
+        --border2:    rgba(225,185,120,0.20);
+        --text:       #f2e8d4;
+        --muted:      #a09070;
+        --accent:     #e07840;
+        --accent-dim: rgba(224,120,64,0.15);
+        --green:      #5cb870;
+        --red:        #e06858;
+        --red-dim:    rgba(224,104,88,0.14);
+        --amber:      #e0b248;
+        --amber-dim:  rgba(224,178,72,0.12);
       }
     }
     :root[data-theme="dark"] {
-      --bg:         #0d0b18;
-      --layer1:     #14101f;
-      --layer2:     #1e1830;
-      --border:     rgba(160,120,255,0.12);
-      --border2:    rgba(160,120,255,0.22);
-      --text:       #e8e0ff;
-      --muted:      #8a7ab0;
-      --accent:     #a78bfa;
-      --accent-dim: rgba(167,139,250,0.15);
-      --green:      #34d399;
-      --red:        #f87171;
-      --red-dim:    rgba(248,113,113,0.14);
-      --amber:      #fbbf24;
-      --amber-dim:  rgba(251,191,36,0.12);
+      --bg:         #1a1208;
+      --layer1:     #241a0c;
+      --layer2:     #2f2214;
+      --border:     rgba(225,185,120,0.10);
+      --border2:    rgba(225,185,120,0.20);
+      --text:       #f2e8d4;
+      --muted:      #a09070;
+      --accent:     #e07840;
+      --accent-dim: rgba(224,120,64,0.15);
+      --green:      #5cb870;
+      --red:        #e06858;
+      --red-dim:    rgba(224,104,88,0.14);
+      --amber:      #e0b248;
+      --amber-dim:  rgba(224,178,72,0.12);
     }
 
     body {
@@ -423,10 +423,10 @@
     }
     .fmt-opt.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
     .speed-row {
-      display: flex; gap: 5px; width: 100%; margin-top: 10px;
+      display: flex; flex-wrap: wrap; gap: 5px; width: 100%; margin-top: 10px;
     }
     .speed-btn {
-      flex: 1; padding: 7px 2px; border-radius: 10px;
+      flex: 1 1 auto; min-width: 46px; padding: 7px 4px; border-radius: 10px;
       border: 1.5px solid var(--border2); background: var(--layer2);
       color: var(--muted); font-size: 11px; font-weight: 700;
       cursor: pointer; text-align: center; font-family: inherit; transition: all 0.15s;
@@ -616,7 +616,7 @@
   <div class="local-panel" id="localPanel" style="display:none">
     <div class="local-card">
       <div class="local-title">🖥️ Lokal – kein Internet nötig</div>
-      <div class="local-sub">Whisper läuft direkt im Browser. Modell wird einmalig heruntergeladen und dann gecacht.</div>
+      <div class="local-sub">Whisper läuft direkt im Browser. Beim ersten Start wird das Modell einmalig geladen (<strong>Tiny: ~40 MB · Base: ~150 MB</strong>) und danach im Browser-Cache gespeichert – kein erneuter Download.</div>
 
       <div class="model-select-row" id="modelSelectRow">
         <button class="model-opt selected" id="optTiny" onclick="selectModel('tiny')">
@@ -821,7 +821,9 @@
   <div class="toast" id="toast"></div>
 
 <script>
-// ── State ──
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
 let currentMode = 'browser';
 let isRecording = false;
 let recognition = null;
@@ -850,6 +852,9 @@ let localDataArray = null;
 let localAudioCtx = null;
 let localTimerInterval = null;
 
+// ═══════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════
 const LS_KEY  = 'whisper_history_v1';
 const LS_LANG = 'whisper_lang';
 const LS_API  = 'whisper_apikey';
@@ -858,7 +863,9 @@ const LS_OLLAMA_MODEL = 'whisper_ollama_model';
 const LS_OLLAMA_URL   = 'whisper_ollama_url';
 const LS_AUDD         = 'whisper_audd_key';
 
-// ── Init ──
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   const savedLang = localStorage.getItem(LS_LANG) || 'de-DE';
   document.getElementById('langSelect').value = savedLang;
@@ -917,13 +924,15 @@ document.addEventListener('DOMContentLoaded', () => {
   renderHistory();
 });
 
-// ── Mode switching ──
+// ═══════════════════════════════════════════
+// MODE SWITCHING
+// ═══════════════════════════════════════════
 function setMode(mode) {
   currentMode = mode;
   stopRecord();
   stopLocalRecord();
 
-  ['browser','local','whisper','upload'].forEach(m => {
+  ['browser','local','whisper','upload','audio'].forEach(m => {
     const el = document.getElementById('tab' + m.charAt(0).toUpperCase() + m.slice(1));
     if (el) el.classList.toggle('active', m === mode);
   });
@@ -932,20 +941,23 @@ function setMode(mode) {
   document.getElementById('localPanel').style.display = mode === 'local'  ? 'block' : 'none';
   document.getElementById('uploadZone').style.display = mode === 'upload' ? 'block' : 'none';
   document.getElementById('audioZone').classList.toggle('visible', mode === 'audio');
+  document.querySelector('.options-row').style.display = mode === 'audio' ? 'none' : '';
   if (mode !== 'audio') stopAudioRecord();
-  // hide transcript area in audio mode
+
   const hideInAudio = mode === 'audio' ? 'none' : '';
   document.querySelector('.transcript-wrap').style.display = hideInAudio;
-  document.querySelector('.ai-card').style.display = hideInAudio;
-  document.getElementById('ollamaCard').style.display = hideInAudio;
   document.getElementById('ollamaResultWrap').style.display = mode === 'audio' ? 'none' : document.getElementById('ollamaResultWrap').dataset.hasResult ? '' : 'none';
+
+  updateCardsVisibility();
 
   if (mode === 'browser') setMicStatus('Tippen zum Aufnehmen', '');
   else if (mode === 'whisper') setMicStatus('Aufnehmen → Whisper API transkribiert', '');
   else if (mode === 'local') initLocalModel();
 }
 
-// ── Local model ──
+// ═══════════════════════════════════════════
+// LOCAL MODEL (Transformers.js / Whisper WASM)
+// ═══════════════════════════════════════════
 function selectModel(name, save = true) {
   selectedModel = name;
   document.getElementById('optTiny').classList.toggle('selected', name === 'tiny');
@@ -1040,7 +1052,9 @@ function showProgress(visible, label, pct) {
   }
 }
 
-// ── Local recording ──
+// ═══════════════════════════════════════════
+// LOCAL RECORDING
+// ═══════════════════════════════════════════
 function toggleLocalRecord() {
   if (isLocalRecording) stopLocalRecord();
   else startLocalRecord();
@@ -1173,7 +1187,9 @@ function clearLocalWave() {
   if (canvas) canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
 }
 
-// ── Browser recording ──
+// ═══════════════════════════════════════════
+// BROWSER RECORDING (Web Speech API)
+// ═══════════════════════════════════════════
 function toggleRecord() {
   if (isRecording) stopRecord();
   else startRecord();
@@ -1252,7 +1268,9 @@ function stopRecord() {
   clearWave();
 }
 
-// ── Whisper API ──
+// ═══════════════════════════════════════════
+// WHISPER API (OpenAI)
+// ═══════════════════════════════════════════
 async function sendToWhisper(chunks, mime) {
   const key = localStorage.getItem(LS_API);
   if (!key) { showToast('Kein API-Key – in ⚙ eintragen', 'error'); return; }
@@ -1289,7 +1307,9 @@ function onFileSelect(input) {
   transcribeBlob(file, file.name.split('.').pop().toLowerCase(), key);
 }
 
-// ── UI helpers ──
+// ═══════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════
 function setRecordingUI(on) {
   const btn = document.getElementById('micBtn');
   const timer = document.getElementById('recTimer');
@@ -1345,12 +1365,23 @@ function clearWave() {
   if (canvas) canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
 }
 
-// ── Transcript ──
+// ═══════════════════════════════════════════
+// TRANSCRIPT
+// ═══════════════════════════════════════════
+function updateCardsVisibility() {
+  const hasText = !!getTranscriptText();
+  const isAudio = currentMode === 'audio';
+  const show = hasText && !isAudio;
+  document.querySelector('.ai-card').style.display = show ? '' : 'none';
+  document.getElementById('ollamaCard').style.display = show ? '' : 'none';
+}
+
 function updatePlaceholder() {
   const ph  = document.getElementById('placeholder');
   const box = document.getElementById('transcriptBox');
   if (!ph) return;
   ph.style.display = box.innerText.trim() ? 'none' : 'block';
+  updateCardsVisibility();
 }
 function getTranscriptText() {
   return document.getElementById('transcriptBox').innerText.trim();
@@ -1380,6 +1411,7 @@ function clearTranscript() {
   box.textContent = '';
   updatePlaceholder();
   updateWordCount();
+  updateCardsVisibility();
 }
 function updateWordCount() {
   const text = getTranscriptText();
@@ -1395,7 +1427,9 @@ function copyTranscript() {
   }).catch(() => showToast('Kopieren nicht möglich','error'));
 }
 
-// ── History ──
+// ═══════════════════════════════════════════
+// HISTORY (localStorage, 30-day retention)
+// ═══════════════════════════════════════════
 function saveToHistory() {
   const text = getTranscriptText(); if (!text) return;
   const hist = loadHistory();
@@ -1469,7 +1503,9 @@ function histDelete(i) {
 function clearHistory() { if (!confirm('Verlauf löschen?')) return; localStorage.removeItem(LS_KEY); renderHistory(); }
 function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ── Settings ──
+// ═══════════════════════════════════════════
+// SETTINGS (API key overlay)
+// ═══════════════════════════════════════════
 function openSettings() {
   updateKeyStatus();
   document.getElementById('apiKeyInput').value = '';
@@ -1489,7 +1525,9 @@ function updateKeyStatus() {
   document.getElementById('keyText').textContent = key ? 'Key gesetzt (…' + key.slice(-4) + ')' : 'Kein Key gespeichert';
 }
 
-// ── Audio Recorder ──
+// ═══════════════════════════════════════════
+// AUDIO RECORDER
+// ═══════════════════════════════════════════
 let audioRecording = false;
 let audioRecChunks = [];
 let audioRecMR = null;
@@ -1627,7 +1665,9 @@ function drawAudioWave() {
   draw();
 }
 
-// ── Export ──
+// ═══════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════
 function exportTxt() {
   const text = getTranscriptText();
   if (!text) { showToast('Kein Transkript zum Exportieren', 'error'); return; }
@@ -1643,7 +1683,9 @@ function exportTxt() {
   URL.revokeObjectURL(url);
 }
 
-// ── AI Prompt ──
+// ═══════════════════════════════════════════
+// AI PROMPT (copy prompt + transcript)
+// ═══════════════════════════════════════════
 const AI_PROMPT = `Bitte strukturiere die folgende Transkription. Halte dich dabei strikt an diese Regeln:
 
 1. Verändere keinen Inhalt – kein Wort darf fehlen, umformuliert oder sinngemäß ersetzt werden
@@ -1689,7 +1731,9 @@ function flashBtn(id, label) {
   setTimeout(() => { btn.textContent = orig; btn.classList.remove('ok'); }, 1800);
 }
 
-// ── Toast ──
+// ═══════════════════════════════════════════
+// TOAST NOTIFICATIONS
+// ═══════════════════════════════════════════
 let toastTimer = null;
 function showToast(msg, type) {
   const el = document.getElementById('toast');
@@ -1699,7 +1743,9 @@ function showToast(msg, type) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ── Ollama ──
+// ═══════════════════════════════════════════
+// OLLAMA (local AI structuring, streaming)
+// ═══════════════════════════════════════════
 function toggleOllamaCard() {
   const body = document.getElementById('ollamaCardBody');
   const chev = document.getElementById('ollamaChevron');
@@ -1828,7 +1874,9 @@ function copyOllamaResult() {
     .catch(() => showToast('Kopieren fehlgeschlagen', 'error'));
 }
 
-// ── Audio Library (IndexedDB) ──
+// ═══════════════════════════════════════════
+// AUDIO LIBRARY (IndexedDB, 30-day retention)
+// ═══════════════════════════════════════════
 const AUDIO_DB    = 'whisper-audio-v1';
 const AUDIO_STORE = 'recordings';
 const RETAIN_MS   = 30 * 86400000; // 30 days
@@ -2002,7 +2050,9 @@ async function clearAudioLibrary() {
   showToast('Bibliothek geleert', 'success');
 }
 
-// ── Playback speed & loop ──
+// ═══════════════════════════════════════════
+// PLAYBACK SPEED & LOOP
+// ═══════════════════════════════════════════
 
 function setSpeed(rate) {
   const player = document.getElementById('audioPlayer');
@@ -2021,7 +2071,9 @@ function toggleLoop() {
   btn.textContent = player.loop ? '🔁 Loop an' : '🔁 Loop aus';
 }
 
-// ── AudD music recognition ──
+// ═══════════════════════════════════════════
+// AUDD MUSIC RECOGNITION
+// ═══════════════════════════════════════════
 async function auddRecognize() {
   if (!audioRecBlob) { showToast('Erst eine Aufnahme erstellen', 'error'); return; }
   const key = document.getElementById('auddKey').value.trim();
