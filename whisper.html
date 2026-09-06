@@ -455,7 +455,8 @@
         <button class="action-btn" onclick="saveToHistory()">💾 Speichern</button>
       </div>
     </div>
-    <div class="transcript-box" id="transcriptBox" contenteditable="true" spellcheck="true">
+    <div style="position:relative">
+      <div class="transcript-box" id="transcriptBox" contenteditable="true" spellcheck="true"></div>
       <span class="transcript-placeholder" id="placeholder">Aufnahme starten oder Datei hochladen…</span>
     </div>
     <div class="word-count" id="wordCount">0 Wörter · 0 Zeichen</div>
@@ -533,13 +534,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('langSelect').addEventListener('change', () => {
     localStorage.setItem(LS_LANG, document.getElementById('langSelect').value);
   });
-  document.getElementById('transcriptBox').addEventListener('input', updateWordCount);
+  document.getElementById('transcriptBox').addEventListener('input', () => { updateWordCount(); updatePlaceholder(); });
 
   const savedModel = localStorage.getItem(LS_MODEL) || 'tiny';
   selectModel(savedModel, false);
 
   renderHistory();
   updateKeyStatus();
+  updatePlaceholder();
 
   const label = document.getElementById('uploadLabel');
   if (label) {
@@ -977,24 +979,23 @@ function clearWave() {
 }
 
 // ── Transcript ──
-function getTranscriptText() {
-  const box = document.getElementById('transcriptBox');
+function updatePlaceholder() {
   const ph  = document.getElementById('placeholder');
-  if (ph && box.contains(ph)) return '';
-  return box.innerText.trim();
+  const box = document.getElementById('transcriptBox');
+  if (!ph) return;
+  ph.style.display = box.innerText.trim() ? 'none' : 'block';
+}
+function getTranscriptText() {
+  return document.getElementById('transcriptBox').innerText.trim();
 }
 function setTranscriptText(text) {
   const box = document.getElementById('transcriptBox');
-  const ph  = document.getElementById('placeholder');
-  box.innerHTML = '';
-  if (text) { if (ph) ph.remove(); box.appendChild(document.createTextNode(text)); }
-  else { if (ph) box.appendChild(ph); }
+  box.textContent = text;
+  updatePlaceholder();
   updateWordCount();
 }
 function renderTranscriptLive(final, interim) {
   const box = document.getElementById('transcriptBox');
-  const ph  = document.getElementById('placeholder');
-  if (ph && box.contains(ph)) ph.remove();
   box.innerHTML = '';
   box.appendChild(document.createTextNode(final));
   if (interim) {
@@ -1004,15 +1005,13 @@ function renderTranscriptLive(final, interim) {
     box.appendChild(sp);
   }
   box.scrollTop = box.scrollHeight;
+  updatePlaceholder();
   updateWordCount();
 }
 function clearTranscript() {
   const box = document.getElementById('transcriptBox');
-  box.innerHTML = '';
-  const ph = document.createElement('span');
-  ph.className = 'transcript-placeholder'; ph.id = 'placeholder';
-  ph.textContent = 'Aufnahme starten oder Datei hochladen…';
-  box.appendChild(ph);
+  box.textContent = '';
+  updatePlaceholder();
   updateWordCount();
 }
 function updateWordCount() {
