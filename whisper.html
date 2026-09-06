@@ -975,6 +975,27 @@ function selectModel(name, save = true) {
 async function initLocalModel(force = false) {
   if (localModelReady && !force) return;
   if (localModelLoading) return;
+
+  // Warn before download when on cellular and model not yet cached
+  const cacheFlag = 'whisper_model_cached_' + selectedModel;
+  const alreadyCached = !!localStorage.getItem(cacheFlag);
+  if (!alreadyCached || force) {
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (conn && conn.type === 'cellular') {
+      const label = selectedModel === 'base' ? 'Base (~150 MB)' : 'Tiny (~40 MB)';
+      const ok = confirm(
+        'Du bist scheinbar mit mobilen Daten verbunden.\n\n' +
+        'Das Whisper-Modell ' + label + ' wird beim ersten Start heruntergeladen ' +
+        'und dann dauerhaft im Browser gecacht.\n\n' +
+        'Jetzt mit mobilen Daten herunterladen?'
+      );
+      if (!ok) {
+        setLocalStatus('text', 'Download abgebrochen. Bitte WLAN verwenden.');
+        return;
+      }
+    }
+  }
+
   localModelLoading = true;
   document.getElementById('initBtn').disabled = true;
   document.getElementById('initBtn').textContent = 'Wird geladen…';
@@ -1013,6 +1034,7 @@ async function initLocalModel(force = false) {
     localTranscriber._modelId = selectedModel;
 
     localModelReady = true;
+    localStorage.setItem(cacheFlag, '1'); // mark as cached so no cellular warning next time
     showProgress(false, '', 0);
     setLocalStatus('dot', 'ready');
     setLocalStatus('text', 'Bereit (' + (selectedModel === 'base' ? 'Base' : 'Tiny') + ') – komplett lokal');
