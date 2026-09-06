@@ -343,6 +343,7 @@
     }
     .ai-btn.secondary:hover { color: var(--accent); border-color: var(--accent); }
     .ai-btn.ok { background: var(--green); }
+    .ai-btn:disabled { opacity: 0.38; cursor: default; }
 
     /* Ollama */
     .ollama-card {
@@ -1539,7 +1540,11 @@ async function ollamaTest() {
     setOllamaConn('✓ Verbunden' + (models.length ? ' · ' + models.length + ' Modell(e) verfügbar' : ''), 'ok');
     localStorage.setItem(LS_OLLAMA_URL, url);
   } catch(e) {
-    setOllamaConn('✗ Nicht erreichbar – läuft Ollama? (OLLAMA_ORIGINS=* ollama serve)', 'err');
+    const isLocal = url.includes('localhost') || url.includes('127.0.0.1');
+    const hint = isLocal
+      ? '✗ Nicht erreichbar. Auf diesem Gerät läuft kein Ollama – oder auf dem PC: OLLAMA_HOST=0.0.0.0 OLLAMA_ORIGINS=* ollama serve, dann PC-IP eintragen'
+      : '✗ Nicht erreichbar – läuft Ollama? (OLLAMA_ORIGINS=* ollama serve)';
+    setOllamaConn(hint, 'err');
   }
 }
 
