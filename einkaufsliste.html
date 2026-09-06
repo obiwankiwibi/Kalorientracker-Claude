@@ -2545,10 +2545,13 @@ function tile(type, it) {
   const sug = getSug(it.name);
   const tilePrice = sug?.price ?? it.unitPrice ?? null;
   const tileUnit  = sug?.unit  ?? it.catalogUnit ?? null;
+  const matchedOffer = !it.isOffer ? getMatchingOffer(it.name) : null;
   let priceHtml = '';
   if (it.isOffer && it.offerPrice != null) {
     const col = HAENDLER_COLORS[it.offerHaendler] || '#fff';
     priceHtml = `<div class="tile-offer-badge">${esc(it.offerHaendler || '')} ${Number(it.offerPrice).toFixed(2).replace('.',',')} €</div>`;
+  } else if (matchedOffer) {
+    priceHtml = `<div class="tile-offer-badge">🏷️ ${esc(matchedOffer.haendler)} ${Number(matchedOffer.preis).toFixed(2).replace('.',',')} €</div>`;
   } else if (tilePrice != null) {
     const mult = calcMultiplier(it.amount, tileUnit || '');
     if (mult > 1) {
