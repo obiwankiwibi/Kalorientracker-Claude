@@ -293,6 +293,57 @@
     .interim-text { color: var(--muted); font-style: italic; }
     .word-count { font-size: 11px; color: var(--muted); text-align: right; margin-top: 6px; }
 
+    /* AI Prompt card */
+    .ai-card {
+      width: 100%; max-width: 480px;
+      background: var(--layer1);
+      border: 1.5px solid var(--border);
+      border-radius: 18px;
+      margin: 12px 16px 0;
+      width: calc(100% - 32px);
+      overflow: hidden;
+    }
+    .ai-card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; cursor: pointer; user-select: none;
+      -webkit-user-select: none;
+    }
+    .ai-card-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 700; color: var(--text);
+    }
+    .ai-card-badge {
+      font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 6px;
+      background: var(--accent-dim); color: var(--accent);
+    }
+    .ai-card-chevron { font-size: 13px; color: var(--muted); transition: transform 0.2s; }
+    .ai-card-chevron.open { transform: rotate(180deg); }
+    .ai-card-body { display: none; padding: 0 14px 14px; }
+    .ai-card-body.open { display: block; }
+    .ai-card-sub {
+      font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 10px;
+    }
+    .prompt-box {
+      background: var(--layer2); border: 1px solid var(--border2);
+      border-radius: 12px; padding: 12px; font-size: 12px; line-height: 1.6;
+      color: var(--text); white-space: pre-wrap; word-break: break-word;
+      max-height: 180px; overflow-y: auto; margin-bottom: 10px;
+      font-family: inherit;
+    }
+    .ai-btns { display: flex; gap: 8px; }
+    .ai-btn {
+      flex: 1; padding: 9px; border-radius: 12px; border: none;
+      background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: opacity 0.15s;
+    }
+    .ai-btn:hover { opacity: 0.88; }
+    .ai-btn.secondary {
+      background: var(--layer2); border: 1px solid var(--border2);
+      color: var(--muted);
+    }
+    .ai-btn.secondary:hover { color: var(--accent); border-color: var(--accent); }
+    .ai-btn.ok { background: var(--green); }
+
     /* History */
     .history-wrap { width: 100%; max-width: 480px; padding: 14px 16px 0; }
     .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
@@ -452,6 +503,7 @@
       <span class="transcript-label">Transkript</span>
       <div class="transcript-actions">
         <button class="action-btn" id="copyBtn" onclick="copyTranscript()">📋 Kopieren</button>
+        <button class="action-btn" onclick="exportTxt()">📥 TXT</button>
         <button class="action-btn" onclick="saveToHistory()">💾 Speichern</button>
       </div>
     </div>
@@ -460,6 +512,25 @@
       <span class="transcript-placeholder" id="placeholder">Aufnahme starten oder Datei hochladen…</span>
     </div>
     <div class="word-count" id="wordCount">0 Wörter · 0 Zeichen</div>
+  </div>
+
+  <!-- AI Prompt -->
+  <div class="ai-card">
+    <div class="ai-card-head" onclick="toggleAiCard()">
+      <div class="ai-card-title">
+        🤖 KI-Strukturierung
+        <span class="ai-card-badge">Prompt</span>
+      </div>
+      <span class="ai-card-chevron" id="aiChevron">▾</span>
+    </div>
+    <div class="ai-card-body" id="aiCardBody">
+      <div class="ai-card-sub">Kopiere Prompt + Transkript und füge es in ChatGPT, Claude o.&nbsp;ä. ein. Der Inhalt wird dabei nicht verändert.</div>
+      <div class="prompt-box" id="promptBox"></div>
+      <div class="ai-btns">
+        <button class="ai-btn secondary" onclick="copyPromptOnly()" id="copyPromptBtn">📋 Nur Prompt</button>
+        <button class="ai-btn" onclick="copyPromptWithText()" id="copyFullBtn">📋 Prompt + Transkript</button>
+      </div>
+    </div>
   </div>
 
   <!-- History -->
@@ -1077,6 +1148,68 @@ function updateKeyStatus() {
   const key = localStorage.getItem(LS_API);
   document.getElementById('keyDot').classList.toggle('set', !!key);
   document.getElementById('keyText').textContent = key ? 'Key gesetzt (…' + key.slice(-4) + ')' : 'Kein Key gespeichert';
+}
+
+// ── Export ──
+function exportTxt() {
+  const text = getTranscriptText();
+  if (!text) { showToast('Kein Transkript zum Exportieren', 'error'); return; }
+  const ts = new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
+  const filename = 'transkript_' + ts + '.txt';
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ── AI Prompt ──
+const AI_PROMPT = `Bitte strukturiere die folgende Transkription. Halte dich dabei strikt an diese Regeln:
+
+1. Verändere keinen Inhalt – kein Wort darf fehlen, umformuliert oder sinngemäß ersetzt werden
+2. Gliedere den Text in Kapitel mit kurzen, treffenden Überschriften, sofern thematische Abschnitte erkennbar sind
+3. Schreibe wichtige Schlagworte und Fachbegriffe **fett**
+4. Korrigiere ausschließlich offensichtliche Spracherkennungsfehler (z.B. falsch klingende, sinnlose Wörter)
+5. Behalte den Originalton, Satzbau und alle Aussagen vollständig bei
+
+Transkription:
+---
+`;
+
+function toggleAiCard() {
+  const body = document.getElementById('aiCardBody');
+  const chev = document.getElementById('aiChevron');
+  const open = body.classList.toggle('open');
+  chev.classList.toggle('open', open);
+  if (open) document.getElementById('promptBox').textContent = AI_PROMPT + '[Transkript wird hier angehängt]';
+}
+
+function copyPromptOnly() {
+  navigator.clipboard.writeText(AI_PROMPT.trim()).then(() => {
+    flashBtn('copyPromptBtn', '✓ Kopiert');
+  }).catch(() => showToast('Kopieren fehlgeschlagen', 'error'));
+}
+
+function copyPromptWithText() {
+  const text = getTranscriptText();
+  if (!text) { showToast('Erst Transkript aufnehmen', 'error'); return; }
+  const full = AI_PROMPT + text + '\n---';
+  navigator.clipboard.writeText(full).then(() => {
+    flashBtn('copyFullBtn', '✓ Kopiert');
+    showToast('Prompt + Transkript kopiert ✓', 'success');
+  }).catch(() => showToast('Kopieren fehlgeschlagen', 'error'));
+}
+
+function flashBtn(id, label) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  const orig = btn.textContent;
+  btn.textContent = label;
+  btn.classList.add('ok');
+  setTimeout(() => { btn.textContent = orig; btn.classList.remove('ok'); }, 1800);
 }
 
 // ── Toast ──
