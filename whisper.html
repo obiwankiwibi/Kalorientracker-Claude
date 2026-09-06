@@ -457,6 +457,53 @@
       font-size: 12px; font-weight: 700; text-decoration: none;
     }
 
+    /* Audio library */
+    .audio-library {
+      width: 100%; margin-top: 14px; padding-top: 12px;
+      border-top: 1px solid var(--border2);
+    }
+    .audio-lib-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .audio-lib-label {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.8px;
+    }
+    .audio-lib-clear {
+      background: none; border: none; color: var(--muted); font-size: 11px;
+      font-weight: 700; cursor: pointer; font-family: inherit; padding: 0;
+    }
+    .audio-lib-empty {
+      font-size: 12px; color: var(--muted); text-align: center; padding: 12px 0;
+    }
+    .lib-item {
+      background: var(--layer2); border: 1px solid var(--border2);
+      border-radius: 14px; padding: 12px 14px; margin-bottom: 8px;
+    }
+    .lib-item-name {
+      font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .lib-item-meta {
+      font-size: 11px; color: var(--muted); margin-bottom: 10px;
+    }
+    .lib-item-actions { display: flex; gap: 6px; }
+    .lib-btn {
+      flex: 1; padding: 7px 4px; border-radius: 10px; border: 1px solid var(--border2);
+      background: var(--layer1); color: var(--muted); font-size: 11px; font-weight: 700;
+      cursor: pointer; font-family: inherit; text-align: center; transition: all 0.15s;
+    }
+    .lib-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .lib-btn.danger:hover { color: #f87171; border-color: #f87171; }
+    .audio-save-btn {
+      width: 100%; padding: 10px; border-radius: 14px; border: 1.5px solid var(--accent);
+      background: var(--accent-dim); color: var(--accent); font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit; margin-top: 8px; transition: all 0.15s;
+    }
+    .audio-save-btn:hover { background: var(--accent); color: #fff; }
+    .audio-save-btn:disabled { opacity: 0.4; cursor: default; }
+
     /* History */
     .history-wrap { width: 100%; max-width: 480px; padding: 14px 16px 0; }
     .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
@@ -675,6 +722,17 @@
       </div>
 
       <button class="audio-dl-btn" id="audioDlBtn" onclick="downloadAudio()" style="margin-top:10px">📥 Aufnahme herunterladen</button>
+      <button class="audio-save-btn" id="audioSaveBtn" onclick="saveAudioToLibrary()">💾 In Bibliothek speichern</button>
+    </div>
+
+    <!-- Audio library -->
+    <div class="audio-library" id="audioLibrary" style="width:100%">
+      <div class="audio-lib-header">
+        <span class="audio-lib-label">📚 Bibliothek</span>
+        <button class="audio-lib-clear" onclick="clearAudioLibrary()">Alle löschen</button>
+      </div>
+      <div id="audioLibList"><div class="audio-lib-empty">Noch keine Aufnahmen gespeichert</div></div>
+      <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:6px">Aufnahmen werden automatisch nach 30 Tagen gelöscht</div>
     </div>
   </div>
 
@@ -839,6 +897,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('auddKey').addEventListener('change', () => {
     localStorage.setItem(LS_AUDD, document.getElementById('auddKey').value.trim());
   });
+
+  // Audio library: clean old entries, then render
+  idbCleanOld().then(() => renderAudioLibrary()).catch(() => {});
+
+  // Transcript history: auto-cleanup entries older than 30 days
+  const hist = loadHistory().filter(h => Date.now() - h.ts < RETAIN_MS);
+  localStorage.setItem(LS_KEY, JSON.stringify(hist));
+  renderHistory();
 });
 
 // ── Mode switching ──
@@ -1468,6 +1534,9 @@ function finishAudioRecord() {
   document.getElementById('audioMicStatus').textContent = 'Fertig · ' + dur + ' · ' + kb + ' KB';
   document.getElementById('audioMicStatus').className = 'mic-status';
   document.getElementById('audioPlayerWrap').style.display = 'block';
+  const saveBtn = document.getElementById('audioSaveBtn');
+  saveBtn.disabled = false; saveBtn.textContent = '💾 In Bibliothek speichern';
+  saveBtn.style.opacity = ''; saveBtn.style.cursor = '';
 }
 
 function downloadAudio() {
@@ -1704,6 +1773,180 @@ function copyOllamaResult() {
   const box = document.getElementById('ollamaResultBox');
   navigator.clipboard.writeText(box.innerText).then(() => showToast('Kopiert ✓', 'success'))
     .catch(() => showToast('Kopieren fehlgeschlagen', 'error'));
+}
+
+// ── Audio Library (IndexedDB) ──
+const AUDIO_DB    = 'whisper-audio-v1';
+const AUDIO_STORE = 'recordings';
+const RETAIN_MS   = 30 * 86400000; // 30 days
+
+function openAudioDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(AUDIO_DB, 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(AUDIO_STORE))
+        db.createObjectStore(AUDIO_STORE, { keyPath: 'id', autoIncrement: true });
+    };
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+async function idbSave(data) {
+  const db = await openAudioDB();
+  return new Promise((res, rej) => {
+    const tx  = db.transaction(AUDIO_STORE, 'readwrite');
+    const req = tx.objectStore(AUDIO_STORE).add(data);
+    req.onsuccess = () => res(req.result);
+    req.onerror   = () => rej(req.error);
+  });
+}
+
+async function idbGetAll() {
+  const db = await openAudioDB();
+  return new Promise((res, rej) => {
+    const tx  = db.transaction(AUDIO_STORE, 'readonly');
+    const req = tx.objectStore(AUDIO_STORE).getAll();
+    req.onsuccess = () => res((req.result || []).reverse());
+    req.onerror   = () => rej(req.error);
+  });
+}
+
+async function idbDelete(id) {
+  const db = await openAudioDB();
+  return new Promise((res, rej) => {
+    const tx  = db.transaction(AUDIO_STORE, 'readwrite');
+    const req = tx.objectStore(AUDIO_STORE).delete(id);
+    req.onsuccess = () => res();
+    req.onerror   = () => rej(req.error);
+  });
+}
+
+async function idbCleanOld() {
+  const db = await openAudioDB();
+  const cutoff = Date.now() - RETAIN_MS;
+  return new Promise(res => {
+    const tx  = db.transaction(AUDIO_STORE, 'readwrite');
+    const req = tx.objectStore(AUDIO_STORE).openCursor();
+    req.onsuccess = e => {
+      const cur = e.target.result;
+      if (!cur) { res(); return; }
+      if (cur.value.date < cutoff) cur.delete();
+      cur.continue();
+    };
+    req.onerror = () => res();
+  });
+}
+
+async function saveAudioToLibrary() {
+  if (!audioRecBlob) return;
+  const btn = document.getElementById('audioSaveBtn');
+  btn.disabled = true; btn.textContent = 'Wird gespeichert…';
+  try {
+    const ext = document.getElementById('audioDlBtn').dataset.ext || 'webm';
+    const dur = document.getElementById('audioMicStatus').textContent;
+    const date = Date.now();
+    const name = 'Aufnahme ' + new Date(date).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'})
+                 + ' ' + new Date(date).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+    await idbSave({ blob: audioRecBlob, ext, dur, size: audioRecBlob.size, date, name });
+    btn.textContent = '✓ Gespeichert';
+    btn.style.opacity = '0.5'; btn.style.cursor = 'default';
+    showToast('In Bibliothek gespeichert ✓', 'success');
+    renderAudioLibrary();
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '💾 In Bibliothek speichern';
+    showToast('Fehler: ' + e.message, 'error');
+  }
+}
+
+const libObjUrls = {};
+
+async function renderAudioLibrary() {
+  const list = document.getElementById('audioLibList');
+  if (!list) return;
+  try {
+    const items = await idbGetAll();
+    if (!items.length) {
+      list.innerHTML = '<div class="audio-lib-empty">Noch keine Aufnahmen gespeichert</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => {
+      const d   = new Date(item.date);
+      const ago = fmtDate(d);
+      const kb  = item.size > 1048576
+        ? (item.size / 1048576).toFixed(1) + ' MB'
+        : Math.round(item.size / 1024) + ' KB';
+      return `<div class="lib-item" id="libitem-${item.id}">
+        <div class="lib-item-name">${escapeHtml(item.name)}</div>
+        <div class="lib-item-meta">${ago} · ${kb} · ${item.dur || ''}</div>
+        <div class="lib-item-actions">
+          <button class="lib-btn" onclick="libPlay(${item.id})">▶ Abspielen</button>
+          <button class="lib-btn" onclick="libDownload(${item.id})">📥</button>
+          <button class="lib-btn danger" onclick="libDelete(${item.id})">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="audio-lib-empty">Fehler beim Laden</div>';
+  }
+}
+
+function fmtDate(d) {
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return 'Heute, ' + d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  const yesterday = new Date(now); yesterday.setDate(now.getDate()-1);
+  if (d.toDateString() === yesterday.toDateString()) return 'Gestern, ' + d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}) + ', ' + d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function libPlay(id) {
+  const db = await openAudioDB();
+  const item = await new Promise((res,rej) => {
+    const req = db.transaction(AUDIO_STORE,'readonly').objectStore(AUDIO_STORE).get(id);
+    req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+  });
+  if (!item) return;
+  if (libObjUrls[id]) URL.revokeObjectURL(libObjUrls[id]);
+  const url = URL.createObjectURL(item.blob);
+  libObjUrls[id] = url;
+  const player = document.getElementById('audioPlayer');
+  player.src = url;
+  document.getElementById('audioPlayerWrap').style.display = 'block';
+  player.play();
+  document.getElementById('audioMicStatus').textContent = item.name;
+}
+
+async function libDownload(id) {
+  const db = await openAudioDB();
+  const item = await new Promise((res,rej) => {
+    const req = db.transaction(AUDIO_STORE,'readonly').objectStore(AUDIO_STORE).get(id);
+    req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+  });
+  if (!item) return;
+  const url = URL.createObjectURL(item.blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = item.name + '.' + (item.ext || 'webm');
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+async function libDelete(id) {
+  await idbDelete(id);
+  renderAudioLibrary();
+  showToast('Gelöscht', 'success');
+}
+
+async function clearAudioLibrary() {
+  if (!confirm('Alle gespeicherten Aufnahmen löschen?')) return;
+  const db = await openAudioDB();
+  await new Promise((res,rej) => {
+    const tx  = db.transaction(AUDIO_STORE,'readwrite');
+    const req = tx.objectStore(AUDIO_STORE).clear();
+    req.onsuccess = () => res(); req.onerror = () => rej(req.error);
+  });
+  renderAudioLibrary();
+  showToast('Bibliothek geleert', 'success');
 }
 
 // ── Playback speed & loop ──
