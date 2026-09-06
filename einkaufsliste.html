@@ -2098,15 +2098,21 @@ function getSug(name) {
 function getItemPrice(name){ return getSug(name)?.price ?? null; }
 function fmtPrice(p)       { return p.toFixed(2).replace('.', ',') + ' €'; }
 
-// Einheit → Gramm (1L ≈ 1000g für Vergleichszwecke)
+// Einheit → Gramm (1L/1000ml ≈ 1000 für Vergleichszwecke)
 function parseWeightG(unit) {
   if (!unit) return null;
   const u = unit.trim();
   let m;
-  m = u.match(/^([\d,]+)\s*g$/i);  if (m) return parseFloat(m[1].replace(',','.'));
-  m = u.match(/^([\d,]+)\s*kg$/i); if (m) return parseFloat(m[1].replace(',','.')) * 1000;
-  m = u.match(/^([\d,]+)\s*[Ll]$/);if (m) return parseFloat(m[1].replace(',','.')) * 1000;
+  m = u.match(/^([\d.,]+)\s*g$/i);   if (m) return parseFloat(m[1].replace(',','.'));
+  m = u.match(/^([\d.,]+)\s*kg$/i);  if (m) return parseFloat(m[1].replace(',','.')) * 1000;
+  m = u.match(/^([\d.,]+)\s*ml$/i);  if (m) return parseFloat(m[1].replace(',','.'));
+  m = u.match(/^([\d.,]+)\s*cl$/i);  if (m) return parseFloat(m[1].replace(',','.')) * 10;
+  m = u.match(/^([\d.,]+)\s*dl$/i);  if (m) return parseFloat(m[1].replace(',','.')) * 100;
+  m = u.match(/^([\d.,]+)\s*[Ll]$/); if (m) return parseFloat(m[1].replace(',','.')) * 1000;
   return null;
+}
+function _isLiquidUnit(unit) {
+  return /^\d*\s*(ml|cl|dl|[Ll])$/i.test((unit || '').trim());
 }
 // Preis normiert auf 1 kg (Supermarkt-Grundpreis)
 function pricePerKg(sug) {
@@ -2130,9 +2136,10 @@ function sugPriceHtml(sug) {
   const origLine = `<div class="tile-price">${fmtPrice(sug.price)}/${sug.unit}</div>`;
   let priceLines = origLine;
   if (ppkg != null) {
+    const perUnit = _isLiquidUnit(sug.unit) ? '/L' : '/kg';
     const cmp = ppkcal != null
-      ? `${fmtPrice(ppkg)}/kg · ${fmtPrice(ppkcal)}/100 kcal`
-      : `${fmtPrice(ppkg)}/kg`;
+      ? `${fmtPrice(ppkg)}${perUnit} · ${fmtPrice(ppkcal)}/100 kcal`
+      : `${fmtPrice(ppkg)}${perUnit}`;
     priceLines += `<div class="tile-kcal-price">${cmp}</div>`;
   }
   if (sug.protein != null) {
@@ -2149,19 +2156,19 @@ function sugPriceHtml(sug) {
 }
 
 // Mengen-Multiplikator berechnen
+const _NUM = '([\\d.,]+)';
+function _n(s) { return parseFloat((s || '0').replace(',', '.')); }
 function parseGrams(s) {
   if (!s) return null;
-  const m = s.trim().match(/^([\d,]+)\s*(g|kg)$/i);
+  const m = s.trim().match(new RegExp('^' + _NUM + '\\s*(g|kg)$', 'i'));
   if (!m) return null;
-  const v = parseFloat(m[1].replace(',', '.'));
-  return m[2].toLowerCase() === 'kg' ? v * 1000 : v;
+  return m[2].toLowerCase() === 'kg' ? _n(m[1]) * 1000 : _n(m[1]);
 }
 function parseLiters(s) {
   if (!s) return null;
-  const m = s.trim().match(/^([\d,]+)\s*(ml|cl|dl|[Ll])$/i);
+  const m = s.trim().match(new RegExp('^' + _NUM + '\\s*(ml|cl|dl|[Ll])$', 'i'));
   if (!m) return null;
-  const v = parseFloat(m[1].replace(',', '.'));
-  const u = m[2].toLowerCase();
+  const v = _n(m[1]), u = m[2].toLowerCase();
   if (u === 'ml') return v / 1000;
   if (u === 'cl') return v / 100;
   if (u === 'dl') return v / 10;
@@ -2169,22 +2176,22 @@ function parseLiters(s) {
 }
 function parsePieces(s) {
   if (!s) return null;
-  const m = s.trim().match(/^([\d,]+)\s*(st\.?|stk\.?|stück)$/i);
+  const m = s.trim().match(new RegExp('^' + _NUM + '\\s*(st\\.?|stk\\.?|stück)$', 'i'));
   if (!m) return null;
-  return parseFloat(m[1].replace(',', '.'));
+  return _n(m[1]);
 }
 function calcMultiplier(amount, unit) {
   if (!amount || amount === '' || amount === '1') return 1;
   if (/^\d+$/.test(amount.trim())) return parseInt(amount, 10);
   const aG = parseGrams(amount), uG = parseGrams(unit);
-  if (aG !== null && uG !== null) return aG / uG;
+  if (aG !== null && uG !== null && uG > 0) return aG / uG;
   const aL = parseLiters(amount), uL = parseLiters(unit);
-  if (aL !== null && uL !== null) return aL / uL;
+  if (aL !== null && uL !== null && uL > 0) return aL / uL;
   const aP = parsePieces(amount), uP = parsePieces(unit);
-  if (aP !== null && uP !== null) return aP / uP;
+  if (aP !== null && uP !== null && uP > 0) return aP / uP;
   // Non-metric units (Bund, Knolle, …): parse leading number
-  const m = amount.trim().match(/^([\d,]+)\s+.+$/);
-  if (m) return parseFloat(m[1].replace(',', '.')) || 1;
+  const m = amount.trim().match(/^([\d.,]+)\s+.+$/);
+  if (m) return _n(m[1]) || 1;
   return 1;
 }
 
