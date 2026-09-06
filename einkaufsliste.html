@@ -6310,19 +6310,44 @@ function cookAdjPortions(delta) {
   renderCookIngredients();
 }
 
+function cookFmtAmt(ing, scale) {
+  const unitStr = (ing.unit || '').trim();
+  const isG  = parseGrams(unitStr)   !== null;
+  const isL  = parseLiters(unitStr)  !== null;
+  if (isG || isL) {
+    const baseG = ing.amountG || 0;
+    const scaledG = Math.round(baseG * scale);
+    if (isL) {
+      if (scaledG >= 1000) return `${parseFloat((scaledG / 1000).toFixed(scaledG % 100 === 0 ? 1 : 2))} L`;
+      if (scaledG >= 100)  return `${parseFloat((scaledG / 100).toFixed(1))} dl`;
+      return `${scaledG} ml`;
+    }
+    if (scaledG >= 1000) return `${parseFloat((scaledG / 1000).toFixed(scaledG % 100 === 0 ? 1 : 2))} kg`;
+    return `${scaledG} g`;
+  }
+  const isPc = parsePieces(unitStr) !== null;
+  if (isPc) {
+    const raw = (ing.qty || 1) * scale;
+    const q   = raw === Math.floor(raw) ? raw : parseFloat(raw.toFixed(1));
+    const label = parsePieces(unitStr) > 1 ? unitStr : (q === 1 ? 'Stück' : 'Stück');
+    return `${q} ${label}`;
+  }
+  // Fallback: plain qty × scale
+  const raw = (ing.qty || 1) * scale;
+  const q   = raw === Math.floor(raw) ? raw : parseFloat(raw.toFixed(1));
+  return unitStr ? `${q} ${unitStr}` : `${q}`;
+}
+
 function renderCookIngredients() {
   const r = cookRecipeId ? recipes[cookRecipeId] : null;
   if (!r) return;
   const scale = cookPortions / (cookBaseServings || 1);
   const ings  = r.ingredients.filter(ing => !ing.custom);
+  const portLabel = cookPortions === Math.floor(cookPortions) ? cookPortions : cookPortions.toFixed(1);
   document.getElementById('cookMeta').textContent =
-    `${cookBaseServings} Portion${cookBaseServings !== 1 ? 'en' : ''} · ${ings.length} Zutat${ings.length !== 1 ? 'en' : ''}`;
+    `${portLabel} Portion${cookPortions !== 1 ? 'en' : ''} · ${ings.length} Zutat${ings.length !== 1 ? 'en' : ''}`;
   document.getElementById('cookIngredients').innerHTML = ings.map(ing => {
-    const scaledQty = ((ing.qty || 1) * scale);
-    const qtyStr = scaledQty === Math.floor(scaledQty) ? scaledQty : parseFloat(scaledQty.toFixed(1));
-    const amt = ing.unit === 'g' || ing.unit === 'ml'
-      ? `${Math.round((ing.amountG || 0) * scale)} ${ing.unit}`
-      : `${qtyStr} ${ing.unit}`;
+    const amt = cookFmtAmt(ing, scale);
     return `<div class="cook-ingr-item">
       <div class="cook-ingr-left">
         <span style="font-size:22px;">${ing.emoji || '🥗'}</span>
