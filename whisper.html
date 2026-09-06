@@ -344,6 +344,43 @@
     .ai-btn.secondary:hover { color: var(--accent); border-color: var(--accent); }
     .ai-btn.ok { background: var(--green); }
 
+    /* Audio recorder */
+    .audio-zone {
+      width: 100%; max-width: 480px;
+      padding: 20px 16px 0;
+      display: none; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .audio-zone.visible { display: flex; }
+    .audio-player-wrap {
+      width: 100%; background: var(--layer1);
+      border: 1.5px solid var(--border); border-radius: 18px; padding: 14px 16px;
+    }
+    .audio-player-label {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
+    }
+    audio {
+      width: 100%; border-radius: 10px; display: block; margin-bottom: 10px;
+      accent-color: var(--accent);
+    }
+    .audio-dl-btn {
+      width: 100%; padding: 11px; border-radius: 14px; border: none;
+      background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: opacity 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .audio-dl-btn:hover { opacity: 0.88; }
+    .audio-format-row {
+      display: flex; gap: 8px; width: 100%;
+    }
+    .fmt-opt {
+      flex: 1; padding: 8px; border-radius: 12px;
+      border: 1.5px solid var(--border2); background: var(--layer2);
+      color: var(--muted); font-size: 12px; font-weight: 700;
+      cursor: pointer; text-align: center; font-family: inherit; transition: all 0.15s;
+    }
+    .fmt-opt.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+
     /* History */
     .history-wrap { width: 100%; max-width: 480px; padding: 14px 16px 0; }
     .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
@@ -419,6 +456,7 @@
     <button class="mode-tab" id="tabLocal"   onclick="setMode('local')">🖥️ Lokal</button>
     <button class="mode-tab" id="tabWhisper" onclick="setMode('whisper')">✨ API</button>
     <button class="mode-tab" id="tabUpload"  onclick="setMode('upload')">📁 Datei</button>
+    <button class="mode-tab" id="tabAudio"   onclick="setMode('audio')">🎵 Audio</button>
   </div>
 
   <div class="options-row">
@@ -512,6 +550,23 @@
       <span class="transcript-placeholder" id="placeholder">Aufnahme starten oder Datei hochladen…</span>
     </div>
     <div class="word-count" id="wordCount">0 Wörter · 0 Zeichen</div>
+  </div>
+
+  <!-- Audio recorder zone -->
+  <div class="audio-zone" id="audioZone">
+    <div class="audio-format-row">
+      <button class="fmt-opt selected" id="fmtWebm" onclick="selectFmt('webm')">WebM</button>
+      <button class="fmt-opt" id="fmtMp4" onclick="selectFmt('mp4')">MP4</button>
+    </div>
+    <div class="rec-timer" id="audioTimer">0:00</div>
+    <button class="mic-btn" id="audioMicBtn" onclick="toggleAudioRecord()">🎙️</button>
+    <canvas id="audioWaveCanvas" height="40" style="width:100%;max-width:480px;display:block;padding:0 16px"></canvas>
+    <div class="mic-status" id="audioMicStatus">Tippen zum Aufnehmen</div>
+    <div class="audio-player-wrap" id="audioPlayerWrap" style="display:none;width:100%">
+      <div class="audio-player-label">Aufnahme</div>
+      <audio id="audioPlayer" controls></audio>
+      <button class="audio-dl-btn" id="audioDlBtn" onclick="downloadAudio()">📥 Aufnahme herunterladen</button>
+    </div>
   </div>
 
   <!-- AI Prompt -->
@@ -643,6 +698,11 @@ function setMode(mode) {
   document.getElementById('micZone').style.display   = (mode === 'browser' || mode === 'whisper') ? 'flex' : 'none';
   document.getElementById('localPanel').style.display = mode === 'local'  ? 'block' : 'none';
   document.getElementById('uploadZone').style.display = mode === 'upload' ? 'block' : 'none';
+  document.getElementById('audioZone').classList.toggle('visible', mode === 'audio');
+  if (mode !== 'audio') stopAudioRecord();
+  // hide transcript area in audio mode
+  document.querySelector('.transcript-wrap').style.display = mode === 'audio' ? 'none' : '';
+  document.querySelector('.ai-card').style.display = mode === 'audio' ? 'none' : '';
 
   if (mode === 'browser') setMicStatus('Tippen zum Aufnehmen', '');
   else if (mode === 'whisper') setMicStatus('Aufnehmen → Whisper API transkribiert', '');
@@ -1148,6 +1208,141 @@ function updateKeyStatus() {
   const key = localStorage.getItem(LS_API);
   document.getElementById('keyDot').classList.toggle('set', !!key);
   document.getElementById('keyText').textContent = key ? 'Key gesetzt (…' + key.slice(-4) + ')' : 'Kein Key gespeichert';
+}
+
+// ── Audio Recorder ──
+let audioRecording = false;
+let audioRecChunks = [];
+let audioRecMR = null;
+let audioRecStream = null;
+let audioRecCtx = null;
+let audioRecAnalyser = null;
+let audioRecData = null;
+let audioRecFrame = null;
+let audioRecTimer = null;
+let audioRecBlob = null;
+let audioRecUrl = null;
+let audioRecMime = null;
+let selectedFmt = 'webm';
+
+function selectFmt(fmt) {
+  selectedFmt = fmt;
+  document.getElementById('fmtWebm').classList.toggle('selected', fmt === 'webm');
+  document.getElementById('fmtMp4').classList.toggle('selected', fmt === 'mp4');
+}
+
+function toggleAudioRecord() {
+  if (audioRecording) stopAudioRecord();
+  else startAudioRecord();
+}
+
+async function startAudioRecord() {
+  try { audioRecStream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch { showToast('Mikrofon-Zugriff verweigert', 'error'); return; }
+
+  // Waveform
+  audioRecCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const src = audioRecCtx.createMediaStreamSource(audioRecStream);
+  audioRecAnalyser = audioRecCtx.createAnalyser();
+  audioRecAnalyser.fftSize = 256;
+  audioRecData = new Uint8Array(audioRecAnalyser.frequencyBinCount);
+  src.connect(audioRecAnalyser);
+  drawAudioWave();
+
+  // Hide old player
+  document.getElementById('audioPlayerWrap').style.display = 'none';
+  if (audioRecUrl) { URL.revokeObjectURL(audioRecUrl); audioRecUrl = null; }
+
+  // Pick mime type
+  const mimes = selectedFmt === 'mp4'
+    ? ['audio/mp4','audio/aac','audio/webm;codecs=opus','audio/webm']
+    : ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];
+  audioRecMime = mimes.find(m => MediaRecorder.isTypeSupported(m)) || null;
+
+  audioRecChunks = [];
+  audioRecMR = new MediaRecorder(audioRecStream, audioRecMime ? { mimeType: audioRecMime } : {});
+  audioRecMR.ondataavailable = e => { if (e.data.size > 0) audioRecChunks.push(e.data); };
+  audioRecMR.onstop = finishAudioRecord;
+  audioRecMR.start();
+
+  audioRecording = true;
+  document.getElementById('audioMicBtn').classList.add('recording');
+  document.getElementById('audioMicBtn').textContent = '⏹';
+  document.getElementById('audioTimer').classList.add('visible');
+  document.getElementById('audioMicStatus').textContent = 'Aufnahme läuft…';
+  document.getElementById('audioMicStatus').className = 'mic-status active';
+  recStartTime = Date.now();
+  audioRecTimer = setInterval(() => {
+    const s = Math.floor((Date.now() - recStartTime) / 1000);
+    document.getElementById('audioTimer').textContent = Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+  }, 500);
+}
+
+function stopAudioRecord() {
+  if (!audioRecording) return;
+  audioRecording = false;
+  clearInterval(audioRecTimer);
+  document.getElementById('audioTimer').classList.remove('visible');
+  document.getElementById('audioTimer').textContent = '0:00';
+  document.getElementById('audioMicBtn').classList.remove('recording');
+  document.getElementById('audioMicBtn').textContent = '🎙️';
+  if (audioRecMR && audioRecMR.state !== 'inactive') audioRecMR.stop();
+  if (audioRecStream) { audioRecStream.getTracks().forEach(t => t.stop()); audioRecStream = null; }
+  if (audioRecFrame) { cancelAnimationFrame(audioRecFrame); audioRecFrame = null; }
+  if (audioRecCtx) { audioRecCtx.close().catch(()=>{}); audioRecCtx = null; audioRecAnalyser = null; }
+  const canvas = document.getElementById('audioWaveCanvas');
+  if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function finishAudioRecord() {
+  const mime = audioRecMime || 'audio/webm';
+  audioRecBlob = new Blob(audioRecChunks, { type: mime });
+  audioRecUrl = URL.createObjectURL(audioRecBlob);
+  const player = document.getElementById('audioPlayer');
+  player.src = audioRecUrl;
+  const ext = mime.includes('mp4') || mime.includes('aac') ? 'm4a' : mime.includes('ogg') ? 'ogg' : 'webm';
+  document.getElementById('audioDlBtn').dataset.ext = ext;
+  const secs = Math.round((Date.now() - recStartTime) / 1000);
+  const dur = Math.floor(secs/60) + ':' + String(secs%60).padStart(2,'0');
+  const kb = Math.round(audioRecBlob.size / 1024);
+  document.getElementById('audioMicStatus').textContent = 'Fertig · ' + dur + ' · ' + kb + ' KB';
+  document.getElementById('audioMicStatus').className = 'mic-status';
+  document.getElementById('audioPlayerWrap').style.display = 'block';
+}
+
+function downloadAudio() {
+  if (!audioRecUrl) return;
+  const btn = document.getElementById('audioDlBtn');
+  const ext = btn.dataset.ext || 'webm';
+  const ts = new Date().toISOString().slice(0,19).replace('T','_').replace(/:/g,'-');
+  const a = document.createElement('a');
+  a.href = audioRecUrl;
+  a.download = 'aufnahme_' + ts + '.' + ext;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function drawAudioWave() {
+  const canvas = document.getElementById('audioWaveCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth * devicePixelRatio || 300;
+  const H = canvas.offsetHeight * devicePixelRatio || 40;
+  canvas.width = W; canvas.height = H;
+  const draw = () => {
+    if (!audioRecAnalyser) return;
+    audioRecFrame = requestAnimationFrame(draw);
+    audioRecAnalyser.getByteTimeDomainData(audioRecData);
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#7c3aed';
+    ctx.lineWidth = 2; ctx.beginPath();
+    const sw = W / audioRecData.length; let x = 0;
+    for (let i = 0; i < audioRecData.length; i++) {
+      const y = (audioRecData[i] / 128) * H / 2;
+      i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+      x += sw;
+    }
+    ctx.lineTo(W, H/2); ctx.stroke();
+  };
+  draw();
 }
 
 // ── Export ──
