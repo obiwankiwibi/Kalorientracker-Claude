@@ -183,6 +183,42 @@ const state=Object.assign({apiKey:'',fuel:'e5',theme:'light',history:{e10:[],e5:
 const $=id=>document.getElementById(id), euro=n=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){localStorage.setItem(STORE,JSON.stringify(state))}
+
+async function syncFavsToFirebase() {
+  const fbUrl = localStorage.getItem('firebase_db_url');
+  if (!fbUrl) return;
+  try {
+    await fetch(fbUrl + '/fuel_favorites.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ favorites: state.favorites, favAlerts: state.favAlerts, favPrices: state.favPrices })
+    });
+  } catch(e) { console.warn('Firebase-Favoriten-Sync:', e); }
+}
+let _favSyncTimer = null;
+function persistFavs() {
+  persist();
+  clearTimeout(_favSyncTimer);
+  _favSyncTimer = setTimeout(syncFavsToFirebase, 1500);
+}
+
+async function restoreFromFirebase() {
+  if (Object.keys(state.favorites).length > 0) return;
+  const fbUrl = localStorage.getItem('firebase_db_url');
+  if (!fbUrl) return;
+  try {
+    const r = await fetch(fbUrl + '/fuel_favorites.json');
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data || !data.favorites || !Object.keys(data.favorites).length) return;
+    state.favorites = data.favorites || {};
+    state.favAlerts  = data.favAlerts  || {};
+    state.favPrices  = data.favPrices  || {};
+    persist();
+    render();
+    showToast('✓ Favoriten aus Firebase wiederhergestellt');
+  } catch(e) { console.warn('Firebase-Restore:', e); }
+}
 function setStatus(msg){$('status').textContent=msg}
 let _toastTimer=null;
 function showToast(msg,ms=3200,actionLabel='',actionFn=null){const t=$('toast');if(actionLabel&&actionFn){t.innerHTML=`<span>${esc(msg)}</span><button class="toast-action">${esc(actionLabel)}</button>`;t.querySelector('.toast-action').onclick=()=>{actionFn();t.classList.remove('show');clearTimeout(_toastTimer);};}else{t.textContent=msg;}t.classList.add('show');clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>t.classList.remove('show'),ms);}
@@ -268,12 +304,12 @@ function toggleFav(id){
  if(state.favorites[id]){
   _undoFav={id,fav:{...state.favorites[id]},prices:[...(state.favPrices[id]||[])]};
   delete state.favorites[id];delete state.favPrices[id];
-  persist();render();
-  showToast('Tankstelle entfernt',5000,'Rückgängig',()=>{if(_undoFav&&_undoFav.id===id){state.favorites[id]=_undoFav.fav;state.favPrices[id]=_undoFav.prices;persist();render();_undoFav=null;}});
+  persistFavs();render();
+  showToast('Tankstelle entfernt',5000,'Rückgängig',()=>{if(_undoFav&&_undoFav.id===id){state.favorites[id]=_undoFav.fav;state.favPrices[id]=_undoFav.prices;persistFavs();render();_undoFav=null;}});
  }else{
   state.favorites[id]={name:s.name,brand:s.brand||'',address:`${s.street||''} ${s.houseNumber||''}`.trim()+`, ${s.postCode} ${s.place}`};
   if(!state.favPrices[id])state.favPrices[id]=[];
-  persist();render();
+  persistFavs();render();
  }
 }
 
@@ -556,11 +592,12 @@ $('favGrid').addEventListener('change',e=>{
  const id=inp.dataset.alertid;
  const val=parseFloat(inp.value);
  if(val>0)state.favAlerts[id]=val;else delete state.favAlerts[id];
- persist();renderFavs();
+ persistFavs();renderFavs();
 });
 persist();
 window.onresize=()=>requestAnimationFrame(drawChart);$('place').value=state.place;setStatus(state.apiKey?'Bereit zur Suche':'API-Key in den Einstellungen hinterlegen');render();checkStale();
 if(state.stations.length)collapseSearch();
+restoreFromFirebase();
 // Stündliche Auto-Abfrage; sofortige Abfrage falls Daten fehlen oder veraltet
 if(state.apiKey&&(!state.stations.length||Date.now()-state.lastRequest>TK_HOUR))search();
 setInterval(search,TK_HOUR);
