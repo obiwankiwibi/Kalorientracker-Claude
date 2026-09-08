@@ -1776,7 +1776,10 @@ function renderKalTiles(filter) {
   items.forEach(item => {
     const tile = document.createElement('div');
     tile.className = 'kal-tile';
-    tile.innerHTML = `<div class="kal-tile-emoji">${item.emoji}</div><div class="kal-tile-name">${item.name}</div><div class="kal-tile-kcal">${item.kcal} kcal</div>`;
+    const tEmoji = document.createElement('div'); tEmoji.className = 'kal-tile-emoji'; tEmoji.textContent = item.emoji;
+    const tName  = document.createElement('div'); tName.className  = 'kal-tile-name';  tName.textContent  = item.name;
+    const tKcal  = document.createElement('div'); tKcal.className  = 'kal-tile-kcal';  tKcal.textContent  = item.kcal + ' kcal';
+    tile.append(tEmoji, tName, tKcal);
     tile.addEventListener('click', () => selectKalTile(item));
     grid.appendChild(tile);
   });
