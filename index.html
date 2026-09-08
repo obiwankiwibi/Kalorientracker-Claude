@@ -740,6 +740,15 @@
       </span>
       <span class="backup-arrow">↓</span>
     </button>
+    <input type="file" id="backupFileInput" accept=".json" style="display:none" onchange="doRestoreFile(this)">
+    <button class="backup-btn" id="restoreBtn" onclick="doRestore()" style="margin-top:8px">
+      <span class="backup-icon">📂</span>
+      <span class="backup-text">
+        <span class="backup-title">Backup wiederherstellen</span>
+        <span class="backup-sub">Backup-Datei importieren</span>
+      </span>
+      <span class="backup-arrow" style="color:var(--muted)">↑</span>
+    </button>
   </div>
 
 <script>
@@ -1041,11 +1050,14 @@ loadFuelPrice();
 setInterval(loadFuelPrice, 5 * 60 * 1000);
 
 const BACKUP_STATIC_KEYS = [
-  'zaehler',
+  'zaehler','zaehler-theme',
   'kalorientracker_v1','kalorientracker_goal','kalorientracker_watergoal',
   'kalorientracker_history','kalorientracker_favorites',
+  'kalorientracker_macro_goals','kalorientracker_scan_db',
   'haushaltskosten_v1',
   'tankstellen_finder_v2',
+  'freizeit_v1',
+  'rezepte_v1',
   'recentLists','restaurants','scannedSuggestions','einkauf_offers',
   'todo_tasks','fb_db_url','haushalt_device_id'
 ];
@@ -1069,7 +1081,7 @@ function doBackup() {
   });
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (k && k.startsWith('list_') && payload[k] === undefined) {
+    if (k && (k.startsWith('list_') || k.startsWith('zimmergruen_') || k.startsWith('zg_notes_')) && payload[k] === undefined) {
       const v = localStorage.getItem(k);
       if (v != null) { try { payload[k] = JSON.parse(v); } catch { payload[k] = v; } }
     }
@@ -1099,6 +1111,38 @@ function doBackupQuick() {
   pill.classList.add('ok');
   pill.textContent = '✓ Gesichert';
   setTimeout(() => { pill.classList.remove('ok'); pill.textContent = '💾 Backup'; }, 2000);
+}
+
+function doRestore() {
+  const inp = document.getElementById('backupFileInput');
+  inp.value = '';
+  inp.click();
+}
+function doRestoreFile(inp) {
+  const file = inp.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      let count = 0;
+      for (const [k, v] of Object.entries(data)) {
+        if (k === '_backup') continue;
+        localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+        count++;
+      }
+      const btn = document.getElementById('restoreBtn');
+      btn.classList.add('success');
+      btn.querySelector('.backup-sub').textContent = count + ' Einträge wiederhergestellt – Seite neu laden';
+      setTimeout(() => {
+        btn.classList.remove('success');
+        btn.querySelector('.backup-sub').textContent = 'Backup-Datei importieren';
+      }, 4000);
+    } catch(err) {
+      alert('Ungültige Backup-Datei.');
+    }
+  };
+  reader.readAsText(file);
 }
 
 // Backup-Pill: letzten Zeitstempel als Tooltip
