@@ -611,16 +611,6 @@
           <div class="method-chip p3" id="tdChip3">③ –/3</div>
         </div>
       </div>
-      <div class="td-row" style="background:rgba(217,119,6,0.13);color:#b45309" onclick="event.stopPropagation();sessionStorage.setItem('todoOpenList','important');location.href='todo.html'">
-        <span class="td-row-emoji">⭐</span>
-        <span class="td-row-label">Wichtig</span>
-        <span class="td-row-num" id="tdImportant">–</span>
-      </div>
-      <div class="td-row" style="background:rgba(74,158,255,0.13);color:#2478d4" onclick="event.stopPropagation();sessionStorage.setItem('todoOpenList','all');location.href='todo.html'">
-        <span class="td-row-emoji">📋</span>
-        <span class="td-row-label">Alle Aufgaben</span>
-        <span class="td-row-num" id="tdAll">–</span>
-      </div>
     </div>
     <a class="app-card" data-tile-id="einkauf" href="einkaufsliste.html">
       <div class="app-icon-wrap c-teal">🛒</div>
@@ -1259,8 +1249,6 @@ function fillTodoWidget(tasks) {
     el.classList.toggle('empty', count === 0);
   });
 
-  document.getElementById('tdImportant').textContent = open.filter(t => t.important).length;
-  document.getElementById('tdAll').textContent        = open.length;
 }
 
 function initTodoWidget() {
