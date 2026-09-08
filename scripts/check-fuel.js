@@ -2,7 +2,7 @@
 const webpush = require('web-push');
 const fetch   = require('node-fetch');
 
-const MIN_NOTIFY_GAP  = 3 * 60 * 60 * 1000; // 3 Stunden Anti-Spam
+const MIN_NOTIFY_GAP  = 100 * 60 * 1000; // 100 Minuten Anti-Spam (Intervall 2h)
 const NOTIFY_HOUR_START = 7;
 const NOTIFY_HOUR_END   = 22;
 
@@ -53,10 +53,11 @@ async function main() {
     return;
   }
 
-  const [sub, config, lastNotif] = await Promise.all([
+  const [sub, config, lastNotif, lastPrices] = await Promise.all([
     fbGet('/push_sub'),
     fbGet('/fuel_config'),
-    fbGet('/fuel_last_notif')
+    fbGet('/fuel_last_notif'),
+    fbGet('/fuel_last_prices')
   ]);
 
   if (!sub || !sub.endpoint) {
@@ -99,6 +100,8 @@ async function main() {
 
   // Stationen auswerten
   const lines = [];
+  const prev = lastPrices || {};
+  const newPrices = {};
 
   for (const id of config.stations) {
     const p = prices[id];
@@ -117,7 +120,11 @@ async function main() {
       if (price == null) {
         parts.push(`${FUEL_LABEL[f]}: —`);
       } else {
-        parts.push(`${FUEL_LABEL[f]}: ${price.toFixed(2).replace('.', ',')} €`);
+        const key = `${id}_${f}`;
+        const prevPrice = prev[key];
+        const arrow = prevPrice == null ? '' : price < prevPrice ? ' 🟢↓' : price > prevPrice ? ' 🔴↑' : '';
+        newPrices[key] = price;
+        parts.push(`${FUEL_LABEL[f]}: ${price.toFixed(2).replace('.', ',')} €${arrow}`);
         if (threshold !== null && price <= threshold) belowThreshold = true;
       }
     }
@@ -153,7 +160,10 @@ async function main() {
 
   try {
     await webpush.sendNotification(sub, payload);
-    await fbSet('/fuel_last_notif', Date.now());
+    await Promise.all([
+      fbSet('/fuel_last_notif', Date.now()),
+      Object.keys(newPrices).length ? fbSet('/fuel_last_prices', newPrices) : Promise.resolve()
+    ]);
     console.log('Push-Benachrichtigung gesendet!');
   } catch (err) {
     if (err.statusCode === 410 || err.statusCode === 404) {
