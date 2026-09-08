@@ -512,6 +512,75 @@
     /* ── Circuit background ── */
     #page-bg { position: fixed; inset: 0; z-index: -1; background: linear-gradient(155deg,#b8d4f0 0%,#dce8f5 45%,#e8f2fc 100%); will-change: transform; }
     @media (prefers-color-scheme: dark) { #page-bg { background: linear-gradient(155deg,#0a1020 0%,#0d1525 45%,#0f1a2e 100%); } }
+
+    /* ══════════════════════════════════════════
+       1-2-3 METHODE VIEW
+    ══════════════════════════════════════════ */
+    .method-section {
+      margin: 8px 12px; border-radius: 18px;
+      background: var(--surface); border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .method-section-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px 10px;
+    }
+    .method-badge {
+      width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 800; flex-shrink: 0; color: #fff;
+    }
+    .method-badge.p1 { background: var(--red); }
+    .method-badge.p2 { background: var(--star); }
+    .method-badge.p3 { background: var(--green); color: #1a3a1a; }
+    .method-section-title { flex: 1; font-size: 14px; font-weight: 700; color: var(--text); }
+    .method-section-count { font-size: 12px; color: var(--muted); }
+    .method-overflow { font-size: 11px; font-weight: 700; color: var(--red); }
+    .method-add-btn {
+      background: none; border: none; color: var(--accent);
+      font-size: 22px; cursor: pointer; padding: 0 4px; line-height: 1;
+    }
+    .method-slot-empty {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-top: 1px solid var(--border);
+      color: var(--muted); font-size: 14px; cursor: pointer;
+      transition: background 0.1s;
+    }
+    .method-slot-empty:active { background: var(--card); }
+    .method-slot-circle {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 2px dashed var(--border); flex-shrink: 0;
+    }
+    .method-task { border-top: 1px solid var(--border); }
+    .method-remove-btn {
+      font-size: 15px; color: var(--muted); padding: 4px 8px;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .method-caption {
+      font-size: 11px; color: var(--muted); padding: 0 14px 10px;
+      line-height: 1.4;
+    }
+
+    /* ── 1-2-3 priority badge on task rows ── */
+    .task-p123 {
+      font-size: 13px; font-weight: 700; flex-shrink: 0;
+      width: 22px; text-align: center;
+    }
+
+    /* ── Detail sheet: 1-2-3 picker ── */
+    .p123-btns { display: flex; gap: 6px; }
+    .p123-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid var(--border); background: none;
+      color: var(--muted); font-size: 14px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .p123-btn:active { opacity: 0.7; }
+    .p123-btn.on.p1 { background: var(--red);  border-color: var(--red);  color: #fff; }
+    .p123-btn.on.p2 { background: var(--star); border-color: var(--star); color: #fff; }
+    .p123-btn.on.p3 { background: var(--green);border-color: var(--green);color: #1a3a1a; }
+    .p123-btn.clear { font-size: 13px; }
   </style>
 </head>
 <body>
@@ -605,6 +674,18 @@
     <div class="detail-row" id="myDayRow" onclick="toggleDetailMyDay()">
       <div class="dr-icon">☀️</div>
       <div class="dr-label" id="myDayLabel">Zu Mein Tag hinzufügen</div>
+    </div>
+
+    <!-- 1-2-3 Priority -->
+    <div class="detail-row" style="cursor:default">
+      <div class="dr-icon" style="font-weight:800;font-size:15px">①</div>
+      <div class="dr-label" id="p123Label">1-2-3 Priorität</div>
+      <div class="p123-btns">
+        <button class="p123-btn p1" id="p123-1" onclick="setPriority123(1)" title="① Muss heute">①</button>
+        <button class="p123-btn p2" id="p123-2" onclick="setPriority123(2)" title="② Soll heute">②</button>
+        <button class="p123-btn p3" id="p123-3" onclick="setPriority123(3)" title="③ Wäre schön">③</button>
+        <button class="p123-btn clear" id="p123-x" onclick="setPriority123(null)" style="display:none" title="Entfernen">✕</button>
+      </div>
     </div>
 
     <!-- Reminder -->
@@ -762,12 +843,13 @@ const FIREBASE_CONFIG = {
 // ═══════════════════════════════════════════════
 //  CONSTANTS
 // ═══════════════════════════════════════════════
-const SMART_IDS = ['myday','important','planned','all'];
+const SMART_IDS = ['method123','myday','important','planned','all'];
 const SMART = {
-  myday:     { name:'Mein Tag',     emoji:'☀️',  grad:['#FF8C00','#FFB347'] },
-  important: { name:'Wichtig',      emoji:'⭐',  grad:['#d97706','#f5a623'] },
-  planned:   { name:'Geplant',      emoji:'📅',  grad:['#2563eb','#4a9eff'] },
-  all:       { name:'Alle Aufgaben',emoji:'🏠',  grad:['#16a34a','#4ade80'] },
+  method123: { name:'1-2-3 Methode', emoji:'🎯', grad:['#7c3aed','#a855f7'] },
+  myday:     { name:'Mein Tag',      emoji:'☀️', grad:['#FF8C00','#FFB347'] },
+  important: { name:'Wichtig',       emoji:'⭐', grad:['#d97706','#f5a623'] },
+  planned:   { name:'Geplant',       emoji:'📅', grad:['#2563eb','#4a9eff'] },
+  all:       { name:'Alle Aufgaben', emoji:'🏠', grad:['#16a34a','#4ade80'] },
 };
 
 const LIST_COLORS = [
@@ -972,6 +1054,7 @@ function persistList(id, data) {
 // ═══════════════════════════════════════════════
 function getTasksForList(lid) {
   const all = Object.entries(tasks).map(([id, t]) => ({ id, ...t }));
+  if (lid === 'method123') return all.filter(t => t.priority123);
   if (lid === 'myday')     return all.filter(t => t.myDay);
   if (lid === 'important') return all.filter(t => t.important);
   if (lid === 'planned')   return all.filter(t => t.dueDate);
@@ -1031,6 +1114,7 @@ function renderListsView() {
 
 function renderTasksView() {
   if (currentListId === null) return;
+  if (currentListId === 'method123') { renderMethod123View(); return; }
   const isSmartList = currentListId in SMART;
   const meta = isSmartList ? SMART[currentListId] : lists[currentListId];
   if (!meta && !isSmartList) { goBack(); return; }
@@ -1110,6 +1194,12 @@ function taskRowHtml(t) {
   if (currentListId === 'all' && t.listId && lists[t.listId])
     metaHtml += `<span class="task-meta-tag">${lists[t.listId].emoji} ${esc(lists[t.listId].name)}</span>`;
 
+  const p123colors = ['','#e8635a','#f5a623','#4ade80'];
+  const p123labels = ['','①','②','③'];
+  const p123badge  = t.priority123
+    ? `<span class="task-p123" style="color:${p123colors[t.priority123]}">${p123labels[t.priority123]}</span>`
+    : '';
+
   return `<div class="task-item" onclick="openDetail('${t.id}')">
     <div class="task-check ${t.completed?'done':''}"
          onclick="event.stopPropagation();tapCheck('${t.id}',this)">
@@ -1119,6 +1209,7 @@ function taskRowHtml(t) {
       <div class="task-title ${t.completed?'done':''}">${esc(t.title)}</div>
       ${metaHtml ? `<div class="task-meta">${metaHtml}</div>` : ''}
     </div>
+    ${p123badge}
     <div class="task-star ${t.important?'on':''}"
          onclick="event.stopPropagation();tapStar('${t.id}',this)">
       ${t.important ? '★' : '☆'}
@@ -1165,6 +1256,15 @@ function renderDetail() {
   mdl.textContent = t.myDay ? 'In Mein Tag' : 'Zu Mein Tag hinzufügen';
   mdl.className   = `dr-label ${t.myDay ? 'set' : ''}`;
   mdl.style.color = t.myDay ? '#FF8C00' : '';
+
+  // 1-2-3 Priority row
+  const p = t.priority123 || null;
+  const p123lbl = document.getElementById('p123Label');
+  const p123names = ['① Muss heute', '② Soll heute', '③ Wäre schön'];
+  p123lbl.textContent = p ? p123names[p-1] : '1-2-3 Priorität';
+  p123lbl.className   = `dr-label ${p ? 'set' : ''}`;
+  [1,2,3].forEach(n => document.getElementById('p123-' + n).classList.toggle('on', p === n));
+  document.getElementById('p123-x').style.display = p ? '' : 'none';
 
   // Reminder
   const rl = document.getElementById('reminderLabel');
@@ -1232,6 +1332,8 @@ function toggleDone() {
 // ═══════════════════════════════════════════════
 //  TASK OPERATIONS
 // ═══════════════════════════════════════════════
+let _methodAddPriority = null;
+
 function addTask() {
   const inp = document.getElementById('addTaskInput');
   const title = inp.value.trim();
@@ -1239,6 +1341,7 @@ function addTask() {
 
   const isCustom = currentListId && !(currentListId in SMART);
   const id = 't_' + Date.now();
+  const p123 = currentListId === 'method123' ? (_methodAddPriority || null) : null;
 
   persistTask(id, {
     title,
@@ -1246,6 +1349,7 @@ function addTask() {
     completed:   false,
     important:   currentListId === 'important',
     myDay:       currentListId === 'myday',
+    priority123: p123,
     dueDate:     null,
     reminderAt:  null,
     notes:       '',
@@ -1254,6 +1358,8 @@ function addTask() {
     completedAt: null,
   });
   inp.value = '';
+  inp.placeholder = 'Aufgabe hinzufügen';
+  _methodAddPriority = null;
   toast(`✓ "${title}" hinzugefügt`);
 }
 
@@ -1714,6 +1820,108 @@ function toggleTheme() {
   const next = cur === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('todo_theme', next);
+}
+
+// ═══════════════════════════════════════════════
+//  1-2-3 METHODE
+// ═══════════════════════════════════════════════
+function setPriority123(p) {
+  if (!detailTaskId) return;
+  const t = tasks[detailTaskId];
+  if (!t) return;
+  const names = ['','① Muss heute','② Soll heute','③ Wäre schön'];
+  persistTask(detailTaskId, { ...t, priority123: p || null });
+  toast(p ? `Priorität ${names[p]} gesetzt` : 'Aus 1-2-3 entfernt');
+}
+
+function setPriority123forTask(taskId, p) {
+  const t = tasks[taskId];
+  if (!t) return;
+  persistTask(taskId, { ...t, priority123: p || null });
+}
+
+function methodAddTask(p) {
+  _methodAddPriority = p;
+  const labels = ['','① Muss heute','② Soll heute','③ Wäre schön'];
+  const inp = document.getElementById('addTaskInput');
+  inp.placeholder = labels[p] + ' hinzufügen…';
+  inp.focus();
+}
+
+function renderMethod123View() {
+  document.getElementById('tasksTitle').textContent = '1-2-3 Methode';
+  document.getElementById('listMoreBtn').style.display = 'none';
+
+  document.getElementById('listHeaderSection').innerHTML = `
+    <div class="list-header">
+      <span class="list-header-emoji">🎯</span>
+      <div class="list-header-title" style="color:#9333ea">1-2-3 Methode</div>
+      <div class="list-header-count">Fokus auf das Wesentliche</div>
+    </div>`;
+
+  const all = Object.entries(tasks).map(([id,t]) => ({id,...t}));
+  const config = [
+    { p:1, label:'Muss heute',  caption:'Die eine wichtigste Aufgabe — unbedingt heute erledigen.', cls:'p1' },
+    { p:2, label:'Soll heute',  caption:'Zwei weitere wichtige Aufgaben für heute.', cls:'p2' },
+    { p:3, label:'Wäre schön',  caption:'Drei optionale Aufgaben — wenn noch Zeit bleibt.', cls:'p3' },
+  ];
+  const limits  = [1,2,3];
+  const circled = ['①','②','③'];
+
+  let html = '';
+  config.forEach(({ p, label, caption, cls }) => {
+    const ts    = all.filter(t => t.priority123 === p && !t.completed);
+    const limit = limits[p-1];
+    const over  = ts.length > limit;
+    html += `<div class="method-section">
+      <div class="method-section-header">
+        <div class="method-badge ${cls}">${circled[p-1]}</div>
+        <div class="method-section-title">${label}</div>
+        ${over
+          ? `<span class="method-overflow">${ts.length}/${limit} – zu viele!</span>`
+          : `<span class="method-section-count">${ts.length}/${limit}</span>`}
+        <button class="method-add-btn" onclick="methodAddTask(${p})" title="Aufgabe hinzufügen">+</button>
+      </div>`;
+
+    ts.forEach(t => {
+      html += `<div class="task-item method-task" onclick="openDetail('${t.id}')">
+        <div class="task-check" onclick="event.stopPropagation();tapCheck('${t.id}',this)"></div>
+        <div class="task-body"><div class="task-title">${esc(t.title)}</div></div>
+        <div class="method-remove-btn" onclick="event.stopPropagation();setPriority123forTask('${t.id}',null)" title="Entfernen">✕</div>
+      </div>`;
+    });
+
+    const empty = Math.max(0, limit - ts.length);
+    for (let i = 0; i < empty; i++) {
+      html += `<div class="method-slot-empty" onclick="methodAddTask(${p})">
+        <div class="method-slot-circle"></div>
+        <span>Aufgabe hinzufügen…</span>
+      </div>`;
+    }
+
+    html += `<div class="method-caption">${caption}</div></div>`;
+  });
+
+  document.getElementById('activeTasksList').innerHTML = html;
+
+  // Done section
+  const done = all.filter(t => t.priority123 && t.completed)
+    .sort((a,b) => (b.completedAt||0) - (a.completedAt||0));
+  const ds = document.getElementById('doneSeparator');
+  const dl = document.getElementById('doneTasksList');
+  if (done.length > 0) {
+    ds.style.display = '';
+    ds.innerHTML = `<div class="divider"></div>
+      <div class="done-section-header" onclick="toggleDone()">
+        <span class="done-arrow ${doneOpen?'open':''}">›</span>
+        Erledigt (${done.length})
+      </div>`;
+    dl.style.display = doneOpen ? '' : 'none';
+    dl.innerHTML = done.map(t => taskRowHtml(t)).join('');
+  } else {
+    ds.style.display = 'none';
+    dl.style.display = 'none';
+  }
 }
 
 // ═══════════════════════════════════════════════
