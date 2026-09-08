@@ -913,7 +913,7 @@ function selectMeal(btn){
 /* ---------- Makro-Ziele ---------- */
 const MACRO_GOALS_KEY='kalorientracker_macro_goals';
 function getMacroGoals(){try{return JSON.parse(localStorage.getItem(MACRO_GOALS_KEY))||{};}catch(e){return{};}}
-function saveMacroGoal(key,val){const g=getMacroGoals();const n=parseFloat(val);if(n>0)g[key]=n;else delete g[key];localStorage.setItem(MACRO_GOALS_KEY,JSON.stringify(g));const day=getDay(fmtKey(currentDate));renderMacros(day.entries);}
+function saveMacroGoal(key,val){const g=getMacroGoals();const n=parseFloat(val);if(n>0)g[key]=n;else delete g[key];localStorage.setItem(MACRO_GOALS_KEY,JSON.stringify(g));scheduleKalSync();const day=getDay(fmtKey(currentDate));renderMacros(day.entries);}
 
 /* ---------- Einstellungen ---------- */
 function openSettings(){
@@ -1093,13 +1093,57 @@ function getISOWeek(d){
 
 /* ---------- Speicher ---------- */
 function loadStore(){ try{return JSON.parse(localStorage.getItem(STORE_KEY))||{};}catch(e){return{};} }
-function saveStore(store){ localStorage.setItem(STORE_KEY,JSON.stringify(store)); }
+function saveStore(store){ localStorage.setItem(STORE_KEY,JSON.stringify(store)); scheduleKalSync(); }
 function getDay(key){ const s=loadStore(); return s[key]||{entries:[],water:0}; }
 function setDay(key,dayData){ const s=loadStore(); s[key]=dayData; saveStore(s); }
 function dayTotal(key){ return getDay(key).entries.reduce((s,e)=>s+e.kcal,0); }
 
+/* ---------- Firebase-Sync ---------- */
+let _kalSyncTimer = null;
+function scheduleKalSync() {
+  clearTimeout(_kalSyncTimer);
+  _kalSyncTimer = setTimeout(async () => {
+    const fbUrl = localStorage.getItem('fb_db_url');
+    if (!fbUrl) return;
+    try {
+      await fetch(fbUrl + '/kalorien.json', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          store:     JSON.parse(localStorage.getItem(STORE_KEY)       || '{}'),
+          goal:      localStorage.getItem('kalorientracker_goal')     || '',
+          watergoal: localStorage.getItem('kalorientracker_watergoal')|| '',
+          macros:    JSON.parse(localStorage.getItem(MACRO_GOALS_KEY) || '{}'),
+          scandb:    JSON.parse(localStorage.getItem(SCAN_DB_KEY)     || '[]'),
+          favorites: JSON.parse(localStorage.getItem(FAV_KEY)         || '[]')
+        })
+      });
+    } catch(e) { console.warn('Kalorien Firebase-Sync:', e); }
+  }, 2000);
+}
+async function restoreKalorienFromFirebase() {
+  const existing = loadStore();
+  if (Object.keys(existing).length > 0) return;
+  const fbUrl = localStorage.getItem('fb_db_url');
+  if (!fbUrl) return;
+  try {
+    const r = await fetch(fbUrl + '/kalorien.json');
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d || !d.store || !Object.keys(d.store).length) return;
+    localStorage.setItem(STORE_KEY,       JSON.stringify(d.store));
+    if (d.goal)      localStorage.setItem('kalorientracker_goal',      d.goal);
+    if (d.watergoal) localStorage.setItem('kalorientracker_watergoal', d.watergoal);
+    if (d.macros   && Object.keys(d.macros).length)   localStorage.setItem(MACRO_GOALS_KEY, JSON.stringify(d.macros));
+    if (d.scandb   && d.scandb.length)                localStorage.setItem(SCAN_DB_KEY,     JSON.stringify(d.scandb));
+    if (d.favorites && d.favorites.length)            localStorage.setItem(FAV_KEY,         JSON.stringify(d.favorites));
+    render();
+    showToast('✓ Kaloriendaten aus Firebase wiederhergestellt');
+  } catch(e) { console.warn('Kalorien Firebase-Restore:', e); }
+}
+
 /* ---------- Kalorienziel ---------- */
-function saveGoal(){ localStorage.setItem('kalorientracker_goal',document.getElementById('goalInput').value||''); render(); }
+function saveGoal(){ localStorage.setItem('kalorientracker_goal',document.getElementById('goalInput').value||''); scheduleKalSync(); render(); }
 function getGoalRaw(){ return localStorage.getItem('kalorientracker_goal')||''; }
 function getGoal(){ const r=parseFloat(getGoalRaw()); return(r&&r>0)?r:DEFAULT_GOAL; }
 
@@ -1111,6 +1155,7 @@ function getWaterGoal(){
 function saveWaterGoal(){
   const v=parseFloat(document.getElementById('waterGoalInput').value);
   if(v>0) localStorage.setItem('kalorientracker_watergoal',String(Math.round(v*1000)));
+  scheduleKalSync();
   renderWater();
 }
 function addWater(ml){
@@ -1167,6 +1212,7 @@ function addToFoodHistory(name,kcal,meta,kcalPer100,nutrients,unit,amount){
     const upd=s.filter(x=>x.name.trim().toLowerCase()!==nrm);
     upd.unshift({name:name.trim(),kcal:kcalPer100,per100});
     localStorage.setItem(SCAN_DB_KEY,JSON.stringify(upd.slice(0,200)));
+    scheduleKalSync();
   }
 }
 
@@ -1238,7 +1284,7 @@ function deleteFromHistory(name){
 
 /* ---------- Favoriten ---------- */
 function getFavs(){ try{return JSON.parse(localStorage.getItem(FAV_KEY))||[];}catch(e){return[];} }
-function saveFavs(f){ localStorage.setItem(FAV_KEY,JSON.stringify(f)); }
+function saveFavs(f){ localStorage.setItem(FAV_KEY,JSON.stringify(f)); scheduleKalSync(); }
 function isFavorite(name){ return getFavs().some(f=>f.name.trim().toLowerCase()===name.trim().toLowerCase()); }
 
 function renderFavorites(){
@@ -2562,6 +2608,7 @@ function migrateToScanDb(){
 /* ---------- Start ---------- */
 migrateToScanDb();
 render();
+restoreKalorienFromFirebase();
 fetchWeather();
 if (sessionStorage.getItem('autoScan') === '1') {
   sessionStorage.removeItem('autoScan');
