@@ -386,7 +386,29 @@ function loadDb() {
   return makeDefaultDb();
 }
 
-function saveDb(){ localStorage.setItem('zaehler',JSON.stringify(db)); }
+function saveDb(){
+  localStorage.setItem('zaehler',JSON.stringify(db));
+  clearTimeout(saveDb._t);
+  saveDb._t=setTimeout(async()=>{
+    const fb=localStorage.getItem('fb_db_url');if(!fb)return;
+    try{await fetch(fb+'/zaehler.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(db)});}
+    catch(e){console.warn('Zähler Firebase-Sync:',e);}
+  },2000);
+}
+async function restoreZaehlerFromFirebase(){
+  const existing=JSON.parse(localStorage.getItem('zaehler')||'null');
+  const hasMeter=existing&&Object.values(existing).some(v=>Array.isArray(v?.meters)&&v.meters.length>0);
+  if(hasMeter)return;
+  const fb=localStorage.getItem('fb_db_url');if(!fb)return;
+  try{
+    const r=await fetch(fb+'/zaehler.json');if(!r.ok)return;
+    const d=await r.json();
+    const hasData=d&&Object.values(d).some(v=>Array.isArray(v?.meters)&&v.meters.length>0);
+    if(!hasData)return;
+    db=d;saveDb();render();
+    alert('✓ Zählerdaten aus Firebase wiederhergestellt');
+  }catch(e){console.warn('Zähler Firebase-Restore:',e);}
+}
 
 // ── State ──────────────────────────────────────────────────────────────────
 
@@ -985,6 +1007,7 @@ document.addEventListener('touchend',e=>{
 const savedTheme=localStorage.getItem('zaehler-theme')||'light';
 document.documentElement.setAttribute('data-theme',savedTheme);
 render();
+restoreZaehlerFromFirebase();
 
 function doQuickBackup(){
   var d={};

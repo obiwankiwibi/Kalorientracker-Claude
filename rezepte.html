@@ -237,7 +237,25 @@ let state = Object.assign(
 // migrate: cart may have been stored as object ids only
 if (state.cart && !Array.isArray(state.cart)) state.cart = [];
 
-function persist() { localStorage.setItem(STORE, JSON.stringify(state)); }
+function persist() {
+  localStorage.setItem(STORE, JSON.stringify(state));
+  clearTimeout(persist._t);
+  persist._t = setTimeout(async () => {
+    const fb = localStorage.getItem('fb_db_url'); if (!fb) return;
+    try { await fetch(fb + '/rezepte.json', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state) }); }
+    catch(e) { console.warn('Rezepte Firebase-Sync:', e); }
+  }, 2000);
+}
+async function restoreRezepteFromFirebase() {
+  if (state.recipes && Object.keys(state.recipes).length > 0) return;
+  const fb = localStorage.getItem('fb_db_url'); if (!fb) return;
+  try {
+    const r = await fetch(fb + '/rezepte.json'); if (!r.ok) return;
+    const d = await r.json(); if (!d || !d.recipes || !Object.keys(d.recipes).length) return;
+    Object.assign(state, d); persist(); renderRecipes();
+    alert('✓ Rezepte aus Firebase wiederhergestellt');
+  } catch(e) { console.warn('Rezepte Firebase-Restore:', e); }
+}
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 const $ = id => document.getElementById(id);
 
@@ -490,6 +508,7 @@ function esc(s) {
 }
 
 renderRecipes();
+restoreRezepteFromFirebase();
 </script>
 </body>
 </html>

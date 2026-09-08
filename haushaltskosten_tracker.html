@@ -65,7 +65,25 @@ const now=new Date();
 const defaults={owner:'Benutzer',persons:[],theme:'light',costs:[]};
 function load(){try{return {...defaults,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){return structuredClone(defaults)}}
 let state=load();
-function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function save(){
+  localStorage.setItem(KEY,JSON.stringify(state));
+  clearTimeout(save._t);
+  save._t=setTimeout(async()=>{
+    const fb=localStorage.getItem('fb_db_url');if(!fb)return;
+    try{await fetch(fb+'/haushalt.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)});}
+    catch(e){console.warn('Haushalt Firebase-Sync:',e);}
+  },2000);
+}
+async function restoreHaushaltFromFirebase(){
+  if(state.costs&&state.costs.length>0)return;
+  const fb=localStorage.getItem('fb_db_url');if(!fb)return;
+  try{
+    const r=await fetch(fb+'/haushalt.json');if(!r.ok)return;
+    const d=await r.json();if(!d||!d.costs||!d.costs.length)return;
+    state=Object.assign({...defaults},d);save();render();
+    alert('✓ Haushaltsdaten aus Firebase wiederhergestellt');
+  }catch(e){console.warn('Haushalt Firebase-Restore:',e);}
+}
 const euro=n=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:0,maximumFractionDigits:2}).format(n||0);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -103,6 +121,7 @@ saveCost.onclick=()=>{const name=costName.value.trim(),amount=+costAmount.value,
 toggleAll.onclick=()=>{const all=state.costs.length&&state.calcSelected?.length===state.costs.length;state.calcSelected=all?[]:state.costs.map(c=>c.id);save();renderCalculator();toggleAll.textContent=all?'Alle auswählen':'Alle abwählen'};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>close(o.id))});
 render();
+restoreHaushaltFromFirebase();
 
 function doQuickBackup(){
   var d={};

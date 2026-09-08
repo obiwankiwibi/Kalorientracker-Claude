@@ -95,11 +95,37 @@ body{background:transparent!important}
 <section><h3>Schneiden und laufende Pflege</h3><p>Vertrocknete äußere Blätter bodennah sauber entfernen. Gesunde Blätter nicht aus optischen Gründen kürzen. Blütenstiel nach dem Verblühen entfernen.</p><ul><li>Schneidwerkzeug vor und nach der Nutzung reinigen.</li><li>Abgestorbene Blätter nicht gewaltsam abreißen.</li><li>Blätter gelegentlich mit einem weichen feuchten Tuch entstauben.</li><li>Vor jedem Gießen erst Substrat und Topfgewicht prüfen.</li></ul></section>
 <section><h3>Wassermenge als Startwert</h3><div class="waterbox"><p>Wähle den Topfdurchmesser. Der Rechner liefert bewusst einen <b>Startwert</b>, keine starre Vorschrift. Langsam gießen, bis der Ballen gleichmäßig feucht ist und gegebenenfalls unten die ersten Tropfen austreten. Restwasser entfernen.</p><div class="calc"><label>Topf-Ø <input type="range" min="8" max="32" value="16" oninput="calcWater(this,7)"><output id="dia-7">16 cm</output></label><div><strong id="ml-7">250 ml</strong><small>ungefährer Startwert</small></div></div><p class="micro">Faktor für diese Pflanze: trocken. Bei feuchter Erde nicht gießen, auch wenn der Rechner eine Menge anzeigt.</p></div></section>
 <section class="notes-section"><h3>Meine Notizen</h3><div class="notes-list" id="notes-list-aloevera"></div><textarea class="notes-add-area" id="notes-input-aloevera" placeholder="Eigene Erfahrungen notieren…"></textarea><button class="notes-save-btn" onclick="addNote('aloevera')">Notiz speichern</button></section><label class="owned"><input type="checkbox" data-key="aloevera"><span>Diese Pflanze habe ich zu Hause</span></label></div></article><footer>Zimmergrün · Offline nutzbar · Pflanzenauswahl bleibt lokal gespeichert</footer><script>
-const cards=[...document.querySelectorAll('.plant-card')],search=document.querySelector('#search');let filter='all';function apply(){let q=search.value.toLowerCase(),shown=0;cards.forEach(c=>{let txt=(c.dataset.name+' '+c.dataset.room).toLowerCase(),ok=!q||txt.includes(q);if(filter==='trocken')ok=ok&&(c.dataset.water.includes('trocken'));if(filter==='bad')ok=ok&&c.dataset.room.includes('bad');if(filter==='büro')ok=ok&&c.dataset.room.includes('büro');c.classList.toggle('hidden',!ok);if(ok)shown++});document.querySelector('#empty').style.display=shown?'none':'block'}search.oninput=apply;document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.f;apply()});function openPlant(i){document.querySelector('#detail-'+i).classList.add('open');document.body.classList.add('lock')}function closePlants(){document.querySelectorAll('.plant-detail').forEach(x=>x.classList.remove('open'));document.body.classList.remove('lock')}document.addEventListener('keydown',e=>{if(e.key==='Escape')closePlants()});const factors={'trocken':.68,'sehr trocken':.53,'normal':1,'feucht':1.16};function calcWater(el,i){let d=+el.value,detail=document.querySelector('#detail-'+i),type=detail.querySelector('.fact-strip div:nth-child(3) b').textContent.toLowerCase(),base=Math.round((d*d*.98)*factors[type]/25)*25;document.querySelector('#dia-'+i).textContent=d+' cm';document.querySelector('#ml-'+i).textContent=base+' ml'}document.querySelectorAll('input[type=range]').forEach(x=>x.dispatchEvent(new Event('input')));document.querySelectorAll('.owned input').forEach(x=>{x.checked=localStorage.getItem('zimmergruen_'+x.dataset.key)==='1';x.onchange=()=>localStorage.setItem('zimmergruen_'+x.dataset.key,x.checked?'1':'0')});
+const cards=[...document.querySelectorAll('.plant-card')],search=document.querySelector('#search');let filter='all';function apply(){let q=search.value.toLowerCase(),shown=0;cards.forEach(c=>{let txt=(c.dataset.name+' '+c.dataset.room).toLowerCase(),ok=!q||txt.includes(q);if(filter==='trocken')ok=ok&&(c.dataset.water.includes('trocken'));if(filter==='bad')ok=ok&&c.dataset.room.includes('bad');if(filter==='büro')ok=ok&&c.dataset.room.includes('büro');c.classList.toggle('hidden',!ok);if(ok)shown++});document.querySelector('#empty').style.display=shown?'none':'block'}search.oninput=apply;document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.f;apply()});function openPlant(i){document.querySelector('#detail-'+i).classList.add('open');document.body.classList.add('lock')}function closePlants(){document.querySelectorAll('.plant-detail').forEach(x=>x.classList.remove('open'));document.body.classList.remove('lock')}document.addEventListener('keydown',e=>{if(e.key==='Escape')closePlants()});const factors={'trocken':.68,'sehr trocken':.53,'normal':1,'feucht':1.16};function calcWater(el,i){let d=+el.value,detail=document.querySelector('#detail-'+i),type=detail.querySelector('.fact-strip div:nth-child(3) b').textContent.toLowerCase(),base=Math.round((d*d*.98)*factors[type]/25)*25;document.querySelector('#dia-'+i).textContent=d+' cm';document.querySelector('#ml-'+i).textContent=base+' ml'}document.querySelectorAll('input[type=range]').forEach(x=>x.dispatchEvent(new Event('input')));document.querySelectorAll('.owned input').forEach(x=>{x.checked=localStorage.getItem('zimmergruen_'+x.dataset.key)==='1';x.onchange=()=>{localStorage.setItem('zimmergruen_'+x.dataset.key,x.checked?'1':'0');schedulePflanzenSync();}});
+
+let _pflanzenSyncTimer=null;
+function schedulePflanzenSync(){
+  clearTimeout(_pflanzenSyncTimer);
+  _pflanzenSyncTimer=setTimeout(async()=>{
+    const fb=localStorage.getItem('fb_db_url');if(!fb)return;
+    const owned={},notes={};
+    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith('zimmergruen_'))owned[k.slice(12)]=localStorage.getItem(k);else if(k.startsWith('zg_notes_'))try{notes[k.slice(9)]=JSON.parse(localStorage.getItem(k));}catch(e){}}
+    try{await fetch(fb+'/pflanzen.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({owned,notes})});}
+    catch(e){console.warn('Pflanzen Firebase-Sync:',e);}
+  },2000);
+}
+async function restorePflanzenFromFirebase(){
+  const hasOwned=[...Array(localStorage.length)].some((_,i)=>localStorage.key(i).startsWith('zimmergruen_'));
+  if(hasOwned)return;
+  const fb=localStorage.getItem('fb_db_url');if(!fb)return;
+  try{
+    const r=await fetch(fb+'/pflanzen.json');if(!r.ok)return;
+    const d=await r.json();if(!d)return;
+    if(d.owned)Object.entries(d.owned).forEach(([k,v])=>localStorage.setItem('zimmergruen_'+k,v));
+    if(d.notes)Object.entries(d.notes).forEach(([k,v])=>localStorage.setItem('zg_notes_'+k,JSON.stringify(v)));
+    document.querySelectorAll('.owned input').forEach(x=>{x.checked=localStorage.getItem('zimmergruen_'+x.dataset.key)==='1';});
+    alert('✓ Pflanzendaten aus Firebase wiederhergestellt');
+  }catch(e){console.warn('Pflanzen Firebase-Restore:',e);}
+}
+restorePflanzenFromFirebase();
 
 // ── Notizen ──────────────────────────────────────────────────────────────────
 function getNotes(key){try{return JSON.parse(localStorage.getItem('zg_notes_'+key)||'[]');}catch(e){return[];}}
-function saveNotes(key,arr){localStorage.setItem('zg_notes_'+key,JSON.stringify(arr));}
+function saveNotes(key,arr){localStorage.setItem('zg_notes_'+key,JSON.stringify(arr));schedulePflanzenSync();}
 function renderNotes(key){
   var list=document.getElementById('notes-list-'+key);
   if(!list)return;

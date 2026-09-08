@@ -288,7 +288,25 @@ if (!Array.isArray(state.activities)) state.activities = [];
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function persist() { localStorage.setItem(STORE, JSON.stringify(state)); }
+function persist() {
+  localStorage.setItem(STORE, JSON.stringify(state));
+  clearTimeout(persist._t);
+  persist._t = setTimeout(async () => {
+    const fb = localStorage.getItem('fb_db_url'); if (!fb) return;
+    try { await fetch(fb + '/freizeit.json', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state) }); }
+    catch(e) { console.warn('Freizeit Firebase-Sync:', e); }
+  }, 2000);
+}
+async function restoreFreizeitFromFirebase() {
+  if (state.activities && state.activities.length > 0) return;
+  const fb = localStorage.getItem('fb_db_url'); if (!fb) return;
+  try {
+    const r = await fetch(fb + '/freizeit.json'); if (!r.ok) return;
+    const d = await r.json(); if (!d || !d.activities || !d.activities.length) return;
+    Object.assign(state, d); persist(); render();
+    alert('✓ Freizeitdaten aus Firebase wiederhergestellt');
+  } catch(e) { console.warn('Freizeit Firebase-Restore:', e); }
+}
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
 const PRICE_LABEL = { free:'Kostenlos', low:'€', mid:'€€', high:'€€€' };
@@ -721,7 +739,8 @@ $('overlay').onclick=e=>{if(e.target===e.currentTarget)closeModal();};
 $('filterInput').oninput=()=>{filterSearch=$('filterInput').value;render();};
 
 /* ── Theme ── */
-persist();};
+persist();
+restoreFreizeitFromFirebase();};
 
 /* ── Collapse results ── */
 let scResultsCollapsed = false;
