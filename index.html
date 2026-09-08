@@ -455,6 +455,11 @@
     .td-row-emoji { font-size: 14px; line-height: 1; flex-shrink: 0; }
     .td-row-label { font-size: 10.5px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .td-row-num   { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+    .td-due-section { cursor: pointer; }
+    .td-due-row  { display: flex; align-items: center; gap: 4px; padding: 2px 2px; }
+    .td-due-name { font-size: 11px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+    .td-due-date { font-size: 10px; font-weight: 700; white-space: nowrap; color: var(--muted); }
+    .td-due-date.overdue { color: #d9534f; }
 
     /* ── 1-2-3 chip row ── */
     .method-chips { display: flex; gap: 6px; align-items: center; }
@@ -610,6 +615,10 @@
           <div class="method-chip p2" id="tdChip2">② –/2</div>
           <div class="method-chip p3" id="tdChip3">③ –/3</div>
         </div>
+      </div>
+      <div class="td-due-section" id="tdDueSection" style="display:none" onclick="event.stopPropagation();sessionStorage.setItem('todoOpenList','planned');location.href='todo.html'">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;padding:0 2px">📅 Fällig</div>
+        <div id="tdDueList"></div>
       </div>
     </div>
     <a class="app-card" data-tile-id="einkauf" href="einkaufsliste.html">
@@ -1249,6 +1258,42 @@ function fillTodoWidget(tasks) {
     el.classList.toggle('empty', count === 0);
   });
 
+  // fällige Aufgaben (überfällig oder innerhalb 7 Tage)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().slice(0, 10);
+  const weekStr  = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const dueSoon  = open
+    .filter(t => t.dueDate && t.dueDate <= weekStr)
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  const dueSection = document.getElementById('tdDueSection');
+  const dueList    = document.getElementById('tdDueList');
+  if (dueSoon.length) {
+    dueSection.style.display = '';
+    dueList.innerHTML = '';
+    dueSoon.slice(0, 4).forEach(t => {
+      const row  = document.createElement('div');
+      row.className = 'td-due-row';
+      const name = document.createElement('span');
+      name.className = 'td-due-name';
+      name.textContent = t.title || '–';
+      const date = document.createElement('span');
+      const isOverdue = t.dueDate < todayStr;
+      const isToday   = t.dueDate === todayStr;
+      date.className = 'td-due-date' + (isOverdue ? ' overdue' : '');
+      if (isOverdue)    date.textContent = '⚠ Überfällig';
+      else if (isToday) date.textContent = 'Heute';
+      else {
+        const dt = new Date(t.dueDate + 'T00:00:00');
+        date.textContent = dt.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' });
+      }
+      row.appendChild(name);
+      row.appendChild(date);
+      dueList.appendChild(row);
+    });
+  } else {
+    dueSection.style.display = 'none';
+  }
 }
 
 function initTodoWidget() {
