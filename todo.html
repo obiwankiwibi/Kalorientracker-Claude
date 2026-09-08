@@ -670,12 +670,6 @@
       </div>
     </div>
 
-    <!-- My Day -->
-    <div class="detail-row" id="myDayRow" onclick="toggleDetailMyDay()">
-      <div class="dr-icon">☀️</div>
-      <div class="dr-label" id="myDayLabel">Zu Mein Tag hinzufügen</div>
-    </div>
-
     <!-- 1-2-3 Priority -->
     <div class="detail-row" style="cursor:default">
       <div class="dr-icon" style="font-weight:800;font-size:15px">①</div>
@@ -862,10 +856,9 @@ const FIREBASE_CONFIG = {
 // ═══════════════════════════════════════════════
 //  CONSTANTS
 // ═══════════════════════════════════════════════
-const SMART_IDS = ['method123','myday','important','planned','all'];
+const SMART_IDS = ['method123','important','planned','all'];
 const SMART = {
   method123: { name:'1-2-3 Methode', emoji:'🎯', grad:['#7c3aed','#a855f7'] },
-  myday:     { name:'Mein Tag',      emoji:'☀️', grad:['#FF8C00','#FFB347'] },
   important: { name:'Wichtig',       emoji:'⭐', grad:['#d97706','#f5a623'] },
   planned:   { name:'Geplant',       emoji:'📅', grad:['#2563eb','#4a9eff'] },
   all:       { name:'Alle Aufgaben', emoji:'🏠', grad:['#16a34a','#4ade80'] },
@@ -1074,7 +1067,6 @@ function persistList(id, data) {
 function getTasksForList(lid) {
   const all = Object.entries(tasks).map(([id, t]) => ({ id, ...t }));
   if (lid === 'method123') return all.filter(t => t.priority123);
-  if (lid === 'myday')     return all.filter(t => t.myDay);
   if (lid === 'important') return all.filter(t => t.important);
   if (lid === 'planned')   return all.filter(t => t.dueDate);
   if (lid === 'all')       return all;
@@ -1147,7 +1139,7 @@ function renderTasksView() {
   const allHere = getTasksForList(currentListId);
   const n = allHere.filter(t => !t.completed).length;
   const accentColor = isSmartList
-    ? (currentListId === 'important' ? '#f5a623' : currentListId === 'myday' ? '#FF8C00' : currentListId === 'planned' ? '#4a9eff' : '#4ade80')
+    ? (currentListId === 'important' ? '#f5a623' : currentListId === 'planned' ? '#4a9eff' : currentListId === 'method123' ? '#9333ea' : '#4ade80')
     : (meta.color || 'var(--accent)');
 
   document.getElementById('listHeaderSection').innerHTML = `
@@ -1200,8 +1192,6 @@ function taskRowHtml(t) {
   const stepsTotal = steps.filter(s => s).length;
 
   let metaHtml = '';
-  if (t.myDay && currentListId !== 'myday')
-    metaHtml += `<span class="task-meta-tag">☀️ Mein Tag</span>`;
   if (due)
     metaHtml += `<span class="task-meta-tag ${due.cls}">📅 ${due.text}</span>`;
   if (stepsTotal > 0)
@@ -1269,12 +1259,6 @@ function renderDetail() {
       <div class="step-title ${s.completed?'done':''}">${esc(s.title)}</div>
       <div class="step-del" onclick="deleteStep(${i})">✕</div>
     </div>`).join('');
-
-  // My Day row
-  const mdl = document.getElementById('myDayLabel');
-  mdl.textContent = t.myDay ? 'In Mein Tag' : 'Zu Mein Tag hinzufügen';
-  mdl.className   = `dr-label ${t.myDay ? 'set' : ''}`;
-  mdl.style.color = t.myDay ? '#FF8C00' : '';
 
   // 1-2-3 Priority row
   const p = t.priority123 || null;
