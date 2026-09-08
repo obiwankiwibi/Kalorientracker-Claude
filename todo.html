@@ -719,6 +719,25 @@
 </div>
 
 <!-- ══════════════════════════════════════════
+     TASK PICKER SHEET (1-2-3 Methode)
+══════════════════════════════════════════ -->
+<div class="sheet-overlay" id="taskPickerOverlay" onclick="if(event.target===this)closeTaskPicker()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="picker-inner">
+      <div class="picker-title" id="taskPickerTitle">Aufgabe wählen</div>
+      <div id="taskPickerList"></div>
+      <div style="margin-top:10px">
+        <button class="pk-btn cancel" style="width:100%" onclick="taskPickerNewTask()">+ Neue Aufgabe erstellen</button>
+      </div>
+      <div class="picker-btns" style="margin-top:8px">
+        <button class="pk-btn cancel" onclick="closeTaskPicker()">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
      NEW LIST SHEET
 ══════════════════════════════════════════ -->
 <div class="sheet-overlay" id="newListOverlay" onclick="newListOverlayClick(event)">
@@ -1840,7 +1859,78 @@ function setPriority123forTask(taskId, p) {
   persistTask(taskId, { ...t, priority123: p || null });
 }
 
+let _pickerPriority = null;
+
 function methodAddTask(p) {
+  openTaskPicker(p);
+}
+
+function openTaskPicker(p) {
+  _pickerPriority = p;
+  const labels = ['','① Muss heute','② Soll heute','③ Wäre schön'];
+  document.getElementById('taskPickerTitle').textContent = `Aufgabe für ${labels[p]} wählen`;
+
+  // All active tasks not yet assigned to 1-2-3
+  const available = Object.entries(tasks)
+    .map(([id,t]) => ({id,...t}))
+    .filter(t => !t.completed && !t.priority123)
+    .sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
+
+  if (!available.length) {
+    document.getElementById('taskPickerList').innerHTML = `
+      <div style="padding:12px 0 4px;font-size:14px;color:var(--muted);text-align:center">
+        Keine offenen Aufgaben ohne Priorität vorhanden.
+      </div>`;
+  } else {
+    // Group by list
+    const byList = {};
+    available.forEach(t => {
+      const key = t.listId || '_';
+      if (!byList[key]) byList[key] = [];
+      byList[key].push(t);
+    });
+
+    let html = '';
+    Object.entries(byList).forEach(([lid, ts]) => {
+      const meta = lid !== '_' ? lists[lid] : null;
+      if (meta) {
+        html += `<div style="padding:10px 2px 4px;font-size:11px;font-weight:700;
+          color:var(--muted);text-transform:uppercase;letter-spacing:0.6px">
+          ${meta.emoji} ${esc(meta.name)}
+        </div>`;
+      }
+      ts.forEach(t => {
+        html += `<div class="quick-reminder-item" onclick="pickTaskForMethod('${t.id}')">
+          <div style="width:22px;height:22px;border:2px solid var(--border);
+            border-radius:50%;flex-shrink:0"></div>
+          <span class="qr-label">${esc(t.title)}</span>
+        </div>`;
+      });
+    });
+    document.getElementById('taskPickerList').innerHTML = html;
+  }
+
+  document.getElementById('taskPickerOverlay').classList.add('open');
+}
+
+function closeTaskPicker() {
+  document.getElementById('taskPickerOverlay').classList.remove('open');
+  _pickerPriority = null;
+}
+
+function pickTaskForMethod(taskId) {
+  if (_pickerPriority === null) return;
+  const t = tasks[taskId];
+  if (!t) return;
+  persistTask(taskId, { ...t, priority123: _pickerPriority });
+  const labels = ['','① Muss heute','② Soll heute','③ Wäre schön'];
+  toast(`${labels[_pickerPriority]}: "${t.title}"`);
+  closeTaskPicker();
+}
+
+function taskPickerNewTask() {
+  const p = _pickerPriority;
+  closeTaskPicker();
   _methodAddPriority = p;
   const labels = ['','① Muss heute','② Soll heute','③ Wäre schön'];
   const inp = document.getElementById('addTaskInput');
