@@ -798,7 +798,7 @@
       <input type="email" class="picker-input" id="settingsEmail" placeholder="deine@email.de">
 
       <div class="settings-field-label">Benachrichtigungen</div>
-      <button class="settings-notif-btn" onclick="requestNotifPerm()">🔔 Browser-Benachrichtigungen erlauben</button>
+      <button class="settings-notif-btn" onclick="requestNotifPerm()">🔔 Push-Benachrichtigungen aktivieren</button>
 
       <div class="settings-field-label">EmailJS – Public Key</div>
       <input type="text" class="picker-input" id="settingsEjsKey" placeholder="user_xxxxxxxxxxxxxxxx" autocomplete="off">
@@ -947,10 +947,44 @@ function saveSettings() {
   toast('Einstellungen gespeichert ✓');
 }
 
+const VAPID_PUBLIC_KEY = 'BAjD2XUMRrUN8gJ6jBMO0Vb4W6ky6BKkrt2-wgsq4Sug3RIGw5diKkBKmlCfF5iByLltBDLYVoqVO1LwxGgMN7k';
+
+function urlB64ToUint8(b64) {
+  const pad = '='.repeat((4 - b64.length % 4) % 4);
+  const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
 async function requestNotifPerm() {
-  if (!('Notification' in window)) { toast('Benachrichtigungen werden nicht unterstützt'); return; }
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    toast('Browser unterstützt keine Push-Benachrichtigungen'); return;
+  }
   const perm = await Notification.requestPermission();
-  toast(perm === 'granted' ? '✓ Benachrichtigungen erlaubt' : 'Benachrichtigungen abgelehnt');
+  if (perm !== 'granted') { toast('Benachrichtigungen abgelehnt'); return; }
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlB64ToUint8(VAPID_PUBLIC_KEY)
+      });
+    }
+    const fbUrl = localStorage.getItem('fb_db_url');
+    if (fbUrl) {
+      await fetch(fbUrl + '/push_sub.json', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub.toJSON())
+      });
+      toast('✓ Push-Benachrichtigungen aktiviert');
+    } else {
+      toast('✓ Erlaubt – Firebase-URL für geräteübergreifende Erinnerungen nötig');
+    }
+  } catch(e) {
+    toast('Fehler beim Aktivieren: ' + e.message);
+  }
 }
 
 let currentListId  = null;   // null = lists view
