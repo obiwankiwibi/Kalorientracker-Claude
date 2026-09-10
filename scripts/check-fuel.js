@@ -44,6 +44,66 @@ async function fbSet(path, data) {
   });
 }
 
+// Tankempfehlung: kombiniert 7-Tage-Statistik + Tageszeit-Heuristik
+function getTankEmpfehlung(currentPrices, history, hour, fuels, stationIds) {
+  const primaryFuel = fuels[0];
+
+  // Besten aktuellen Preis ermitteln
+  let bestCurrent = null;
+  for (const id of stationIds) {
+    const v = currentPrices[`${id}_${primaryFuel}`];
+    if (v != null && (bestCurrent === null || v < bestCurrent)) bestCurrent = v;
+  }
+  if (bestCurrent === null) return null;
+
+  // 7-Tage-Durchschnitt aus History (max. 56 Einträge = ~7 Tage bei 2h-Intervall)
+  const entries = Array.isArray(history) ? history.slice(-56) : [];
+  const histVals = [];
+  for (const e of entries) {
+    for (const id of stationIds) {
+      const v = e.prices && e.prices[`${id}_${primaryFuel}`];
+      if (v != null) histVals.push(v);
+    }
+  }
+
+  // Tageszeit-Klassifikation (ADAC-Muster für Deutschland)
+  const isEveningWindow = hour >= 18 && hour < 21;   // günstigstes Fenster
+  const isMorningWindow = hour >= 6  && hour < 9;    // zweites günstiges Fenster
+  const isPeakTime      = (hour >= 9 && hour < 11) || (hour >= 12 && hour < 14);
+
+  if (histVals.length < 5) {
+    // Noch zu wenig Daten → nur Tageszeit-Heuristik
+    if (isEveningWindow) return '🕕 Günstigstes Zeitfenster – jetzt tanken lohnt sich!';
+    if (isMorningWindow) return '🌅 Guter Morgenzeitpunkt zum Tanken.';
+    if (isPeakTime)      return '⏰ Preisspitze – heute Abend 18–20 Uhr abwarten.';
+    return null;
+  }
+
+  const avg    = histVals.reduce((a, b) => a + b, 0) / histVals.length;
+  const diffCt = Math.round((bestCurrent - avg) * 100); // Abweichung in Cent
+  const isCheap     = diffCt <= -2;
+  const isExpensive = diffCt >= 3;
+  const absDiff     = Math.abs(diffCt);
+
+  if (isCheap && isEveningWindow)
+    return `🟢 Jetzt tanken! ${absDiff} ct unter 7-Tage-Ø & günstigstes Tagesfenster.`;
+  if (isCheap && isMorningWindow)
+    return `🟢 Guter Zeitpunkt – ${absDiff} ct unter 7-Tage-Ø.`;
+  if (isCheap && !isPeakTime)
+    return `✅ ${absDiff} ct unter Ø. Heute Abend 18–20 Uhr evtl. noch günstiger.`;
+  if (isCheap && isPeakTime)
+    return `✅ ${absDiff} ct unter Ø, aber Preisspitze. Heute Abend 18–20 Uhr warten.`;
+  if (isExpensive && hour < 17)
+    return `🔴 ${absDiff} ct über 7-Tage-Ø – heute Abend 18–20 Uhr oder morgen früh abwarten.`;
+  if (isExpensive && isEveningWindow)
+    return `⚠️ ${absDiff} ct über Ø – eher teuer. Falls möglich morgen früh (6–9 Uhr) tanken.`;
+  if (isExpensive)
+    return `⚠️ ${absDiff} ct über 7-Tage-Ø – morgen früh 6–9 Uhr abwarten.`;
+  if (isEveningWindow)
+    return '🕕 Günstiges Abend-Zeitfenster – guter Moment zum Tanken.';
+  return null;
+}
+
 async function main() {
   // Zeitfenster: nur 7–22 Uhr (Europe/Berlin)
   const nowBerlin = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
@@ -53,11 +113,12 @@ async function main() {
     return;
   }
 
-  const [sub, config, lastNotif, lastPrices] = await Promise.all([
+  const [sub, config, lastNotif, lastPrices, priceHistory] = await Promise.all([
     fbGet('/push_sub'),
     fbGet('/fuel_config'),
     fbGet('/fuel_last_notif'),
-    fbGet('/fuel_last_prices')
+    fbGet('/fuel_last_prices'),
+    fbGet('/fuel_price_history')
   ]);
 
   if (!sub || !sub.endpoint) {
@@ -151,20 +212,34 @@ async function main() {
 
   const nowBerlinStr = nowBerlin.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
   const thresholdNote = threshold !== null ? ` (≤ ${threshold.toFixed(2).replace('.', ',')} €)` : '';
+
+  const empfehlung = getTankEmpfehlung(newPrices, priceHistory, hour, fuels, config.stations);
+  const bodyLines = [...lines];
+  if (empfehlung) bodyLines.push('', empfehlung);
+
   const payload = JSON.stringify({
     title: `⛽ ${fuelTitle}-Preise${thresholdNote} – ${nowBerlinStr} Uhr`,
-    body: lines.join('\n'),
+    body: bodyLines.join('\n'),
     icon:  'https://obiwankiwibi.github.io/Kalorientracker-Claude/icon-192.png',
     url:   'https://obiwankiwibi.github.io/Kalorientracker-Claude/tankstellen_finder.html'
   });
+
+  // History aktualisieren (max. 56 Einträge behalten)
+  const updatedHistory = Array.isArray(priceHistory) ? [...priceHistory] : [];
+  if (Object.keys(newPrices).length) {
+    updatedHistory.push({ ts: Date.now(), prices: newPrices });
+    if (updatedHistory.length > 56) updatedHistory.splice(0, updatedHistory.length - 56);
+  }
 
   try {
     await webpush.sendNotification(sub, payload);
     await Promise.all([
       fbSet('/fuel_last_notif', Date.now()),
-      Object.keys(newPrices).length ? fbSet('/fuel_last_prices', newPrices) : Promise.resolve()
+      Object.keys(newPrices).length ? fbSet('/fuel_last_prices', newPrices) : Promise.resolve(),
+      updatedHistory.length ? fbSet('/fuel_price_history', updatedHistory) : Promise.resolve()
     ]);
     console.log('Push-Benachrichtigung gesendet!');
+    if (empfehlung) console.log('Empfehlung:', empfehlung);
   } catch (err) {
     if (err.statusCode === 410 || err.statusCode === 404) {
       console.log('Subscription abgelaufen – wird aus Firebase gelöscht.');
