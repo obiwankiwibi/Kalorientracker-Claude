@@ -128,6 +128,12 @@ header { border-bottom: 2px solid var(--brand); }
 .topstats{margin-top:18px}
 .filter-bar { background:var(--soft);border-radius:10px;padding:12px;margin-top:12px;border-top:none; }
 .fav-section .section-title { color:var(--brand); }
+.tank-empf { display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-radius:var(--radius);border:1px solid var(--line);background:var(--card);margin-top:12px;font-size:13px;font-weight:600;line-height:1.4; }
+.tank-empf.good  { border-color:rgba(0,180,140,0.4);background:rgba(0,180,140,0.07); }
+.tank-empf.warn  { border-color:rgba(220,80,40,0.35);background:rgba(220,80,40,0.06); }
+.tank-empf.neu   { border-color:rgba(100,140,220,0.35);background:rgba(100,140,220,0.07); }
+.tank-empf-icon  { font-size:18px;flex-shrink:0;margin-top:1px; }
+.tank-empf-sub   { font-size:11px;font-weight:400;color:var(--muted);margin-top:3px; }
 </style>
 </head>
 <body>
@@ -165,6 +171,7 @@ header { border-bottom: 2px solid var(--brand); }
   <div class="card stat"><div class="eyebrow">Spanne</div><div class="big" id="spread">—</div><div class="hint">günstig bis teuer</div></div>
   <div class="card stat"><div class="eyebrow" id="savingsLabel">Ersparnis / 50 L</div><div class="big" id="savings">—</div><div class="hint">günstigste vs. Durchschnitt</div></div>
 </div>
+<div id="tankEmpfehlung" style="display:none" class="tank-empf"></div>
 <div class="fav-section" id="favSection" style="display:none">
   <div class="section-head"><div class="section-title">Beobachtete Tankstellen</div><span class="count" id="favCount">0</span></div>
   <div class="fav-grid" id="favGrid"></div>
@@ -342,6 +349,7 @@ function render(){
  $('minPrice').textContent=euro(min);$('minName').textContent=cheap.name;$('avgPrice').textContent=euro(avg);
  $('spread').textContent=(max-min).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
  const tz=state.tankSize||50;const saving=(avg-min)*tz;$('savings').textContent=saving>0?saving.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €':'—';$('savingsLabel').textContent='Ersparnis / '+tz+' L';
+ renderEmpfehlung();
  $('stations').innerHTML=list.map(s=>{
   const isFav=!!state.favorites[s.id];
   return `<article class="card station"><div class="station-left">${brandBadge(s.brand)}<div style="flex:1;min-width:0"><div class="name">${esc(s.name)}</div><div class="address">${esc(s.street)} ${esc(s.houseNumber)}, ${esc(s.postCode)} ${esc(s.place)}</div><div class="badges"><button class="badge hours-btn ${s.isOpen?'open':'closed'}" data-sid="${esc(s.id)}">${s.isOpen?'Geöffnet ▾':'Geschlossen ▾'}</button><span class="badge">${Number(s.dist).toLocaleString('de-DE',{maximumFractionDigits:1})} km</span></div><div class="hours-panel" id="hp_${s.id}" style="display:none"></div></div></div><div><div class="price">${euro(s[state.fuel])}<small>pro Liter</small></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.lat+','+s.lng)}">Route öffnen</a><button class="star${isFav?' active':''}" data-favid="${esc(s.id)}" title="${isFav?'Nicht mehr beobachten':'Beobachten'}">★</button></div></article>`;
@@ -594,10 +602,96 @@ $('favGrid').addEventListener('change',e=>{
  if(val>0)state.favAlerts[id]=val;else delete state.favAlerts[id];
  persistFavs();renderFavs();
 });
+// ── Tankempfehlung ──────────────────────────────────────────────
+let _priceHistory = null;
+
+async function loadPriceHistory() {
+  const fbUrl = localStorage.getItem('firebase_db_url');
+  if (!fbUrl) return;
+  try {
+    const r = await fetch(fbUrl + '/fuel_price_history.json');
+    if (r.ok) _priceHistory = await r.json();
+  } catch(e) {}
+  renderEmpfehlung();
+}
+
+function getTankEmpfehlung(history, fuel, stationIds) {
+  const now = new Date();
+  const hour = now.getHours();
+  const entries = Array.isArray(history) ? history.slice(-56) : [];
+  const histVals = [];
+  for (const e of entries) {
+    for (const id of stationIds) {
+      const v = e.prices && e.prices[`${id}_${fuel}`];
+      if (v != null) histVals.push(v);
+    }
+  }
+  let bestCurrent = null;
+  for (const id of stationIds) {
+    const p = state.stations.find(s => s.id === id);
+    if (p && p[fuel] != null) {
+      if (bestCurrent === null || p[fuel] < bestCurrent) bestCurrent = p[fuel];
+    }
+  }
+  if (bestCurrent === null && state.stations.length) {
+    const vals = state.stations.map(s => s[fuel]).filter(v => v != null);
+    if (vals.length) bestCurrent = Math.min(...vals);
+  }
+  if (bestCurrent === null) return null;
+
+  const isEveningWindow = hour >= 18 && hour < 21;
+  const isMorningWindow = hour >= 6  && hour < 9;
+  const isPeakTime      = (hour >= 9 && hour < 11) || (hour >= 12 && hour < 14);
+
+  if (histVals.length < 5) {
+    if (isEveningWindow) return { cls:'good', icon:'🕕', text:'Günstigstes Zeitfenster', sub:'18–21 Uhr – jetzt tanken lohnt sich!' };
+    if (isMorningWindow) return { cls:'good', icon:'🌅', text:'Guter Morgenzeitpunkt', sub:'Früh tanken zahlt sich oft aus.' };
+    if (isPeakTime)      return { cls:'warn', icon:'⏰', text:'Preisspitze', sub:'Heute Abend 18–20 Uhr sind Preise meist günstiger.' };
+    return { cls:'neu', icon:'📊', text:'Daten werden gesammelt', sub:'Empfehlung erscheint nach ein paar Messungen automatisch.' };
+  }
+
+  const avg    = histVals.reduce((a, b) => a + b, 0) / histVals.length;
+  const diffCt = Math.round((bestCurrent - avg) * 100);
+  const isCheap     = diffCt <= -2;
+  const isExpensive = diffCt >= 3;
+  const absDiff     = Math.abs(diffCt);
+  const sub7 = `Bester Preis ${absDiff} ct ${isCheap ? 'unter' : 'über'} 7-Tage-Ø (Ø ${avg.toFixed(2).replace('.',',')} €)`;
+
+  if (isCheap && isEveningWindow)  return { cls:'good', icon:'🟢', text:'Jetzt tanken!', sub:`${absDiff} ct unter 7-Tage-Ø & günstigstes Tagesfenster.` };
+  if (isCheap && isMorningWindow)  return { cls:'good', icon:'🟢', text:'Guter Zeitpunkt', sub };
+  if (isCheap && !isPeakTime)      return { cls:'good', icon:'✅', text:'Unter Durchschnitt', sub:`${sub7} – heute Abend 18–20 Uhr evtl. noch günstiger.` };
+  if (isCheap && isPeakTime)       return { cls:'good', icon:'✅', text:'Unter Durchschnitt', sub:`${sub7} – aber Preisspitze jetzt. Heute Abend 18–20 Uhr warten.` };
+  if (isExpensive && hour < 17)    return { cls:'warn', icon:'🔴', text:'Eher teuer', sub:`${sub7} – heute Abend 18–20 Uhr oder morgen früh abwarten.` };
+  if (isExpensive && isEveningWindow) return { cls:'warn', icon:'⚠️', text:'Über Durchschnitt', sub:`${sub7} – falls möglich morgen früh (6–9 Uhr) tanken.` };
+  if (isExpensive)                 return { cls:'warn', icon:'⚠️', text:'Über Durchschnitt', sub:`${sub7} – morgen früh 6–9 Uhr abwarten.` };
+  if (isEveningWindow)             return { cls:'good', icon:'🕕', text:'Günstiges Abend-Fenster', sub:'Guter Moment zum Tanken.' };
+  return { cls:'neu', icon:'📊', text:'Preis im Normalbereich', sub };
+}
+
+function renderEmpfehlung() {
+  const el = $('tankEmpfehlung');
+  if (!el) return;
+  if (!state.stations.length) { el.style.display = 'none'; return; }
+  const favIds = Object.keys(state.favorites);
+  const ids = favIds.length ? favIds : state.stations.slice(0, 5).map(s => s.id);
+  const result = getTankEmpfehlung(_priceHistory, state.fuel, ids);
+  if (!result) { el.style.display = 'none'; return; }
+  el.className = 'tank-empf ' + result.cls;
+  const icon = document.createElement('div'); icon.className = 'tank-empf-icon'; icon.textContent = result.icon;
+  const body = document.createElement('div');
+  const title = document.createElement('div'); title.textContent = result.text;
+  const sub   = document.createElement('div'); sub.className = 'tank-empf-sub'; sub.textContent = result.sub;
+  body.append(title, sub);
+  el.innerHTML = '';
+  el.append(icon, body);
+  el.style.display = 'flex';
+}
+
 persist();
 window.onresize=()=>requestAnimationFrame(drawChart);$('place').value=state.place;setStatus(state.apiKey?'Bereit zur Suche':'API-Key in den Einstellungen hinterlegen');render();checkStale();
 if(state.stations.length)collapseSearch();
 restoreFromFirebase();
+loadPriceHistory();
 // Stündliche Auto-Abfrage; sofortige Abfrage falls Daten fehlen oder veraltet
 if(state.apiKey&&(!state.stations.length||Date.now()-state.lastRequest>TK_HOUR))search();
 setInterval(search,TK_HOUR);
