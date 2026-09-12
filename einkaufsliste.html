@@ -654,6 +654,25 @@ html { height: 100%; }
       color: #fff;
     }
 
+    .markt-chip {
+      padding: 5px 13px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text);
+      transition: border-color 0.12s, background 0.12s, color 0.12s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .markt-chip.on {
+      border-color: var(--mc, var(--active));
+      background: var(--mc, var(--active));
+      color: #fff;
+    }
+
     .sheet-input {
       width: 100%;
       background: var(--card);
@@ -1552,6 +1571,9 @@ html { height: 100%; }
 <div class="section" id="sugSection">
   <div class="sec-header" style="cursor:default;pointer-events:none;padding-bottom:6px">
     <span class="sec-title">Vorschläge</span>
+  </div>
+  <div id="offerMarktRow" style="display:none;overflow-x:auto;padding:0 0 8px 0;-webkit-overflow-scrolling:touch">
+    <div id="offerMarktChips" style="display:flex;gap:6px;padding-bottom:2px;white-space:nowrap"></div>
   </div>
   <div class="grid" id="sugGrid"></div>
 </div>
@@ -2665,7 +2687,11 @@ function renderSuggestions() {
       .filter(s => (usageCounts[usageKey(s.name)] || 0) > 0)
       .sort((a, b) => (usageCounts[usageKey(b.name)] || 0) - (usageCounts[usageKey(a.name)] || 0));
   } else if (activeCat === '🏷️ Angebote') {
-    list = list.filter(s => getMatchingOffer(s.name) !== null);
+    list = list.filter(s => {
+      const offer = getMatchingOffer(s.name);
+      if (!offer) return false;
+      return activeOfferMarkt === 'Alle' || offer.haendler === activeOfferMarkt;
+    });
   } else if (activeCat !== 'Alle') {
     list = list.filter(s => s.cat === activeCat);
   }
@@ -2717,8 +2743,34 @@ function renderSuggestions() {
     }).join('');
   }
 
+  renderOfferMarktChips();
   renderCats();
   renderSort();
+}
+
+function renderOfferMarktChips() {
+  const row   = document.getElementById('offerMarktRow');
+  const chips = document.getElementById('offerMarktChips');
+  if (!row || !chips) return;
+  if (activeCat !== '🏷️ Angebote') { row.style.display = 'none'; return; }
+  const markts = ['Alle', ...new Set(allOffers.map(o => o.haendler).filter(Boolean).sort())];
+  row.style.display = '';
+  chips.innerHTML = '';
+  markts.forEach(h => {
+    const btn = document.createElement('button');
+    btn.className = 'markt-chip' + (h === activeOfferMarkt ? ' on' : '');
+    btn.textContent = h;
+    if (h !== 'Alle' && HAENDLER_COLORS[h]) {
+      btn.style.setProperty('--mc', HAENDLER_COLORS[h]);
+    }
+    btn.onclick = () => setOfferMarkt(h);
+    chips.appendChild(btn);
+  });
+}
+
+function setOfferMarkt(h) {
+  activeOfferMarkt = h;
+  renderSuggestions();
 }
 
 const SORT_OPTIONS = [
@@ -3190,6 +3242,7 @@ function onSearchKey(e) {
 }
 
 function setCat(cat) {
+  if (cat !== '🏷️ Angebote') activeOfferMarkt = 'Alle';
   activeCat = cat;
   renderSuggestions();
 }
@@ -3795,6 +3848,7 @@ let allOffers = [];
 let activeHaendler = 'Alle';
 let favHaendler = new Set(JSON.parse(localStorage.getItem('einkauf_fav_haendler') || '[]'));
 let activeOffersSort = 'ablauf'; // 'az' | 'preis' | 'ablauf'
+let activeOfferMarkt = 'Alle';
 
 function toggleFavHaendler(h, e) {
   e.stopPropagation();
