@@ -10,9 +10,12 @@
 .note-item{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 14px;position:relative}
 .note-text{margin:0;font-size:14px;line-height:1.55;white-space:pre-wrap;color:var(--ink)}
 .note-actions{display:flex;gap:8px;margin-top:8px}
-.note-edit-btn,.note-del-btn{border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.note-edit-btn,.note-del-btn,.note-done-btn{border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
 .note-edit-btn{background:var(--line);color:var(--ink)}
 .note-del-btn{background:rgba(138,50,31,0.12);color:var(--danger)}
+.note-done-btn{background:rgba(60,160,90,0.12);color:var(--green)}
+.note-item.done{opacity:.6}
+.note-item.done .note-text{text-decoration:line-through;color:var(--muted,#888)}
 .note-edit-area{width:100%;border:1px solid var(--green);border-radius:10px;padding:10px;font:14px/1.55 inherit;color:var(--ink);background:var(--paper);resize:vertical;margin-bottom:8px;outline:none;box-sizing:border-box}
 .note-save-btn{border:none;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;background:var(--green);color:#fff;font-family:inherit}
 .note-cancel-btn{border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;background:var(--line);color:var(--ink);font-family:inherit;margin-left:6px}
@@ -124,42 +127,71 @@ async function restorePflanzenFromFirebase(){
 restorePflanzenFromFirebase();
 
 // ── Notizen ──────────────────────────────────────────────────────────────────
-function getNotes(key){try{return JSON.parse(localStorage.getItem('zg_notes_'+key)||'[]');}catch(e){return[];}}
+function getNotes(key){
+  try{
+    var raw=JSON.parse(localStorage.getItem('zg_notes_'+key)||'[]');
+    // Migrate old string[] → {text,done}[]
+    return raw.map(function(e){return typeof e==='string'?{text:e,done:false}:e;});
+  }catch(e){return[];}
+}
 function saveNotes(key,arr){localStorage.setItem('zg_notes_'+key,JSON.stringify(arr));schedulePflanzenSync();}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function renderNotes(key){
   var list=document.getElementById('notes-list-'+key);
   if(!list)return;
   var notes=getNotes(key);
   list.innerHTML='';
-  notes.forEach(function(text,i){
-    var item=document.createElement('div');item.className='note-item';
-    item.innerHTML='<p class="note-text">'+escHtml(text)+'</p><div class="note-actions"><button class="note-edit-btn" onclick="startEdit(\''+key+'\','+i+')">Bearbeiten</button><button class="note-del-btn" onclick="delNote(\''+key+'\','+i+')">Löschen</button></div>';
+  notes.forEach(function(note,i){
+    var item=document.createElement('div');
+    item.className='note-item'+(note.done?' done':'');
+    var p=document.createElement('p');p.className='note-text';p.textContent=note.text;
+    var actions=document.createElement('div');actions.className='note-actions';
+    var doneBtn=document.createElement('button');
+    doneBtn.className='note-done-btn';
+    doneBtn.textContent=note.done?'↩ Offen':'✓ Erledigt';
+    doneBtn.onclick=(function(k,idx){return function(){toggleNoteDone(k,idx);};})(key,i);
+    var editBtn=document.createElement('button');
+    editBtn.className='note-edit-btn';editBtn.textContent='Bearbeiten';
+    editBtn.onclick=(function(k,idx){return function(){startEdit(k,idx);};})(key,i);
+    var delBtn=document.createElement('button');
+    delBtn.className='note-del-btn';delBtn.textContent='Löschen';
+    delBtn.onclick=(function(k,idx){return function(){delNote(k,idx);};})(key,i);
+    actions.append(doneBtn,editBtn,delBtn);
+    item.append(p,actions);
     list.appendChild(item);
   });
 }
-function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function addNote(key){
   var ta=document.getElementById('notes-input-'+key);
   var text=(ta.value||'').trim();
   if(!text)return;
-  var arr=getNotes(key);arr.push(text);saveNotes(key,arr);ta.value='';renderNotes(key);
+  var arr=getNotes(key);arr.push({text:text,done:false});saveNotes(key,arr);ta.value='';renderNotes(key);
 }
 function delNote(key,i){
   var arr=getNotes(key);arr.splice(i,1);saveNotes(key,arr);renderNotes(key);
+}
+function toggleNoteDone(key,i){
+  var arr=getNotes(key);arr[i].done=!arr[i].done;saveNotes(key,arr);renderNotes(key);
 }
 function startEdit(key,i){
   var list=document.getElementById('notes-list-'+key);
   var items=list.querySelectorAll('.note-item');
   var item=items[i];
   var notes=getNotes(key);
-  item.innerHTML='<textarea class="note-edit-area">'+escHtml(notes[i])+'</textarea><button class="note-save-btn" onclick="saveEdit(\''+key+'\','+i+',this)">Speichern</button><button class="note-cancel-btn" onclick="renderNotes(\''+key+'\')">Abbrechen</button>';
-  item.querySelector('.note-edit-area').focus();
+  var ta=document.createElement('textarea');ta.className='note-edit-area';ta.value=notes[i].text;
+  var saveBtn=document.createElement('button');saveBtn.className='note-save-btn';saveBtn.textContent='Speichern';
+  saveBtn.onclick=function(){saveEdit(key,i,saveBtn);};
+  var cancelBtn=document.createElement('button');cancelBtn.className='note-cancel-btn';cancelBtn.textContent='Abbrechen';
+  cancelBtn.style.marginLeft='6px';
+  cancelBtn.onclick=function(){renderNotes(key);};
+  item.innerHTML='';item.append(ta,saveBtn,cancelBtn);
+  ta.focus();
 }
 function saveEdit(key,i,btn){
   var ta=btn.parentElement.querySelector('.note-edit-area');
   var text=(ta.value||'').trim();
   if(!text)return;
-  var arr=getNotes(key);arr[i]=text;saveNotes(key,arr);renderNotes(key);
+  var arr=getNotes(key);arr[i].text=text;saveNotes(key,arr);renderNotes(key);
 }
 // Render all on load
 renderNotes('dracaenatrifasciata');
