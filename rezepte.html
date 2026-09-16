@@ -507,6 +507,30 @@ function esc(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// ── Einmalige Rezept-Importe ─────────────────────────────────────────────────
+(function seedRecipes() {
+  const seeds = [
+    {
+      id: 'seed_wedges',
+      name: 'Wedges',
+      servings: 4,
+      note: 'nach australischem Rezept – 200 °C Ober-/Unterhitze, 30–40 Min. Schmeckt gut zu Steak, Filet und Huhn.',
+      ingredients: [
+        { name: 'Kartoffeln', amount: '1', unit: 'kg' },
+        { name: 'Olivenöl', amount: '3', unit: 'EL' },
+        { name: 'Salz', amount: '1', unit: 'EL' },
+        { name: 'Pfeffer gemahlen', amount: '1', unit: 'EL' },
+        { name: 'Paprikapulver oder Chilipulver', amount: '1', unit: 'EL' },
+      ]
+    }
+  ];
+  let changed = false;
+  seeds.forEach(function(r) {
+    if (!state.recipes[r.id]) { state.recipes[r.id] = r; changed = true; }
+  });
+  if (changed) persist();
+})();
+
 renderRecipes();
 restoreRezepteFromFirebase();
 </script>
