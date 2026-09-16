@@ -395,6 +395,7 @@ html { height: 100%; }
     .tile.sug .tile-macros .m-sep,
     .tile.active .tile-macros .m-sep { opacity: 0.4; color: rgba(255,255,255,0.9); }
     .tile-amount { position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: 700; opacity: 0.9; }
+    .tile-unit-hint { position: absolute; top: 6px; right: 8px; font-size: 10px; font-weight: 600; opacity: 0.45; }
     .tile-store  { font-size: 9.5px; color: rgba(255,255,255,0.95); background: rgba(255,255,255,0.22); border-radius: 10px; padding: 1px 6px; margin-top: 2px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
     .store-chip  { display: inline-block; padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface); font-size: 12px; font-weight: 600; margin-right: 6px; white-space: nowrap; cursor: pointer; transition: border-color .15s, background .15s; }
     .store-chip.active { border-color: var(--active); background: rgba(27,107,62,0.10); color: var(--active); }
@@ -685,6 +686,7 @@ html { height: 100%; }
       margin-bottom: 14px;
     }
     .sheet-input:focus { border-color: var(--active); }
+    .sheet-unit-hint { font-size:12px;color:var(--muted);padding:0 0 10px;font-weight:500; }
 
     .sheet-btns { display: flex; gap: 9px; }
 
@@ -1621,6 +1623,7 @@ html { height: 100%; }
       <span id="sheetEmoji"></span>
       <span id="sheetTitle"></span>
     </div>
+    <div id="sheetUnitHint" class="sheet-unit-hint" style="display:none"></div>
     <div class="amount-chips" id="amtChips"></div>
     <input class="sheet-input" id="sheetInput" placeholder="Menge oder Notiz…" oninput="onSheetInput(this.value)">
     <div style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px">Wo kaufen?</div>
@@ -2613,7 +2616,9 @@ function tile(type, it) {
       <div class="tile-name">${esc(it.name)}</div>
       ${storeBadge}
       ${priceHtml}
-      ${it.amount ? `<div class="tile-amount">${esc(it.amount)}</div>` : ''}
+      ${it.amount
+        ? `<div class="tile-amount">${esc(it.amount)}</div>`
+        : (tileUnit ? `<div class="tile-unit-hint">1× ${esc(tileUnit)}</div>` : '')}
     </div>`;
   }
   // done: compact list row
@@ -2941,7 +2946,9 @@ function openPicker(id) {
   document.getElementById('sheetStore').value = picker.store;
   document.getElementById('removeBtn').style.display = '';
 
-  buildAmtChips(picker.amount);
+  const _sug1 = getSug(it.name);
+  buildAmtChips(picker.amount, _sug1?.unit ?? null);
+  _showSheetUnitHint(it.name);
   buildStoreChips(picker.store);
   document.getElementById('overlay').classList.add('open');
 }
@@ -2953,16 +2960,35 @@ function openNewPicker(name, emoji) {
   document.getElementById('sheetInput').value = '';
   document.getElementById('sheetStore').value = '';
   document.getElementById('removeBtn').style.display = 'none';
-  buildAmtChips('');
+  const _sug2 = getSug(name);
+  buildAmtChips('', _sug2?.unit ?? null);
+  _showSheetUnitHint(name);
   buildStoreChips('');
   document.getElementById('overlay').classList.add('open');
 }
 
-function buildAmtChips(selected) {
+function _showSheetUnitHint(name) {
+  const hint = document.getElementById('sheetUnitHint');
+  if (!hint) return;
+  const sug = getSug(name);
+  if (sug?.unit) {
+    const priceStr = sug.price != null ? ` = ${fmtPrice(sug.price)}` : '';
+    hint.textContent = `📦 Standardmenge: 1× ${sug.unit}${priceStr}`;
+    hint.style.display = '';
+  } else {
+    hint.style.display = 'none';
+  }
+}
+
+function buildAmtChips(selected, catalogUnit) {
   const ac = document.getElementById('amtChips');
-  ac.innerHTML = AMOUNTS.map(a =>
-    `<div class="amt-chip ${a === selected ? 'on' : ''}" data-amt="${a}" onclick="pickAmt('${a}')">${a}</div>`
-  ).join('');
+  const extras = catalogUnit && !AMOUNTS.includes(catalogUnit) ? [catalogUnit] : [];
+  const all = [...extras, ...AMOUNTS];
+  ac.innerHTML = all.map(a => {
+    const isCatalog = a === catalogUnit;
+    const label = isCatalog ? `${a} ★` : a;
+    return `<div class="amt-chip ${a === selected ? 'on' : ''}" data-amt="${a}" onclick="pickAmt('${a}')">${label}</div>`;
+  }).join('');
 }
 
 function pickAmt(a) {
