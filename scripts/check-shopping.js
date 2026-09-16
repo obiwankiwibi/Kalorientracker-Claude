@@ -2,7 +2,7 @@
 const webpush = require('web-push');
 const fetch   = require('node-fetch');
 
-const DEBOUNCE_MS = 10 * 60 * 1000;  // 10 Min. Ruhe nach letzter Änderung
+const DEBOUNCE_MS =  2 * 60 * 1000;  // 2 Min. Ruhe nach letzter Änderung
 const MAX_WAIT_MS = 30 * 60 * 1000;  // Spätestens nach 30 Min. senden
 const STALE_MS    =  2 * 3600 * 1000; // Älter als 2 Std. → verwerfen
 
@@ -61,7 +61,7 @@ async function main() {
     return;
   }
 
-  const { changedAt, firstChangedAt, pushSentAt = 0 } = ping;
+  const { changedAt, firstChangedAt, pushSentAt = 0, itemCount, totalPrice } = ping;
   const now = Date.now();
 
   // Bereits per Push gesendet?
@@ -90,9 +90,16 @@ async function main() {
   // Als gesendet markieren (verhindert Doppel-Sends)
   await fbPatch('/settings/shoppingPing', { pushSentAt: now });
 
+  const itemStr  = itemCount != null ? `${itemCount} Artikel` : null;
+  const priceStr = totalPrice != null && totalPrice > 0 ? `ca. ${totalPrice} €` : null;
+  const details  = [itemStr, priceStr].filter(Boolean).join(' · ');
+  const body     = details
+    ? `Einkaufsliste geändert – ${details}`
+    : 'Jemand hat die Einkaufsliste geändert – schau mal rein!';
+
   const payload = JSON.stringify({
     title: '🛒 Einkaufsliste aktualisiert',
-    body:  'Jemand hat die Einkaufsliste geändert – schau mal rein!',
+    body,
     icon:  'https://obiwankiwibi.github.io/Kalorientracker-Claude/icon-192.png',
     url:   'https://obiwankiwibi.github.io/Kalorientracker-Claude/einkaufsliste.html'
   });

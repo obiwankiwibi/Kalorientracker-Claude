@@ -4452,15 +4452,35 @@ async function sendEmail(toEmail, toName, subject, message) {
 // ═══════════════════════════════════════════════
 //  EINKAUFSLISTEN-BENACHRICHTIGUNG (Debounce)
 // ═══════════════════════════════════════════════
+function _getListSummary() {
+  const active = Object.values(items).filter(it => !it.checked);
+  let total = 0;
+  const grouped = {};
+  active.forEach(it => {
+    const sug = getSug(it.name);
+    const price = sug?.price ?? it.unitPrice ?? null;
+    const unit  = sug?.unit  ?? it.catalogUnit ?? null;
+    if (price == null) return;
+    const k = it.name.toLowerCase().trim();
+    if (!grouped[k]) grouped[k] = { price, unit, rawMult: 0 };
+    grouped[k].rawMult += calcMultiplier(it.amount, unit || '');
+  });
+  Object.values(grouped).forEach(({ price, rawMult }) => { total += price * Math.ceil(rawMult); });
+  return { count: active.length, total: Math.round(total) };
+}
+
 function notifyChange() {
   if (!shoppingPingRef) return;
   const now = Date.now();
   const isNewBatch = (shoppingPing.sentAt || 0) >= (shoppingPing.changedAt || 1);
+  const { count, total } = _getListSummary();
   shoppingPingRef.set({
     changedAt:      now,
     changedBy:      MY_DEVICE_ID,
     sentAt:         shoppingPing.sentAt || 0,
     firstChangedAt: isNewBatch ? now : (shoppingPing.firstChangedAt || now),
+    itemCount:      count,
+    totalPrice:     total,
   });
 }
 
@@ -4473,7 +4493,7 @@ async function checkAndSendShoppingNotification() {
   const now               = Date.now();
   const sinceLastChange   = now - changedAt;
   const sinceFirstChange  = now - (firstChangedAt || changedAt);
-  const DEBOUNCE          = 10 * 60 * 1000;  // 10 Minuten
+  const DEBOUNCE          = 2 * 60 * 1000;   // 2 Minuten
   const MAX_WAIT          = 30 * 60 * 1000;  // 30 Minuten
 
   // Veraltete Benachrichtigungen verwerfen (älter als 2 Std.)

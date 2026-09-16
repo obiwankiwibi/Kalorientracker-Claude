@@ -2,7 +2,7 @@ name: Einkaufsliste Push-Benachrichtigung
 
 on:
   schedule:
-    - cron: '*/10 * * * *'   # alle 10 Minuten
+    - cron: '*/2 * * * *'    # alle 2 Minuten
   workflow_dispatch:
 
 jobs:
