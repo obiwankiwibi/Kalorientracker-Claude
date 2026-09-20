@@ -5161,6 +5161,36 @@ _initDefaultRecipes();
     localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
   }
 
+  if (!recipes['default_26']) {
+    recipes['default_26'] = {
+      id:'default_26', name:'Kohlrabi-Frischkäse-Topf', emoji:'🥬', servings:4, category:'Eintopf',
+      description:'Cremiger Gemüsetopf mit Kartoffeln, Kohlrabi und Frischkäse – nach Rezept von gina.sandrin. Optional mit Bockwürstchen.',
+      steps:[
+        'Etwas Öl in einen Topf geben und das gesamte Gemüse (Kartoffeln, Kohlrabi, Möhren, Zwiebel) hineingeben.',
+        'Ein paar Minuten kräftig anrösten.',
+        'Mit der Gemüsebrühe ablöschen und ca. 15 Minuten leicht köcheln lassen.',
+        'Frischkäse unterrühren und mit Salz, Pfeffer und Muskatnuss abschmecken.',
+        'Wer es dicker mag: mehr Frischkäse, Schmelzkäse oder 2 TL in Wasser angerührte Speisestärke.',
+        'Petersilie unterrühren. Wer mag, Bockwürstchen dazugeben und los schlemmen.',
+      ],
+      ingredients:[
+        g('Kartoffeln','🥔',800,'g',800,77,2,17,0.1,1.29,1000,'1kg'),
+        g('Kohlrabi','🥬',400,'g',400,27,1.7,6,0.1,0.79,2,'2er Pack'),
+        g('Möhren','🥕',250,'g',250,41,0.9,10,0.2,0.89,500,'500g'),
+        g('Zwiebel','🧅',100,'g',100,40,1.1,9,0.1,0.49,3,'3er Netz'),
+        g('Frischkäse','🧀',250,'g',250,115,8,4,8,1.39,200,'200g'),
+        g('Gemüsebrühe','🍲',550,'ml',550,5,0.5,0.5,0.1,0.69,2,'2 Würfel'),
+        g('Öl','🫙',15,'ml',15,884,0,0,100,1.99,1000,'1L'),
+        g('Petersilie frisch','🌿',30,'g',30,36,3,6,0.8,0.99,30,'Bund'),
+        g('Bockwürstchen','🌭',200,'g',200,285,11,2,25,1.99,5,'5er Pack'),
+        g('Salz','🧂',4,'g',4,0,0,0,0,0.49,500,'500g'),
+        g('Pfeffer gemahlen','🌶️',2,'g',2,251,10,49,3.3,0.99,50,'50g'),
+        g('Muskatnuss gemahlen','🫙',1,'g',1,525,6,49,36,1.49,40,'40g'),
+      ]
+    };
+    localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
+  }
+
   // Stamp / upgrade categories on default recipes
   const DEFAULT_CATS = {
     default_01:'Nudelgericht', default_02:'Curry',        default_03:'Frühstück',
