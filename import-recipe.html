@@ -3,31 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rezept importieren</title>
+  <title>Rezepte importieren</title>
   <style>
-    body { font-family: Georgia,serif; background:#2C1808; color:#E8D0A0; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; padding:20px; box-sizing:border-box; }
-    .box { background:#FDF8EE; color:#4A2E0A; border-radius:16px; padding:28px 24px; max-width:380px; width:100%; text-align:center; }
-    .emoji { font-size:52px; margin-bottom:12px; }
-    h2 { font-size:22px; margin-bottom:6px; }
-    p { font-size:14px; color:#6A4020; margin-bottom:20px; }
-    .btn { display:inline-block; padding:13px 28px; background:#8B5C14; color:#FDF8EE; border:none; border-radius:28px; font-family:Georgia,serif; font-size:15px; font-weight:700; cursor:pointer; text-decoration:none; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Georgia,serif; background:#2C1808; color:#E8D0A0; min-height:100vh; padding:24px 16px 40px; }
+    h1 { text-align:center; font-size:18px; letter-spacing:.1em; text-transform:uppercase; color:#D4A96A; margin-bottom:24px; }
+    .card { background:#FDF8EE; color:#4A2E0A; border-radius:16px; padding:22px 20px; max-width:420px; margin:0 auto 16px; }
+    .card-top { display:flex; align-items:center; gap:14px; margin-bottom:10px; }
+    .card-emoji { font-size:38px; line-height:1; }
+    .card-info { flex:1; }
+    .card-name { font-size:17px; font-weight:700; margin-bottom:2px; }
+    .card-meta { font-size:12px; color:#7A5030; }
+    .btn { width:100%; padding:12px; background:#8B5C14; color:#FDF8EE; border:none; border-radius:28px; font-family:Georgia,serif; font-size:15px; font-weight:700; cursor:pointer; margin-top:4px; }
     .btn:active { background:#6B4410; }
-    .msg { margin-top:16px; font-size:14px; color:#5C3317; min-height:20px; }
+    .btn:disabled { opacity:.45; cursor:default; }
+    .msg { margin-top:10px; font-size:13px; color:#5C3317; min-height:18px; text-align:center; }
+    .back { display:block; text-align:center; margin-top:8px; font-size:13px; color:#D4A96A; text-decoration:none; }
   </style>
 </head>
 <body>
-<div class="box">
-  <div class="emoji">🥦</div>
-  <h2>Brokkoli-Hähnchen Pfanne</h2>
-  <p>Dieses Rezept zum Rezeptbuch hinzufügen?</p>
-  <button class="btn" onclick="importRecipe()">Rezept importieren</button>
-  <div class="msg" id="msg"></div>
+<h1>Rezepte importieren</h1>
+
+<div class="card" id="card-0">
+  <div class="card-top">
+    <div class="card-emoji">🥦</div>
+    <div class="card-info">
+      <div class="card-name">Brokkoli-Hähnchen Pfanne</div>
+      <div class="card-meta">Hauptgericht · 1 Portion · ~840 kcal · 97g Protein</div>
+    </div>
+  </div>
+  <button class="btn" onclick="importRecipe(0)">Importieren</button>
+  <div class="msg" id="msg-0"></div>
 </div>
+
+<div class="card" id="card-1">
+  <div class="card-top">
+    <div class="card-emoji">🌿</div>
+    <div class="card-info">
+      <div class="card-name">Rosenkohl-Curry Pfanne</div>
+      <div class="card-meta">Hauptgericht · 3–4 Portionen · cremig mit Schinken</div>
+    </div>
+  </div>
+  <button class="btn" onclick="importRecipe(1)">Importieren</button>
+  <div class="msg" id="msg-1"></div>
+</div>
+
+<a class="back" href="rezeptbuch.html">← Zum Rezeptbuch</a>
+
 <script>
-function importRecipe() {
-  const id = 'import_' + Date.now();
-  const recipe = {
-    id,
+const RECIPES = [
+  {
     name: 'Brokkoli-Hähnchen Pfanne',
     emoji: '🥦',
     category: 'Hauptgericht',
@@ -50,20 +75,49 @@ function importRecipe() {
       'Cremefine und Light Frischkäse zur Pfanne geben, gut verrühren und kurz aufkochen lassen.',
       'Light Käse einrühren bis er geschmolzen ist. Mit Salz, Pfeffer und Gewürzen nach Geschmack würzen.',
       'Nudeln unterheben, alles gut vermengen und servieren.'
+    ]
+  },
+  {
+    name: 'Rosenkohl-Curry Pfanne',
+    emoji: '🌿',
+    category: 'Hauptgericht',
+    servings: 4,
+    description: 'Cremige Rosenkohl-Pfanne mit Schinken und Curry-Sahne – einfach und aromatisch.',
+    ingredients: [
+      { name: 'Rosenkohl', emoji: '🌿', amount: 750, unit: 'g', kcalPer100: 43, proteinPer100: 3.4, carbsPer100: 9, fatPer100: 0.5, custom: true },
+      { name: 'Schinkenwürfel', emoji: '🥩', amount: 75, unit: 'g', kcalPer100: 150, proteinPer100: 18, carbsPer100: 1, fatPer100: 8, custom: true },
+      { name: 'Currypulver', emoji: '🟡', amount: 1, unit: 'TL', kcalPer100: 325, proteinPer100: 13, carbsPer100: 50, fatPer100: 14, custom: true },
+      { name: 'Gemüsebrühe', emoji: '🍲', amount: 150, unit: 'ml', kcalPer100: 5, proteinPer100: 0.3, carbsPer100: 1, fatPer100: 0, custom: true },
+      { name: 'Sahne', emoji: '🥛', amount: 300, unit: 'ml', kcalPer100: 300, proteinPer100: 2.5, carbsPer100: 3, fatPer100: 30, custom: true },
+      { name: 'Öl', emoji: '🫙', amount: 1, unit: 'EL', kcalPer100: 900, proteinPer100: 0, carbsPer100: 0, fatPer100: 100, custom: true },
+      { name: 'Butter', emoji: '🧈', amount: 1, unit: 'EL', kcalPer100: 740, proteinPer100: 0.7, carbsPer100: 0.6, fatPer100: 83, custom: true },
+      { name: 'Pfeffer', emoji: '🌶️', amount: 1, unit: 'Prise', kcalPer100: 250, proteinPer100: 10, carbsPer100: 64, fatPer100: 3, custom: true },
+      { name: 'Gemahlener Kümmel', emoji: '🌿', amount: 1, unit: 'Prise', kcalPer100: 375, proteinPer100: 18, carbsPer100: 44, fatPer100: 22, custom: true }
     ],
-    createdAt: Date.now()
-  };
+    steps: [
+      'Den Rosenkohl putzen und halbieren. In einem heißen Butter-Öl-Gemisch bei mittlerer Hitze anbraten. Gib ihm etwas Zeit, damit er langsam Farbe bekommt – so entwickelt er Aroma, ohne außen zu dunkel und innen noch roh zu werden.',
+      'Die Schinkenwürfel hinzufügen und kurz mitbraten. Alles mit Currypulver würzen und ebenfalls kurz anrösten. Mit 150 ml Gemüsebrühe ablöschen und bei geschlossenem Deckel köcheln lassen, bis die Flüssigkeit nahezu verdampft ist.',
+      'Nun die Sahne hinzufügen und mit Pfeffer sowie etwas gemahlenem Kümmel würzen. Die Sahne bei niedriger Hitze einköcheln lassen, bis sie sich schön cremig um den Rosenkohl schmiegt.',
+      'Abschmecken und servieren. Guten Appetit!'
+    ]
+  }
+];
 
+function importRecipe(idx) {
+  const r = RECIPES[idx];
+  const id = 'import_' + idx + '_' + Date.now();
+  const recipe = { ...r, id, createdAt: Date.now() };
   let recipes = {};
   try { recipes = JSON.parse(localStorage.getItem('rezepte_v2') || '{}'); } catch {}
   recipes[id] = recipe;
   try {
     localStorage.setItem('rezepte_v2', JSON.stringify(recipes));
-    document.getElementById('msg').innerHTML = '✓ Importiert! <a href="rezeptbuch.html" style="color:#8B5C14;font-weight:700;">Zum Rezeptbuch →</a>';
-    document.querySelector('.btn').disabled = true;
-    document.querySelector('.btn').style.opacity = '0.5';
+    const msg = document.getElementById('msg-' + idx);
+    msg.innerHTML = '✓ Importiert! <a href="rezeptbuch.html" style="color:#8B5C14;font-weight:700;">Zum Rezeptbuch →</a>';
+    const btn = document.querySelectorAll('.btn')[idx];
+    btn.disabled = true;
   } catch(e) {
-    document.getElementById('msg').textContent = 'Fehler: ' + e.message;
+    document.getElementById('msg-' + idx).textContent = 'Fehler: ' + e.message;
   }
 }
 </script>
