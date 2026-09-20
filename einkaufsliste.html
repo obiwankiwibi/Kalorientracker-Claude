@@ -5191,6 +5191,40 @@ _initDefaultRecipes();
     localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
   }
 
+  if (!recipes['default_27']) {
+    recipes['default_27'] = {
+      id:'default_27', name:'Hackfleisch-Cheddar-Topf', emoji:'🧀', servings:7, category:'Eintopf',
+      description:'Cremiger Hackfleisch-Kartoffel-Topf mit Erbsen und geschmolzenem Cheddar – sättigend und ideal als Meal Prep.',
+      steps:[
+        'Kartoffeln schälen und in ca. 2 cm große Würfel schneiden. Möhren schälen, der Länge nach halbieren, vierteln und in kleine Stücke schneiden. Zwiebel würfeln, Knoblauch hacken.',
+        'Öl erhitzen und Rinderhackfleisch kräftig anbraten. Zwiebeln und Knoblauch dazugeben und kurz mitbraten.',
+        'Mit Mehl bestäuben, gut verrühren und ca. 1 Minute anschwitzen.',
+        'Kartoffeln, Möhren, Paprikapulver, Thymian, Salz und Pfeffer dazugeben, mit der Rinderbrühe ablöschen und ca. 18–22 Minuten köcheln lassen.',
+        'Sahne und TK-Erbsen einrühren und weitere 5 Minuten köcheln lassen.',
+        'Hitze reduzieren, Cheddar unterrühren und schmelzen lassen. Abschmecken und mit gehackter Petersilie servieren.',
+      ],
+      ingredients:[
+        g('Rinderhackfleisch','🥩',800,'g',800,196,17,0,14,4.99,500,'500g'),
+        g('Kartoffeln','🥔',1200,'g',1200,77,2,17,0.1,1.29,1000,'1kg'),
+        g('Möhren','🥕',500,'g',500,41,0.9,10,0.2,0.89,500,'500g'),
+        g('TK-Erbsen','🫛',300,'g',300,81,5,14,0.4,1.29,750,'750g'),
+        g('Zwiebel','🧅',100,'g',100,40,1.1,9,0.1,0.49,3,'3er Netz'),
+        g('Knoblauch','🧄',9,'g',9,135,6,28,0.5,0.59,5,'Knolle'),
+        g('Öl','🫙',20,'ml',20,884,0,0,100,1.99,1000,'1L'),
+        g('Mehl','🌾',24,'g',24,340,10,71,1,0.89,1000,'1kg'),
+        g('Rinderbrühe','🍲',1300,'ml',1300,5,0.5,0.5,0.1,0.79,3,'3 Würfel'),
+        g('Sahne','🥛',300,'ml',300,292,2,3,30,0.99,200,'200ml'),
+        g('Cheddar','🧀',150,'g',150,403,25,0,33,2.49,150,'150g'),
+        g('Paprikapulver edelsüß','🫑',5,'g',5,282,14,49,13,0.89,50,'50g'),
+        g('Thymian getrocknet','🌿',2,'g',2,276,9,45,7,0.89,8,'8g'),
+        g('Petersilie frisch','🌿',30,'g',30,36,3,6,0.8,0.99,30,'Bund'),
+        g('Salz','🧂',6,'g',6,0,0,0,0,0.49,500,'500g'),
+        g('Pfeffer gemahlen','🌶️',3,'g',3,251,10,49,3.3,0.99,50,'50g'),
+      ]
+    };
+    localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
+  }
+
   // Stamp / upgrade categories on default recipes
   const DEFAULT_CATS = {
     default_01:'Nudelgericht', default_02:'Curry',        default_03:'Frühstück',
