@@ -2100,9 +2100,9 @@ html { height: 100%; }
 <!-- ══ BOOK VIEW ══ -->
 <div class="book-view" id="bookView" style="display:none;">
   <div class="book-header">
-    <button class="book-back" onclick="closeBookView()">← Zurück</button>
+    <button class="book-back" id="bookBackBtn" onclick="bookBackAction()">← Zurück</button>
     <div class="book-header-title">Rezeptbuch</div>
-    <div class="book-pg-badge" id="bookPgBadge"></div>
+    <div style="width:60px;"></div>
   </div>
   <div class="book-pages" id="bookPages"></div>
   <div class="book-nav">
@@ -6845,24 +6845,29 @@ function bookFlip(dir) {
   });
 }
 
+function bookBackAction() {
+  if (bookCurrentPage === 0) closeBookView();
+  else bookGoToIndex();
+}
+
 function updateBookNav() {
   const prevBtn = document.getElementById('bookPrevBtn');
   const nextBtn = document.getElementById('bookNextBtn');
   const navPg   = document.getElementById('bookNavPg');
   const navName = document.getElementById('bookNavName');
-  const badge   = document.getElementById('bookPgBadge');
+  const backBtn = document.getElementById('bookBackBtn');
   if (!prevBtn) return;
   prevBtn.disabled = bookCurrentPage === 0;
   nextBtn.disabled = bookCurrentPage === bookPages.length - 1;
   if (bookCurrentPage === 0) {
     navPg.textContent = 'Inhalt';
     navName.textContent = '';
-    if (badge) badge.textContent = '';
+    if (backBtn) backBtn.textContent = '← Zurück';
   } else {
     const pg = bookPages[bookCurrentPage];
     navPg.textContent = `${bookCurrentPage} / ${bookPages.length - 1}`;
     navName.textContent = pg.r?.name || '';
-    if (badge) badge.textContent = `${bookCurrentPage}/${bookPages.length-1}`;
+    if (backBtn) backBtn.textContent = '≡ Inhalt';
   }
 }
 
