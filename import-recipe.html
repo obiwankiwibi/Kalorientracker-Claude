@@ -48,6 +48,18 @@
   <div class="msg" id="msg-1"></div>
 </div>
 
+<div class="card" id="card-2">
+  <div class="card-top">
+    <div class="card-emoji">🥗</div>
+    <div class="card-info">
+      <div class="card-name">Omas Salatdressing</div>
+      <div class="card-meta">Dressing · 1 Kopfsalat · cremig, süß-säuerlich</div>
+    </div>
+  </div>
+  <button class="btn" onclick="importRecipe(2)">Importieren</button>
+  <div class="msg" id="msg-2"></div>
+</div>
+
 <a class="back" href="rezeptbuch.html">← Zum Rezeptbuch</a>
 
 <script>
@@ -99,6 +111,30 @@ const RECIPES = [
       'Die Schinkenwürfel hinzufügen und kurz mitbraten. Alles mit Currypulver würzen und ebenfalls kurz anrösten. Mit 150 ml Gemüsebrühe ablöschen und bei geschlossenem Deckel köcheln lassen, bis die Flüssigkeit nahezu verdampft ist.',
       'Nun die Sahne hinzufügen und mit Pfeffer sowie etwas gemahlenem Kümmel würzen. Die Sahne bei niedriger Hitze einköcheln lassen, bis sie sich schön cremig um den Rosenkohl schmiegt.',
       'Abschmecken und servieren. Guten Appetit!'
+    ]
+  },
+  {
+    name: 'Omas Salatdressing',
+    emoji: '🥗',
+    category: 'Dressing',
+    servings: 1,
+    description: 'Das beste Dressing für einen einfachen Blattsalat – cremig, süß-säuerlich und einfach unfassbar lecker. Pure Kindheitserinnerung.',
+    ingredients: [
+      { name: 'Sahne', emoji: '🥛', amount: 150, unit: 'ml', kcalPer100: 300, proteinPer100: 2.5, carbsPer100: 3, fatPer100: 30, custom: true },
+      { name: 'Öl', emoji: '🫙', amount: 10, unit: 'ml', kcalPer100: 900, proteinPer100: 0, carbsPer100: 0, fatPer100: 100, custom: true },
+      { name: 'Zitronensaft', emoji: '🍋', amount: 0.5, unit: 'Stück', kcalPer100: 22, proteinPer100: 0.4, carbsPer100: 6, fatPer100: 0.3, custom: true },
+      { name: 'Balsamico oder Apfelessig', emoji: '🍶', amount: 2, unit: 'EL', kcalPer100: 90, proteinPer100: 0.5, carbsPer100: 17, fatPer100: 0, custom: true },
+      { name: 'Zucker', emoji: '🍬', amount: 1, unit: 'EL', kcalPer100: 400, proteinPer100: 0, carbsPer100: 100, fatPer100: 0, custom: true },
+      { name: 'Senf', emoji: '🟡', amount: 1, unit: 'TL', kcalPer100: 60, proteinPer100: 4, carbsPer100: 6, fatPer100: 3, custom: true },
+      { name: 'Schnittlauch', emoji: '🌿', amount: 1, unit: 'Bund', kcalPer100: 30, proteinPer100: 3, carbsPer100: 4, fatPer100: 0.6, custom: true },
+      { name: 'Salz & Pfeffer', emoji: '🧂', amount: 1, unit: 'Prise', kcalPer100: 0, proteinPer100: 0, carbsPer100: 0, fatPer100: 0, custom: true }
+    ],
+    steps: [
+      'Sahne in eine Schüssel geben. Öl, Zitronensaft und Balsamico (oder Apfelessig) dazugeben.',
+      'Zucker und Senf unterrühren, bis sich alles gut verbindet.',
+      'Mit Salz und Pfeffer abschmecken.',
+      'Frischen Schnittlauch fein schneiden und unterheben.',
+      'Das Dressing über den Kopfsalat geben und sofort servieren.'
     ]
   }
 ];
