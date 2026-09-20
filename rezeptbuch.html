@@ -45,6 +45,7 @@
       color: #E8D0A0; text-align: center; letter-spacing: .1em; text-transform: uppercase;
     }
     .book-header-spacer { min-width: 60px; }
+    .book-refresh-btn { background: none; border: none; color: #D4A96A; font-size: 20px; cursor: pointer; padding: 6px 8px; min-width: 60px; text-align: right; }
 
     /* ── Pages ── */
     .book-pages { flex: 1; position: relative; overflow: hidden; }
@@ -263,7 +264,7 @@
   <div class="book-header">
     <button class="book-back" id="bookBackBtn" onclick="bookBackAction()">← Zurück</button>
     <div class="book-header-title">Rezeptbuch</div>
-    <div class="book-header-spacer"></div>
+    <button class="book-refresh-btn" onclick="refreshBook()" title="Aktualisieren">↻</button>
   </div>
   <div class="book-pages" id="bookPages"></div>
   <div class="book-nav">
@@ -985,6 +986,21 @@ function showToast(msg) {
   const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
   clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
 }
+
+// ── Refresh ──
+async function refreshBook() {
+  loadRecipes();
+  await loadAllRecipeImages();
+  const cur = bookCurrentPage;
+  buildBookPages();
+  renderBookAllPages();
+  bookJumpToPage(Math.min(cur, bookPages.length - 1));
+  updateBookNav();
+  showToast('Aktualisiert');
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') refreshBook();
+});
 
 // ── Init ──
 (async()=>{
