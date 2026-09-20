@@ -102,6 +102,8 @@
     .brp-step-text { font-family: Georgia,serif; font-size: 15px; color: #4A2E0A; line-height: 1.65; flex: 1; }
     .brp-desc { font-family: Georgia,serif; font-size: 15px; color: #4A2E0A; line-height: 1.65; white-space: pre-wrap; }
     .brp-actions { display: flex; gap: 10px; padding: 4px 22px; }
+    .brp-list-btn { width: 100%; padding: 12px; border: 1.5px solid #8B5C14; background: #EDD9B0; color: #4A2E0A; font-family: Georgia,serif; font-size: 15px; font-weight: 700; border-radius: 10px; cursor: pointer; }
+    .brp-list-btn:active { background: #D4B896; }
     .brp-edit-btn { flex: 1; padding: 11px; border: 1.5px solid #C4A46A; background: #FDF8EE; color: #8B5C14; font-family: Georgia,serif; font-size: 14px; border-radius: 10px; cursor: pointer; }
     .brp-del-btn  { flex: 1; padding: 11px; border: 1.5px solid #D4B896; background: #FDF8EE; color: #A06060; font-family: Georgia,serif; font-size: 14px; border-radius: 10px; cursor: pointer; }
 
@@ -207,7 +209,12 @@
     /* Ingredient rows */
     .bld-ing-row { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
     .bld-ing-emoji { width: 40px; height: 40px; border: 1px solid #C4A46A; border-radius: 8px; background: #F5EDD8; text-align: center; font-size: 18px; color: #4A2E0A; font-family: Georgia,serif; outline: none; flex-shrink: 0; padding: 0; }
-    .bld-ing-name { flex: 1; height: 40px; border: 1px solid #C4A46A; border-radius: 8px; background: #F5EDD8; color: #4A2E0A; font-size: 14px; font-family: Georgia,serif; padding: 0 10px; outline: none; min-width: 0; }
+    .bld-ing-name-wrap { flex: 1; position: relative; min-width: 0; }
+    .bld-ing-name { width: 100%; height: 40px; border: 1px solid #C4A46A; border-radius: 8px; background: #F5EDD8; color: #4A2E0A; font-size: 14px; font-family: Georgia,serif; padding: 0 10px; outline: none; }
+    .bld-ing-ac { position: absolute; top: 100%; left: 0; right: 0; background: #FDF8EE; border: 1.5px solid #C4A46A; border-top: none; border-radius: 0 0 10px 10px; z-index: 50; max-height: 220px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+    .bld-ing-ac-item { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-family: Georgia,serif; font-size: 14px; color: #4A2E0A; cursor: pointer; border-bottom: 1px solid #EDD9C0; }
+    .bld-ing-ac-item:last-child { border-bottom: none; }
+    .bld-ing-ac-item:active { background: #EDD9B0; }
     .bld-ing-qty { width: 54px; height: 40px; border: 1px solid #C4A46A; border-radius: 8px; background: #F5EDD8; color: #4A2E0A; font-size: 14px; font-family: Georgia,serif; text-align: center; outline: none; flex-shrink: 0; }
     .bld-ing-unit { width: 52px; height: 40px; border: 1px solid #C4A46A; border-radius: 8px; background: #F5EDD8; color: #4A2E0A; font-size: 13px; font-family: Georgia,serif; text-align: center; outline: none; flex-shrink: 0; padding: 0 4px; }
     .bld-ing-del { width: 32px; height: 32px; border: none; background: none; color: #B08060; font-size: 20px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
@@ -322,6 +329,7 @@
 
 <div id="toast"></div>
 
+<script src="catalog.js"></script>
 <script>
 'use strict';
 
@@ -596,6 +604,9 @@ function buildRecipePageHTML(pg, pageIdx) {
       ${r.description?`<div class="brp-section"><div class="brp-section-title">Beschreibung</div><div class="brp-desc">${esc(r.description)}</div></div>`:''}
       ${steps?`<div class="brp-section"><div class="brp-section-title">Zubereitung</div>${steps}</div>`:''}
       ${photoHTML}
+    </div>
+    <div class="brp-actions" style="padding-bottom:6px">
+      <button class="brp-list-btn" onclick="addRecipeToList('${safeId}',${pageIdx})">🛒 Zur Einkaufsliste</button>
     </div>
     <div class="brp-actions">
       <button class="brp-edit-btn" onclick="openBuilder('${safeId}')">✏️ Bearbeiten</button>
@@ -873,11 +884,69 @@ function renderBuilderIngredients() {
   container.innerHTML=builderIngredients.map((ing,i)=>`
     <div class="bld-ing-row">
       <input class="bld-ing-emoji" value="${esc(ing.emoji)}" placeholder="🥕" maxlength="4" autocomplete="off" oninput="builderIngredients[${i}].emoji=this.value">
-      <input class="bld-ing-name" value="${esc(ing.name)}" placeholder="Zutat …" autocomplete="off" oninput="builderIngredients[${i}].name=this.value">
+      <div class="bld-ing-name-wrap">
+        <input class="bld-ing-name" value="${esc(ing.name)}" placeholder="Zutat …" autocomplete="off"
+          oninput="builderIngredients[${i}].name=this.value;ingAcFilter(${i},this.value)"
+          onblur="setTimeout(()=>ingAcHide(${i}),180)">
+        <div class="bld-ing-ac" id="bld-ac-${i}"></div>
+      </div>
       <input class="bld-ing-qty" type="number" min="0" step="any" value="${ing.qty||''}" placeholder="100" oninput="builderIngredients[${i}].qty=parseFloat(this.value)||0">
       <input class="bld-ing-unit" value="${esc(ing.unitRaw||'')}" placeholder="g" autocomplete="off" oninput="builderIngredients[${i}].unitRaw=this.value">
       <button class="bld-ing-del" onclick="removeBuilderIngredient(${i})">×</button>
     </div>`).join('');
+}
+
+// ── Ingredient autocomplete ──
+function ingAcFilter(i, val) {
+  const ac = document.getElementById('bld-ac-' + i); if (!ac) return;
+  const q = val.trim().toLowerCase();
+  if (q.length < 2) { ac.innerHTML = ''; return; }
+  const matches = [];
+  for (let j = 0; j < SUGGESTIONS.length && matches.length < 6; j++) {
+    if (SUGGESTIONS[j].name.toLowerCase().includes(q)) matches.push({s: SUGGESTIONS[j], j});
+  }
+  if (!matches.length) { ac.innerHTML = ''; return; }
+  ac.innerHTML = matches.map(m =>
+    `<div class="bld-ing-ac-item" onmousedown="ingAcSelect(${i},${m.j})">${m.s.emoji} <span>${esc(m.s.name)}</span></div>`
+  ).join('');
+}
+function ingAcSelect(i, si) {
+  const s = SUGGESTIONS[si]; if (!s) return;
+  const unitG = parseFloat(s.unit) || 100;
+  builderIngredients[i] = {
+    ...builderIngredients[i],
+    name: s.name, emoji: s.emoji,
+    kcalPer100: s.kcal, proteinPer100: s.protein,
+    carbsPer100: s.carbs, fatPer100: s.fat,
+    unitPrice: s.price, unitG, catalogUnit: s.unit
+  };
+  renderBuilderIngredients();
+  const qtyInputs = document.querySelectorAll('.bld-ing-qty');
+  if (qtyInputs[i]) qtyInputs[i].focus();
+}
+function ingAcHide(i) {
+  const ac = document.getElementById('bld-ac-' + i); if (ac) ac.innerHTML = '';
+}
+
+// ── Add recipe to shopping list ──
+function addRecipeToList(recipeId, pageIdx) {
+  const r = recipes[recipeId]; if (!r) return;
+  const portions = bookPortions[recipeId] || r.servings || 4;
+  const scale = portions / (r.servings || 4);
+  const ingredients = (r.ingredients || []).filter(i => !i.custom);
+  if (!ingredients.length) { showToast('Keine Zutaten vorhanden'); return; }
+  const listKey = 'list_zuhause';
+  let listItems = {};
+  try { listItems = JSON.parse(localStorage.getItem(listKey) || '{}'); } catch {}
+  let added = 0;
+  for (const ing of ingredients) {
+    const amtStr = cookFmtAmt(ing, scale);
+    const id = 'rz_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    listItems[id] = { name: ing.name, emoji: ing.emoji || '🛒', amount: amtStr, store: '', checked: false, addedAt: Date.now() };
+    added++;
+  }
+  try { localStorage.setItem(listKey, JSON.stringify(listItems)); } catch(e) {}
+  showToast(`${added} Zutat${added !== 1 ? 'en' : ''} zur Einkaufsliste`);
 }
 
 // ── Builder steps ──
