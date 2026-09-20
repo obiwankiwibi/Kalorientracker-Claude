@@ -289,6 +289,12 @@ function renderRecipes() {
     $('recipeGrid').innerHTML = '<div class="card empty"><strong>Noch keine Rezepte</strong>Tippe auf + um dein erstes Rezept anzulegen.</div>';
     return;
   }
+  const _now = Date.now(), _thr = 7*24*60*60*1000;
+  ids.sort((a, b) => {
+    const na = state.recipes[a].createdAt && (_now - state.recipes[a].createdAt) < _thr ? 1 : 0;
+    const nb = state.recipes[b].createdAt && (_now - state.recipes[b].createdAt) < _thr ? 1 : 0;
+    return nb - na;
+  });
   $('recipeGrid').innerHTML = ids.map(id => {
     const r = state.recipes[id];
     const added = inCart.has(id);
