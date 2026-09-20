@@ -225,16 +225,17 @@
     .bld-step-ta:focus { border-color: #8B5C14; }
     .bld-step-del { width: 32px; height: 32px; border: none; background: none; color: #B08060; font-size: 20px; cursor: pointer; flex-shrink: 0; margin-top: 4px; }
     #bldStepList { padding-bottom: 6px; }
-    .bld-tm5-toggle { margin-top: 6px; display: inline-flex; align-items: center; gap: 5px; background: none; border: 1px solid #C4A46A; border-radius: 20px; padding: 3px 10px; font-family: Georgia,serif; font-size: 12px; color: #8B5C14; cursor: pointer; }
-    .bld-tm5-toggle.on { background: #EDD9B0; border-color: #8B5C14; font-weight: 700; }
-    .bld-tm5-fields { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .bld-tm5-label-row { margin-top: 8px; font-family: Georgia,serif; font-size: 12px; font-weight: 700; color: #8B5C14; text-transform: uppercase; letter-spacing: .06em; }
+    .bld-tm5-fields { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
     .bld-tm5-field { display: flex; flex-direction: column; align-items: center; gap: 3px; }
     .bld-tm5-in { width: 70px; height: 36px; border: 1px solid #C4A46A; border-radius: 8px; background: #F5EDD8; color: #4A2E0A; font-size: 14px; font-family: Georgia,serif; text-align: center; padding: 0 6px; outline: none; }
     .bld-tm5-in:focus { border-color: #8B5C14; }
     .bld-tm5-lbl { font-family: Georgia,serif; font-size: 10px; color: #8B6A3A; text-transform: uppercase; letter-spacing: .06em; }
 
-    /* TM5 chips in recipe view */
-    .brp-step-tm5 { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+    /* Thermomix chips in recipe view */
+    .brp-step-tm5 { margin-top: 8px; }
+    .brp-step-tm5-title { font-family: Georgia,serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #8B5C14; margin-bottom: 5px; }
+    .brp-step-tm5-chips { display: flex; flex-wrap: wrap; gap: 5px; }
     .brp-step-tm5-chip { background: #EDD9B0; border-radius: 20px; padding: 3px 10px; font-family: Georgia,serif; font-size: 12px; color: #5C3317; font-weight: 600; }
 
     .bld-empty-hint { font-family: Georgia,serif; font-size: 13px; color: #A8875A; font-style: italic; padding: 4px 0 14px; }
@@ -574,8 +575,8 @@ function buildRecipePageHTML(pg, pageIdx) {
       const t=tm5.temp?(isNaN(tm5.temp)?tm5.temp:tm5.temp+'°C'):null;
       const sp=tm5.speed?('Stufe '+tm5.speed):null;
       const ti=tm5.time||null;
-      chips=[t&&`<span class="brp-step-tm5-chip">🌡️ ${esc(t)}</span>`,sp&&`<span class="brp-step-tm5-chip">⚙️ ${esc(sp)}</span>`,ti&&`<span class="brp-step-tm5-chip">⏱️ ${esc(ti)}</span>`].filter(Boolean).join('');
-      if(chips) chips=`<div class="brp-step-tm5">${chips}</div>`;
+      const chipsInner=[t&&`<span class="brp-step-tm5-chip">🌡️ ${esc(t)}</span>`,sp&&`<span class="brp-step-tm5-chip">⚙️ ${esc(sp)}</span>`,ti&&`<span class="brp-step-tm5-chip">⏱️ ${esc(ti)}</span>`].filter(Boolean).join('');
+      if(chipsInner) chips=`<div class="brp-step-tm5"><div class="brp-step-tm5-title">Thermomix</div><div class="brp-step-tm5-chips">${chipsInner}</div></div>`;
     }
     return `<div class="brp-step"><div class="brp-step-num">${i+1}</div><div class="brp-step-text">${esc(text)}${chips}</div></div>`;
   }).join('');
@@ -795,7 +796,7 @@ async function saveRecipe() {
     servings:parseInt(document.getElementById('bldServings').value)||4,
     description:document.getElementById('bldDesc').value.trim(),
     steps:builderSteps.filter(s=>(s.text||'').trim()).map(s=>{
-      if(!s.tm5On||(!s.tm5Temp&&!s.tm5Speed&&!s.tm5Time)) return s.text;
+      if(!s.tm5Temp&&!s.tm5Speed&&!s.tm5Time) return s.text;
       const tm5={};
       if(s.tm5Temp) tm5.temp=s.tm5Temp;
       if(s.tm5Speed) tm5.speed=s.tm5Speed;
@@ -887,7 +888,6 @@ function addBuilderStep() {
   if(rows.length) rows[rows.length-1].focus();
 }
 function removeBuilderStep(i) { builderSteps.splice(i,1); renderBuilderSteps(); }
-function toggleTm5(i) { builderSteps[i].tm5On=!builderSteps[i].tm5On; renderBuilderSteps(); }
 function setStepText(i,v) { builderSteps[i].text=v; }
 function setStepTm5(i,field,v) { builderSteps[i][field]=v; }
 function renderBuilderSteps() {
@@ -898,12 +898,12 @@ function renderBuilderSteps() {
       <div class="bld-step-num">${i+1}</div>
       <div class="bld-step-body">
         <textarea class="bld-step-ta" rows="2" placeholder="Schritt beschreiben …" oninput="setStepText(${i},this.value);autoResize(this)">${esc(s.text)}</textarea>
-        <button class="bld-tm5-toggle${s.tm5On?' on':''}" onclick="toggleTm5(${i})">🌡️ TM5${s.tm5On?' ▲':' ▼'}</button>
-        ${s.tm5On?`<div class="bld-tm5-fields">
+        <div class="bld-tm5-label-row">🌡️ Thermomix</div>
+        <div class="bld-tm5-fields">
           <div class="bld-tm5-field"><input class="bld-tm5-in" type="text" inputmode="decimal" placeholder="100" value="${esc(s.tm5Temp)}" oninput="setStepTm5(${i},'tm5Temp',this.value)"><span class="bld-tm5-lbl">Temp °C</span></div>
           <div class="bld-tm5-field"><input class="bld-tm5-in" type="text" inputmode="decimal" placeholder="4" value="${esc(s.tm5Speed)}" oninput="setStepTm5(${i},'tm5Speed',this.value)"><span class="bld-tm5-lbl">Stufe</span></div>
           <div class="bld-tm5-field"><input class="bld-tm5-in" type="text" placeholder="5:00" value="${esc(s.tm5Time)}" oninput="setStepTm5(${i},'tm5Time',this.value)"><span class="bld-tm5-lbl">Zeit</span></div>
-        </div>`:''}
+        </div>
       </div>
       <button class="bld-step-del" onclick="removeBuilderStep(${i})">×</button>
     </div>`).join('');
