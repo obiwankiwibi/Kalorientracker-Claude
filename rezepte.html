@@ -50,6 +50,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-app
 /* Recipe grid */
 .recipe-grid{display:grid;gap:10px}
 .recipe-card{padding:14px 16px;cursor:pointer;transition:border-color .15s}
+.recipe-new-badge{display:inline-block;font-size:10px;font-weight:800;padding:2px 6px;border-radius:20px;background:#16a34a;color:#fff;white-space:nowrap;letter-spacing:.3px;vertical-align:middle;margin-left:5px;}
 .recipe-card:active{border-color:var(--brand)}
 .recipe-name{font-weight:750;font-size:16px;margin-bottom:2px}
 .recipe-meta{font-size:12px;color:var(--muted)}
@@ -291,8 +292,9 @@ function renderRecipes() {
   $('recipeGrid').innerHTML = ids.map(id => {
     const r = state.recipes[id];
     const added = inCart.has(id);
+    const isNew = r.createdAt && (Date.now() - r.createdAt) < 7*24*60*60*1000;
     return `<div class="card recipe-card" onclick="openRecipeModal('${id}')">
-      <div class="recipe-name">${esc(r.name)}</div>
+      <div class="recipe-name">${esc(r.name)}${isNew ? '<span class="recipe-new-badge">NEU</span>' : ''}</div>
       <div class="recipe-meta">${r.servings} Portionen · ${r.ingredients.length} Zutaten${r.note ? ' · ' + esc(r.note) : ''}</div>
       <div class="recipe-card-actions" onclick="event.stopPropagation()">
         <button class="btn-primary" onclick="toggleCart('${id}')" style="${added ? 'background:var(--green)' : ''}">
@@ -490,7 +492,8 @@ function saveRecipe() {
     });
   });
   const id = $('editId').value || uid();
-  state.recipes[id] = { id, name, servings, note, ingredients: ings };
+  const existing = state.recipes[id];
+  state.recipes[id] = { id, name, servings, note, ingredients: ings, createdAt: existing?.createdAt || Date.now() };
   persist(); closeModal(); renderRecipes();
   showToast('Rezept gespeichert ✓');
 }
@@ -514,6 +517,7 @@ function esc(s) {
       id: 'seed_wedges',
       name: 'Wedges',
       servings: 4,
+      createdAt: Date.now(),
       note: 'nach australischem Rezept – 200 °C Ober-/Unterhitze, 30–40 Min. Schmeckt gut zu Steak, Filet und Huhn.',
       ingredients: [
         { name: 'Kartoffeln', amount: '1', unit: 'kg' },
@@ -527,6 +531,7 @@ function esc(s) {
       id: 'seed_bauerntopf',
       name: 'Bauerntopf',
       servings: 4,
+      createdAt: Date.now(),
       note: 'Rezept von gina.sandrin – Öl im Topf erhitzen und Hackfleisch krümelig anbraten. Zwiebeln & Knoblauch glasig dünsten, Tomatenmark anrösten. Alle restlichen Zutaten zugeben, Deckel drauf und ca. 20 Min. köcheln lassen. Nach Belieben mit Stärke andicken. Klecks Sauerrahm & frische Petersilie drauf.',
       ingredients: [
         { name: 'Kartoffeln', amount: '700', unit: 'g' },
@@ -550,6 +555,7 @@ function esc(s) {
       id: 'seed_kohlrabitopf',
       name: 'Kohlrabi-Frischkäse-Topf',
       servings: 4,
+      createdAt: Date.now(),
       note: 'Rezept von gina.sandrin – Gemüse kräftig anrösten, mit Brühe ablöschen, 15 Min. köcheln, Frischkäse unterrühren. Optional mit Bockwürstchen.',
       ingredients: [
         { name: 'Kartoffeln (festkochend)', amount: '800', unit: 'g' },
@@ -569,6 +575,7 @@ function esc(s) {
       id: 'seed_cheddartopf',
       name: 'Hackfleisch-Cheddar-Topf',
       servings: 7,
+      createdAt: Date.now(),
       note: 'Cremig, sättigend, ideal als Meal Prep. Hackfleisch anbraten → Mehl anschwitzen → Gemüse + Brühe 18–22 Min. köcheln → Sahne & Erbsen 5 Min. → Cheddar schmelzen → Petersilie.',
       ingredients: [
         { name: 'Rinderhackfleisch', amount: '800', unit: 'g' },
@@ -592,6 +599,7 @@ function esc(s) {
       id: 'seed_gnocchitopf',
       name: 'Gnocchi-Hackfleisch-Eintopf',
       servings: 4,
+      createdAt: Date.now(),
       note: 'Hackfleisch anbraten → Zwiebel & Knoblauch → Tomatenmark → Gewürze → Brühe & Sahne → Gnocchi rein und schwimmen lassen → Parmesan & Spinat unterheben.',
       ingredients: [
         { name: 'Gnocchi (Nudelregal)', amount: '500', unit: 'g' },
@@ -614,6 +622,7 @@ function esc(s) {
       id: 'seed_spaghettiragù',
       name: 'Spaghetti Ragù',
       servings: 4,
+      createdAt: Date.now(),
       note: 'Hackfleisch kräftig anbraten → Gemüse anschwitzen → mit Brühe & Traubensaft ablöschen → Pastawasser & Schmand einrühren → Spaghetti & Parmesan unterheben → mit Schnittlauch garnieren.',
       ingredients: [
         { name: 'Rinderhackfleisch', amount: '500', unit: 'g' },
