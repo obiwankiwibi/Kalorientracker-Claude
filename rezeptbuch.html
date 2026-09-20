@@ -33,38 +33,28 @@
 
     /* ── Header ── */
     .book-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: flex; align-items: center; gap: 8px;
       padding: 12px 14px 10px;
       padding-top: max(12px, env(safe-area-inset-top));
-      background: #2C1808;
-      flex-shrink: 0;
+      background: #2C1808; flex-shrink: 0;
     }
     .book-back {
       background: none; border: none; color: #D4A96A;
       font-size: 15px; font-weight: 600; cursor: pointer;
       padding: 6px 4px; font-family: Georgia, serif;
-      -webkit-tap-highlight-color: transparent;
       min-width: 60px;
     }
     .book-header-title {
       flex: 1; font-family: Georgia, serif;
-      font-size: 13px; font-weight: 700;
-      color: #E8D0A0; text-align: center;
-      letter-spacing: .1em; text-transform: uppercase;
+      font-size: 13px; font-weight: 700; color: #E8D0A0;
+      text-align: center; letter-spacing: .1em; text-transform: uppercase;
     }
     .book-header-spacer { min-width: 60px; }
 
     /* ── Page container ── */
-    .book-pages {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-    }
+    .book-pages { flex: 1; position: relative; overflow: hidden; }
     .book-page {
-      position: absolute; inset: 0;
-      background: #FDF8EE;
+      position: absolute; inset: 0; background: #FDF8EE;
       overflow-y: auto; overflow-x: hidden;
       transform: translateX(100%);
       transition: transform .3s cubic-bezier(.4,0,.2,1);
@@ -74,172 +64,174 @@
     .book-page.bp-left { transform: translateX(-100%); }
     .book-page.bp-no-t { transition: none !important; }
 
-    /* ── Cover page ── */
-    .bc-inner {
-      padding: 36px 24px 80px;
-      max-width: 440px;
-      margin: 0 auto;
-    }
-    .bc-ornament {
-      text-align: center; font-size: 20px;
-      color: #C4A46A; letter-spacing: .4em; margin-bottom: 16px;
-    }
-    .bc-title {
-      font-family: Georgia, serif; font-size: 30px; font-weight: 700;
-      color: #4A2E0A; text-align: center; margin-bottom: 4px; line-height: 1.2;
-    }
-    .bc-subtitle {
-      font-family: Georgia, serif; font-size: 13px; color: #8B6A3A;
-      text-align: center; margin-bottom: 24px; font-style: italic;
-    }
-    .bc-search {
-      width: 100%; padding: 13px 18px;
-      border-radius: 28px; border: 1.5px solid #C4A46A;
-      background: #F5EDD8; color: #4A2E0A;
-      font-size: 15px; font-family: Georgia, serif; outline: none;
-    }
+    /* ── Cover ── */
+    .bc-inner { padding: 36px 24px 100px; max-width: 440px; margin: 0 auto; }
+    .bc-ornament { text-align: center; font-size: 20px; color: #C4A46A; letter-spacing: .4em; margin-bottom: 16px; }
+    .bc-title { font-family: Georgia,serif; font-size: 30px; font-weight: 700; color: #4A2E0A; text-align: center; margin-bottom: 4px; line-height: 1.2; }
+    .bc-subtitle { font-family: Georgia,serif; font-size: 13px; color: #8B6A3A; text-align: center; margin-bottom: 24px; font-style: italic; }
+    .bc-search { width: 100%; padding: 13px 18px; border-radius: 28px; border: 1.5px solid #C4A46A; background: #F5EDD8; color: #4A2E0A; font-size: 15px; font-family: Georgia,serif; outline: none; }
     .bc-search::placeholder { color: #A8875A; }
     .bc-search:focus { border-color: #8B5C14; box-shadow: 0 0 0 3px rgba(139,92,20,.1); }
     .bc-divider { border: none; border-top: 1px solid #D4B896; margin: 20px 0; }
-    .bc-cats-label {
-      font-family: Georgia, serif; font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .12em;
-      color: #8B6A3A; margin-bottom: 10px;
-    }
-    .bc-cat-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 13px 0; border-bottom: 1px solid #EDD9C0;
-      cursor: pointer; -webkit-tap-highlight-color: transparent;
-    }
+    .bc-cats-label { font-family: Georgia,serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #8B6A3A; margin-bottom: 10px; }
+    .bc-cat-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid #EDD9C0; cursor: pointer; }
     .bc-cat-row:last-child { border-bottom: none; }
     .bc-cat-left { display: flex; align-items: center; gap: 12px; }
-    .bc-cat-name {
-      font-family: Georgia, serif; font-size: 17px;
-      font-weight: 700; color: #4A2E0A;
-    }
-    .bc-cat-count {
-      font-family: Georgia, serif; font-size: 13px;
-      color: #8B6A3A; font-style: italic;
-    }
+    .bc-cat-name { font-family: Georgia,serif; font-size: 17px; font-weight: 700; color: #4A2E0A; }
+    .bc-cat-count { font-family: Georgia,serif; font-size: 13px; color: #8B6A3A; font-style: italic; }
     .bc-cat-arrow { color: #C4A46A; font-size: 16px; }
-    .bc-result-row {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 0; border-bottom: 1px solid #EDD9C0;
-      cursor: pointer; -webkit-tap-highlight-color: transparent;
-    }
+    .bc-result-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #EDD9C0; cursor: pointer; }
     .bc-result-row:last-child { border-bottom: none; }
     .bc-result-emoji { font-size: 24px; flex-shrink: 0; }
-    .bc-result-name {
-      font-family: Georgia, serif; font-size: 16px;
-      font-weight: 700; color: #4A2E0A;
-    }
-    .bc-result-meta {
-      font-family: Georgia, serif; font-size: 12px; color: #8B6A3A;
-    }
+    .bc-result-name { font-family: Georgia,serif; font-size: 16px; font-weight: 700; color: #4A2E0A; }
+    .bc-result-meta { font-family: Georgia,serif; font-size: 12px; color: #8B6A3A; }
 
-    /* ── Recipe pages ── */
-    .brp-inner {
-      padding: 28px 22px 100px;
-      max-width: 440px; margin: 0 auto;
-    }
-    .brp-cat {
-      font-family: Georgia, serif; font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .12em;
-      color: #8B5C14; text-align: center; margin-bottom: 10px;
-    }
+    /* ── Recipe page ── */
+    .brp-inner { padding: 28px 22px 100px; max-width: 440px; margin: 0 auto; }
+    .brp-cat { font-family: Georgia,serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #8B5C14; text-align: center; margin-bottom: 10px; }
     .brp-emoji { font-size: 54px; text-align: center; margin-bottom: 10px; line-height: 1; }
-    .brp-name {
-      font-family: Georgia, serif; font-size: 26px; font-weight: 700;
-      color: #4A2E0A; text-align: center; margin-bottom: 18px; line-height: 1.25;
-    }
-    .brp-portions-row {
-      display: flex; align-items: center; justify-content: center; gap: 12px;
-      background: #EDD9B0; border-radius: 16px; padding: 10px 16px; margin-bottom: 24px;
-    }
-    .brp-portions-label {
-      font-family: Georgia, serif; font-size: 13px;
-      color: #5C3317; font-weight: 600;
-    }
-    .brp-portions-btn {
-      width: 32px; height: 32px; border-radius: 50%;
-      border: 1.5px solid #C4A46A; background: #FDF8EE;
-      color: #8B5C14; font-size: 20px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .brp-portions-val {
-      font-family: Georgia, serif; font-size: 18px;
-      font-weight: 700; color: #4A2E0A; min-width: 32px; text-align: center;
-    }
+    .brp-name { font-family: Georgia,serif; font-size: 26px; font-weight: 700; color: #4A2E0A; text-align: center; margin-bottom: 18px; line-height: 1.25; }
+    .brp-portions-row { display: flex; align-items: center; justify-content: center; gap: 12px; background: #EDD9B0; border-radius: 16px; padding: 10px 16px; margin-bottom: 24px; }
+    .brp-portions-label { font-family: Georgia,serif; font-size: 13px; color: #5C3317; font-weight: 600; }
+    .brp-portions-btn { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid #C4A46A; background: #FDF8EE; color: #8B5C14; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .brp-portions-val { font-family: Georgia,serif; font-size: 18px; font-weight: 700; color: #4A2E0A; min-width: 32px; text-align: center; }
     .brp-section { margin-bottom: 24px; }
-    .brp-section-title {
-      font-family: Georgia, serif; font-size: 12px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .1em; color: #8B5C14;
-      margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #D4B896;
-    }
-    .brp-ingr-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 0; border-bottom: 1px solid #EDD9C0;
-      font-family: Georgia, serif;
-    }
+    .brp-section-title { font-family: Georgia,serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8B5C14; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #D4B896; }
+    .brp-ingr-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #EDD9C0; font-family: Georgia,serif; }
     .brp-ingr-item:last-child { border-bottom: none; }
     .brp-ingr-left { display: flex; align-items: center; gap: 8px; color: #4A2E0A; font-size: 14px; }
-    .brp-ingr-amt {
-      font-weight: 700; color: #8B5C14; font-size: 14px;
-      font-variant-numeric: tabular-nums;
-    }
+    .brp-ingr-amt { font-weight: 700; color: #8B5C14; font-size: 14px; font-variant-numeric: tabular-nums; }
     .brp-step { display: flex; gap: 14px; margin-bottom: 18px; }
-    .brp-step-num {
-      width: 28px; height: 28px; background: #EDD9B0; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-family: Georgia, serif; font-size: 13px; font-weight: 700;
-      color: #8B5C14; flex-shrink: 0; margin-top: 2px;
-    }
-    .brp-step-text {
-      font-family: Georgia, serif; font-size: 15px;
-      color: #4A2E0A; line-height: 1.65; flex: 1;
-    }
-    .brp-desc {
-      font-family: Georgia, serif; font-size: 15px;
-      color: #4A2E0A; line-height: 1.65; white-space: pre-wrap;
-    }
+    .brp-step-num { width: 28px; height: 28px; background: #EDD9B0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: Georgia,serif; font-size: 13px; font-weight: 700; color: #8B5C14; flex-shrink: 0; margin-top: 2px; }
+    .brp-step-text { font-family: Georgia,serif; font-size: 15px; color: #4A2E0A; line-height: 1.65; flex: 1; }
+    .brp-desc { font-family: Georgia,serif; font-size: 15px; color: #4A2E0A; line-height: 1.65; white-space: pre-wrap; }
+    .brp-actions { display: flex; gap: 10px; margin-top: 8px; }
+    .brp-edit-btn { flex: 1; padding: 11px; border: 1.5px solid #C4A46A; background: #FDF8EE; color: #8B5C14; font-family: Georgia,serif; font-size: 14px; border-radius: 10px; cursor: pointer; }
+    .brp-del-btn  { flex: 1; padding: 11px; border: 1.5px solid #D4B896; background: #FDF8EE; color: #A06060; font-family: Georgia,serif; font-size: 14px; border-radius: 10px; cursor: pointer; }
 
     /* ── Bottom nav ── */
     .book-nav {
-      flex-shrink: 0; background: #2C1808;
-      border-top: 1px solid #4A2E0A;
+      flex-shrink: 0; background: #2C1808; border-top: 1px solid #4A2E0A;
       display: flex; align-items: stretch; height: 62px;
       padding-bottom: env(safe-area-inset-bottom);
     }
-    .book-nav-btn {
-      flex: 0 0 72px; border: none; background: none;
-      color: #D4A96A; font-size: 28px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      -webkit-tap-highlight-color: transparent; transition: color .15s;
-    }
+    .book-nav-btn { flex: 0 0 72px; border: none; background: none; color: #D4A96A; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color .15s; }
     .book-nav-btn:disabled { color: #3A1A08; cursor: default; }
     .book-nav-btn:not(:disabled):active { color: #FDF8EE; }
-    .book-nav-center {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    .book-nav-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
+    .book-nav-pg { font-family: Georgia,serif; font-size: 13px; font-weight: 700; color: #D4A96A; }
+    .book-nav-name { font-family: Georgia,serif; font-size: 10px; color: #7A5A3A; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
+
+    /* ── FAB ── */
+    #fabBtn {
+      position: fixed; right: 20px; bottom: 82px;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: #8B5C14; color: #FDF8EE;
+      border: none; font-size: 26px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      z-index: 10;
+      transition: background .15s, transform .15s;
     }
-    .book-nav-pg {
-      font-family: Georgia, serif; font-size: 13px;
-      font-weight: 700; color: #D4A96A;
+    #fabBtn:active { background: #6B4410; transform: scale(0.94); }
+    #fabBtn.hidden { display: none; }
+
+    /* ── Builder overlay ── */
+    #builderView {
+      position: fixed; inset: 0; z-index: 400;
+      background: #FDF8EE;
+      display: flex; flex-direction: column;
+      overflow: hidden;
     }
-    .book-nav-name {
-      font-family: Georgia, serif; font-size: 10px; color: #7A5A3A;
-      margin-top: 2px; white-space: nowrap; overflow: hidden;
-      text-overflow: ellipsis; max-width: 170px;
+    #builderView.hidden { display: none; }
+
+    .bld-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 14px 10px;
+      padding-top: max(12px, env(safe-area-inset-top));
+      background: #2C1808; flex-shrink: 0;
     }
+    .bld-cancel-btn {
+      background: none; border: none; color: #D4A96A;
+      font-family: Georgia,serif; font-size: 14px; font-weight: 600;
+      cursor: pointer; padding: 6px 4px; min-width: 80px;
+    }
+    .bld-header-title {
+      flex: 1; font-family: Georgia,serif; font-size: 13px; font-weight: 700;
+      color: #E8D0A0; text-align: center; letter-spacing: .1em; text-transform: uppercase;
+    }
+    .bld-save-btn {
+      background: #8B5C14; border: none; color: #FDF8EE;
+      font-family: Georgia,serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; padding: 7px 14px; border-radius: 20px; min-width: 80px;
+    }
+    .bld-body {
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+      padding: 0 0 env(safe-area-inset-bottom);
+    }
+    .bld-section {
+      padding: 20px 20px 0;
+      border-bottom: 1px solid #EDD9C0;
+      margin-bottom: 0;
+    }
+    .bld-section:last-child { border-bottom: none; padding-bottom: 40px; }
+    .bld-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .bld-section-title { font-family: Georgia,serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8B5C14; }
+    .bld-add-btn { background: none; border: 1.5px solid #C4A46A; color: #8B5C14; font-family: Georgia,serif; font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
+
+    /* Basic info inputs */
+    .bld-top-row { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+    .bld-emoji-in { width: 52px; height: 52px; border: 1.5px solid #C4A46A; border-radius: 12px; background: #F5EDD8; color: #4A2E0A; font-size: 24px; text-align: center; font-family: Georgia,serif; outline: none; flex-shrink: 0; }
+    .bld-name-in { flex: 1; height: 52px; border: 1.5px solid #C4A46A; border-radius: 12px; background: #F5EDD8; color: #4A2E0A; font-size: 17px; font-family: Georgia,serif; padding: 0 14px; outline: none; }
+    .bld-name-in::placeholder, .bld-emoji-in::placeholder { color: #A8875A; }
+    .bld-name-in:focus, .bld-emoji-in:focus { border-color: #8B5C14; }
+
+    .bld-cat-row { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+    .bld-cat-sel { flex: 1; height: 44px; border: 1.5px solid #C4A46A; border-radius: 10px; background: #F5EDD8; color: #4A2E0A; font-size: 15px; font-family: Georgia,serif; padding: 0 10px; outline: none; appearance: none; -webkit-appearance: none; }
+    .bld-srv-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .bld-srv-in { width: 52px; height: 44px; border: 1.5px solid #C4A46A; border-radius: 10px; background: #F5EDD8; color: #4A2E0A; font-size: 16px; font-family: Georgia,serif; text-align: center; outline: none; }
+    .bld-srv-label { font-family: Georgia,serif; font-size: 13px; color: #8B6A3A; }
+
+    .bld-desc-in { width: 100%; border: 1.5px solid #C4A46A; border-radius: 10px; background: #F5EDD8; color: #4A2E0A; font-size: 14px; font-family: Georgia,serif; padding: 10px 14px; outline: none; resize: none; margin-bottom: 20px; line-height: 1.5; }
+    .bld-desc-in::placeholder { color: #A8875A; }
+    .bld-desc-in:focus { border-color: #8B5C14; }
+
+    /* Ingredient rows */
+    .bld-ing-row { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
+    .bld-ing-emoji { width: 40px; height: 40px; border: 1px solid #C4A46A; border-radius: 8px; background: #F5EDD8; text-align: center; font-size: 18px; color: #4A2E0A; font-family: Georgia,serif; outline: none; flex-shrink: 0; padding: 0; }
+    .bld-ing-name { flex: 1; height: 40px; border: 1px solid #C4A46A; border-radius: 8px; background: #F5EDD8; color: #4A2E0A; font-size: 14px; font-family: Georgia,serif; padding: 0 10px; outline: none; min-width: 0; }
+    .bld-ing-qty { width: 54px; height: 40px; border: 1px solid #C4A46A; border-radius: 8px; background: #F5EDD8; color: #4A2E0A; font-size: 14px; font-family: Georgia,serif; text-align: center; outline: none; flex-shrink: 0; }
+    .bld-ing-unit { width: 52px; height: 40px; border: 1px solid #C4A46A; border-radius: 8px; background: #F5EDD8; color: #4A2E0A; font-size: 13px; font-family: Georgia,serif; text-align: center; outline: none; flex-shrink: 0; padding: 0 4px; }
+    .bld-ing-del { width: 32px; height: 32px; border: none; background: none; color: #B08060; font-size: 20px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .bld-ing-row input::placeholder { color: #A8875A; }
+    .bld-ing-row input:focus { border-color: #8B5C14; }
+    .bld-ing-hint { font-family: Georgia,serif; font-size: 11px; color: #A8875A; margin-bottom: 14px; }
+    #bldIngList { padding-bottom: 6px; }
+
+    /* Step rows */
+    .bld-step-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+    .bld-step-num { width: 26px; height: 26px; background: #EDD9B0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: Georgia,serif; font-size: 12px; font-weight: 700; color: #8B5C14; flex-shrink: 0; margin-top: 7px; }
+    .bld-step-ta { flex: 1; border: 1px solid #C4A46A; border-radius: 8px; background: #F5EDD8; color: #4A2E0A; font-size: 14px; font-family: Georgia,serif; padding: 8px 10px; outline: none; resize: none; line-height: 1.5; min-height: 40px; }
+    .bld-step-ta::placeholder { color: #A8875A; }
+    .bld-step-ta:focus { border-color: #8B5C14; }
+    .bld-step-del { width: 32px; height: 32px; border: none; background: none; color: #B08060; font-size: 20px; cursor: pointer; flex-shrink: 0; margin-top: 4px; }
+    #bldStepList { padding-bottom: 6px; }
+
+    .bld-empty-hint { font-family: Georgia,serif; font-size: 13px; color: #A8875A; font-style: italic; padding: 6px 0 14px; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      background: #2C1808; color: #E8D0A0;
+      font-family: Georgia,serif; font-size: 14px;
+      padding: 10px 20px; border-radius: 20px;
+      z-index: 500; opacity: 0; pointer-events: none;
+      transition: opacity .25s; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; }
 
     /* ── Empty state ── */
-    .empty-state {
-      padding: 80px 32px;
-      text-align: center;
-      font-family: Georgia, serif;
-    }
+    .empty-state { padding: 80px 32px; text-align: center; font-family: Georgia,serif; }
     .empty-ornament { font-size: 48px; margin-bottom: 20px; }
     .empty-title { font-size: 22px; font-weight: 700; color: #4A2E0A; margin-bottom: 12px; }
     .empty-text { font-size: 15px; color: #8B6A3A; line-height: 1.6; font-style: italic; }
@@ -263,6 +255,55 @@
   </div>
 </div>
 
+<button id="fabBtn" onclick="openBuilder(null)" title="Rezept hinzufügen">+</button>
+
+<!-- Builder overlay -->
+<div id="builderView" class="hidden">
+  <div class="bld-header">
+    <button class="bld-cancel-btn" onclick="closeBuilder()">← Abbrechen</button>
+    <div class="bld-header-title" id="bldTitle">Neues Rezept</div>
+    <button class="bld-save-btn" onclick="saveRecipe()">✓ Speichern</button>
+  </div>
+  <div class="bld-body" id="builderBody">
+    <div class="bld-section">
+      <div class="bld-top-row">
+        <input class="bld-emoji-in" id="bldEmoji" type="text" placeholder="🍽️" maxlength="4" autocomplete="off">
+        <input class="bld-name-in" id="bldName" type="text" placeholder="Rezeptname *" autocomplete="off">
+      </div>
+      <div class="bld-cat-row">
+        <select class="bld-cat-sel" id="bldCategory"></select>
+        <div class="bld-srv-wrap">
+          <input class="bld-srv-in" id="bldServings" type="number" min="1" max="99" value="4">
+          <span class="bld-srv-label">Port.</span>
+        </div>
+      </div>
+    </div>
+    <div class="bld-section">
+      <div class="bld-section-head">
+        <div class="bld-section-title">Beschreibung</div>
+      </div>
+      <textarea class="bld-desc-in" id="bldDesc" placeholder="Kurze Beschreibung (optional) …" rows="3"></textarea>
+    </div>
+    <div class="bld-section">
+      <div class="bld-section-head">
+        <div class="bld-section-title">Zutaten</div>
+        <button class="bld-add-btn" onclick="addBuilderIngredient()">+ Zutat</button>
+      </div>
+      <div class="bld-ing-hint">Menge · Einheit z.B.: 200 g · 500 ml · 3 Stück · 2 EL</div>
+      <div id="bldIngList"></div>
+    </div>
+    <div class="bld-section">
+      <div class="bld-section-head">
+        <div class="bld-section-title">Zubereitung</div>
+        <button class="bld-add-btn" onclick="addBuilderStep()">+ Schritt</button>
+      </div>
+      <div id="bldStepList"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
 <script>
 'use strict';
 
@@ -270,10 +311,9 @@ const RECIPE_STORE = 'rezepte_v2';
 const RECIPE_CATEGORIES = ['Frühstück','Nudelgericht','Salat','Suppe','Auflauf','Pfannengericht','Curry','Fisch','Dessert','Snack','Sonstiges'];
 
 function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-// ── Amount parsers ──
 const _NUM = '([\\d.,]+)';
 function _n(s) { return parseFloat((s || '0').replace(',','.')); }
 function parseGrams(s) {
@@ -325,21 +365,22 @@ function cookFmtAmt(ing, scale) {
   return unitStr ? `${q} ${unitStr}` : `${q}`;
 }
 
-// ── State ──
+// ── Storage ──
 let recipes = {};
+function loadRecipes() {
+  try { recipes = JSON.parse(localStorage.getItem(RECIPE_STORE) || '{}'); }
+  catch(e) { recipes = {}; }
+}
+function saveRecipes() {
+  localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
+}
+
+// ── Book state ──
 let bookCurrentPage = 0;
 let bookPages = [];
 let bookPortions = {};
 let bookSearch = '';
 let bookTX = 0, bookTY = 0;
-
-function loadRecipes() {
-  try {
-    recipes = JSON.parse(localStorage.getItem(RECIPE_STORE) || '{}');
-  } catch(e) {
-    recipes = {};
-  }
-}
 
 function buildBookPages() {
   const now = Date.now(), thr = 7*24*60*60*1000;
@@ -371,7 +412,7 @@ function renderBookAllPages() {
     el.innerHTML = `<div class="empty-state">
       <div class="empty-ornament">📚</div>
       <div class="empty-title">Noch keine Rezepte</div>
-      <div class="empty-text">Füge Rezepte in der Einkaufsliste-App hinzu – sie erscheinen automatisch hier.</div>
+      <div class="empty-text">Tippe auf + unten rechts, um dein erstes Rezept hinzuzufügen.</div>
     </div>`;
     container.appendChild(el);
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('bp-no-t')));
@@ -432,19 +473,24 @@ function buildRecipePageHTML(pg, pageIdx) {
   const steps = (r.steps || []).filter(s => s.trim()).map((s, i) =>
     `<div class="brp-step"><div class="brp-step-num">${i+1}</div><div class="brp-step-text">${esc(s)}</div></div>`
   ).join('');
+  const safeId = esc(r.id);
   return `<div class="brp-inner">
     <div class="brp-cat">${esc(cat)}</div>
     <div class="brp-emoji">${r.emoji || '🍽️'}</div>
     <div class="brp-name">${esc(r.name)}</div>
     <div class="brp-portions-row">
       <span class="brp-portions-label">Portionen</span>
-      <button class="brp-portions-btn" onclick="bookAdjPortions('${esc(r.id)}',${pageIdx},-1)">−</button>
+      <button class="brp-portions-btn" onclick="bookAdjPortions('${safeId}',${pageIdx},-1)">−</button>
       <span class="brp-portions-val" id="brp-pval-${pageIdx}">${portions}</span>
-      <button class="brp-portions-btn" onclick="bookAdjPortions('${esc(r.id)}',${pageIdx},1)">+</button>
+      <button class="brp-portions-btn" onclick="bookAdjPortions('${safeId}',${pageIdx},1)">+</button>
     </div>
     ${ingrs ? `<div class="brp-section"><div class="brp-section-title">Zutaten</div>${ingrs}</div>` : ''}
     ${r.description ? `<div class="brp-section"><div class="brp-section-title">Beschreibung</div><div class="brp-desc">${esc(r.description)}</div></div>` : ''}
     ${steps ? `<div class="brp-section"><div class="brp-section-title">Zubereitung</div>${steps}</div>` : ''}
+    <div class="brp-actions">
+      <button class="brp-edit-btn" onclick="openBuilder('${safeId}')">✏️ Bearbeiten</button>
+      <button class="brp-del-btn"  onclick="deleteRecipeConfirm('${safeId}')">🗑️ Löschen</button>
+    </div>
   </div>`;
 }
 
@@ -499,6 +545,7 @@ function updateBookNav() {
   const navPg   = document.getElementById('bookNavPg');
   const navName = document.getElementById('bookNavName');
   const backBtn = document.getElementById('bookBackBtn');
+  const fab     = document.getElementById('fabBtn');
   if (!prevBtn) return;
   prevBtn.disabled = bookCurrentPage === 0;
   nextBtn.disabled = bookCurrentPage === bookPages.length - 1;
@@ -506,11 +553,13 @@ function updateBookNav() {
     navPg.textContent = 'Inhalt';
     navName.textContent = '';
     if (backBtn) backBtn.textContent = '← Zurück';
+    if (fab) fab.classList.remove('hidden');
   } else {
     const pg = bookPages[bookCurrentPage];
     navPg.textContent = `${bookCurrentPage} / ${bookPages.length - 1}`;
     navName.textContent = pg.r?.name || '';
     if (backBtn) backBtn.textContent = '≡ Inhalt';
+    if (fab) fab.classList.add('hidden');
   }
 }
 
@@ -573,13 +622,230 @@ function bookOnSearch(val) {
   coverContent.innerHTML = `<div class="bc-cats-label">${matches.length} Ergebnis${matches.length !== 1 ? 'se' : ''}</div><div>${rows}</div>`;
 }
 
+// ── Builder ──
+let builderEditId = null;
+let builderIngredients = [];
+let builderSteps = [];
+
+function openBuilder(id) {
+  builderEditId = id || null;
+  document.getElementById('bldTitle').textContent = id ? 'Rezept bearbeiten' : 'Neues Rezept';
+
+  // Fill category select
+  const catSel = document.getElementById('bldCategory');
+  catSel.innerHTML = RECIPE_CATEGORIES.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+
+  if (id && recipes[id]) {
+    const r = recipes[id];
+    document.getElementById('bldEmoji').value    = r.emoji || '';
+    document.getElementById('bldName').value     = r.name || '';
+    document.getElementById('bldServings').value = r.servings || 4;
+    document.getElementById('bldDesc').value     = r.description || '';
+    catSel.value = r.category || 'Sonstiges';
+    builderIngredients = (r.ingredients || []).filter(i => !i.custom).map(parseIngForBuilder);
+    builderSteps = [...(r.steps || [])];
+  } else {
+    document.getElementById('bldEmoji').value    = '';
+    document.getElementById('bldName').value     = '';
+    document.getElementById('bldServings').value = 4;
+    document.getElementById('bldDesc').value     = '';
+    catSel.value = 'Sonstiges';
+    builderIngredients = [];
+    builderSteps = [];
+  }
+
+  renderBuilderIngredients();
+  renderBuilderSteps();
+  document.getElementById('builderView').classList.remove('hidden');
+  document.getElementById('bldName').focus();
+}
+
+function closeBuilder() {
+  document.getElementById('builderView').classList.add('hidden');
+}
+
+function parseIngForBuilder(ing) {
+  // Separate stored unit string into qty + unitRaw for the builder form
+  const unitFull = (ing.unit || '').trim();
+  let qty = ing.qty || 0;
+  let unitRaw = unitFull;
+
+  const gm = unitFull.match(/^([\d.,]+)\s*(g|kg|ml|cl|dl|[lL])$/i);
+  if (gm) { qty = parseFloat(gm[1].replace(',','.')); unitRaw = gm[2]; return { ...ing, qty, unitRaw }; }
+  const pc = unitFull.match(/^([\d.,]+)\s*(stück|stk\.?)$/i);
+  if (pc) { qty = parseFloat(pc[1].replace(',','.')); unitRaw = 'Stück'; return { ...ing, qty, unitRaw }; }
+
+  return { ...ing, qty, unitRaw };
+}
+
+function ingForRecipe(bIng) {
+  const qty  = parseFloat(bIng.qty) || 0;
+  const uRaw = (bIng.unitRaw || '').trim();
+  const u    = uRaw.toLowerCase();
+  let unit   = uRaw;
+  let amountG = 0;
+
+  if (u === 'g')                           { unit = `${qty} g`;     amountG = qty; }
+  else if (u === 'kg')                     { unit = `${qty} kg`;    amountG = qty * 1000; }
+  else if (u === 'ml')                     { unit = `${qty} ml`;    amountG = qty; }
+  else if (u === 'cl')                     { unit = `${qty} cl`;    amountG = qty * 10; }
+  else if (u === 'dl')                     { unit = `${qty} dl`;    amountG = qty * 100; }
+  else if (u === 'l')                      { unit = `${qty} L`;     amountG = qty * 1000; }
+  else if (u === 'stück' || u === 'stk' || u === 'stk.') {
+    unit = `${qty} Stück`; amountG = 0;
+  }
+  // Other (EL, TL, Prise, …): keep unit as bare label, qty carries the number
+
+  return {
+    name: (bIng.name || '').trim(),
+    emoji: bIng.emoji || '',
+    unit,
+    amountG,
+    qty,
+    custom: false,
+    kcalPer100:    bIng.kcalPer100    || 0,
+    proteinPer100: bIng.proteinPer100 || 0,
+    carbsPer100:   bIng.carbsPer100   || 0,
+    fatPer100:     bIng.fatPer100     || 0,
+    unitPrice:     bIng.unitPrice     || 0,
+    unitG:         bIng.unitG         || 0,
+  };
+}
+
+function saveRecipe() {
+  const name = document.getElementById('bldName').value.trim();
+  if (!name) { showToast('Bitte einen Rezeptnamen eingeben'); return; }
+
+  const id = builderEditId || Date.now().toString();
+  const existing = builderEditId ? recipes[builderEditId] : null;
+
+  recipes[id] = {
+    id,
+    createdAt: existing ? (existing.createdAt || Date.now()) : Date.now(),
+    name,
+    emoji:       document.getElementById('bldEmoji').value.trim() || '🍽️',
+    category:    document.getElementById('bldCategory').value || 'Sonstiges',
+    servings:    parseInt(document.getElementById('bldServings').value) || 4,
+    description: document.getElementById('bldDesc').value.trim(),
+    steps:       builderSteps.filter(s => s.trim()),
+    ingredients: builderIngredients.filter(i => i.name.trim()).map(ingForRecipe),
+  };
+
+  saveRecipes();
+  closeBuilder();
+
+  // Rebuild and stay on the saved recipe's page
+  const wasIdx = bookCurrentPage;
+  buildBookPages();
+  bookCurrentPage = 0;
+  renderBookAllPages();
+  updateBookNav();
+
+  const targetIdx = bookPages.findIndex(pg => pg.type === 'recipe' && pg.id === id);
+  if (targetIdx >= 0) bookJumpToPage(targetIdx);
+
+  showToast(builderEditId ? 'Rezept gespeichert' : 'Rezept hinzugefügt');
+}
+
+function deleteRecipeConfirm(id) {
+  const r = recipes[id];
+  if (!r) return;
+  if (!confirm(`„${r.name}" wirklich löschen?`)) return;
+  delete recipes[id];
+  delete bookPortions[id];
+  saveRecipes();
+  buildBookPages();
+  bookCurrentPage = 0;
+  renderBookAllPages();
+  updateBookNav();
+  showToast('Rezept gelöscht');
+}
+
+// ── Builder ingredient list ──
+function addBuilderIngredient() {
+  builderIngredients.push({ name:'', emoji:'', qty:0, unitRaw:'g' });
+  renderBuilderIngredients();
+  // Focus last name input
+  const rows = document.querySelectorAll('.bld-ing-name');
+  if (rows.length) rows[rows.length - 1].focus();
+}
+
+function removeBuilderIngredient(i) {
+  builderIngredients.splice(i, 1);
+  renderBuilderIngredients();
+}
+
+function renderBuilderIngredients() {
+  const container = document.getElementById('bldIngList');
+  if (!builderIngredients.length) {
+    container.innerHTML = '<div class="bld-empty-hint">Noch keine Zutaten hinzugefügt.</div>';
+    return;
+  }
+  container.innerHTML = builderIngredients.map((ing, i) => `
+    <div class="bld-ing-row">
+      <input class="bld-ing-emoji" value="${esc(ing.emoji)}" placeholder="🥕" maxlength="4" autocomplete="off"
+             oninput="builderIngredients[${i}].emoji=this.value">
+      <input class="bld-ing-name" value="${esc(ing.name)}" placeholder="Zutat …"
+             autocomplete="off" oninput="builderIngredients[${i}].name=this.value">
+      <input class="bld-ing-qty" type="number" min="0" step="any" value="${ing.qty || ''}" placeholder="100"
+             oninput="builderIngredients[${i}].qty=parseFloat(this.value)||0">
+      <input class="bld-ing-unit" value="${esc(ing.unitRaw||'')}" placeholder="g"
+             autocomplete="off" oninput="builderIngredients[${i}].unitRaw=this.value">
+      <button class="bld-ing-del" onclick="removeBuilderIngredient(${i})">×</button>
+    </div>`
+  ).join('');
+}
+
+// ── Builder step list ──
+function addBuilderStep() {
+  builderSteps.push('');
+  renderBuilderSteps();
+  const rows = document.querySelectorAll('.bld-step-ta');
+  if (rows.length) rows[rows.length - 1].focus();
+}
+
+function removeBuilderStep(i) {
+  builderSteps.splice(i, 1);
+  renderBuilderSteps();
+}
+
+function renderBuilderSteps() {
+  const container = document.getElementById('bldStepList');
+  if (!builderSteps.length) {
+    container.innerHTML = '<div class="bld-empty-hint">Noch keine Schritte hinzugefügt.</div>';
+    return;
+  }
+  container.innerHTML = builderSteps.map((s, i) => `
+    <div class="bld-step-row">
+      <div class="bld-step-num">${i+1}</div>
+      <textarea class="bld-step-ta" rows="2" placeholder="Schritt beschreiben …"
+                oninput="builderSteps[${i}]=this.value;autoResize(this)">${esc(s)}</textarea>
+      <button class="bld-step-del" onclick="removeBuilderStep(${i})">×</button>
+    </div>`
+  ).join('');
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// ── Toast ──
+let _toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
 // ── Init ──
 loadRecipes();
 buildBookPages();
 renderBookAllPages();
 updateBookNav();
 
-// Service Worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js');
 }
