@@ -105,18 +105,17 @@
     .brp-edit-btn { flex: 1; padding: 11px; border: 1.5px solid #C4A46A; background: #FDF8EE; color: #8B5C14; font-family: Georgia,serif; font-size: 14px; border-radius: 10px; cursor: pointer; }
     .brp-del-btn  { flex: 1; padding: 11px; border: 1.5px solid #D4B896; background: #FDF8EE; color: #A06060; font-family: Georgia,serif; font-size: 14px; border-radius: 10px; cursor: pointer; }
 
-    /* ── Photo strip (recipe view) ── */
-    .brp-photo-strip {
-      display: flex; gap: 0; overflow-x: auto; scrollbar-width: none;
-      -webkit-overflow-scrolling: touch; margin-bottom: 20px;
+    /* ── Photo gallery (recipe view) ── */
+    .brp-photo-gallery {
+      display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
     }
-    .brp-photo-strip::-webkit-scrollbar { display: none; }
-    .brp-photo-strip img {
-      width: 100%; max-height: 260px; object-fit: cover;
-      flex-shrink: 0; cursor: pointer;
-    }
-    .brp-photo-strip.multi img {
-      width: 160px; height: 130px; border-radius: 10px; flex-shrink: 0;
+    .brp-photo-gallery::-webkit-scrollbar { display: none; }
+    .brp-photo-gallery img {
+      width: 110px; height: 110px; object-fit: cover;
+      flex-shrink: 0; cursor: pointer; border-radius: 10px;
+      border: 1.5px solid #D4B896;
     }
 
     /* ── Lightbox ── */
@@ -544,11 +543,9 @@ function buildRecipePageHTML(pg, pageIdx) {
   const safeId=esc(r.id);
 
   let photoHTML='';
-  if (photos.length===1) {
-    photoHTML=`<div class="brp-photo-strip"><img src="${photos[0].dataUrl}" onclick="openLightbox('${safeId}',0)" loading="lazy"></div>`;
-  } else if (photos.length>1) {
+  if (photos.length>0) {
     const imgs=photos.map((p,i)=>`<img src="${p.dataUrl}" onclick="openLightbox('${safeId}',${i})" loading="lazy">`).join('');
-    photoHTML=`<div class="brp-photo-strip multi">${imgs}</div>`;
+    photoHTML=`<div class="brp-section"><div class="brp-section-title">Fotos</div><div class="brp-photo-gallery">${imgs}</div></div>`;
   }
 
   const ingrs=(r.ingredients||[]).filter(i=>!i.custom).map(i=>
@@ -562,7 +559,6 @@ function buildRecipePageHTML(pg, pageIdx) {
   ).join('');
 
   return `<div class="brp-inner">
-    ${photoHTML}
     <div class="brp-content">
       <div class="brp-cat">${esc(cat)}</div>
       <div class="brp-emoji">${r.emoji||'🍽️'}</div>
@@ -576,6 +572,7 @@ function buildRecipePageHTML(pg, pageIdx) {
       ${ingrs?`<div class="brp-section"><div class="brp-section-title">Zutaten</div>${ingrs}</div>`:''}
       ${r.description?`<div class="brp-section"><div class="brp-section-title">Beschreibung</div><div class="brp-desc">${esc(r.description)}</div></div>`:''}
       ${steps?`<div class="brp-section"><div class="brp-section-title">Zubereitung</div>${steps}</div>`:''}
+      ${photoHTML}
     </div>
     <div class="brp-actions">
       <button class="brp-edit-btn" onclick="openBuilder('${safeId}')">✏️ Bearbeiten</button>
