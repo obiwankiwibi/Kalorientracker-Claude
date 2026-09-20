@@ -5260,6 +5260,38 @@ _initDefaultRecipes();
     localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
   }
 
+  if (!recipes['default_29']) {
+    recipes['default_29'] = {
+      id:'default_29', name:'Spaghetti Ragù', emoji:'🍝', servings:4, category:'Nudelgericht',
+      description:'Cremiges Hackfleisch-Ragù mit Schmand und Parmesan – ½ Tasse Pastawasser macht die Sauce perfekt sämig.',
+      steps:[
+        'Karotten schälen und in kleine Würfel schneiden, Zwiebel fein würfeln. Gleichzeitig Salzwasser für die Spaghetti aufsetzen.',
+        'Öl erhitzen und Rinderhackfleisch kräftig anbraten – es darf ordentlich Farbe bekommen.',
+        'Spaghetti nach Packungsanleitung kochen. Vor dem Abgießen ca. ½ Tasse Pastawasser auffangen.',
+        'Zwiebeln und Karotten zum Hackfleisch geben und kurz anschwitzen. Mit Salz und Pfeffer würzen.',
+        'Mit Gemüsebrühe und Traubensaft (oder Weißwein) ablöschen und kurz köcheln lassen.',
+        'Pastawasser und Schmand einrühren. Hitze reduzieren und Sauce nochmals abschmecken.',
+        'Spaghetti zur Sauce geben, Parmesan unterrühren und alles gut vermengen. Kurz ziehen lassen.',
+        'Mit frisch geschnittenem Schnittlauch garnieren und sofort servieren.',
+      ],
+      ingredients:[
+        g('Spaghetti','🍝',400,'g',400,353,12,71,1.5,0.99,500,'500g'),
+        g('Rinderhackfleisch','🥩',500,'g',500,196,17,0,14,4.99,500,'500g'),
+        g('Möhren','🥕',300,'g',300,41,0.9,10,0.2,0.89,500,'500g'),
+        g('Zwiebel','🧅',100,'g',100,40,1.1,9,0.1,0.49,3,'3er Netz'),
+        g('Schmand','🥛',200,'g',200,210,3,4,21,0.79,200,'200g'),
+        g('Gemüsebrühe','🍲',250,'ml',250,5,0.5,0.5,0.1,0.69,2,'2 Würfel'),
+        g('Traubensaft hell','🍇',100,'ml',100,60,0.5,14,0.1,0.89,1000,'1L'),
+        g('Parmesan','🧀',50,'g',50,431,38,0,29,2.49,100,'100g'),
+        g('Schnittlauch','🌿',10,'g',10,30,3,4,0.7,0.79,30,'Bund'),
+        g('Öl','🫙',15,'ml',15,884,0,0,100,1.99,1000,'1L'),
+        g('Salz','🧂',5,'g',5,0,0,0,0,0.49,500,'500g'),
+        g('Pfeffer gemahlen','🌶️',2,'g',2,251,10,49,3.3,0.99,50,'50g'),
+      ]
+    };
+    localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
+  }
+
   // Stamp / upgrade categories on default recipes
   const DEFAULT_CATS = {
     default_01:'Nudelgericht', default_02:'Curry',        default_03:'Frühstück',
