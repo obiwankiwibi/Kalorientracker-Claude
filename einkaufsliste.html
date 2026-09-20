@@ -891,25 +891,62 @@ html { height: 100%; }
     .recipe-btn-cook:active { opacity:.75; }
 
     /* ── Book view ── */
-    .book-view { position:fixed; inset:0; z-index:300; background:#FDF8EE; display:flex; flex-direction:column; overflow:hidden; }
-    .book-header { display:flex; align-items:center; gap:8px; padding:14px 14px 12px; border-bottom:2px solid #D4B896; background:#F5EDD8; flex-shrink:0; }
-    .book-back { background:none; border:none; color:#8B5C14; font-size:15px; font-weight:600; cursor:pointer; padding:6px 4px; font-family:Georgia,'Times New Roman',serif; -webkit-tap-highlight-color:transparent; }
-    .book-header-title { flex:1; font-family:Georgia,'Times New Roman',serif; font-size:18px; font-weight:700; color:#4A2E0A; text-align:center; }
-    .book-toc-bar { flex-shrink:0; background:#F5EDD8; border-bottom:1px solid #D4B896; padding:10px 14px; overflow-x:auto; display:flex; gap:8px; scrollbar-width:none; }
-    .book-toc-bar::-webkit-scrollbar { display:none; }
-    .book-toc-btn { flex-shrink:0; background:#EDD9B0; border:1.5px solid #C4A46A; color:#5C3317; font-family:Georgia,'Times New Roman',serif; font-size:12px; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; transition:background .15s,color .15s; }
-    .book-toc-btn.on { background:#8B5C14; color:#FDF8EE; border-color:#8B5C14; }
-    .book-body { flex:1; overflow-y:auto; padding:20px 16px 80px; }
-    .book-cat-section { margin-bottom:36px; }
-    .book-cat-heading { font-family:Georgia,'Times New Roman',serif; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:#8B5C14; padding-bottom:8px; border-bottom:2px solid #D4B896; margin-bottom:14px; }
-    .book-entry { display:flex; align-items:center; gap:12px; padding:14px 0; border-bottom:1px solid #E8D9C0; -webkit-tap-highlight-color:transparent; }
-    .book-entry:last-child { border-bottom:none; }
-    .book-entry-emoji { font-size:28px; flex-shrink:0; line-height:1; }
-    .book-entry-info { flex:1; min-width:0; cursor:pointer; }
-    .book-entry-name { font-family:Georgia,'Times New Roman',serif; font-size:17px; font-weight:700; color:#4A2E0A; margin-bottom:3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-    .book-entry-meta { font-family:Georgia,'Times New Roman',serif; font-size:12px; color:#7A5C3A; }
-    .book-entry-cook { flex-shrink:0; width:40px; height:40px; border-radius:12px; border:1.5px solid #8B5C14; background:#FDF8EE; color:#8B5C14; font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:opacity .15s; }
-    .book-entry-cook:active { opacity:.7; }
+    /* ── Book view (page mode) ── */
+    .book-view { position:fixed; inset:0; z-index:300; background:#2C1808; display:flex; flex-direction:column; overflow:hidden; }
+    .book-header { display:flex; align-items:center; gap:8px; padding:12px 14px 10px; background:#2C1808; flex-shrink:0; }
+    .book-back { background:none; border:none; color:#D4A96A; font-size:15px; font-weight:600; cursor:pointer; padding:6px 4px; font-family:Georgia,serif; -webkit-tap-highlight-color:transparent; }
+    .book-header-title { flex:1; font-family:Georgia,serif; font-size:13px; font-weight:700; color:#E8D0A0; text-align:center; letter-spacing:.1em; text-transform:uppercase; }
+    .book-pg-badge { font-family:Georgia,serif; font-size:12px; color:#8B6A3A; white-space:nowrap; min-width:50px; text-align:right; }
+    .book-pages { flex:1; position:relative; overflow:hidden; }
+    .book-page { position:absolute; inset:0; background:#FDF8EE; overflow-y:auto; overflow-x:hidden; transform:translateX(100%); transition:transform .3s cubic-bezier(.4,0,.2,1); will-change:transform; }
+    .book-page.bp-on   { transform:translateX(0); }
+    .book-page.bp-left { transform:translateX(-100%); }
+    .book-page.bp-no-t { transition:none !important; }
+    .bc-inner { padding:36px 24px 80px; max-width:440px; margin:0 auto; }
+    .bc-ornament { text-align:center; font-size:20px; color:#C4A46A; letter-spacing:.4em; margin-bottom:16px; }
+    .bc-title { font-family:Georgia,serif; font-size:30px; font-weight:700; color:#4A2E0A; text-align:center; margin-bottom:4px; line-height:1.2; }
+    .bc-subtitle { font-family:Georgia,serif; font-size:13px; color:#8B6A3A; text-align:center; margin-bottom:24px; font-style:italic; }
+    .bc-search { width:100%; box-sizing:border-box; padding:13px 18px; border-radius:28px; border:1.5px solid #C4A46A; background:#F5EDD8; color:#4A2E0A; font-size:15px; font-family:Georgia,serif; outline:none; }
+    .bc-search::placeholder { color:#A8875A; }
+    .bc-search:focus { border-color:#8B5C14; box-shadow:0 0 0 3px rgba(139,92,20,.1); }
+    .bc-divider { border:none; border-top:1px solid #D4B896; margin:20px 0; }
+    .bc-cats-label { font-family:Georgia,serif; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:#8B6A3A; margin-bottom:10px; }
+    .bc-cat-row { display:flex; align-items:center; justify-content:space-between; padding:13px 0; border-bottom:1px solid #EDD9C0; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .bc-cat-row:last-child { border-bottom:none; }
+    .bc-cat-left { display:flex; align-items:center; gap:12px; }
+    .bc-cat-name { font-family:Georgia,serif; font-size:17px; font-weight:700; color:#4A2E0A; }
+    .bc-cat-count { font-family:Georgia,serif; font-size:13px; color:#8B6A3A; font-style:italic; }
+    .bc-cat-arrow { color:#C4A46A; font-size:16px; }
+    .bc-result-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #EDD9C0; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .bc-result-row:last-child { border-bottom:none; }
+    .bc-result-emoji { font-size:24px; flex-shrink:0; }
+    .bc-result-name { font-family:Georgia,serif; font-size:16px; font-weight:700; color:#4A2E0A; }
+    .bc-result-meta { font-family:Georgia,serif; font-size:12px; color:#8B6A3A; }
+    .brp-inner { padding:28px 22px 100px; max-width:440px; margin:0 auto; }
+    .brp-cat { font-family:Georgia,serif; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:#8B5C14; text-align:center; margin-bottom:10px; }
+    .brp-emoji { font-size:54px; text-align:center; margin-bottom:10px; line-height:1; }
+    .brp-name { font-family:Georgia,serif; font-size:26px; font-weight:700; color:#4A2E0A; text-align:center; margin-bottom:18px; line-height:1.25; }
+    .brp-portions-row { display:flex; align-items:center; justify-content:center; gap:12px; background:#EDD9B0; border-radius:16px; padding:10px 16px; margin-bottom:24px; }
+    .brp-portions-label { font-family:Georgia,serif; font-size:13px; color:#5C3317; font-weight:600; }
+    .brp-portions-btn { width:32px; height:32px; border-radius:50%; border:1.5px solid #C4A46A; background:#FDF8EE; color:#8B5C14; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; }
+    .brp-portions-val { font-family:Georgia,serif; font-size:18px; font-weight:700; color:#4A2E0A; min-width:32px; text-align:center; }
+    .brp-section { margin-bottom:24px; }
+    .brp-section-title { font-family:Georgia,serif; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:#8B5C14; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #D4B896; }
+    .brp-ingr-item { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid #EDD9C0; font-family:Georgia,serif; }
+    .brp-ingr-item:last-child { border-bottom:none; }
+    .brp-ingr-left { display:flex; align-items:center; gap:8px; color:#4A2E0A; font-size:14px; }
+    .brp-ingr-amt { font-weight:700; color:#8B5C14; font-size:14px; font-variant-numeric:tabular-nums; }
+    .brp-step { display:flex; gap:14px; margin-bottom:18px; }
+    .brp-step-num { width:28px; height:28px; background:#EDD9B0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:Georgia,serif; font-size:13px; font-weight:700; color:#8B5C14; flex-shrink:0; margin-top:2px; }
+    .brp-step-text { font-family:Georgia,serif; font-size:15px; color:#4A2E0A; line-height:1.65; flex:1; }
+    .brp-desc { font-family:Georgia,serif; font-size:15px; color:#4A2E0A; line-height:1.65; white-space:pre-wrap; }
+    .book-nav { flex-shrink:0; background:#2C1808; border-top:1px solid #4A2E0A; display:flex; align-items:stretch; height:62px; }
+    .book-nav-btn { flex:0 0 72px; border:none; background:none; color:#D4A96A; font-size:28px; cursor:pointer; display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent; transition:color .15s; }
+    .book-nav-btn:disabled { color:#3A1A08; cursor:default; }
+    .book-nav-btn:not(:disabled):active { color:#FDF8EE; }
+    .book-nav-center { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .book-nav-pg { font-family:Georgia,serif; font-size:13px; font-weight:700; color:#D4A96A; }
+    .book-nav-name { font-family:Georgia,serif; font-size:10px; color:#7A5A3A; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px; }
 
     /* ── Bottom nav ── */
     .bottom-nav {
@@ -2063,12 +2100,19 @@ html { height: 100%; }
 <!-- ══ BOOK VIEW ══ -->
 <div class="book-view" id="bookView" style="display:none;">
   <div class="book-header">
-    <button class="book-back" onclick="closeBookView()">← Rezepte</button>
-    <div class="book-header-title">📚 Rezeptbuch</div>
-    <div style="width:80px;"></div>
+    <button class="book-back" onclick="closeBookView()">← Zurück</button>
+    <div class="book-header-title">Rezeptbuch</div>
+    <div class="book-pg-badge" id="bookPgBadge"></div>
   </div>
-  <div class="book-toc-bar" id="bookTocBar"></div>
-  <div class="book-body" id="bookBody"></div>
+  <div class="book-pages" id="bookPages"></div>
+  <div class="book-nav">
+    <button class="book-nav-btn" id="bookPrevBtn" onclick="bookFlip(-1)">‹</button>
+    <div class="book-nav-center" onclick="bookGoToIndex()">
+      <div class="book-nav-pg" id="bookNavPg">Inhalt</div>
+      <div class="book-nav-name" id="bookNavName"></div>
+    </div>
+    <button class="book-nav-btn" id="bookNextBtn" onclick="bookFlip(1)">›</button>
+  </div>
 </div>
 
 <!-- ══ CUSTOM CONFIRM DIALOG ══ -->
@@ -6647,10 +6691,19 @@ function cookAdjPortions(delta) {
 }
 
 // ── Book view ──────────────────────────────────────────────────
-function bookCatId(cat) { return 'bk-' + cat.replace(/[^\wäöüÄÖÜß]/g, '_'); }
+// ── Book view (page mode) ──────────────────────────────────────
+let bookCurrentPage = 0;
+let bookPages = [];
+let bookPortions = {};
+let bookSearch = '';
+let bookTX = 0, bookTY = 0;
 
 function openBookView() {
-  renderBookView();
+  bookSearch = '';
+  buildBookPages();
+  renderBookAllPages();
+  bookCurrentPage = 0;
+  updateBookNav();
   document.getElementById('bookView').style.display = 'flex';
 }
 
@@ -6658,70 +6711,218 @@ function closeBookView() {
   document.getElementById('bookView').style.display = 'none';
 }
 
-function renderBookView() {
+function buildBookPages() {
   const now = Date.now(), thr = 7*24*60*60*1000;
   const allRecs = Object.values(recipes);
-  // category order: known categories first, then any extras
   const catOrder = [...RECIPE_CATEGORIES];
-  allRecs.forEach(r => { const c = r.category || 'Sonstiges'; if (!catOrder.includes(c)) catOrder.push(c); });
-  // group by category
+  allRecs.forEach(r => { const c = r.category||'Sonstiges'; if (!catOrder.includes(c)) catOrder.push(c); });
   const grouped = {};
-  allRecs.forEach(r => {
-    const c = r.category || 'Sonstiges';
-    if (!grouped[c]) grouped[c] = [];
-    grouped[c].push(r);
-  });
+  allRecs.forEach(r => { const c = r.category||'Sonstiges'; if (!grouped[c]) grouped[c]=[]; grouped[c].push(r); });
   const usedCats = catOrder.filter(c => grouped[c]);
-  // sort each group: NEU first, then alphabetically
-  usedCats.forEach(cat => {
-    grouped[cat].sort((a, b) => {
-      const na = a.createdAt && (now - a.createdAt) < thr ? 1 : 0;
-      const nb = b.createdAt && (now - b.createdAt) < thr ? 1 : 0;
-      return nb !== na ? nb - na : a.name.localeCompare(b.name);
-    });
-  });
-  // TOC bar
-  const tocBar = document.getElementById('bookTocBar');
-  tocBar.innerHTML = usedCats.map(cat =>
-    `<button class="book-toc-btn" data-cat="${esc(cat)}" onclick="bookJumpTo('${esc(cat)}')">${esc(cat)} <span style="opacity:.55;font-size:11px;">${grouped[cat].length}</span></button>`
-  ).join('');
-  // Book body
-  const body = document.getElementById('bookBody');
-  body.innerHTML = usedCats.map(cat => {
-    const entries = grouped[cat].map(r => {
-      const isNew = r.createdAt && (now - r.createdAt) < thr;
-      const st = recipeStats(r);
-      const kcalP = r.servings ? Math.round(st.kcal / r.servings) : 0;
-      const meta = [r.servings + ' Portionen', kcalP ? kcalP + ' kcal/P' : null, (r.ingredients||[]).length + ' Zutaten'].filter(Boolean).join(' · ');
-      const newBadge = isNew ? '<span class="recipe-new-badge" style="font-size:9px;padding:1px 5px;">NEU</span>' : '';
-      return `<div class="book-entry">
-        <div class="book-entry-emoji" onclick="bookOpenCook('${r.id}')">${r.emoji||'🍽️'}</div>
-        <div class="book-entry-info" onclick="bookOpenCook('${r.id}')">
-          <div class="book-entry-name">${esc(r.name)}${newBadge}</div>
-          <div class="book-entry-meta">${meta}</div>
-        </div>
-        <button class="book-entry-cook" onclick="bookOpenCook('${r.id}')">📖</button>
-      </div>`;
-    }).join('');
-    return `<div class="book-cat-section" id="${bookCatId(cat)}">
-      <div class="book-cat-heading">${esc(cat)} <span style="font-size:11px;font-weight:400;opacity:.55;letter-spacing:0;">(${grouped[cat].length})</span></div>
-      ${entries}
-    </div>`;
-  }).join('');
+  usedCats.forEach(cat => grouped[cat].sort((a,b) => {
+    const na = a.createdAt && (now-a.createdAt)<thr ? 1 : 0;
+    const nb = b.createdAt && (now-b.createdAt)<thr ? 1 : 0;
+    return nb!==na ? nb-na : a.name.localeCompare(b.name);
+  }));
+  bookPages = [{ type:'cover', grouped, usedCats }];
+  usedCats.forEach(cat => grouped[cat].forEach(r => {
+    bookPages.push({ type:'recipe', id:r.id, r, cat });
+    if (!bookPortions[r.id]) bookPortions[r.id] = r.servings || 4;
+  }));
 }
 
-function bookJumpTo(cat) {
-  document.querySelectorAll('.book-toc-btn').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
-  const el = document.getElementById(bookCatId(cat));
-  if (el) {
-    const body = document.getElementById('bookBody');
-    body.scrollTo({ top: el.offsetTop - 8, behavior: 'smooth' });
+function renderBookAllPages() {
+  const container = document.getElementById('bookPages');
+  container.innerHTML = '';
+  bookPages.forEach((pg, i) => {
+    const el = document.createElement('div');
+    el.className = 'book-page bp-no-t' + (i === 0 ? ' bp-on' : '');
+    el.id = 'bp-' + i;
+    el.innerHTML = i === 0 ? buildCoverHTML(pg) : buildRecipePageHTML(pg, i);
+    container.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('bp-no-t')));
+    el.addEventListener('touchstart', e => { bookTX = e.touches[0].clientX; bookTY = e.touches[0].clientY; }, {passive:true});
+    el.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - bookTX;
+      const dy = e.changedTouches[0].clientY - bookTY;
+      if (Math.abs(dx) > Math.abs(dy) * 1.2 && Math.abs(dx) > 50) bookFlip(dx < 0 ? 1 : -1);
+    }, {passive:true});
+  });
+}
+
+function buildCoverHTML(pg) {
+  const { grouped, usedCats } = pg;
+  const totalRecs = bookPages.length - 1;
+  const catRows = usedCats.map(cat => {
+    const emoji = grouped[cat][0]?.emoji || '🍽️';
+    return `<div class="bc-cat-row" onclick="bookGoToFirstInCat('${esc(cat)}')">
+      <div class="bc-cat-left"><span style="font-size:20px">${emoji}</span><span class="bc-cat-name">${esc(cat)}</span></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="bc-cat-count">${grouped[cat].length} Rezept${grouped[cat].length!==1?'e':''}</span>
+        <span class="bc-cat-arrow">›</span>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="bc-inner">
+    <div class="bc-ornament">— ✦ —</div>
+    <div class="bc-title">Mein Rezeptbuch</div>
+    <div class="bc-subtitle">${totalRecs} Rezept${totalRecs!==1?'e':''}</div>
+    <input class="bc-search" id="bookSearchInput" type="search" placeholder="Rezept suchen …" oninput="bookOnSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+    <hr class="bc-divider">
+    <div id="bookCoverContent">
+      <div class="bc-cats-label">Kategorien</div>
+      ${catRows}
+    </div>
+  </div>`;
+}
+
+function buildRecipePageHTML(pg, pageIdx) {
+  const { r, cat } = pg;
+  const portions = bookPortions[r.id] || r.servings || 4;
+  const scale = portions / (r.servings || 4);
+  const ingrs = (r.ingredients||[]).filter(i=>!i.custom).map(i =>
+    `<div class="brp-ingr-item">
+      <div class="brp-ingr-left"><span>${i.emoji||''}</span><span>${esc(i.name)}</span></div>
+      <div class="brp-ingr-amt">${cookFmtAmt(i, scale)}</div>
+    </div>`
+  ).join('');
+  const steps = (r.steps||[]).filter(s=>s.trim()).map((s,i) =>
+    `<div class="brp-step"><div class="brp-step-num">${i+1}</div><div class="brp-step-text">${esc(s)}</div></div>`
+  ).join('');
+  return `<div class="brp-inner">
+    <div class="brp-cat">${esc(cat)}</div>
+    <div class="brp-emoji">${r.emoji||'🍽️'}</div>
+    <div class="brp-name">${esc(r.name)}</div>
+    <div class="brp-portions-row">
+      <span class="brp-portions-label">Portionen</span>
+      <button class="brp-portions-btn" onclick="bookAdjPortions('${r.id}',${pageIdx},-1)">−</button>
+      <span class="brp-portions-val" id="brp-pval-${pageIdx}">${portions}</span>
+      <button class="brp-portions-btn" onclick="bookAdjPortions('${r.id}',${pageIdx},1)">+</button>
+    </div>
+    ${ingrs ? `<div class="brp-section"><div class="brp-section-title">Zutaten</div>${ingrs}</div>` : ''}
+    ${r.description ? `<div class="brp-section"><div class="brp-section-title">Beschreibung</div><div class="brp-desc">${esc(r.description)}</div></div>` : ''}
+    ${steps ? `<div class="brp-section"><div class="brp-section-title">Zubereitung</div>${steps}</div>` : ''}
+  </div>`;
+}
+
+function bookAdjPortions(id, pageIdx, delta) {
+  bookPortions[id] = Math.max(0.5, (bookPortions[id] || 4) + delta);
+  const val = bookPortions[id];
+  const el = document.getElementById('bp-' + pageIdx);
+  if (!el) return;
+  const pvalEl = el.querySelector('#brp-pval-' + pageIdx);
+  if (pvalEl) pvalEl.textContent = val === Math.floor(val) ? val : val.toFixed(1);
+  const pg = bookPages[pageIdx];
+  if (!pg?.r) return;
+  const scale = val / (pg.r.servings || 4);
+  const ings = (pg.r.ingredients||[]).filter(i=>!i.custom);
+  el.querySelectorAll('.brp-ingr-amt').forEach((amtEl, i) => {
+    if (ings[i]) amtEl.textContent = cookFmtAmt(ings[i], scale);
+  });
+}
+
+function bookFlip(dir) {
+  const nextIdx = bookCurrentPage + dir;
+  if (nextIdx < 0 || nextIdx >= bookPages.length) return;
+  const curEl  = document.getElementById('bp-' + bookCurrentPage);
+  const nextEl = document.getElementById('bp-' + nextIdx);
+  if (!curEl || !nextEl) return;
+  nextEl.classList.add('bp-no-t');
+  nextEl.classList.remove('bp-on', 'bp-left');
+  if (dir < 0) nextEl.classList.add('bp-left');
+  void nextEl.offsetWidth;
+  nextEl.classList.remove('bp-no-t');
+  requestAnimationFrame(() => {
+    if (dir > 0) {
+      curEl.classList.remove('bp-on'); curEl.classList.add('bp-left');
+      nextEl.classList.add('bp-on');
+    } else {
+      curEl.classList.remove('bp-on', 'bp-left');
+      nextEl.classList.remove('bp-left'); nextEl.classList.add('bp-on');
+    }
+    bookCurrentPage = nextIdx;
+    updateBookNav();
+  });
+}
+
+function updateBookNav() {
+  const prevBtn = document.getElementById('bookPrevBtn');
+  const nextBtn = document.getElementById('bookNextBtn');
+  const navPg   = document.getElementById('bookNavPg');
+  const navName = document.getElementById('bookNavName');
+  const badge   = document.getElementById('bookPgBadge');
+  if (!prevBtn) return;
+  prevBtn.disabled = bookCurrentPage === 0;
+  nextBtn.disabled = bookCurrentPage === bookPages.length - 1;
+  if (bookCurrentPage === 0) {
+    navPg.textContent = 'Inhalt';
+    navName.textContent = '';
+    if (badge) badge.textContent = '';
+  } else {
+    const pg = bookPages[bookCurrentPage];
+    navPg.textContent = `${bookCurrentPage} / ${bookPages.length - 1}`;
+    navName.textContent = pg.r?.name || '';
+    if (badge) badge.textContent = `${bookCurrentPage}/${bookPages.length-1}`;
   }
 }
 
-function bookOpenCook(id) {
-  closeBookView();
-  openCookView(id);
+function bookGoToIndex() { bookJumpToPage(0); }
+
+function bookGoToFirstInCat(cat) {
+  const idx = bookPages.findIndex(pg => pg.type === 'recipe' && pg.cat === cat);
+  if (idx >= 0) bookJumpToPage(idx);
+}
+
+function bookGoToRecipe(id) {
+  const idx = bookPages.findIndex(pg => pg.type === 'recipe' && pg.id === id);
+  if (idx >= 0) bookJumpToPage(idx);
+}
+
+function bookJumpToPage(targetIdx) {
+  if (targetIdx === bookCurrentPage) return;
+  const curEl  = document.getElementById('bp-' + bookCurrentPage);
+  const nextEl = document.getElementById('bp-' + targetIdx);
+  if (curEl)  { curEl.classList.add('bp-no-t');  curEl.classList.remove('bp-on','bp-left');  void curEl.offsetWidth;  curEl.classList.remove('bp-no-t'); }
+  if (nextEl) { nextEl.classList.add('bp-no-t'); nextEl.classList.remove('bp-left'); nextEl.classList.add('bp-on'); void nextEl.offsetWidth; nextEl.classList.remove('bp-no-t'); nextEl.scrollTop = 0; }
+  bookCurrentPage = targetIdx;
+  updateBookNav();
+}
+
+function bookOnSearch(val) {
+  bookSearch = val.trim().toLowerCase();
+  const coverContent = document.getElementById('bookCoverContent');
+  if (!coverContent) return;
+  if (!bookSearch) {
+    const pg = bookPages[0];
+    if (!pg) return;
+    const { grouped, usedCats } = pg;
+    const catRows = usedCats.map(cat => {
+      const emoji = grouped[cat][0]?.emoji || '🍽️';
+      return `<div class="bc-cat-row" onclick="bookGoToFirstInCat('${esc(cat)}')">
+        <div class="bc-cat-left"><span style="font-size:20px">${emoji}</span><span class="bc-cat-name">${esc(cat)}</span></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span class="bc-cat-count">${grouped[cat].length} Rezept${grouped[cat].length!==1?'e':''}</span><span class="bc-cat-arrow">›</span></div>
+      </div>`;
+    }).join('');
+    coverContent.innerHTML = `<div class="bc-cats-label">Kategorien</div>${catRows}`;
+    return;
+  }
+  const matches = bookPages.filter(pg => pg.type==='recipe').filter(pg => {
+    const r = pg.r;
+    if (r.name.toLowerCase().includes(bookSearch)) return true;
+    if (r.description && r.description.toLowerCase().includes(bookSearch)) return true;
+    return (r.ingredients||[]).some(i => i.name.toLowerCase().includes(bookSearch));
+  });
+  if (!matches.length) {
+    coverContent.innerHTML = '<div style="font-family:Georgia,serif;color:#8B6A3A;text-align:center;padding:24px 0;font-size:14px;font-style:italic;">Keine Rezepte gefunden.</div>';
+    return;
+  }
+  const rows = matches.map(pg =>
+    `<div class="bc-result-row" onclick="bookGoToRecipe('${pg.r.id}')">
+      <span class="bc-result-emoji">${pg.r.emoji||'🍽️'}</span>
+      <div><div class="bc-result-name">${esc(pg.r.name)}</div><div class="bc-result-meta">${esc(pg.cat)} · ${pg.r.servings} Portionen</div></div>
+    </div>`
+  ).join('');
+  coverContent.innerHTML = `<div class="bc-cats-label">${matches.length} Ergebnis${matches.length!==1?'se':''}</div><div>${rows}</div>`;
 }
 
 function cookFmtAmt(ing, scale) {
