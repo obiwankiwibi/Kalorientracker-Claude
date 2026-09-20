@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="40" fill="#2C1808"/>
+  <!-- Book body -->
+  <rect x="44" y="32" width="104" height="128" rx="8" fill="#8B5C14"/>
+  <rect x="44" y="32" width="22" height="128" rx="4" fill="#5C3317"/>
+  <!-- Pages -->
+  <rect x="64" y="40" width="76" height="112" rx="3" fill="#FDF8EE"/>
+  <!-- Text lines -->
+  <rect x="72" y="60" width="54" height="4" rx="2" fill="#C4A46A"/>
+  <rect x="72" y="74" width="46" height="3" rx="1.5" fill="#D4B896"/>
+  <rect x="72" y="83" width="50" height="3" rx="1.5" fill="#D4B896"/>
+  <rect x="72" y="92" width="42" height="3" rx="1.5" fill="#D4B896"/>
+  <rect x="72" y="108" width="54" height="3" rx="1.5" fill="#C4A46A"/>
+  <rect x="72" y="117" width="48" height="3" rx="1.5" fill="#D4B896"/>
+  <rect x="72" y="126" width="44" height="3" rx="1.5" fill="#D4B896"/>
+  <!-- Bookmark -->
+  <path d="M118 40 L128 40 L128 68 L123 62 L118 68 Z" fill="#8B5C14"/>
+</svg>

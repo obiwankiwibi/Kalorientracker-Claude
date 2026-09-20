@@ -1,6 +1,6 @@
-/* cache: 20260920T120000 */
+/* cache: 20260920T140000 */
 /* push: enabled */
-const CACHE = 'kt-v101';
+const CACHE = 'kt-v102';
 const PRECACHE = [
   './',
   './index.html',
@@ -16,7 +16,10 @@ const PRECACHE = [
   './rezepte.html',
   './catalog.js',
   './whisper.html',
-  './manifest-whisper.json'
+  './manifest-whisper.json',
+  './rezeptbuch.html',
+  './manifest-rezeptbuch.json',
+  './icon-rezeptbuch.svg'
 ];
 
 self.addEventListener('install', e => {

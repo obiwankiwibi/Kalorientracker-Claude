@@ -1,0 +1,20 @@
+{
+  "id": "yapihub-rezeptbuch",
+  "name": "Rezeptbuch",
+  "short_name": "Rezeptbuch",
+  "description": "Mein persönliches Rezeptbuch",
+  "start_url": "./rezeptbuch.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#2C1808",
+  "background_color": "#FDF8EE",
+  "icons": [
+    {
+      "src": "icon-rezeptbuch.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
