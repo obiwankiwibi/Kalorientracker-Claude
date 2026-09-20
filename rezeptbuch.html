@@ -45,7 +45,21 @@
       color: #E8D0A0; text-align: center; letter-spacing: .1em; text-transform: uppercase;
     }
     .book-header-spacer { min-width: 60px; }
-    .book-refresh-btn { background: none; border: none; color: #D4A96A; font-size: 20px; cursor: pointer; padding: 6px 8px; min-width: 60px; text-align: right; }
+    .book-add-btn { background: none; border: none; color: #D4A96A; font-size: 26px; font-weight: 700; cursor: pointer; padding: 4px 8px; min-width: 60px; text-align: right; line-height: 1; }
+    .book-add-btn.hidden { visibility: hidden; }
+
+    /* ── Pull-to-refresh hint ── */
+    #ptrHint {
+      position: fixed; top: 0; left: 0; right: 0;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: #2C1808; color: #D4A96A;
+      font-family: Georgia,serif; font-size: 13px;
+      padding: 10px 0; z-index: 200;
+      transform: translateY(-100%);
+      transition: transform .25s cubic-bezier(.4,0,.2,1);
+      pointer-events: none;
+    }
+    #ptrHint.visible { transform: translateY(0); }
 
     /* ── Pages ── */
     .book-pages { flex: 1; position: relative; overflow: hidden; }
@@ -145,18 +159,6 @@
     .book-nav-pg { font-family: Georgia,serif; font-size: 13px; font-weight: 700; color: #D4A96A; }
     .book-nav-name { font-family: Georgia,serif; font-size: 10px; color: #7A5A3A; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
 
-    /* ── FAB ── */
-    #fabBtn {
-      position: fixed; right: 20px; bottom: 82px;
-      width: 52px; height: 52px; border-radius: 50%;
-      background: #8B5C14; color: #FDF8EE;
-      border: none; font-size: 26px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 16px rgba(0,0,0,.4); z-index: 10;
-      transition: background .15s, transform .15s;
-    }
-    #fabBtn:active { background: #6B4410; transform: scale(0.94); }
-    #fabBtn.hidden { display: none; }
 
     /* ── Builder overlay ── */
     #builderView {
@@ -264,7 +266,7 @@
   <div class="book-header">
     <button class="book-back" id="bookBackBtn" onclick="bookBackAction()">← Zurück</button>
     <div class="book-header-title">Rezeptbuch</div>
-    <button class="book-refresh-btn" onclick="refreshBook()" title="Aktualisieren">↻</button>
+    <button class="book-add-btn" id="bookAddBtn" onclick="openBuilder(null)" title="Rezept hinzufügen">+</button>
   </div>
   <div class="book-pages" id="bookPages"></div>
   <div class="book-nav">
@@ -277,7 +279,7 @@
   </div>
 </div>
 
-<button id="fabBtn" onclick="openBuilder(null)" title="Rezept hinzufügen">+</button>
+<div id="ptrHint">↓ Loslassen zum Aktualisieren</div>
 
 <!-- Builder overlay -->
 <div id="builderView" class="hidden">
@@ -520,7 +522,7 @@ function renderBookAllPages() {
   if (bookPages.length===1&&Object.keys(recipes).length===0) {
     const el=document.createElement('div');
     el.className='book-page bp-no-t bp-on'; el.id='bp-0';
-    el.innerHTML=`<div class="empty-state"><div class="empty-ornament">📚</div><div class="empty-title">Noch keine Rezepte</div><div class="empty-text">Tippe auf + unten rechts, um dein erstes Rezept hinzuzufügen.</div></div>`;
+    el.innerHTML=`<div class="empty-state"><div class="empty-ornament">📚</div><div class="empty-title">Noch keine Rezepte</div><div class="empty-text">Tippe auf + oben rechts, um dein erstes Rezept hinzuzufügen.</div></div>`;
     container.appendChild(el);
     requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('bp-no-t')));
     return;
@@ -536,6 +538,20 @@ function renderBookAllPages() {
       const dx=e.changedTouches[0].clientX-bookTX, dy=e.changedTouches[0].clientY-bookTY;
       if(Math.abs(dx)>Math.abs(dy)*1.2&&Math.abs(dx)>50) bookFlip(dx<0?1:-1);
     },{passive:true});
+    if(i===0){
+      let ptrActive=false;
+      const ptrEl=document.getElementById('ptrHint');
+      el.addEventListener('touchmove',e=>{
+        if(el.scrollTop>0){ptrActive=false;if(ptrEl)ptrEl.classList.remove('visible');return;}
+        const dy=e.touches[0].clientY-bookTY, dx=e.touches[0].clientX-bookTX;
+        if(dy>0&&dy>Math.abs(dx)*1.2&&dy>20){ptrActive=true;if(ptrEl)ptrEl.classList.add('visible');}
+        else{ptrActive=false;if(ptrEl)ptrEl.classList.remove('visible');}
+      },{passive:true});
+      el.addEventListener('touchend',()=>{
+        if(ptrEl)ptrEl.classList.remove('visible');
+        if(ptrActive){ptrActive=false;refreshBook();}
+      },{passive:true});
+    }
   });
 }
 
@@ -647,19 +663,19 @@ function bookBackAction() { bookCurrentPage===0?history.back():bookGoToIndex(); 
 function updateBookNav() {
   const prevBtn=document.getElementById('bookPrevBtn'), nextBtn=document.getElementById('bookNextBtn');
   const navPg=document.getElementById('bookNavPg'), navName=document.getElementById('bookNavName');
-  const backBtn=document.getElementById('bookBackBtn'), fab=document.getElementById('fabBtn');
+  const backBtn=document.getElementById('bookBackBtn'), addBtn=document.getElementById('bookAddBtn');
   if(!prevBtn) return;
   prevBtn.disabled=bookCurrentPage===0; nextBtn.disabled=bookCurrentPage===bookPages.length-1;
   if(bookCurrentPage===0){
     navPg.textContent='Inhalt'; navName.textContent='';
     if(backBtn) backBtn.textContent='← Zurück';
-    if(fab) fab.classList.remove('hidden');
+    if(addBtn) addBtn.classList.remove('hidden');
   } else {
     const pg=bookPages[bookCurrentPage];
     navPg.textContent=`${bookCurrentPage} / ${bookPages.length-1}`;
     navName.textContent=pg.r?.name||'';
     if(backBtn) backBtn.textContent='≡ Inhalt';
-    if(fab) fab.classList.add('hidden');
+    if(addBtn) addBtn.classList.add('hidden');
   }
 }
 
@@ -985,7 +1001,7 @@ function showToast(msg) {
 }
 
 // ── Refresh ──
-async function refreshBook() {
+async function refreshBook(silent=false) {
   loadRecipes();
   await loadAllRecipeImages();
   const cur = bookCurrentPage;
@@ -993,10 +1009,10 @@ async function refreshBook() {
   renderBookAllPages();
   bookJumpToPage(Math.min(cur, bookPages.length - 1));
   updateBookNav();
-  showToast('Aktualisiert');
+  if(!silent) showToast('Aktualisiert');
 }
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') refreshBook();
+  if (document.visibilityState === 'visible') refreshBook(true);
 });
 
 // ── Init ──
