@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rezept importieren</title>
+  <style>
+    body { font-family: Georgia,serif; background:#2C1808; color:#E8D0A0; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; padding:20px; box-sizing:border-box; }
+    .box { background:#FDF8EE; color:#4A2E0A; border-radius:16px; padding:28px 24px; max-width:380px; width:100%; text-align:center; }
+    .emoji { font-size:52px; margin-bottom:12px; }
+    h2 { font-size:22px; margin-bottom:6px; }
+    p { font-size:14px; color:#6A4020; margin-bottom:20px; }
+    .btn { display:inline-block; padding:13px 28px; background:#8B5C14; color:#FDF8EE; border:none; border-radius:28px; font-family:Georgia,serif; font-size:15px; font-weight:700; cursor:pointer; text-decoration:none; }
+    .btn:active { background:#6B4410; }
+    .msg { margin-top:16px; font-size:14px; color:#5C3317; min-height:20px; }
+  </style>
+</head>
+<body>
+<div class="box">
+  <div class="emoji">🥦</div>
+  <h2>Brokkoli-Hähnchen Pfanne</h2>
+  <p>Dieses Rezept zum Rezeptbuch hinzufügen?</p>
+  <button class="btn" onclick="importRecipe()">Rezept importieren</button>
+  <div class="msg" id="msg"></div>
+</div>
+<script>
+function importRecipe() {
+  const id = 'import_' + Date.now();
+  const recipe = {
+    id,
+    name: 'Brokkoli-Hähnchen Pfanne',
+    emoji: '🥦',
+    category: 'Hauptgericht',
+    servings: 1,
+    description: 'Schnelle High-Protein Pfanne mit fast 100g Eiweiß – perfekt zum Abnehmen ohne Verzicht.',
+    ingredients: [
+      { name: 'Hähnchenbrust', emoji: '🍗', amount: 250, unit: 'g', kcalPer100: 116, proteinPer100: 22.5, carbsPer100: 0, fatPer100: 3 },
+      { name: 'Zwiebel', emoji: '🧅', amount: 0.5, unit: 'Stück', kcalPer100: 40, proteinPer100: 1.1, carbsPer100: 9, fatPer100: 0.1, custom: true },
+      { name: 'Brokkoli', emoji: '🥦', amount: 100, unit: 'g', kcalPer100: 34, proteinPer100: 2.8, carbsPer100: 7, fatPer100: 0.4 },
+      { name: 'Protein Nudeln', emoji: '🍝', amount: 80, unit: 'g', kcalPer100: 350, proteinPer100: 28, carbsPer100: 47, fatPer100: 5, custom: true },
+      { name: 'Light Käse', emoji: '🧀', amount: 50, unit: 'g', kcalPer100: 200, proteinPer100: 30, carbsPer100: 0, fatPer100: 16, custom: true },
+      { name: 'Light Frischkäse', emoji: '🧀', amount: 50, unit: 'g', kcalPer100: 180, proteinPer100: 12, carbsPer100: 8, fatPer100: 10, custom: true },
+      { name: 'Cremefine 7%', emoji: '🥛', amount: 100, unit: 'ml', kcalPer100: 70, proteinPer100: 2.5, carbsPer100: 4, fatPer100: 7, custom: true }
+    ],
+    steps: [
+      'Hähnchenbrust in mundgerechte Stücke schneiden und in einer Pfanne mit etwas Öl bei mittlerer Hitze goldbraun anbraten.',
+      'Zwiebel würfeln und mit dem Hähnchen andünsten bis sie glasig sind.',
+      'Brokkoli in Röschen teilen, dazugeben und kurz mitbraten.',
+      'Protein Nudeln nach Packungsanleitung kochen, abgießen und beiseite stellen.',
+      'Cremefine und Light Frischkäse zur Pfanne geben, gut verrühren und kurz aufkochen lassen.',
+      'Light Käse einrühren bis er geschmolzen ist. Mit Salz, Pfeffer und Gewürzen nach Geschmack würzen.',
+      'Nudeln unterheben, alles gut vermengen und servieren.'
+    ],
+    createdAt: Date.now()
+  };
+
+  let recipes = {};
+  try { recipes = JSON.parse(localStorage.getItem('rezepte_v2') || '{}'); } catch {}
+  recipes[id] = recipe;
+  try {
+    localStorage.setItem('rezepte_v2', JSON.stringify(recipes));
+    document.getElementById('msg').innerHTML = '✓ Importiert! <a href="rezeptbuch.html" style="color:#8B5C14;font-weight:700;">Zum Rezeptbuch →</a>';
+    document.querySelector('.btn').disabled = true;
+    document.querySelector('.btn').style.opacity = '0.5';
+  } catch(e) {
+    document.getElementById('msg').textContent = 'Fehler: ' + e.message;
+  }
+}
+</script>
+</body>
+</html>
