@@ -890,6 +890,27 @@ html { height: 100%; }
     .recipe-btn-cook { width:42px; height:42px; border-radius:12px; border:1.5px solid #8B5C14; background:#FDF8EE; color:#8B5C14; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; -webkit-tap-highlight-color:transparent; transition:opacity .15s; }
     .recipe-btn-cook:active { opacity:.75; }
 
+    /* ── Book view ── */
+    .book-view { position:fixed; inset:0; z-index:300; background:#FDF8EE; display:flex; flex-direction:column; overflow:hidden; }
+    .book-header { display:flex; align-items:center; gap:8px; padding:14px 14px 12px; border-bottom:2px solid #D4B896; background:#F5EDD8; flex-shrink:0; }
+    .book-back { background:none; border:none; color:#8B5C14; font-size:15px; font-weight:600; cursor:pointer; padding:6px 4px; font-family:Georgia,'Times New Roman',serif; -webkit-tap-highlight-color:transparent; }
+    .book-header-title { flex:1; font-family:Georgia,'Times New Roman',serif; font-size:18px; font-weight:700; color:#4A2E0A; text-align:center; }
+    .book-toc-bar { flex-shrink:0; background:#F5EDD8; border-bottom:1px solid #D4B896; padding:10px 14px; overflow-x:auto; display:flex; gap:8px; scrollbar-width:none; }
+    .book-toc-bar::-webkit-scrollbar { display:none; }
+    .book-toc-btn { flex-shrink:0; background:#EDD9B0; border:1.5px solid #C4A46A; color:#5C3317; font-family:Georgia,'Times New Roman',serif; font-size:12px; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; white-space:nowrap; -webkit-tap-highlight-color:transparent; transition:background .15s,color .15s; }
+    .book-toc-btn.on { background:#8B5C14; color:#FDF8EE; border-color:#8B5C14; }
+    .book-body { flex:1; overflow-y:auto; padding:20px 16px 80px; }
+    .book-cat-section { margin-bottom:36px; }
+    .book-cat-heading { font-family:Georgia,'Times New Roman',serif; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:#8B5C14; padding-bottom:8px; border-bottom:2px solid #D4B896; margin-bottom:14px; }
+    .book-entry { display:flex; align-items:center; gap:12px; padding:14px 0; border-bottom:1px solid #E8D9C0; -webkit-tap-highlight-color:transparent; }
+    .book-entry:last-child { border-bottom:none; }
+    .book-entry-emoji { font-size:28px; flex-shrink:0; line-height:1; }
+    .book-entry-info { flex:1; min-width:0; cursor:pointer; }
+    .book-entry-name { font-family:Georgia,'Times New Roman',serif; font-size:17px; font-weight:700; color:#4A2E0A; margin-bottom:3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .book-entry-meta { font-family:Georgia,'Times New Roman',serif; font-size:12px; color:#7A5C3A; }
+    .book-entry-cook { flex-shrink:0; width:40px; height:40px; border-radius:12px; border:1.5px solid #8B5C14; background:#FDF8EE; color:#8B5C14; font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:opacity .15s; }
+    .book-entry-cook:active { opacity:.7; }
+
     /* ── Bottom nav ── */
     .bottom-nav {
       position: fixed;
@@ -1785,6 +1806,7 @@ html { height: 100%; }
   <div class="recipe-toolbar">
     <button class="recipe-tool-btn primary" onclick="openRecipeBuilder()">+ Rezept erstellen</button>
     <button class="recipe-tool-btn" onclick="openChefkochSheet()" style="display:flex;align-items:center;gap:5px;">📥 Chefkoch</button>
+    <button class="recipe-tool-btn" onclick="openBookView()" style="display:flex;align-items:center;gap:5px;" title="Rezeptbuch">📚 Buch</button>
   </div>
   <div style="display:flex;gap:8px;margin:8px 0 2px;">
     <button class="recipe-tool-btn" onclick="openKiExport()" style="flex:1;justify-content:center;">🤖 Exportieren für KI</button>
@@ -2036,6 +2058,17 @@ html { height: 100%; }
       <div id="cookSteps"></div>
     </div>
   </div>
+</div>
+
+<!-- ══ BOOK VIEW ══ -->
+<div class="book-view" id="bookView" style="display:none;">
+  <div class="book-header">
+    <button class="book-back" onclick="closeBookView()">← Rezepte</button>
+    <div class="book-header-title">📚 Rezeptbuch</div>
+    <div style="width:80px;"></div>
+  </div>
+  <div class="book-toc-bar" id="bookTocBar"></div>
+  <div class="book-body" id="bookBody"></div>
 </div>
 
 <!-- ══ CUSTOM CONFIRM DIALOG ══ -->
@@ -6611,6 +6644,84 @@ function cookAdjPortions(delta) {
   document.getElementById('cookPortionsVal').textContent =
     cookPortions === Math.floor(cookPortions) ? cookPortions : cookPortions.toFixed(1);
   renderCookIngredients();
+}
+
+// ── Book view ──────────────────────────────────────────────────
+function bookCatId(cat) { return 'bk-' + cat.replace(/[^\wäöüÄÖÜß]/g, '_'); }
+
+function openBookView() {
+  renderBookView();
+  document.getElementById('bookView').style.display = 'flex';
+}
+
+function closeBookView() {
+  document.getElementById('bookView').style.display = 'none';
+}
+
+function renderBookView() {
+  const now = Date.now(), thr = 7*24*60*60*1000;
+  const allRecs = Object.values(recipes);
+  // category order: known categories first, then any extras
+  const catOrder = [...RECIPE_CATEGORIES];
+  allRecs.forEach(r => { const c = r.category || 'Sonstiges'; if (!catOrder.includes(c)) catOrder.push(c); });
+  // group by category
+  const grouped = {};
+  allRecs.forEach(r => {
+    const c = r.category || 'Sonstiges';
+    if (!grouped[c]) grouped[c] = [];
+    grouped[c].push(r);
+  });
+  const usedCats = catOrder.filter(c => grouped[c]);
+  // sort each group: NEU first, then alphabetically
+  usedCats.forEach(cat => {
+    grouped[cat].sort((a, b) => {
+      const na = a.createdAt && (now - a.createdAt) < thr ? 1 : 0;
+      const nb = b.createdAt && (now - b.createdAt) < thr ? 1 : 0;
+      return nb !== na ? nb - na : a.name.localeCompare(b.name);
+    });
+  });
+  // TOC bar
+  const tocBar = document.getElementById('bookTocBar');
+  tocBar.innerHTML = usedCats.map(cat =>
+    `<button class="book-toc-btn" data-cat="${esc(cat)}" onclick="bookJumpTo('${esc(cat)}')">${esc(cat)} <span style="opacity:.55;font-size:11px;">${grouped[cat].length}</span></button>`
+  ).join('');
+  // Book body
+  const body = document.getElementById('bookBody');
+  body.innerHTML = usedCats.map(cat => {
+    const entries = grouped[cat].map(r => {
+      const isNew = r.createdAt && (now - r.createdAt) < thr;
+      const st = recipeStats(r);
+      const kcalP = r.servings ? Math.round(st.kcal / r.servings) : 0;
+      const meta = [r.servings + ' Portionen', kcalP ? kcalP + ' kcal/P' : null, (r.ingredients||[]).length + ' Zutaten'].filter(Boolean).join(' · ');
+      const newBadge = isNew ? '<span class="recipe-new-badge" style="font-size:9px;padding:1px 5px;">NEU</span>' : '';
+      return `<div class="book-entry">
+        <div class="book-entry-emoji" onclick="bookOpenCook('${r.id}')">${r.emoji||'🍽️'}</div>
+        <div class="book-entry-info" onclick="bookOpenCook('${r.id}')">
+          <div class="book-entry-name">${esc(r.name)}${newBadge}</div>
+          <div class="book-entry-meta">${meta}</div>
+        </div>
+        <button class="book-entry-cook" onclick="bookOpenCook('${r.id}')">📖</button>
+      </div>`;
+    }).join('');
+    return `<div class="book-cat-section" id="${bookCatId(cat)}">
+      <div class="book-cat-heading">${esc(cat)} <span style="font-size:11px;font-weight:400;opacity:.55;letter-spacing:0;">(${grouped[cat].length})</span></div>
+      ${entries}
+    </div>`;
+  }).join('');
+}
+
+function bookJumpTo(cat) {
+  document.querySelectorAll('.book-toc-btn').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
+  const el = document.getElementById(bookCatId(cat));
+  if (el) {
+    const body = document.getElementById('bookBody');
+    body.scrollTo({ top: el.offsetTop - 8, behavior: 'smooth' });
+  }
+}
+
+function bookOpenCook(id) {
+  closeBookView();
+  openCookView(id);
 }
 
 function cookFmtAmt(ing, scale) {
