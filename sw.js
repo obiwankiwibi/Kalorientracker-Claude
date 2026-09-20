@@ -1,6 +1,6 @@
-/* cache: 20260920T183000 */
+/* cache: 20260920T185000 */
 /* push: enabled */
-const CACHE = 'kt-v107';
+const CACHE = 'kt-v108';
 const PRECACHE = [
   './',
   './index.html',

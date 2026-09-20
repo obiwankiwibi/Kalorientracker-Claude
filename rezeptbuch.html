@@ -297,12 +297,6 @@
       <textarea class="bld-desc-in" id="bldDesc" placeholder="Kurze Beschreibung (optional) …" rows="3"></textarea>
     </div>
     <div class="bld-section">
-      <div class="bld-section-head"><div class="bld-section-title">Fotos</div></div>
-      <div class="bld-photo-thumbs" id="bldPhotoThumbs"></div>
-      <button type="button" class="bld-upload-btn" onclick="bldTriggerUpload()">📷 Foto hinzufügen</button>
-      <input type="file" id="bldFileIn" accept="image/*" multiple style="display:none" onchange="bldHandleFiles(this)">
-    </div>
-    <div class="bld-section">
       <div class="bld-section-head">
         <div class="bld-section-title">Zutaten</div>
         <button class="bld-add-btn" onclick="addBuilderIngredient()">+ Zutat</button>
@@ -316,6 +310,12 @@
         <button class="bld-add-btn" onclick="addBuilderStep()">+ Schritt</button>
       </div>
       <div id="bldStepList"></div>
+    </div>
+    <div class="bld-section">
+      <div class="bld-section-head"><div class="bld-section-title">Fotos</div></div>
+      <div class="bld-photo-thumbs" id="bldPhotoThumbs"></div>
+      <button type="button" class="bld-upload-btn" onclick="bldTriggerUpload()">📷 Foto hinzufügen</button>
+      <input type="file" id="bldFileIn" accept="image/*" multiple style="display:none" onchange="bldHandleFiles(this)">
     </div>
   </div>
 </div>
