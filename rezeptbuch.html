@@ -23,12 +23,9 @@
     }
 
     #app {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: #2C1808;
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      overflow: hidden; background: #2C1808;
     }
 
     /* ── Header ── */
@@ -41,17 +38,15 @@
     .book-back {
       background: none; border: none; color: #D4A96A;
       font-size: 15px; font-weight: 600; cursor: pointer;
-      padding: 6px 4px; font-family: Georgia, serif;
-      min-width: 60px;
+      padding: 6px 4px; font-family: Georgia, serif; min-width: 60px;
     }
     .book-header-title {
-      flex: 1; font-family: Georgia, serif;
-      font-size: 13px; font-weight: 700; color: #E8D0A0;
-      text-align: center; letter-spacing: .1em; text-transform: uppercase;
+      flex: 1; font-family: Georgia, serif; font-size: 13px; font-weight: 700;
+      color: #E8D0A0; text-align: center; letter-spacing: .1em; text-transform: uppercase;
     }
     .book-header-spacer { min-width: 60px; }
 
-    /* ── Page container ── */
+    /* ── Pages ── */
     .book-pages { flex: 1; position: relative; overflow: hidden; }
     .book-page {
       position: absolute; inset: 0; background: #FDF8EE;
@@ -87,7 +82,8 @@
     .bc-result-meta { font-family: Georgia,serif; font-size: 12px; color: #8B6A3A; }
 
     /* ── Recipe page ── */
-    .brp-inner { padding: 28px 22px 100px; max-width: 440px; margin: 0 auto; }
+    .brp-inner { padding: 0 0 100px; max-width: 440px; margin: 0 auto; }
+    .brp-content { padding: 28px 22px 0; }
     .brp-cat { font-family: Georgia,serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #8B5C14; text-align: center; margin-bottom: 10px; }
     .brp-emoji { font-size: 54px; text-align: center; margin-bottom: 10px; line-height: 1; }
     .brp-name { font-family: Georgia,serif; font-size: 26px; font-weight: 700; color: #4A2E0A; text-align: center; margin-bottom: 18px; line-height: 1.25; }
@@ -105,9 +101,34 @@
     .brp-step-num { width: 28px; height: 28px; background: #EDD9B0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: Georgia,serif; font-size: 13px; font-weight: 700; color: #8B5C14; flex-shrink: 0; margin-top: 2px; }
     .brp-step-text { font-family: Georgia,serif; font-size: 15px; color: #4A2E0A; line-height: 1.65; flex: 1; }
     .brp-desc { font-family: Georgia,serif; font-size: 15px; color: #4A2E0A; line-height: 1.65; white-space: pre-wrap; }
-    .brp-actions { display: flex; gap: 10px; margin-top: 8px; }
+    .brp-actions { display: flex; gap: 10px; padding: 4px 22px; }
     .brp-edit-btn { flex: 1; padding: 11px; border: 1.5px solid #C4A46A; background: #FDF8EE; color: #8B5C14; font-family: Georgia,serif; font-size: 14px; border-radius: 10px; cursor: pointer; }
     .brp-del-btn  { flex: 1; padding: 11px; border: 1.5px solid #D4B896; background: #FDF8EE; color: #A06060; font-family: Georgia,serif; font-size: 14px; border-radius: 10px; cursor: pointer; }
+
+    /* ── Photo strip (recipe view) ── */
+    .brp-photo-strip {
+      display: flex; gap: 0; overflow-x: auto; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch; margin-bottom: 20px;
+    }
+    .brp-photo-strip::-webkit-scrollbar { display: none; }
+    .brp-photo-strip img {
+      width: 100%; max-height: 260px; object-fit: cover;
+      flex-shrink: 0; cursor: pointer;
+    }
+    .brp-photo-strip.multi img {
+      width: 160px; height: 130px; border-radius: 10px; flex-shrink: 0;
+    }
+
+    /* ── Lightbox ── */
+    .lightbox-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.95);
+      z-index: 600; display: flex; align-items: center; justify-content: center;
+    }
+    .lightbox-img { max-width: 96vw; max-height: 88vh; border-radius: 8px; object-fit: contain; }
+    .lightbox-close { position: absolute; top: 18px; right: 18px; background: none; border: none; color: #fff; font-size: 30px; cursor: pointer; padding: 4px 10px; line-height: 1; }
+    .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,.15); border: none; color: #fff; font-size: 28px; cursor: pointer; padding: 12px 14px; border-radius: 50%; line-height: 1; }
+    .lightbox-prev { left: 12px; }
+    .lightbox-next { right: 12px; }
 
     /* ── Bottom nav ── */
     .book-nav {
@@ -129,8 +150,7 @@
       background: #8B5C14; color: #FDF8EE;
       border: none; font-size: 26px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 16px rgba(0,0,0,.4);
-      z-index: 10;
+      box-shadow: 0 4px 16px rgba(0,0,0,.4); z-index: 10;
       transition: background .15s, transform .15s;
     }
     #fabBtn:active { background: #6B4410; transform: scale(0.94); }
@@ -140,8 +160,7 @@
     #builderView {
       position: fixed; inset: 0; z-index: 400;
       background: #FDF8EE;
-      display: flex; flex-direction: column;
-      overflow: hidden;
+      display: flex; flex-direction: column; overflow: hidden;
     }
     #builderView.hidden { display: none; }
 
@@ -151,50 +170,40 @@
       padding-top: max(12px, env(safe-area-inset-top));
       background: #2C1808; flex-shrink: 0;
     }
-    .bld-cancel-btn {
-      background: none; border: none; color: #D4A96A;
-      font-family: Georgia,serif; font-size: 14px; font-weight: 600;
-      cursor: pointer; padding: 6px 4px; min-width: 80px;
-    }
-    .bld-header-title {
-      flex: 1; font-family: Georgia,serif; font-size: 13px; font-weight: 700;
-      color: #E8D0A0; text-align: center; letter-spacing: .1em; text-transform: uppercase;
-    }
-    .bld-save-btn {
-      background: #8B5C14; border: none; color: #FDF8EE;
-      font-family: Georgia,serif; font-size: 14px; font-weight: 700;
-      cursor: pointer; padding: 7px 14px; border-radius: 20px; min-width: 80px;
-    }
-    .bld-body {
-      flex: 1; overflow-y: auto; overflow-x: hidden;
-      padding: 0 0 env(safe-area-inset-bottom);
-    }
-    .bld-section {
-      padding: 20px 20px 0;
-      border-bottom: 1px solid #EDD9C0;
-      margin-bottom: 0;
-    }
+    .bld-cancel-btn { background: none; border: none; color: #D4A96A; font-family: Georgia,serif; font-size: 14px; font-weight: 600; cursor: pointer; padding: 6px 4px; min-width: 80px; }
+    .bld-header-title { flex: 1; font-family: Georgia,serif; font-size: 13px; font-weight: 700; color: #E8D0A0; text-align: center; letter-spacing: .1em; text-transform: uppercase; }
+    .bld-save-btn { background: #8B5C14; border: none; color: #FDF8EE; font-family: Georgia,serif; font-size: 14px; font-weight: 700; cursor: pointer; padding: 7px 14px; border-radius: 20px; min-width: 80px; }
+
+    .bld-body { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0 0 env(safe-area-inset-bottom); }
+    .bld-section { padding: 18px 20px 0; border-bottom: 1px solid #EDD9C0; }
     .bld-section:last-child { border-bottom: none; padding-bottom: 40px; }
     .bld-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .bld-section-title { font-family: Georgia,serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8B5C14; }
     .bld-add-btn { background: none; border: 1.5px solid #C4A46A; color: #8B5C14; font-family: Georgia,serif; font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
 
-    /* Basic info inputs */
-    .bld-top-row { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
-    .bld-emoji-in { width: 52px; height: 52px; border: 1.5px solid #C4A46A; border-radius: 12px; background: #F5EDD8; color: #4A2E0A; font-size: 24px; text-align: center; font-family: Georgia,serif; outline: none; flex-shrink: 0; }
+    .bld-top-row { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; }
+    .bld-emoji-in { width: 52px; height: 52px; border: 1.5px solid #C4A46A; border-radius: 12px; background: #F5EDD8; color: #4A2E0A; font-size: 24px; text-align: center; font-family: Georgia,serif; outline: none; flex-shrink: 0; padding: 0; }
     .bld-name-in { flex: 1; height: 52px; border: 1.5px solid #C4A46A; border-radius: 12px; background: #F5EDD8; color: #4A2E0A; font-size: 17px; font-family: Georgia,serif; padding: 0 14px; outline: none; }
     .bld-name-in::placeholder, .bld-emoji-in::placeholder { color: #A8875A; }
     .bld-name-in:focus, .bld-emoji-in:focus { border-color: #8B5C14; }
 
-    .bld-cat-row { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; }
+    .bld-cat-row { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; }
     .bld-cat-sel { flex: 1; height: 44px; border: 1.5px solid #C4A46A; border-radius: 10px; background: #F5EDD8; color: #4A2E0A; font-size: 15px; font-family: Georgia,serif; padding: 0 10px; outline: none; appearance: none; -webkit-appearance: none; }
     .bld-srv-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
     .bld-srv-in { width: 52px; height: 44px; border: 1.5px solid #C4A46A; border-radius: 10px; background: #F5EDD8; color: #4A2E0A; font-size: 16px; font-family: Georgia,serif; text-align: center; outline: none; }
     .bld-srv-label { font-family: Georgia,serif; font-size: 13px; color: #8B6A3A; }
 
-    .bld-desc-in { width: 100%; border: 1.5px solid #C4A46A; border-radius: 10px; background: #F5EDD8; color: #4A2E0A; font-size: 14px; font-family: Georgia,serif; padding: 10px 14px; outline: none; resize: none; margin-bottom: 20px; line-height: 1.5; }
+    .bld-desc-in { width: 100%; border: 1.5px solid #C4A46A; border-radius: 10px; background: #F5EDD8; color: #4A2E0A; font-size: 14px; font-family: Georgia,serif; padding: 10px 14px; outline: none; resize: none; margin-bottom: 18px; line-height: 1.5; }
     .bld-desc-in::placeholder { color: #A8875A; }
     .bld-desc-in:focus { border-color: #8B5C14; }
+
+    /* Photo section in builder */
+    .bld-photo-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .bld-photo-thumb { position: relative; display: inline-block; }
+    .bld-photo-thumb img { width: 80px; height: 64px; object-fit: cover; border-radius: 8px; display: block; }
+    .bld-photo-del { position: absolute; top: -7px; right: -7px; background: #8B2020; color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; cursor: pointer; padding: 0; line-height: 1; display: flex; align-items: center; justify-content: center; }
+    .bld-upload-btn { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px dashed #C4A46A; background: #F5EDD8; color: #8B6A3A; font-size: 14px; font-weight: 600; cursor: pointer; font-family: Georgia,serif; margin-bottom: 18px; }
+    .bld-upload-btn:active { background: #EDD9B0; }
 
     /* Ingredient rows */
     .bld-ing-row { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
@@ -205,7 +214,7 @@
     .bld-ing-del { width: 32px; height: 32px; border: none; background: none; color: #B08060; font-size: 20px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
     .bld-ing-row input::placeholder { color: #A8875A; }
     .bld-ing-row input:focus { border-color: #8B5C14; }
-    .bld-ing-hint { font-family: Georgia,serif; font-size: 11px; color: #A8875A; margin-bottom: 14px; }
+    .bld-ing-hint { font-family: Georgia,serif; font-size: 11px; color: #A8875A; margin-bottom: 12px; }
     #bldIngList { padding-bottom: 6px; }
 
     /* Step rows */
@@ -217,17 +226,10 @@
     .bld-step-del { width: 32px; height: 32px; border: none; background: none; color: #B08060; font-size: 20px; cursor: pointer; flex-shrink: 0; margin-top: 4px; }
     #bldStepList { padding-bottom: 6px; }
 
-    .bld-empty-hint { font-family: Georgia,serif; font-size: 13px; color: #A8875A; font-style: italic; padding: 6px 0 14px; }
+    .bld-empty-hint { font-family: Georgia,serif; font-size: 13px; color: #A8875A; font-style: italic; padding: 4px 0 14px; }
 
     /* ── Toast ── */
-    #toast {
-      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
-      background: #2C1808; color: #E8D0A0;
-      font-family: Georgia,serif; font-size: 14px;
-      padding: 10px 20px; border-radius: 20px;
-      z-index: 500; opacity: 0; pointer-events: none;
-      transition: opacity .25s; white-space: nowrap;
-    }
+    #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #2C1808; color: #E8D0A0; font-family: Georgia,serif; font-size: 14px; padding: 10px 20px; border-radius: 20px; z-index: 500; opacity: 0; pointer-events: none; transition: opacity .25s; white-space: nowrap; }
     #toast.show { opacity: 1; }
 
     /* ── Empty state ── */
@@ -279,17 +281,21 @@
       </div>
     </div>
     <div class="bld-section">
-      <div class="bld-section-head">
-        <div class="bld-section-title">Beschreibung</div>
-      </div>
+      <div class="bld-section-head"><div class="bld-section-title">Beschreibung</div></div>
       <textarea class="bld-desc-in" id="bldDesc" placeholder="Kurze Beschreibung (optional) …" rows="3"></textarea>
+    </div>
+    <div class="bld-section">
+      <div class="bld-section-head"><div class="bld-section-title">Fotos</div></div>
+      <div class="bld-photo-thumbs" id="bldPhotoThumbs"></div>
+      <button type="button" class="bld-upload-btn" onclick="bldTriggerUpload()">📷 Foto hinzufügen</button>
+      <input type="file" id="bldFileIn" accept="image/*" multiple style="display:none" onchange="bldHandleFiles(this)">
     </div>
     <div class="bld-section">
       <div class="bld-section-head">
         <div class="bld-section-title">Zutaten</div>
         <button class="bld-add-btn" onclick="addBuilderIngredient()">+ Zutat</button>
       </div>
-      <div class="bld-ing-hint">Menge · Einheit z.B.: 200 g · 500 ml · 3 Stück · 2 EL</div>
+      <div class="bld-ing-hint">Einheit z.B.: g · kg · ml · Stück · EL · TL</div>
       <div id="bldIngList"></div>
     </div>
     <div class="bld-section">
@@ -311,182 +317,266 @@ const RECIPE_STORE = 'rezepte_v2';
 const RECIPE_CATEGORIES = ['Frühstück','Nudelgericht','Salat','Suppe','Auflauf','Pfannengericht','Curry','Fisch','Dessert','Snack','Sonstiges'];
 
 function esc(s) {
-  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 const _NUM = '([\\d.,]+)';
-function _n(s) { return parseFloat((s || '0').replace(',','.')); }
+function _n(s) { return parseFloat((s||'0').replace(',','.')); }
 function parseGrams(s) {
   if (!s) return null;
-  const m = s.trim().match(new RegExp('^' + _NUM + '\\s*(g|kg)$', 'i'));
+  const m = s.trim().match(new RegExp('^'+_NUM+'\\s*(g|kg)$','i'));
   if (!m) return null;
-  return m[2].toLowerCase() === 'kg' ? _n(m[1]) * 1000 : _n(m[1]);
+  return m[2].toLowerCase()==='kg' ? _n(m[1])*1000 : _n(m[1]);
 }
 function parseLiters(s) {
   if (!s) return null;
-  const m = s.trim().match(new RegExp('^' + _NUM + '\\s*(ml|cl|dl|[Ll])$', 'i'));
+  const m = s.trim().match(new RegExp('^'+_NUM+'\\s*(ml|cl|dl|[Ll])$','i'));
   if (!m) return null;
-  const v = _n(m[1]), u = m[2].toLowerCase();
-  if (u === 'ml') return v / 1000;
-  if (u === 'cl') return v / 100;
-  if (u === 'dl') return v / 10;
-  return v;
+  const v=_n(m[1]),u=m[2].toLowerCase();
+  if(u==='ml') return v/1000; if(u==='cl') return v/100; if(u==='dl') return v/10; return v;
 }
 function parsePieces(s) {
   if (!s) return null;
-  const m = s.trim().match(new RegExp('^' + _NUM + '\\s*(st\\.?|stk\\.?|stück)$', 'i'));
+  const m = s.trim().match(new RegExp('^'+_NUM+'\\s*(st\\.?|stk\\.?|stück)$','i'));
   if (!m) return null;
   return _n(m[1]);
 }
 
 function cookFmtAmt(ing, scale) {
-  const unitStr = (ing.unit || '').trim();
-  const isG = parseGrams(unitStr) !== null;
-  const isL = parseLiters(unitStr) !== null;
-  if (isG || isL) {
-    const baseG = ing.amountG || 0;
-    const scaledG = Math.round(baseG * scale);
+  const unitStr = (ing.unit||'').trim();
+  const isG = parseGrams(unitStr)!==null, isL = parseLiters(unitStr)!==null;
+  if (isG||isL) {
+    const scaledG = Math.round((ing.amountG||0)*scale);
     if (isL) {
-      if (scaledG >= 1000) return `${parseFloat((scaledG / 1000).toFixed(scaledG % 100 === 0 ? 1 : 2))} L`;
-      if (scaledG >= 100)  return `${parseFloat((scaledG / 100).toFixed(1))} dl`;
+      if (scaledG>=1000) return `${parseFloat((scaledG/1000).toFixed(scaledG%100===0?1:2))} L`;
+      if (scaledG>=100)  return `${parseFloat((scaledG/100).toFixed(1))} dl`;
       return `${scaledG} ml`;
     }
-    if (scaledG >= 1000) return `${parseFloat((scaledG / 1000).toFixed(scaledG % 100 === 0 ? 1 : 2))} kg`;
+    if (scaledG>=1000) return `${parseFloat((scaledG/1000).toFixed(scaledG%100===0?1:2))} kg`;
     return `${scaledG} g`;
   }
-  const isPc = parsePieces(unitStr) !== null;
-  if (isPc) {
-    const raw = (ing.qty || 1) * scale;
-    const q = raw === Math.floor(raw) ? raw : parseFloat(raw.toFixed(1));
-    return `${q} Stück`;
+  if (parsePieces(unitStr)!==null) {
+    const raw=(ing.qty||1)*scale;
+    return `${raw===Math.floor(raw)?raw:parseFloat(raw.toFixed(1))} Stück`;
   }
-  const raw = (ing.qty || 1) * scale;
-  const q = raw === Math.floor(raw) ? raw : parseFloat(raw.toFixed(1));
+  const raw=(ing.qty||1)*scale, q=raw===Math.floor(raw)?raw:parseFloat(raw.toFixed(1));
   return unitStr ? `${q} ${unitStr}` : `${q}`;
 }
 
-// ── Storage ──
+// ── IndexedDB image store (shared with einkaufsliste) ──
+const IMG_DB_NAME = 'kt_recipe_imgs', IMG_STORE_NM = 'images';
+let _imgDB = null;
+let recipeImageCache = {};
+
+function _openImgDB() {
+  if (_imgDB) return Promise.resolve(_imgDB);
+  return new Promise((res,rej) => {
+    const req = indexedDB.open(IMG_DB_NAME, 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IMG_STORE_NM)) {
+        const s = db.createObjectStore(IMG_STORE_NM, {keyPath:'id', autoIncrement:true});
+        s.createIndex('recipeId','recipeId',{unique:false});
+      }
+    };
+    req.onsuccess = e => { _imgDB=e.target.result; res(_imgDB); };
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+async function loadAllRecipeImages() {
+  const db = await _openImgDB();
+  return new Promise(res => {
+    const tx  = db.transaction(IMG_STORE_NM,'readonly');
+    const req = tx.objectStore(IMG_STORE_NM).getAll();
+    req.onsuccess = () => {
+      recipeImageCache = {};
+      (req.result||[]).forEach(row => {
+        if (!recipeImageCache[row.recipeId]) recipeImageCache[row.recipeId]=[];
+        recipeImageCache[row.recipeId].push({id:row.id, dataUrl:row.dataUrl});
+      });
+      res();
+    };
+    req.onerror = () => res();
+  });
+}
+
+async function addRecipeImage(recipeId, dataUrl) {
+  const db = await _openImgDB();
+  return new Promise(res => {
+    const tx  = db.transaction(IMG_STORE_NM,'readwrite');
+    const req = tx.objectStore(IMG_STORE_NM).add({recipeId, dataUrl});
+    req.onsuccess = () => {
+      if (!recipeImageCache[recipeId]) recipeImageCache[recipeId]=[];
+      recipeImageCache[recipeId].push({id:req.result, dataUrl});
+      res(req.result);
+    };
+    req.onerror = () => res(null);
+  });
+}
+
+async function deleteRecipeImage(imgId, recipeId) {
+  const db = await _openImgDB();
+  return new Promise(res => {
+    const tx = db.transaction(IMG_STORE_NM,'readwrite');
+    tx.objectStore(IMG_STORE_NM).delete(imgId);
+    tx.oncomplete = () => {
+      if (recipeImageCache[recipeId])
+        recipeImageCache[recipeId]=recipeImageCache[recipeId].filter(i=>i.id!==imgId);
+      res();
+    };
+    tx.onerror = () => res();
+  });
+}
+
+async function deleteAllImagesForRecipe(recipeId) {
+  const imgs = recipeImageCache[recipeId]||[];
+  if (!imgs.length) return;
+  const db = await _openImgDB();
+  return new Promise(res => {
+    const tx=db.transaction(IMG_STORE_NM,'readwrite'), store=tx.objectStore(IMG_STORE_NM);
+    imgs.forEach(i=>store.delete(i.id));
+    tx.oncomplete = () => { delete recipeImageCache[recipeId]; res(); };
+    tx.onerror = () => res();
+  });
+}
+
+function compressImage(file, maxPx=1400, quality=0.8) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let w=img.width, h=img.height;
+        if (w>maxPx||h>maxPx) {
+          if (w>h) { h=Math.round(h*maxPx/w); w=maxPx; }
+          else     { w=Math.round(w*maxPx/h); h=maxPx; }
+        }
+        const c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(c.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── Recipe storage ──
 let recipes = {};
 function loadRecipes() {
-  try { recipes = JSON.parse(localStorage.getItem(RECIPE_STORE) || '{}'); }
-  catch(e) { recipes = {}; }
+  try { recipes=JSON.parse(localStorage.getItem(RECIPE_STORE)||'{}'); } catch(e) { recipes={}; }
 }
-function saveRecipes() {
-  localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
-}
+function saveRecipes() { localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes)); }
 
 // ── Book state ──
-let bookCurrentPage = 0;
-let bookPages = [];
-let bookPortions = {};
-let bookSearch = '';
-let bookTX = 0, bookTY = 0;
+let bookCurrentPage=0, bookPages=[], bookPortions={}, bookSearch='', bookTX=0, bookTY=0;
 
 function buildBookPages() {
-  const now = Date.now(), thr = 7*24*60*60*1000;
-  const allRecs = Object.values(recipes);
-  const catOrder = [...RECIPE_CATEGORIES];
-  allRecs.forEach(r => { const c = r.category || 'Sonstiges'; if (!catOrder.includes(c)) catOrder.push(c); });
-  const grouped = {};
-  allRecs.forEach(r => { const c = r.category || 'Sonstiges'; if (!grouped[c]) grouped[c] = []; grouped[c].push(r); });
-  const usedCats = catOrder.filter(c => grouped[c]);
-  usedCats.forEach(cat => grouped[cat].sort((a,b) => {
-    const na = a.createdAt && (now - a.createdAt) < thr ? 1 : 0;
-    const nb = b.createdAt && (now - b.createdAt) < thr ? 1 : 0;
-    return nb !== na ? nb - na : a.name.localeCompare(b.name);
+  const now=Date.now(), thr=7*24*60*60*1000;
+  const allRecs=Object.values(recipes);
+  const catOrder=[...RECIPE_CATEGORIES];
+  allRecs.forEach(r => { const c=r.category||'Sonstiges'; if(!catOrder.includes(c)) catOrder.push(c); });
+  const grouped={};
+  allRecs.forEach(r => { const c=r.category||'Sonstiges'; if(!grouped[c]) grouped[c]=[]; grouped[c].push(r); });
+  const usedCats=catOrder.filter(c=>grouped[c]);
+  usedCats.forEach(cat=>grouped[cat].sort((a,b)=>{
+    const na=a.createdAt&&(now-a.createdAt)<thr?1:0, nb=b.createdAt&&(now-b.createdAt)<thr?1:0;
+    return nb!==na?nb-na:a.name.localeCompare(b.name);
   }));
-  bookPages = [{ type:'cover', grouped, usedCats }];
-  usedCats.forEach(cat => grouped[cat].forEach(r => {
-    bookPages.push({ type:'recipe', id:r.id, r, cat });
-    if (!bookPortions[r.id]) bookPortions[r.id] = r.servings || 4;
+  bookPages=[{type:'cover',grouped,usedCats}];
+  usedCats.forEach(cat=>grouped[cat].forEach(r=>{
+    bookPages.push({type:'recipe',id:r.id,r,cat});
+    if(!bookPortions[r.id]) bookPortions[r.id]=r.servings||4;
   }));
 }
 
 function renderBookAllPages() {
-  const container = document.getElementById('bookPages');
-  container.innerHTML = '';
-  if (bookPages.length === 1 && Object.keys(recipes).length === 0) {
-    const el = document.createElement('div');
-    el.className = 'book-page bp-no-t bp-on';
-    el.id = 'bp-0';
-    el.innerHTML = `<div class="empty-state">
-      <div class="empty-ornament">📚</div>
-      <div class="empty-title">Noch keine Rezepte</div>
-      <div class="empty-text">Tippe auf + unten rechts, um dein erstes Rezept hinzuzufügen.</div>
-    </div>`;
+  const container=document.getElementById('bookPages');
+  container.innerHTML='';
+  if (bookPages.length===1&&Object.keys(recipes).length===0) {
+    const el=document.createElement('div');
+    el.className='book-page bp-no-t bp-on'; el.id='bp-0';
+    el.innerHTML=`<div class="empty-state"><div class="empty-ornament">📚</div><div class="empty-title">Noch keine Rezepte</div><div class="empty-text">Tippe auf + unten rechts, um dein erstes Rezept hinzuzufügen.</div></div>`;
     container.appendChild(el);
-    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('bp-no-t')));
+    requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('bp-no-t')));
     return;
   }
-  bookPages.forEach((pg, i) => {
-    const el = document.createElement('div');
-    el.className = 'book-page bp-no-t' + (i === 0 ? ' bp-on' : '');
-    el.id = 'bp-' + i;
-    el.innerHTML = i === 0 ? buildCoverHTML(pg) : buildRecipePageHTML(pg, i);
+  bookPages.forEach((pg,i)=>{
+    const el=document.createElement('div');
+    el.className='book-page bp-no-t'+(i===0?' bp-on':''); el.id='bp-'+i;
+    el.innerHTML=i===0?buildCoverHTML(pg):buildRecipePageHTML(pg,i);
     container.appendChild(el);
-    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('bp-no-t')));
-    el.addEventListener('touchstart', e => { bookTX = e.touches[0].clientX; bookTY = e.touches[0].clientY; }, {passive:true});
-    el.addEventListener('touchend', e => {
-      const dx = e.changedTouches[0].clientX - bookTX;
-      const dy = e.changedTouches[0].clientY - bookTY;
-      if (Math.abs(dx) > Math.abs(dy) * 1.2 && Math.abs(dx) > 50) bookFlip(dx < 0 ? 1 : -1);
-    }, {passive:true});
+    requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('bp-no-t')));
+    el.addEventListener('touchstart',e=>{bookTX=e.touches[0].clientX;bookTY=e.touches[0].clientY;},{passive:true});
+    el.addEventListener('touchend',e=>{
+      const dx=e.changedTouches[0].clientX-bookTX, dy=e.changedTouches[0].clientY-bookTY;
+      if(Math.abs(dx)>Math.abs(dy)*1.2&&Math.abs(dx)>50) bookFlip(dx<0?1:-1);
+    },{passive:true});
   });
 }
 
 function buildCoverHTML(pg) {
-  const { grouped, usedCats } = pg;
-  const totalRecs = bookPages.length - 1;
-  const catRows = usedCats.map(cat => {
-    const emoji = grouped[cat][0]?.emoji || '🍽️';
+  const {grouped,usedCats}=pg, totalRecs=bookPages.length-1;
+  const catRows=usedCats.map(cat=>{
+    const emoji=grouped[cat][0]?.emoji||'🍽️';
     return `<div class="bc-cat-row" onclick="bookGoToFirstInCat('${esc(cat)}')">
       <div class="bc-cat-left"><span style="font-size:20px">${emoji}</span><span class="bc-cat-name">${esc(cat)}</span></div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span class="bc-cat-count">${grouped[cat].length} Rezept${grouped[cat].length !== 1 ? 'e' : ''}</span>
-        <span class="bc-cat-arrow">›</span>
-      </div>
+      <div style="display:flex;align-items:center;gap:8px;"><span class="bc-cat-count">${grouped[cat].length} Rezept${grouped[cat].length!==1?'e':''}</span><span class="bc-cat-arrow">›</span></div>
     </div>`;
   }).join('');
   return `<div class="bc-inner">
     <div class="bc-ornament">— ✦ —</div>
     <div class="bc-title">Mein Rezeptbuch</div>
-    <div class="bc-subtitle">${totalRecs} Rezept${totalRecs !== 1 ? 'e' : ''}</div>
+    <div class="bc-subtitle">${totalRecs} Rezept${totalRecs!==1?'e':''}</div>
     <input class="bc-search" id="bookSearchInput" type="search" placeholder="Rezept suchen …" oninput="bookOnSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
     <hr class="bc-divider">
-    <div id="bookCoverContent">
-      <div class="bc-cats-label">Kategorien</div>
-      ${catRows}
-    </div>
+    <div id="bookCoverContent"><div class="bc-cats-label">Kategorien</div>${catRows}</div>
   </div>`;
 }
 
 function buildRecipePageHTML(pg, pageIdx) {
-  const { r, cat } = pg;
-  const portions = bookPortions[r.id] || r.servings || 4;
-  const scale = portions / (r.servings || 4);
-  const ingrs = (r.ingredients || []).filter(i => !i.custom).map(i =>
+  const {r,cat}=pg;
+  const portions=bookPortions[r.id]||r.servings||4, scale=portions/(r.servings||4);
+  const photos=recipeImageCache[r.id]||[];
+  const safeId=esc(r.id);
+
+  let photoHTML='';
+  if (photos.length===1) {
+    photoHTML=`<div class="brp-photo-strip"><img src="${photos[0].dataUrl}" onclick="openLightbox('${safeId}',0)" loading="lazy"></div>`;
+  } else if (photos.length>1) {
+    const imgs=photos.map((p,i)=>`<img src="${p.dataUrl}" onclick="openLightbox('${safeId}',${i})" loading="lazy">`).join('');
+    photoHTML=`<div class="brp-photo-strip multi">${imgs}</div>`;
+  }
+
+  const ingrs=(r.ingredients||[]).filter(i=>!i.custom).map(i=>
     `<div class="brp-ingr-item">
-      <div class="brp-ingr-left"><span>${i.emoji || ''}</span><span>${esc(i.name)}</span></div>
-      <div class="brp-ingr-amt">${cookFmtAmt(i, scale)}</div>
+      <div class="brp-ingr-left"><span>${i.emoji||''}</span><span>${esc(i.name)}</span></div>
+      <div class="brp-ingr-amt">${cookFmtAmt(i,scale)}</div>
     </div>`
   ).join('');
-  const steps = (r.steps || []).filter(s => s.trim()).map((s, i) =>
+  const steps=(r.steps||[]).filter(s=>s.trim()).map((s,i)=>
     `<div class="brp-step"><div class="brp-step-num">${i+1}</div><div class="brp-step-text">${esc(s)}</div></div>`
   ).join('');
-  const safeId = esc(r.id);
+
   return `<div class="brp-inner">
-    <div class="brp-cat">${esc(cat)}</div>
-    <div class="brp-emoji">${r.emoji || '🍽️'}</div>
-    <div class="brp-name">${esc(r.name)}</div>
-    <div class="brp-portions-row">
-      <span class="brp-portions-label">Portionen</span>
-      <button class="brp-portions-btn" onclick="bookAdjPortions('${safeId}',${pageIdx},-1)">−</button>
-      <span class="brp-portions-val" id="brp-pval-${pageIdx}">${portions}</span>
-      <button class="brp-portions-btn" onclick="bookAdjPortions('${safeId}',${pageIdx},1)">+</button>
+    ${photoHTML}
+    <div class="brp-content">
+      <div class="brp-cat">${esc(cat)}</div>
+      <div class="brp-emoji">${r.emoji||'🍽️'}</div>
+      <div class="brp-name">${esc(r.name)}</div>
+      <div class="brp-portions-row">
+        <span class="brp-portions-label">Portionen</span>
+        <button class="brp-portions-btn" onclick="bookAdjPortions('${safeId}',${pageIdx},-1)">−</button>
+        <span class="brp-portions-val" id="brp-pval-${pageIdx}">${portions}</span>
+        <button class="brp-portions-btn" onclick="bookAdjPortions('${safeId}',${pageIdx},1)">+</button>
+      </div>
+      ${ingrs?`<div class="brp-section"><div class="brp-section-title">Zutaten</div>${ingrs}</div>`:''}
+      ${r.description?`<div class="brp-section"><div class="brp-section-title">Beschreibung</div><div class="brp-desc">${esc(r.description)}</div></div>`:''}
+      ${steps?`<div class="brp-section"><div class="brp-section-title">Zubereitung</div>${steps}</div>`:''}
     </div>
-    ${ingrs ? `<div class="brp-section"><div class="brp-section-title">Zutaten</div>${ingrs}</div>` : ''}
-    ${r.description ? `<div class="brp-section"><div class="brp-section-title">Beschreibung</div><div class="brp-desc">${esc(r.description)}</div></div>` : ''}
-    ${steps ? `<div class="brp-section"><div class="brp-section-title">Zubereitung</div>${steps}</div>` : ''}
     <div class="brp-actions">
       <button class="brp-edit-btn" onclick="openBuilder('${safeId}')">✏️ Bearbeiten</button>
       <button class="brp-del-btn"  onclick="deleteRecipeConfirm('${safeId}')">🗑️ Löschen</button>
@@ -495,360 +585,308 @@ function buildRecipePageHTML(pg, pageIdx) {
 }
 
 function bookAdjPortions(id, pageIdx, delta) {
-  bookPortions[id] = Math.max(0.5, (bookPortions[id] || 4) + delta);
-  const val = bookPortions[id];
-  const el = document.getElementById('bp-' + pageIdx);
-  if (!el) return;
-  const pvalEl = el.querySelector('#brp-pval-' + pageIdx);
-  if (pvalEl) pvalEl.textContent = val === Math.floor(val) ? val : val.toFixed(1);
-  const pg = bookPages[pageIdx];
-  if (!pg?.r) return;
-  const scale = val / (pg.r.servings || 4);
-  const ings = (pg.r.ingredients || []).filter(i => !i.custom);
-  el.querySelectorAll('.brp-ingr-amt').forEach((amtEl, i) => {
-    if (ings[i]) amtEl.textContent = cookFmtAmt(ings[i], scale);
-  });
+  bookPortions[id]=Math.max(0.5,(bookPortions[id]||4)+delta);
+  const val=bookPortions[id], el=document.getElementById('bp-'+pageIdx);
+  if(!el) return;
+  const pvalEl=el.querySelector('#brp-pval-'+pageIdx);
+  if(pvalEl) pvalEl.textContent=val===Math.floor(val)?val:val.toFixed(1);
+  const pg=bookPages[pageIdx]; if(!pg?.r) return;
+  const scale=val/(pg.r.servings||4), ings=(pg.r.ingredients||[]).filter(i=>!i.custom);
+  el.querySelectorAll('.brp-ingr-amt').forEach((amtEl,i)=>{ if(ings[i]) amtEl.textContent=cookFmtAmt(ings[i],scale); });
 }
 
 function bookFlip(dir) {
-  const nextIdx = bookCurrentPage + dir;
-  if (nextIdx < 0 || nextIdx >= bookPages.length) return;
-  const curEl  = document.getElementById('bp-' + bookCurrentPage);
-  const nextEl = document.getElementById('bp-' + nextIdx);
-  if (!curEl || !nextEl) return;
-  nextEl.classList.add('bp-no-t');
-  nextEl.classList.remove('bp-on', 'bp-left');
-  if (dir < 0) nextEl.classList.add('bp-left');
-  void nextEl.offsetWidth;
-  nextEl.classList.remove('bp-no-t');
-  requestAnimationFrame(() => {
-    if (dir > 0) {
-      curEl.classList.remove('bp-on'); curEl.classList.add('bp-left');
-      nextEl.classList.add('bp-on');
-    } else {
-      curEl.classList.remove('bp-on', 'bp-left');
-      nextEl.classList.remove('bp-left'); nextEl.classList.add('bp-on');
-    }
-    bookCurrentPage = nextIdx;
-    updateBookNav();
+  const nextIdx=bookCurrentPage+dir;
+  if(nextIdx<0||nextIdx>=bookPages.length) return;
+  const curEl=document.getElementById('bp-'+bookCurrentPage), nextEl=document.getElementById('bp-'+nextIdx);
+  if(!curEl||!nextEl) return;
+  nextEl.classList.add('bp-no-t'); nextEl.classList.remove('bp-on','bp-left');
+  if(dir<0) nextEl.classList.add('bp-left');
+  void nextEl.offsetWidth; nextEl.classList.remove('bp-no-t');
+  requestAnimationFrame(()=>{
+    if(dir>0){curEl.classList.remove('bp-on');curEl.classList.add('bp-left');nextEl.classList.add('bp-on');}
+    else{curEl.classList.remove('bp-on','bp-left');nextEl.classList.remove('bp-left');nextEl.classList.add('bp-on');}
+    bookCurrentPage=nextIdx; updateBookNav();
   });
 }
 
-function bookBackAction() {
-  if (bookCurrentPage === 0) history.back();
-  else bookGoToIndex();
-}
+function bookBackAction() { bookCurrentPage===0?history.back():bookGoToIndex(); }
 
 function updateBookNav() {
-  const prevBtn = document.getElementById('bookPrevBtn');
-  const nextBtn = document.getElementById('bookNextBtn');
-  const navPg   = document.getElementById('bookNavPg');
-  const navName = document.getElementById('bookNavName');
-  const backBtn = document.getElementById('bookBackBtn');
-  const fab     = document.getElementById('fabBtn');
-  if (!prevBtn) return;
-  prevBtn.disabled = bookCurrentPage === 0;
-  nextBtn.disabled = bookCurrentPage === bookPages.length - 1;
-  if (bookCurrentPage === 0) {
-    navPg.textContent = 'Inhalt';
-    navName.textContent = '';
-    if (backBtn) backBtn.textContent = '← Zurück';
-    if (fab) fab.classList.remove('hidden');
+  const prevBtn=document.getElementById('bookPrevBtn'), nextBtn=document.getElementById('bookNextBtn');
+  const navPg=document.getElementById('bookNavPg'), navName=document.getElementById('bookNavName');
+  const backBtn=document.getElementById('bookBackBtn'), fab=document.getElementById('fabBtn');
+  if(!prevBtn) return;
+  prevBtn.disabled=bookCurrentPage===0; nextBtn.disabled=bookCurrentPage===bookPages.length-1;
+  if(bookCurrentPage===0){
+    navPg.textContent='Inhalt'; navName.textContent='';
+    if(backBtn) backBtn.textContent='← Zurück';
+    if(fab) fab.classList.remove('hidden');
   } else {
-    const pg = bookPages[bookCurrentPage];
-    navPg.textContent = `${bookCurrentPage} / ${bookPages.length - 1}`;
-    navName.textContent = pg.r?.name || '';
-    if (backBtn) backBtn.textContent = '≡ Inhalt';
-    if (fab) fab.classList.add('hidden');
+    const pg=bookPages[bookCurrentPage];
+    navPg.textContent=`${bookCurrentPage} / ${bookPages.length-1}`;
+    navName.textContent=pg.r?.name||'';
+    if(backBtn) backBtn.textContent='≡ Inhalt';
+    if(fab) fab.classList.add('hidden');
   }
 }
 
 function bookGoToIndex() { bookJumpToPage(0); }
-
-function bookGoToFirstInCat(cat) {
-  const idx = bookPages.findIndex(pg => pg.type === 'recipe' && pg.cat === cat);
-  if (idx >= 0) bookJumpToPage(idx);
-}
-
-function bookGoToRecipe(id) {
-  const idx = bookPages.findIndex(pg => pg.type === 'recipe' && pg.id === id);
-  if (idx >= 0) bookJumpToPage(idx);
-}
+function bookGoToFirstInCat(cat) { const idx=bookPages.findIndex(pg=>pg.type==='recipe'&&pg.cat===cat); if(idx>=0) bookJumpToPage(idx); }
+function bookGoToRecipe(id)      { const idx=bookPages.findIndex(pg=>pg.type==='recipe'&&pg.id===id);  if(idx>=0) bookJumpToPage(idx); }
 
 function bookJumpToPage(targetIdx) {
-  if (targetIdx === bookCurrentPage) return;
-  const curEl  = document.getElementById('bp-' + bookCurrentPage);
-  const nextEl = document.getElementById('bp-' + targetIdx);
-  if (curEl)  { curEl.classList.add('bp-no-t');  curEl.classList.remove('bp-on','bp-left');  void curEl.offsetWidth;  curEl.classList.remove('bp-no-t'); }
-  if (nextEl) { nextEl.classList.add('bp-no-t'); nextEl.classList.remove('bp-left'); nextEl.classList.add('bp-on'); void nextEl.offsetWidth; nextEl.classList.remove('bp-no-t'); nextEl.scrollTop = 0; }
-  bookCurrentPage = targetIdx;
-  updateBookNav();
+  if(targetIdx===bookCurrentPage) return;
+  const curEl=document.getElementById('bp-'+bookCurrentPage), nextEl=document.getElementById('bp-'+targetIdx);
+  if(curEl){curEl.classList.add('bp-no-t');curEl.classList.remove('bp-on','bp-left');void curEl.offsetWidth;curEl.classList.remove('bp-no-t');}
+  if(nextEl){nextEl.classList.add('bp-no-t');nextEl.classList.remove('bp-left');nextEl.classList.add('bp-on');void nextEl.offsetWidth;nextEl.classList.remove('bp-no-t');nextEl.scrollTop=0;}
+  bookCurrentPage=targetIdx; updateBookNav();
 }
 
 function bookOnSearch(val) {
-  bookSearch = val.trim().toLowerCase();
-  const coverContent = document.getElementById('bookCoverContent');
-  if (!coverContent) return;
-  if (!bookSearch) {
-    const pg = bookPages[0];
-    if (!pg) return;
-    const { grouped, usedCats } = pg;
-    const catRows = usedCats.map(cat => {
-      const emoji = grouped[cat][0]?.emoji || '🍽️';
+  bookSearch=val.trim().toLowerCase();
+  const coverContent=document.getElementById('bookCoverContent'); if(!coverContent) return;
+  if(!bookSearch) {
+    const pg=bookPages[0]; if(!pg) return;
+    const {grouped,usedCats}=pg;
+    const catRows=usedCats.map(cat=>{
+      const emoji=grouped[cat][0]?.emoji||'🍽️';
       return `<div class="bc-cat-row" onclick="bookGoToFirstInCat('${esc(cat)}')">
         <div class="bc-cat-left"><span style="font-size:20px">${emoji}</span><span class="bc-cat-name">${esc(cat)}</span></div>
-        <div style="display:flex;align-items:center;gap:8px;"><span class="bc-cat-count">${grouped[cat].length} Rezept${grouped[cat].length !== 1 ? 'e' : ''}</span><span class="bc-cat-arrow">›</span></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span class="bc-cat-count">${grouped[cat].length} Rezept${grouped[cat].length!==1?'e':''}</span><span class="bc-cat-arrow">›</span></div>
       </div>`;
     }).join('');
-    coverContent.innerHTML = `<div class="bc-cats-label">Kategorien</div>${catRows}`;
+    coverContent.innerHTML=`<div class="bc-cats-label">Kategorien</div>${catRows}`;
     return;
   }
-  const matches = bookPages.filter(pg => pg.type === 'recipe').filter(pg => {
-    const r = pg.r;
-    if (r.name.toLowerCase().includes(bookSearch)) return true;
-    if (r.description && r.description.toLowerCase().includes(bookSearch)) return true;
-    return (r.ingredients || []).some(i => i.name.toLowerCase().includes(bookSearch));
+  const matches=bookPages.filter(pg=>pg.type==='recipe').filter(pg=>{
+    const r=pg.r;
+    if(r.name.toLowerCase().includes(bookSearch)) return true;
+    if(r.description&&r.description.toLowerCase().includes(bookSearch)) return true;
+    return (r.ingredients||[]).some(i=>i.name.toLowerCase().includes(bookSearch));
   });
-  if (!matches.length) {
-    coverContent.innerHTML = '<div style="font-family:Georgia,serif;color:#8B6A3A;text-align:center;padding:24px 0;font-size:14px;font-style:italic;">Keine Rezepte gefunden.</div>';
-    return;
+  if(!matches.length){coverContent.innerHTML='<div style="font-family:Georgia,serif;color:#8B6A3A;text-align:center;padding:24px 0;font-size:14px;font-style:italic;">Keine Rezepte gefunden.</div>';return;}
+  const rows=matches.map(pg=>`<div class="bc-result-row" onclick="bookGoToRecipe('${esc(pg.r.id)}')"><span class="bc-result-emoji">${pg.r.emoji||'🍽️'}</span><div><div class="bc-result-name">${esc(pg.r.name)}</div><div class="bc-result-meta">${esc(pg.cat)} · ${pg.r.servings} Portionen</div></div></div>`).join('');
+  coverContent.innerHTML=`<div class="bc-cats-label">${matches.length} Ergebnis${matches.length!==1?'se':''}</div><div>${rows}</div>`;
+}
+
+// ── Lightbox ──
+let _lbRecipeId='', _lbIndex=0;
+function openLightbox(recipeId, idx) {
+  _lbRecipeId=recipeId; _lbIndex=idx;
+  const imgs=recipeImageCache[recipeId]||[];
+  if(!imgs.length) return;
+  let lb=document.getElementById('_lightbox');
+  if(!lb){
+    lb=document.createElement('div'); lb.id='_lightbox'; lb.className='lightbox-overlay';
+    lb.addEventListener('click',e=>{if(e.target===lb)closeLightbox();});
+    document.body.appendChild(lb);
   }
-  const rows = matches.map(pg =>
-    `<div class="bc-result-row" onclick="bookGoToRecipe('${esc(pg.r.id)}')">
-      <span class="bc-result-emoji">${pg.r.emoji || '🍽️'}</span>
-      <div><div class="bc-result-name">${esc(pg.r.name)}</div><div class="bc-result-meta">${esc(pg.cat)} · ${pg.r.servings} Portionen</div></div>
-    </div>`
-  ).join('');
-  coverContent.innerHTML = `<div class="bc-cats-label">${matches.length} Ergebnis${matches.length !== 1 ? 'se' : ''}</div><div>${rows}</div>`;
+  lb.innerHTML=`
+    <button class="lightbox-close" onclick="closeLightbox()">×</button>
+    <img class="lightbox-img" src="${imgs[_lbIndex].dataUrl}">
+    ${imgs.length>1?`<button class="lightbox-nav lightbox-prev" onclick="lbNav(-1)">‹</button><button class="lightbox-nav lightbox-next" onclick="lbNav(1)">›</button>`:''}
+  `;
+  lb.style.display='flex';
+}
+function closeLightbox() { const lb=document.getElementById('_lightbox'); if(lb) lb.style.display='none'; }
+function lbNav(dir) {
+  const imgs=recipeImageCache[_lbRecipeId]||[];
+  _lbIndex=(_lbIndex+dir+imgs.length)%imgs.length;
+  const lb=document.getElementById('_lightbox'); if(!lb) return;
+  lb.querySelector('.lightbox-img').src=imgs[_lbIndex].dataUrl;
 }
 
 // ── Builder ──
-let builderEditId = null;
-let builderIngredients = [];
-let builderSteps = [];
+let builderEditId=null, builderIngredients=[], builderSteps=[];
+let builderPendingImgs=[], builderExistingImgs=[], builderDeletedIds=[];
 
 function openBuilder(id) {
-  builderEditId = id || null;
-  document.getElementById('bldTitle').textContent = id ? 'Rezept bearbeiten' : 'Neues Rezept';
+  builderEditId=id||null;
+  document.getElementById('bldTitle').textContent=id?'Rezept bearbeiten':'Neues Rezept';
 
-  // Fill category select
-  const catSel = document.getElementById('bldCategory');
-  catSel.innerHTML = RECIPE_CATEGORIES.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  const catSel=document.getElementById('bldCategory');
+  catSel.innerHTML=RECIPE_CATEGORIES.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
 
-  if (id && recipes[id]) {
-    const r = recipes[id];
-    document.getElementById('bldEmoji').value    = r.emoji || '';
-    document.getElementById('bldName').value     = r.name || '';
-    document.getElementById('bldServings').value = r.servings || 4;
-    document.getElementById('bldDesc').value     = r.description || '';
-    catSel.value = r.category || 'Sonstiges';
-    builderIngredients = (r.ingredients || []).filter(i => !i.custom).map(parseIngForBuilder);
-    builderSteps = [...(r.steps || [])];
+  if(id&&recipes[id]){
+    const r=recipes[id];
+    document.getElementById('bldEmoji').value=r.emoji||'';
+    document.getElementById('bldName').value=r.name||'';
+    document.getElementById('bldServings').value=r.servings||4;
+    document.getElementById('bldDesc').value=r.description||'';
+    catSel.value=r.category||'Sonstiges';
+    builderIngredients=(r.ingredients||[]).filter(i=>!i.custom).map(parseIngForBuilder);
+    builderSteps=[...(r.steps||[])];
+    builderExistingImgs=(recipeImageCache[id]||[]).map(i=>({...i}));
   } else {
-    document.getElementById('bldEmoji').value    = '';
-    document.getElementById('bldName').value     = '';
-    document.getElementById('bldServings').value = 4;
-    document.getElementById('bldDesc').value     = '';
-    catSel.value = 'Sonstiges';
-    builderIngredients = [];
-    builderSteps = [];
+    document.getElementById('bldEmoji').value='';
+    document.getElementById('bldName').value='';
+    document.getElementById('bldServings').value=4;
+    document.getElementById('bldDesc').value='';
+    catSel.value='Sonstiges';
+    builderIngredients=[]; builderSteps=[]; builderExistingImgs=[];
   }
-
+  builderPendingImgs=[]; builderDeletedIds=[];
+  renderBuilderPhotoThumbs();
   renderBuilderIngredients();
   renderBuilderSteps();
   document.getElementById('builderView').classList.remove('hidden');
   document.getElementById('bldName').focus();
 }
 
-function closeBuilder() {
-  document.getElementById('builderView').classList.add('hidden');
-}
+function closeBuilder() { document.getElementById('builderView').classList.add('hidden'); }
 
 function parseIngForBuilder(ing) {
-  // Separate stored unit string into qty + unitRaw for the builder form
-  const unitFull = (ing.unit || '').trim();
-  let qty = ing.qty || 0;
-  let unitRaw = unitFull;
-
-  const gm = unitFull.match(/^([\d.,]+)\s*(g|kg|ml|cl|dl|[lL])$/i);
-  if (gm) { qty = parseFloat(gm[1].replace(',','.')); unitRaw = gm[2]; return { ...ing, qty, unitRaw }; }
-  const pc = unitFull.match(/^([\d.,]+)\s*(stück|stk\.?)$/i);
-  if (pc) { qty = parseFloat(pc[1].replace(',','.')); unitRaw = 'Stück'; return { ...ing, qty, unitRaw }; }
-
-  return { ...ing, qty, unitRaw };
+  const unitFull=(ing.unit||'').trim();
+  let qty=ing.qty||0, unitRaw=unitFull;
+  const gm=unitFull.match(/^([\d.,]+)\s*(g|kg|ml|cl|dl|[lL])$/i);
+  if(gm){qty=parseFloat(gm[1].replace(',','.'));unitRaw=gm[2];return{...ing,qty,unitRaw};}
+  const pc=unitFull.match(/^([\d.,]+)\s*(stück|stk\.?)$/i);
+  if(pc){qty=parseFloat(pc[1].replace(',','.'));unitRaw='Stück';return{...ing,qty,unitRaw};}
+  return{...ing,qty,unitRaw};
 }
 
 function ingForRecipe(bIng) {
-  const qty  = parseFloat(bIng.qty) || 0;
-  const uRaw = (bIng.unitRaw || '').trim();
-  const u    = uRaw.toLowerCase();
-  let unit   = uRaw;
-  let amountG = 0;
-
-  if (u === 'g')                           { unit = `${qty} g`;     amountG = qty; }
-  else if (u === 'kg')                     { unit = `${qty} kg`;    amountG = qty * 1000; }
-  else if (u === 'ml')                     { unit = `${qty} ml`;    amountG = qty; }
-  else if (u === 'cl')                     { unit = `${qty} cl`;    amountG = qty * 10; }
-  else if (u === 'dl')                     { unit = `${qty} dl`;    amountG = qty * 100; }
-  else if (u === 'l')                      { unit = `${qty} L`;     amountG = qty * 1000; }
-  else if (u === 'stück' || u === 'stk' || u === 'stk.') {
-    unit = `${qty} Stück`; amountG = 0;
-  }
-  // Other (EL, TL, Prise, …): keep unit as bare label, qty carries the number
-
-  return {
-    name: (bIng.name || '').trim(),
-    emoji: bIng.emoji || '',
-    unit,
-    amountG,
-    qty,
-    custom: false,
-    kcalPer100:    bIng.kcalPer100    || 0,
-    proteinPer100: bIng.proteinPer100 || 0,
-    carbsPer100:   bIng.carbsPer100   || 0,
-    fatPer100:     bIng.fatPer100     || 0,
-    unitPrice:     bIng.unitPrice     || 0,
-    unitG:         bIng.unitG         || 0,
-  };
+  const qty=parseFloat(bIng.qty)||0, uRaw=(bIng.unitRaw||'').trim(), u=uRaw.toLowerCase();
+  let unit=uRaw, amountG=0;
+  if(u==='g')          {unit=`${qty} g`;    amountG=qty;}
+  else if(u==='kg')    {unit=`${qty} kg`;   amountG=qty*1000;}
+  else if(u==='ml')    {unit=`${qty} ml`;   amountG=qty;}
+  else if(u==='cl')    {unit=`${qty} cl`;   amountG=qty*10;}
+  else if(u==='dl')    {unit=`${qty} dl`;   amountG=qty*100;}
+  else if(u==='l')     {unit=`${qty} L`;    amountG=qty*1000;}
+  else if(u==='stück'||u==='stk'||u==='stk.'){unit=`${qty} Stück`;}
+  return{name:(bIng.name||'').trim(),emoji:bIng.emoji||'',unit,amountG,qty,custom:false,
+    kcalPer100:bIng.kcalPer100||0,proteinPer100:bIng.proteinPer100||0,
+    carbsPer100:bIng.carbsPer100||0,fatPer100:bIng.fatPer100||0,
+    unitPrice:bIng.unitPrice||0,unitG:bIng.unitG||0};
 }
 
-function saveRecipe() {
-  const name = document.getElementById('bldName').value.trim();
-  if (!name) { showToast('Bitte einen Rezeptnamen eingeben'); return; }
-
-  const id = builderEditId || Date.now().toString();
-  const existing = builderEditId ? recipes[builderEditId] : null;
-
-  recipes[id] = {
-    id,
-    createdAt: existing ? (existing.createdAt || Date.now()) : Date.now(),
-    name,
-    emoji:       document.getElementById('bldEmoji').value.trim() || '🍽️',
-    category:    document.getElementById('bldCategory').value || 'Sonstiges',
-    servings:    parseInt(document.getElementById('bldServings').value) || 4,
-    description: document.getElementById('bldDesc').value.trim(),
-    steps:       builderSteps.filter(s => s.trim()),
-    ingredients: builderIngredients.filter(i => i.name.trim()).map(ingForRecipe),
+async function saveRecipe() {
+  const name=document.getElementById('bldName').value.trim();
+  if(!name){showToast('Bitte einen Rezeptnamen eingeben');return;}
+  const id=builderEditId||Date.now().toString();
+  const existing=builderEditId?recipes[builderEditId]:null;
+  recipes[id]={
+    id, createdAt:existing?(existing.createdAt||Date.now()):Date.now(),
+    name, emoji:document.getElementById('bldEmoji').value.trim()||'🍽️',
+    category:document.getElementById('bldCategory').value||'Sonstiges',
+    servings:parseInt(document.getElementById('bldServings').value)||4,
+    description:document.getElementById('bldDesc').value.trim(),
+    steps:builderSteps.filter(s=>s.trim()),
+    ingredients:builderIngredients.filter(i=>i.name.trim()).map(ingForRecipe),
   };
-
   saveRecipes();
+  for(const delId of builderDeletedIds) await deleteRecipeImage(delId, builderEditId||id);
+  for(const img of builderPendingImgs) await addRecipeImage(id, img.dataUrl);
   closeBuilder();
-
-  // Rebuild and stay on the saved recipe's page
-  const wasIdx = bookCurrentPage;
-  buildBookPages();
-  bookCurrentPage = 0;
-  renderBookAllPages();
-  updateBookNav();
-
-  const targetIdx = bookPages.findIndex(pg => pg.type === 'recipe' && pg.id === id);
-  if (targetIdx >= 0) bookJumpToPage(targetIdx);
-
-  showToast(builderEditId ? 'Rezept gespeichert' : 'Rezept hinzugefügt');
+  buildBookPages(); bookCurrentPage=0; renderBookAllPages(); updateBookNav();
+  const targetIdx=bookPages.findIndex(pg=>pg.type==='recipe'&&pg.id===id);
+  if(targetIdx>=0) bookJumpToPage(targetIdx);
+  showToast(builderEditId?'Rezept gespeichert':'Rezept hinzugefügt');
 }
 
-function deleteRecipeConfirm(id) {
-  const r = recipes[id];
-  if (!r) return;
-  if (!confirm(`„${r.name}" wirklich löschen?`)) return;
-  delete recipes[id];
-  delete bookPortions[id];
-  saveRecipes();
-  buildBookPages();
-  bookCurrentPage = 0;
-  renderBookAllPages();
-  updateBookNav();
+async function deleteRecipeConfirm(id) {
+  const r=recipes[id]; if(!r) return;
+  if(!confirm(`„${r.name}" wirklich löschen?`)) return;
+  await deleteAllImagesForRecipe(id);
+  delete recipes[id]; delete bookPortions[id]; saveRecipes();
+  buildBookPages(); bookCurrentPage=0; renderBookAllPages(); updateBookNav();
   showToast('Rezept gelöscht');
 }
 
-// ── Builder ingredient list ──
-function addBuilderIngredient() {
-  builderIngredients.push({ name:'', emoji:'', qty:0, unitRaw:'g' });
-  renderBuilderIngredients();
-  // Focus last name input
-  const rows = document.querySelectorAll('.bld-ing-name');
-  if (rows.length) rows[rows.length - 1].focus();
+// ── Builder photo ──
+function bldTriggerUpload() { document.getElementById('bldFileIn').click(); }
+
+function bldHandleFiles(input) {
+  Array.from(input.files).forEach(file => {
+    compressImage(file).then(dataUrl => {
+      builderPendingImgs.push({dataUrl});
+      renderBuilderPhotoThumbs();
+    });
+  });
+  input.value='';
 }
 
-function removeBuilderIngredient(i) {
-  builderIngredients.splice(i, 1);
-  renderBuilderIngredients();
+function bldDelExisting(imgId) {
+  builderDeletedIds.push(imgId);
+  builderExistingImgs=builderExistingImgs.filter(i=>i.id!==imgId);
+  renderBuilderPhotoThumbs();
 }
 
-function renderBuilderIngredients() {
-  const container = document.getElementById('bldIngList');
-  if (!builderIngredients.length) {
-    container.innerHTML = '<div class="bld-empty-hint">Noch keine Zutaten hinzugefügt.</div>';
-    return;
-  }
-  container.innerHTML = builderIngredients.map((ing, i) => `
-    <div class="bld-ing-row">
-      <input class="bld-ing-emoji" value="${esc(ing.emoji)}" placeholder="🥕" maxlength="4" autocomplete="off"
-             oninput="builderIngredients[${i}].emoji=this.value">
-      <input class="bld-ing-name" value="${esc(ing.name)}" placeholder="Zutat …"
-             autocomplete="off" oninput="builderIngredients[${i}].name=this.value">
-      <input class="bld-ing-qty" type="number" min="0" step="any" value="${ing.qty || ''}" placeholder="100"
-             oninput="builderIngredients[${i}].qty=parseFloat(this.value)||0">
-      <input class="bld-ing-unit" value="${esc(ing.unitRaw||'')}" placeholder="g"
-             autocomplete="off" oninput="builderIngredients[${i}].unitRaw=this.value">
-      <button class="bld-ing-del" onclick="removeBuilderIngredient(${i})">×</button>
-    </div>`
+function bldDelPending(idx) {
+  builderPendingImgs.splice(idx,1);
+  renderBuilderPhotoThumbs();
+}
+
+function renderBuilderPhotoThumbs() {
+  const container=document.getElementById('bldPhotoThumbs');
+  const existingHTML=builderExistingImgs.map(img=>
+    `<div class="bld-photo-thumb"><img src="${img.dataUrl}"><button class="bld-photo-del" onclick="bldDelExisting(${img.id})">×</button></div>`
   ).join('');
+  const pendingHTML=builderPendingImgs.map((_,i)=>
+    `<div class="bld-photo-thumb"><img src="${builderPendingImgs[i].dataUrl}"><button class="bld-photo-del" onclick="bldDelPending(${i})">×</button></div>`
+  ).join('');
+  container.innerHTML=existingHTML+pendingHTML;
 }
 
-// ── Builder step list ──
+// ── Builder ingredients ──
+function addBuilderIngredient() {
+  builderIngredients.push({name:'',emoji:'',qty:0,unitRaw:'g'});
+  renderBuilderIngredients();
+  const rows=document.querySelectorAll('.bld-ing-name');
+  if(rows.length) rows[rows.length-1].focus();
+}
+function removeBuilderIngredient(i) { builderIngredients.splice(i,1); renderBuilderIngredients(); }
+function renderBuilderIngredients() {
+  const container=document.getElementById('bldIngList');
+  if(!builderIngredients.length){container.innerHTML='<div class="bld-empty-hint">Noch keine Zutaten hinzugefügt.</div>';return;}
+  container.innerHTML=builderIngredients.map((ing,i)=>`
+    <div class="bld-ing-row">
+      <input class="bld-ing-emoji" value="${esc(ing.emoji)}" placeholder="🥕" maxlength="4" autocomplete="off" oninput="builderIngredients[${i}].emoji=this.value">
+      <input class="bld-ing-name" value="${esc(ing.name)}" placeholder="Zutat …" autocomplete="off" oninput="builderIngredients[${i}].name=this.value">
+      <input class="bld-ing-qty" type="number" min="0" step="any" value="${ing.qty||''}" placeholder="100" oninput="builderIngredients[${i}].qty=parseFloat(this.value)||0">
+      <input class="bld-ing-unit" value="${esc(ing.unitRaw||'')}" placeholder="g" autocomplete="off" oninput="builderIngredients[${i}].unitRaw=this.value">
+      <button class="bld-ing-del" onclick="removeBuilderIngredient(${i})">×</button>
+    </div>`).join('');
+}
+
+// ── Builder steps ──
 function addBuilderStep() {
-  builderSteps.push('');
-  renderBuilderSteps();
-  const rows = document.querySelectorAll('.bld-step-ta');
-  if (rows.length) rows[rows.length - 1].focus();
+  builderSteps.push(''); renderBuilderSteps();
+  const rows=document.querySelectorAll('.bld-step-ta');
+  if(rows.length) rows[rows.length-1].focus();
 }
-
-function removeBuilderStep(i) {
-  builderSteps.splice(i, 1);
-  renderBuilderSteps();
-}
-
+function removeBuilderStep(i) { builderSteps.splice(i,1); renderBuilderSteps(); }
 function renderBuilderSteps() {
-  const container = document.getElementById('bldStepList');
-  if (!builderSteps.length) {
-    container.innerHTML = '<div class="bld-empty-hint">Noch keine Schritte hinzugefügt.</div>';
-    return;
-  }
-  container.innerHTML = builderSteps.map((s, i) => `
+  const container=document.getElementById('bldStepList');
+  if(!builderSteps.length){container.innerHTML='<div class="bld-empty-hint">Noch keine Schritte hinzugefügt.</div>';return;}
+  container.innerHTML=builderSteps.map((s,i)=>`
     <div class="bld-step-row">
       <div class="bld-step-num">${i+1}</div>
-      <textarea class="bld-step-ta" rows="2" placeholder="Schritt beschreiben …"
-                oninput="builderSteps[${i}]=this.value;autoResize(this)">${esc(s)}</textarea>
+      <textarea class="bld-step-ta" rows="2" placeholder="Schritt beschreiben …" oninput="builderSteps[${i}]=this.value;autoResize(this)">${esc(s)}</textarea>
       <button class="bld-step-del" onclick="removeBuilderStep(${i})">×</button>
-    </div>`
-  ).join('');
+    </div>`).join('');
 }
-
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
-}
+function autoResize(el) { el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 
 // ── Toast ──
-let _toastTimer = null;
+let _toastTimer=null;
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
 }
 
 // ── Init ──
-loadRecipes();
-buildBookPages();
-renderBookAllPages();
-updateBookNav();
+(async()=>{
+  loadRecipes();
+  await loadAllRecipeImages();
+  buildBookPages();
+  renderBookAllPages();
+  updateBookNav();
+})();
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js');
-}
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
 </script>
 </body>
 </html>
