@@ -936,17 +936,14 @@ function addRecipeToList(recipeId, pageIdx) {
   const scale = portions / (r.servings || 4);
   const ingredients = (r.ingredients || []).filter(i => !i.custom);
   if (!ingredients.length) { showToast('Keine Zutaten vorhanden'); return; }
-  const listKey = 'list_zuhause';
-  let listItems = {};
-  try { listItems = JSON.parse(localStorage.getItem(listKey) || '{}'); } catch {}
+  let pending = [];
+  try { pending = JSON.parse(localStorage.getItem('pending_einkauf_items') || '[]'); } catch {}
   let added = 0;
   for (const ing of ingredients) {
-    const amtStr = cookFmtAmt(ing, scale);
-    const id = 'rz_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-    listItems[id] = { name: ing.name, emoji: ing.emoji || '🛒', amount: amtStr, store: '', checked: false, addedAt: Date.now() };
+    pending.push({ name: ing.name, emoji: ing.emoji || '🛒', amount: cookFmtAmt(ing, scale), store: '', checked: false, addedAt: Date.now() });
     added++;
   }
-  try { localStorage.setItem(listKey, JSON.stringify(listItems)); } catch(e) {}
+  try { localStorage.setItem('pending_einkauf_items', JSON.stringify(pending)); } catch(e) {}
   showToast(`${added} Zutat${added !== 1 ? 'en' : ''} zur Einkaufsliste`);
 }
 

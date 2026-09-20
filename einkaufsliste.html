@@ -2479,6 +2479,7 @@ function initApp() {
       items = snap.val() || {};
       autoClearOldDone(items);
       renderAll();
+      processPendingItems();
     });
 
     restRef = db.ref('lists/' + listId + '/restaurants');
@@ -2519,7 +2520,25 @@ function startOffline() {
   try { scannedSuggestions = JSON.parse(localStorage.getItem('scannedSuggestions') || '{}'); } catch { scannedSuggestions = {}; }
   autoClearOldDone(items);
   renderAll();
+  processPendingItems();
 }
+
+function processPendingItems() {
+  let pending = [];
+  try { pending = JSON.parse(localStorage.getItem('pending_einkauf_items') || '[]'); } catch {}
+  if (!pending.length) return;
+  localStorage.removeItem('pending_einkauf_items');
+  for (const item of pending) {
+    const id = 'rz_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    persist(id, item);
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') processPendingItems();
+});
+window.addEventListener('storage', e => {
+  if (e.key === 'pending_einkauf_items' && e.newValue) processPendingItems();
+});
 
 function setOnline(on, isOfflineMode = false) {
   const dot  = document.getElementById('dot');
