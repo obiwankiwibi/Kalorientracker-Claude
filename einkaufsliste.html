@@ -5225,6 +5225,41 @@ _initDefaultRecipes();
     localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
   }
 
+  if (!recipes['default_28']) {
+    recipes['default_28'] = {
+      id:'default_28', name:'Gnocchi-Hackfleisch-Eintopf', emoji:'🥟', servings:4, category:'Eintopf',
+      description:'Cremiger Eintopf mit Gnocchi, Rinderhackfleisch, Blattspinat und Parmesan – schnell und sättigend.',
+      steps:[
+        'Zwiebel fein würfeln, Knoblauch fein hacken, Blattspinat grob schneiden.',
+        'Öl in einem großen Topf erhitzen und das Rinderhackfleisch krümelig anbraten.',
+        'Zwiebel dazugeben und kurz mitbraten, dann Knoblauch dazugeben und ebenfalls kurz anbraten.',
+        'Tomatenmark einrühren und kurz mitrösten.',
+        'Thymian, Paprika edelsüß, Paprika rosenscharf, Salz und Pfeffer dazugeben und kurz anrösten.',
+        'Mit der Rinderbrühe ablöschen und die Schlagsahne dazugeben. Alles gut verrühren.',
+        'Die Gnocchi direkt in den Eintopf geben und köcheln lassen, bis sie gar sind und an der Oberfläche schwimmen.',
+        'Parmesan und Blattspinat unterrühren, bis der Spinat zusammenfällt. Servieren.',
+      ],
+      ingredients:[
+        g('Gnocchi','🥟',500,'g',500,170,3,35,1,1.29,500,'500g'),
+        g('Rinderhackfleisch','🥩',500,'g',500,196,17,0,14,4.99,500,'500g'),
+        g('Blattspinat','🥬',100,'g',100,23,2.9,3.6,0.4,1.49,200,'200g'),
+        g('Schlagsahne','🥛',200,'ml',200,292,2,3,30,0.99,200,'200ml'),
+        g('Rinderbrühe','🍲',800,'ml',800,5,0.5,0.5,0.1,0.79,2,'2 Würfel'),
+        g('Öl','🫙',20,'ml',20,884,0,0,100,1.99,1000,'1L'),
+        g('Zwiebel','🧅',100,'g',100,40,1.1,9,0.1,0.49,3,'3er Netz'),
+        g('Knoblauch','🧄',9,'g',9,135,6,28,0.5,0.59,5,'Knolle'),
+        g('Tomatenmark','🍅',15,'g',15,90,5,16,0.3,0.69,70,'70g'),
+        g('Thymian getrocknet','🌿',2,'g',2,276,9,45,7,0.89,8,'8g'),
+        g('Paprika edelsüß','🫑',3,'g',3,282,14,49,13,0.89,50,'50g'),
+        g('Paprika rosenscharf','🌶️',3,'g',3,280,14,49,12,0.99,50,'50g'),
+        g('Parmesan','🧀',50,'g',50,431,38,0,29,2.49,100,'100g'),
+        g('Salz','🧂',4,'g',4,0,0,0,0,0.49,500,'500g'),
+        g('Pfeffer gemahlen','🌶️',2,'g',2,251,10,49,3.3,0.99,50,'50g'),
+      ]
+    };
+    localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes));
+  }
+
   // Stamp / upgrade categories on default recipes
   const DEFAULT_CATS = {
     default_01:'Nudelgericht', default_02:'Curry',        default_03:'Frühstück',
