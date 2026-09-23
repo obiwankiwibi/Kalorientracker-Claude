@@ -655,6 +655,7 @@ function bookFlip(dir) {
     if(dir>0){curEl.classList.remove('bp-on');curEl.classList.add('bp-left');nextEl.classList.add('bp-on');}
     else{curEl.classList.remove('bp-on','bp-left');nextEl.classList.remove('bp-left');nextEl.classList.add('bp-on');}
     bookCurrentPage=nextIdx; updateBookNav();
+    try { localStorage.setItem('rezeptbuch_page', String(bookPages[nextIdx]?.id || nextIdx)); } catch {}
   });
 }
 
@@ -689,6 +690,7 @@ function bookJumpToPage(targetIdx) {
   if(curEl){curEl.classList.add('bp-no-t');curEl.classList.remove('bp-on','bp-left');void curEl.offsetWidth;curEl.classList.remove('bp-no-t');}
   if(nextEl){nextEl.classList.add('bp-no-t');nextEl.classList.remove('bp-left');nextEl.classList.add('bp-on');void nextEl.offsetWidth;nextEl.classList.remove('bp-no-t');nextEl.scrollTop=0;}
   bookCurrentPage=targetIdx; updateBookNav();
+  try { localStorage.setItem('rezeptbuch_page', String(bookPages[targetIdx]?.id || targetIdx)); } catch {}
 }
 
 function bookOnSearch(val) {
@@ -1022,6 +1024,13 @@ document.addEventListener('visibilitychange', () => {
   buildBookPages();
   renderBookAllPages();
   updateBookNav();
+  try {
+    const saved = localStorage.getItem('rezeptbuch_page');
+    if(saved) {
+      const idx = bookPages.findIndex(pg => pg.id === saved || String(pg.id) === saved);
+      if(idx > 0) bookJumpToPage(idx);
+    }
+  } catch {}
 })();
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
