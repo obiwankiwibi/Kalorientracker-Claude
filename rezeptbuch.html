@@ -57,6 +57,9 @@
     }
     #bookListView.visible { display: block; }
     .blv-inner { padding: 12px 20px 100px; max-width: 440px; margin: 0 auto; }
+    .blv-search { width: 100%; padding: 11px 16px; border-radius: 24px; border: 1.5px solid #C4A46A; background: #F5EDD8; color: #4A2E0A; font-size: 15px; font-family: Georgia,serif; outline: none; margin-bottom: 4px; }
+    .blv-search::placeholder { color: #A8875A; }
+    .blv-search:focus { border-color: #8B5C14; }
     .blv-chapter { font-family: Georgia,serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #8B5C14; margin: 22px 0 8px; padding-bottom: 6px; border-bottom: 1.5px solid #D4B896; }
     .blv-chapter:first-child { margin-top: 6px; }
     .blv-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid #EDD9C0; cursor: pointer; -webkit-tap-highlight-color: rgba(139,92,20,.08); }
@@ -542,7 +545,9 @@ function buildBookPages() {
 
 function renderBookAllPages() {
   const container=document.getElementById('bookPages');
+  const listEl=document.getElementById('bookListView'); // save before clearing
   container.innerHTML='';
+  if(listEl) container.appendChild(listEl); // restore list view element
   if (bookPages.length===1&&Object.keys(recipes).length===0) {
     const el=document.createElement('div');
     el.className='book-page bp-no-t bp-on'; el.id='bp-0';
@@ -729,30 +734,50 @@ function toggleBookView() {
   updateBookNav();
 }
 
-function renderListView() {
+let listViewSearch='';
+
+function renderListView(q) {
   const listEl=document.getElementById('bookListView');
   if(!listEl) return;
+  if(q!==undefined) listViewSearch=q;
+  const filter=listViewSearch.trim().toLowerCase();
   const grouped={}, cats=[];
   Object.values(recipes).forEach(r=>{
+    if(filter){
+      const hit=r.name.toLowerCase().includes(filter)
+        ||(r.description||'').toLowerCase().includes(filter)
+        ||(r.category||'').toLowerCase().includes(filter)
+        ||(r.ingredients||[]).some(i=>i.name.toLowerCase().includes(filter));
+      if(!hit) return;
+    }
     const cat=r.category||'Sonstiges';
     if(!grouped[cat]){grouped[cat]=[];cats.push(cat);}
     grouped[cat].push(r);
   });
   cats.sort();
   cats.forEach(c=>grouped[c].sort((a,b)=>a.name.localeCompare(b.name)));
-  if(!cats.length){
-    listEl.innerHTML=`<div class="blv-inner" style="padding-top:60px;text-align:center;color:#8B6A3A;font-style:italic;font-family:Georgia,serif;">Noch keine Rezepte vorhanden.</div>`;
-    return;
+  const total=Object.values(recipes).length;
+  let body;
+  if(!total){
+    body='<div style="padding-top:40px;text-align:center;color:#8B6A3A;font-style:italic;font-size:14px;">Noch keine Rezepte vorhanden.</div>';
+  } else if(!cats.length){
+    body=`<div style="padding-top:20px;text-align:center;color:#8B6A3A;font-style:italic;font-size:14px;">Keine Ergebnisse für „${esc(listViewSearch)}"</div>`;
+  } else {
+    body=cats.map(cat=>`
+      <div class="blv-chapter">${esc(cat)}</div>
+      ${grouped[cat].map(r=>`<div class="blv-row" onclick="listOpenRecipe('${esc(r.id)}')">
+        <div class="blv-emoji">${r.emoji||'🍽️'}</div>
+        <div class="blv-name">${esc(r.name)}</div>
+        <div class="blv-arrow">›</div>
+      </div>`).join('')}
+    `).join('');
   }
-  const html=cats.map(cat=>`
-    <div class="blv-chapter">${esc(cat)}</div>
-    ${grouped[cat].map(r=>`<div class="blv-row" onclick="listOpenRecipe('${esc(r.id)}')">
-      <div class="blv-emoji">${r.emoji||'🍽️'}</div>
-      <div class="blv-name">${esc(r.name)}</div>
-      <div class="blv-arrow">›</div>
-    </div>`).join('')}
-  `).join('');
-  listEl.innerHTML=`<div class="blv-inner">${html}</div>`;
+  const searchVal=esc(listViewSearch);
+  listEl.innerHTML=`<div class="blv-inner">
+    <input class="blv-search" type="search" placeholder="Rezept suchen …" value="${searchVal}"
+      oninput="renderListView(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+    ${body}
+  </div>`;
 }
 
 function listOpenRecipe(id) {
