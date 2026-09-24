@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Rezepte importieren</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Georgia,serif; background: #2C1808; color: #E8D0A0; min-height: 100vh; padding: 20px 16px 60px; }
+    h1 { text-align: center; font-size: 17px; letter-spacing: .1em; text-transform: uppercase; color: #D4A96A; margin-bottom: 20px; }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed #C4A46A; border-radius: 16px; padding: 36px 24px;
+      text-align: center; cursor: pointer; transition: background .2s;
+      max-width: 480px; margin: 0 auto 28px;
+    }
+    .drop-zone.over { background: rgba(196,164,106,.15); }
+    .drop-zone-icon { font-size: 36px; margin-bottom: 10px; }
+    .drop-zone-text { font-size: 15px; color: #D4A96A; margin-bottom: 6px; }
+    .drop-zone-sub { font-size: 12px; color: #7A5A3A; }
+    #fileInput { display: none; }
+
+    /* Cards */
+    .cards { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+    .card {
+      background: #FDF8EE; color: #4A2E0A; border-radius: 16px; overflow: hidden;
+    }
+    .card-loading { padding: 28px; text-align: center; color: #8B6A3A; font-size: 14px; font-style: italic; }
+    .card-loading .spinner { font-size: 24px; display: block; margin-bottom: 10px; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .card-thumb { width: 100%; max-height: 200px; object-fit: cover; object-position: top; display: block; }
+    .card-body { padding: 18px; }
+    .card-row { display: flex; gap: 10px; margin-bottom: 12px; }
+    .card-field { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .card-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8B5C14; }
+    .card-input {
+      font-family: Georgia,serif; font-size: 14px; color: #4A2E0A;
+      border: 1.5px solid #C4A46A; border-radius: 8px; padding: 7px 10px;
+      background: #F5EDD8; outline: none; width: 100%;
+    }
+    .card-input:focus { border-color: #8B5C14; }
+    select.card-input { cursor: pointer; }
+
+    .card-section-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
+      color: #8B5C14; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #D4B896;
+    }
+    .card-section { margin-bottom: 14px; }
+
+    .ing-list, .step-list { display: flex; flex-direction: column; gap: 5px; }
+    .ing-item, .step-item {
+      display: flex; align-items: flex-start; gap: 8px; background: #F5EDD8;
+      border-radius: 8px; padding: 7px 10px; font-size: 13px; color: #4A2E0A; line-height: 1.4;
+    }
+    .ing-num { color: #8B5C14; font-weight: 700; flex-shrink: 0; min-width: 18px; }
+    .ing-text, .step-text {
+      flex: 1; font-family: Georgia,serif; font-size: 13px; color: #4A2E0A;
+      border: none; background: transparent; outline: none; resize: none;
+      line-height: 1.45; padding: 0;
+    }
+    .add-btn {
+      width: 100%; padding: 8px; border: 1.5px dashed #C4A46A; border-radius: 8px;
+      background: none; color: #8B5C14; font-family: Georgia,serif; font-size: 13px;
+      cursor: pointer; margin-top: 4px;
+    }
+
+    .card-footer { display: flex; align-items: center; gap: 10px; padding: 0 18px 18px; }
+    .card-skip-btn {
+      flex: 1; padding: 10px; border: 1.5px solid #C4A46A; border-radius: 24px;
+      background: none; color: #8B6A3A; font-family: Georgia,serif; font-size: 14px; cursor: pointer;
+    }
+    .card.skipped { opacity: .4; }
+    .card-import-btn {
+      flex: 2; padding: 10px; border: none; border-radius: 24px;
+      background: #8B5C14; color: #FDF8EE; font-family: Georgia,serif; font-size: 14px; font-weight: 700; cursor: pointer;
+    }
+    .card-import-btn:disabled { opacity: .45; cursor: default; }
+    .card-done { text-align: center; padding: 10px 18px 18px; color: #5C3317; font-size: 13px; font-style: italic; }
+
+    .import-all-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #2C1808; border-top: 1px solid #5A2C08;
+      padding: 12px 20px max(12px, env(safe-area-inset-bottom));
+      display: none;
+    }
+    .import-all-bar.visible { display: block; }
+    .import-all-btn {
+      width: 100%; max-width: 480px; margin: 0 auto; display: block;
+      padding: 14px; border: none; border-radius: 28px;
+      background: #8B5C14; color: #FDF8EE; font-family: Georgia,serif; font-size: 16px; font-weight: 700; cursor: pointer;
+    }
+    .import-all-btn:disabled { opacity: .45; }
+
+    .back { display: block; text-align: center; margin: 24px auto 0; font-size: 13px; color: #D4A96A; text-decoration: none; max-width: 480px; }
+    .error-badge { background: #C0392B; color: #FFF; font-size: 12px; border-radius: 8px; padding: 3px 8px; margin-top: 4px; display: inline-block; }
+    .no-data-hint { font-size: 12px; color: #A8875A; font-style: italic; margin-top: 4px; }
+  </style>
+</head>
+<body>
+<h1>PDF Rezepte importieren</h1>
+
+<div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+  <div class="drop-zone-icon">📄</div>
+  <div class="drop-zone-text">PDFs hier ablegen oder antippen</div>
+  <div class="drop-zone-sub">Mehrere Dateien gleichzeitig möglich</div>
+  <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple>
+</div>
+<input type="file" id="fileInput" accept=".pdf,application/pdf" multiple style="display:none">
+
+<div class="cards" id="cards"></div>
+<a class="back" href="rezeptbuch.html">← Zum Rezeptbuch</a>
+
+<div class="import-all-bar" id="importAllBar">
+  <button class="import-all-btn" id="importAllBtn" onclick="importAll()">Alle importieren</button>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+/* ── IndexedDB (same schema as rezeptbuch) ── */
+const IMG_DB='kt_recipe_imgs', IMG_STORE='images';
+let _db=null;
+function openDB(){
+  if(_db) return Promise.resolve(_db);
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(IMG_DB,1);
+    r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(IMG_STORE)){const s=db.createObjectStore(IMG_STORE,{keyPath:'id',autoIncrement:true});s.createIndex('recipeId','recipeId',{unique:false});}};
+    r.onsuccess=e=>{_db=e.target.result;res(_db);};
+    r.onerror=e=>rej(e.target.error);
+  });
+}
+async function saveImage(recipeId,dataUrl){
+  const db=await openDB();
+  return new Promise(res=>{const tx=db.transaction(IMG_STORE,'readwrite');const r=tx.objectStore(IMG_STORE).add({recipeId,dataUrl});r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);});
+}
+
+/* ── localStorage recipes ── */
+function loadRecipes(){try{return JSON.parse(localStorage.getItem('rezepte_v2')||'{}');}catch{return {};}}
+function saveRecipes(r){localStorage.setItem('rezepte_v2',JSON.stringify(r));}
+
+/* ── PDF parsing ── */
+async function extractPDF(file){
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+
+  // Render page 1 → JPEG thumbnail
+  let coverImage=null;
+  try{
+    const p1=await pdf.getPage(1);
+    const vp=p1.getViewport({scale:1.4});
+    const c=document.createElement('canvas');
+    c.width=vp.width; c.height=vp.height;
+    await p1.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+    coverImage=c.toDataURL('image/jpeg',0.75);
+  }catch(e){}
+
+  // Extract text from all pages, preserve line breaks
+  const pageTexts=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const tc=await page.getTextContent();
+    const byY={};
+    tc.items.forEach(item=>{
+      if(!item.str.trim()) return;
+      const y=Math.round(item.transform[5]/3)*3; // bucket to 3px
+      if(!byY[y]) byY[y]=[];
+      byY[y].push({x:item.transform[4],str:item.str,h:item.height||0});
+    });
+    const sortedYs=Object.keys(byY).map(Number).sort((a,b)=>b-a); // top→bottom
+    const lines=sortedYs.map(y=>byY[y].sort((a,b)=>a.x-b.x).map(i=>i.str).join(' ').trim()).filter(Boolean);
+    pageTexts.push(lines);
+  }
+  return{coverImage, lines:pageTexts.flat(), fileName:file.name.replace(/\.pdf$/i,'')};
+}
+
+function parseRecipe({lines, fileName}){
+  /* ── Title ── */
+  let name=fileName, titleEnd=0;
+  for(let i=0;i<Math.min(8,lines.length);i++){
+    const l=lines[i];
+    if(l.length>=3&&l.length<=100&&!/^(zutaten|ingredients|zubereitung|anleitung|preparation|steps|für|for)/i.test(l)){
+      name=l.replace(/^\d+\.\s*/,'').trim(); titleEnd=i+1; break;
+    }
+  }
+
+  /* ── Section indices ── */
+  const idxOf=pat=>lines.findIndex((l,i)=>i>=titleEnd&&pat.test(l.trim()));
+  const zIdx=idxOf(/^(zutaten|ingredients?)\s*:?\s*$/i);
+  const zIdx2=idxOf(/^(zubereitung|anleitung|zubereiten|preparation|steps|so geht|method)\s*:?\s*$/i);
+
+  /* ── Servings ── */
+  let servings=4;
+  const portLine=lines.find(l=>/(\d+)\s*(portion|personen|serves?|ergibt|für \d)/i.test(l));
+  if(portLine){const m=portLine.match(/(\d+)/);if(m)servings=Math.max(1,parseInt(m[1]));}
+
+  /* ── Ingredients ── */
+  const ingredients=[];
+  const ingStart=zIdx>=0?zIdx+1:titleEnd;
+  const ingEnd=zIdx2>=0?zIdx2:lines.length;
+  const measureRe=/^([\d½¼¾]+[\.,]?[\d]*)\s*(g|kg|ml|l|cl|EL|TL|Pr\.|Stk\.?|Stück|Prise|Pck\.?|Tasse|Zehe|Bund|Scheibe|Handvoll|cup|tbsp|tsp|oz|lb)\.?\s+(.+)/i;
+  const bulletRe=/^[-•*]\s+(.+)/;
+  for(let i=ingStart;i<Math.min(ingEnd,ingStart+60);i++){
+    const l=lines[i].trim();
+    if(!l||l.length>120) continue;
+    if(/^(zubereitung|anleitung|preparation|steps|so geht)/i.test(l)) break;
+    const m=l.match(measureRe);
+    if(m){
+      ingredients.push({name:m[3].trim(),emoji:'🍽️',amount:parseFloat(m[1].replace(',','.').replace('½','0.5').replace('¼','0.25').replace('¾','0.75')),unit:m[2].replace(/\.$/,''),custom:true});
+    } else {
+      const b=l.match(bulletRe);
+      if(b) ingredients.push({name:b[1].trim(),emoji:'🍽️',amount:1,unit:'Stück',custom:true});
+      else if(zIdx<0&&l.match(/\d/)&&l.length<60) ingredients.push({name:l,emoji:'🍽️',amount:1,unit:'Stück',custom:true});
+    }
+  }
+
+  /* ── Steps ── */
+  const steps=[];
+  const stepStart=zIdx2>=0?zIdx2+1:Math.max(ingEnd,titleEnd);
+  let buf='';
+  for(let i=stepStart;i<lines.length;i++){
+    const l=lines[i].trim();
+    if(!l) continue;
+    if(/^\d+[\.\)]\s/.test(l)){
+      if(buf) steps.push(buf.trim());
+      buf=l.replace(/^\d+[\.\)]\s+/,'');
+    } else if(l.length>20){
+      buf+=( buf?( buf.endsWith('.')||buf.endsWith('!')||buf.endsWith('?')?' ':' ') :'' )+l;
+      if(buf.length>300){steps.push(buf.trim());buf='';}
+    }
+  }
+  if(buf) steps.push(buf.trim());
+
+  /* ── Category heuristic ── */
+  const txt=lines.join(' ').toLowerCase();
+  let category='Hauptgericht';
+  if(/kuchen|torte|muffin|gebäck|cookie|brot|brötchen|backen/.test(txt)) category='Backen';
+  else if(/\bsalat\b/.test(txt)) category='Salat';
+  else if(/suppe|eintopf|brühe/.test(txt)) category='Suppe';
+  else if(/snack|dip|aufstrich|fingerfood/.test(txt)) category='Snack';
+  else if(/frühstück|pancake|oatmeal|müsli|porridge/.test(txt)) category='Frühstück';
+  else if(/dessert|nachspeise|pudding|eis|mousse|parfait/.test(txt)) category='Dessert';
+  else if(/smoothie|shake|getränk|cocktail|drink/.test(txt)) category='Getränk';
+  else if(/dressing|marinade|sauce|soße/.test(txt)) category='Dressing';
+
+  return{name,servings,ingredients,steps,category};
+}
+
+/* ── UI ── */
+const parsed=[];
+let cardCount=0;
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+async function handleFiles(files){
+  const bar=document.getElementById('importAllBar');
+  for(const file of files){
+    if(!file.name.toLowerCase().endsWith('.pdf')) continue;
+    const idx=cardCount++;
+    const card=document.createElement('div');
+    card.className='card'; card.id='card-'+idx;
+    card.innerHTML=`<div class="card-loading"><span class="spinner">⏳</span>${esc(file.name)} wird verarbeitet…</div>`;
+    document.getElementById('cards').appendChild(card);
+    bar.classList.add('visible');
+
+    try{
+      const raw=await extractPDF(file);
+      const recipe=parseRecipe(raw);
+      parsed[idx]={...recipe,coverImage:raw.coverImage,done:false,skip:false};
+      renderCard(idx);
+    }catch(e){
+      card.innerHTML=`<div class="card-loading"><div class="error-badge">Fehler beim Laden</div><br><small>${esc(file.name)}</small></div>`;
+    }
+  }
+}
+
+function renderCard(idx){
+  const d=parsed[idx];
+  const card=document.getElementById('card-'+idx);
+  const cats=['Backen','Beilage','Dressing','Dessert','Frühstück','Getränk','Hauptgericht','Salat','Snack','Suppe','Sonstiges'];
+  const catOpts=cats.map(c=>`<option value="${c}"${c===d.category?' selected':''}>${c}</option>`).join('');
+  const ings=d.ingredients.map((ing,i)=>`
+    <div class="ing-item">
+      <span class="ing-num">•</span>
+      <textarea class="ing-text" rows="1" oninput="autoResize(this);updateIng(${idx},${i},this.value)">${esc(ingLine(ing))}</textarea>
+    </div>`).join('');
+  const stps=d.steps.map((s,i)=>`
+    <div class="step-item">
+      <span class="ing-num">${i+1}</span>
+      <textarea class="step-text" rows="2" oninput="autoResize(this);updateStep(${idx},${i},this.value)">${esc(s)}</textarea>
+    </div>`).join('');
+
+  card.innerHTML=`
+    ${d.coverImage?`<img class="card-thumb" src="${d.coverImage}" alt="Vorschau">`:''}
+    <div class="card-body">
+      <div class="card-section">
+        <div class="card-label">Rezeptname</div>
+        <input class="card-input" value="${esc(d.name)}" oninput="parsed[${idx}].name=this.value">
+      </div>
+      <div class="card-row">
+        <div class="card-field">
+          <div class="card-label">Kategorie</div>
+          <select class="card-input" onchange="parsed[${idx}].category=this.value">${catOpts}</select>
+        </div>
+        <div class="card-field" style="max-width:90px">
+          <div class="card-label">Portionen</div>
+          <input class="card-input" type="number" min="1" max="99" value="${d.servings}" oninput="parsed[${idx}].servings=parseInt(this.value)||1">
+        </div>
+      </div>
+      <div class="card-section">
+        <div class="card-section-title">Zutaten ${d.ingredients.length===0?'<span class="no-data-hint">(keine erkannt — bitte manuell ergänzen)</span>':''}</div>
+        <div class="ing-list" id="ings-${idx}">${ings}</div>
+        <button class="add-btn" onclick="addIng(${idx})">+ Zutat hinzufügen</button>
+      </div>
+      <div class="card-section">
+        <div class="card-section-title">Zubereitung ${d.steps.length===0?'<span class="no-data-hint">(keine erkannt — bitte manuell ergänzen)</span>':''}</div>
+        <div class="step-list" id="steps-${idx}">${stps}</div>
+        <button class="add-btn" onclick="addStep(${idx})">+ Schritt hinzufügen</button>
+      </div>
+    </div>
+    <div class="card-footer">
+      <button class="card-skip-btn" onclick="skipCard(${idx})">Überspringen</button>
+      <button class="card-import-btn" id="ibtn-${idx}" onclick="importOne(${idx})">Importieren</button>
+    </div>`;
+  card.querySelectorAll('textarea').forEach(autoResize);
+}
+
+function ingLine(ing){
+  if(ing.amount&&ing.unit&&ing.unit!=='Stück') return `${ing.amount} ${ing.unit} ${ing.name}`;
+  if(ing.amount&&ing.amount!==1) return `${ing.amount} ${ing.name}`;
+  return ing.name;
+}
+
+function autoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+
+function updateIng(idx,i,val){parsed[idx].ingredients[i]._raw=val;}
+function updateStep(idx,i,val){parsed[idx].steps[i]=val;}
+
+function addIng(idx){
+  parsed[idx].ingredients.push({name:'',emoji:'🍽️',amount:1,unit:'Stück',custom:true});
+  renderCard(idx);
+}
+function addStep(idx){parsed[idx].steps.push('');renderCard(idx);}
+
+function skipCard(idx){
+  parsed[idx].skip=true;
+  const card=document.getElementById('card-'+idx);
+  card.classList.add('skipped');
+  card.querySelector('.card-footer').innerHTML='<div class="card-done">Übersprungen</div>';
+}
+
+function parseIngLine(raw){
+  if(!raw||!raw.trim()) return null;
+  const m=raw.trim().match(/^([\d½¼¾]+[\.,]?[\d]*)\s*(g|kg|ml|l|cl|EL|TL|Stück|Prise|Pck\.?|Tasse|Zehe|Bund|Scheibe|Handvoll|cup|tbsp|tsp|oz|lb)?\.?\s+(.+)/i);
+  if(m) return{name:m[3].trim(),emoji:'🍽️',amount:parseFloat(m[1].replace(',','.').replace('½','0.5').replace('¼','0.25').replace('¾','0.75'))||1,unit:(m[2]||'Stück').replace(/\.$/,''),custom:true};
+  return{name:raw.trim(),emoji:'🍽️',amount:1,unit:'Stück',custom:true};
+}
+
+async function importOne(idx){
+  const d=parsed[idx];
+  if(d.done||d.skip) return;
+  const btn=document.getElementById('ibtn-'+idx);
+  btn.disabled=true; btn.textContent='Wird gespeichert…';
+
+  const id='pdf_'+Date.now()+'_'+idx;
+  const ings=d.ingredients.map((ing,i)=>{
+    const raw=ing._raw;
+    return raw!==undefined?parseIngLine(raw)||ing:ing;
+  }).filter(i=>i&&i.name);
+
+  const recipe={
+    id, name:d.name.trim()||'Unbekanntes Rezept',
+    emoji:'🍽️', category:d.category, servings:d.servings||4,
+    description:'', ingredients:ings,
+    steps:d.steps.filter(s=>s.trim()),
+    createdAt:Date.now()
+  };
+
+  const recipes=loadRecipes();
+  recipes[id]=recipe;
+  saveRecipes(recipes);
+
+  if(d.coverImage){
+    try{ await saveImage(id,d.coverImage); }catch(e){}
+  }
+
+  parsed[idx].done=true;
+  document.getElementById('card-'+idx).querySelector('.card-footer').innerHTML=
+    `<div class="card-done">✓ Importiert als „${esc(recipe.name)}"</div>`;
+}
+
+async function importAll(){
+  const btn=document.getElementById('importAllBtn');
+  btn.disabled=true; btn.textContent='Importiere…';
+  for(let i=0;i<parsed.length;i++){
+    if(!parsed[i].done&&!parsed[i].skip) await importOne(i);
+  }
+  btn.textContent='✓ Alle importiert — Zum Rezeptbuch';
+  btn.onclick=()=>location.href='rezeptbuch.html';
+  btn.disabled=false;
+}
+
+/* ── Drag & drop / file picker ── */
+const dz=document.getElementById('dropZone');
+const fi=document.getElementById('fileInput');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');handleFiles([...e.dataTransfer.files]);});
+fi.addEventListener('change',()=>{handleFiles([...fi.files]);fi.value='';});
+dz.addEventListener('click',()=>fi.click());
+</script>
+</body>
+</html>
