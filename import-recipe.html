@@ -60,6 +60,18 @@
   <div class="msg" id="msg-2"></div>
 </div>
 
+<div class="card" id="card-3">
+  <div class="card-top">
+    <div class="card-emoji">🍋</div>
+    <div class="card-info">
+      <div class="card-name">Cremige Zitronen-Pasta</div>
+      <div class="card-meta">Hauptgericht · 2 Portionen · cremig, frisch, schnell</div>
+    </div>
+  </div>
+  <button class="btn" onclick="importRecipe(3)">Importieren</button>
+  <div class="msg" id="msg-3"></div>
+</div>
+
 <a class="back" href="rezeptbuch.html">← Zum Rezeptbuch</a>
 
 <script>
@@ -135,6 +147,38 @@ const RECIPES = [
       'Mit Salz und Pfeffer abschmecken.',
       'Frischen Schnittlauch fein schneiden und unterheben.',
       'Das Dressing über den Kopfsalat geben und sofort servieren.'
+    ]
+  },
+  {
+    name: 'Cremige Zitronen-Pasta',
+    emoji: '🍋',
+    category: 'Hauptgericht',
+    servings: 2,
+    description: 'Schnelle cremige Pasta mit Parmesan-Zitronen-Sauce – seidig, frisch und in unter 30 Minuten auf dem Tisch.',
+    ingredients: [
+      { name: 'Spaghetti', emoji: '🍝', amount: 250, unit: 'g', kcalPer100: 357, proteinPer100: 13, carbsPer100: 71, fatPer100: 1.5, custom: true },
+      { name: 'Butter', emoji: '🧈', amount: 2, unit: 'EL', kcalPer100: 740, proteinPer100: 0.7, carbsPer100: 0.6, fatPer100: 83, custom: true },
+      { name: 'Olivenöl', emoji: '🫙', amount: 1, unit: 'EL', kcalPer100: 900, proteinPer100: 0, carbsPer100: 0, fatPer100: 100, custom: true },
+      { name: 'Zwiebel', emoji: '🧅', amount: 1, unit: 'Stück', kcalPer100: 40, proteinPer100: 1.1, carbsPer100: 9, fatPer100: 0.1, custom: true },
+      { name: 'Mehl', emoji: '🌾', amount: 1, unit: 'EL', kcalPer100: 340, proteinPer100: 10, carbsPer100: 72, fatPer100: 1, custom: true },
+      { name: 'Hühnerbrühe', emoji: '🍲', amount: 240, unit: 'ml', kcalPer100: 5, proteinPer100: 0.3, carbsPer100: 1, fatPer100: 0, custom: true },
+      { name: 'Sahne', emoji: '🥛', amount: 240, unit: 'ml', kcalPer100: 300, proteinPer100: 2.5, carbsPer100: 3, fatPer100: 30, custom: true },
+      { name: 'Parmesan', emoji: '🧀', amount: 80, unit: 'g', kcalPer100: 431, proteinPer100: 38, carbsPer100: 0, fatPer100: 29, custom: true },
+      { name: 'Knoblauchpulver', emoji: '🧄', amount: 1, unit: 'TL', kcalPer100: 330, proteinPer100: 17, carbsPer100: 73, fatPer100: 0.5, custom: true },
+      { name: 'Italienische Kräuter', emoji: '🌿', amount: 1, unit: 'TL', kcalPer100: 265, proteinPer100: 9, carbsPer100: 60, fatPer100: 4, custom: true },
+      { name: 'Zitrone (Abrieb + Saft)', emoji: '🍋', amount: 1, unit: 'Stück', kcalPer100: 29, proteinPer100: 1.1, carbsPer100: 9, fatPer100: 0.3, custom: true },
+      { name: 'Salz, Pfeffer & Chiliflocken', emoji: '🧂', amount: 1, unit: 'Prise', kcalPer100: 0, proteinPer100: 0, carbsPer100: 0, fatPer100: 0, custom: true },
+      { name: 'Petersilie', emoji: '🌿', amount: 1, unit: 'Handvoll', kcalPer100: 36, proteinPer100: 3, carbsPer100: 6, fatPer100: 0.8, custom: true }
+    ],
+    steps: [
+      'Spaghetti in Salzwasser al dente kochen. Vor dem Abgießen eine Tasse Nudelwasser aufbewahren.',
+      'Zwiebel fein würfeln. Butter und Olivenöl in einer großen Pfanne bei mittlerer Hitze erhitzen, Zwiebel darin glasig dünsten.',
+      'Mehl einstreuen und 1 Minute mitrösten.',
+      'Hühnerbrühe einrühren und dabei klümpchenfrei verrühren. Sahne dazugeben und alles aufkochen lassen.',
+      'Mit Knoblauchpulver, italienischen Kräutern, Salz, Pfeffer und Chiliflocken würzen.',
+      'Parmesan, Zitronenabrieb und 1–2 TL Zitronensaft einrühren, bis die Sauce cremig ist.',
+      'Spaghetti mit einem Schuss Nudelwasser in die Sauce geben und schwenken, bis alles seidig glänzt.',
+      'Mit gehackter Petersilie und extra Parmesan servieren.'
     ]
   }
 ];
