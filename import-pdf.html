@@ -108,7 +108,6 @@
   <div class="drop-zone-sub">Mehrere Dateien gleichzeitig möglich</div>
   <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple>
 </div>
-<input type="file" id="fileInput" accept=".pdf,application/pdf" multiple style="display:none">
 
 <div class="cards" id="cards"></div>
 <a class="back" href="rezeptbuch.html">← Zum Rezeptbuch</a>
@@ -119,6 +118,9 @@
 
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+function parseFrac(s){return parseFloat(String(s).replace(',','.').replace('½','0.5').replace('¼','0.25').replace('¾','0.75'))||1;}
+function numToFrac(n){if(n===0.5)return'½';if(n===0.25)return'¼';if(n===0.75)return'¾';if(n===1.5)return'1½';return Number.isInteger(n)?String(n):String(n);}
 
 /* ── IndexedDB (same schema as rezeptbuch) ── */
 const IMG_DB='kt_recipe_imgs', IMG_STORE='images';
@@ -157,58 +159,175 @@ async function extractPDF(file){
     coverImage=c.toDataURL('image/jpeg',0.75);
   }catch(e){}
 
-  // Extract text from all pages, preserve line breaks
-  const pageTexts=[];
+  // Extract text from all pages; null = paragraph gap
+  const allLines=[];
   for(let p=1;p<=pdf.numPages;p++){
     const page=await pdf.getPage(p);
     const tc=await page.getTextContent();
     const byY={};
     tc.items.forEach(item=>{
       if(!item.str.trim()) return;
-      const y=Math.round(item.transform[5]/3)*3; // bucket to 3px
+      const y=Math.round(item.transform[5]/3)*3;
       if(!byY[y]) byY[y]=[];
-      byY[y].push({x:item.transform[4],str:item.str,h:item.height||0});
+      byY[y].push({x:item.transform[4],str:item.str});
     });
-    const sortedYs=Object.keys(byY).map(Number).sort((a,b)=>b-a); // top→bottom
-    const lines=sortedYs.map(y=>byY[y].sort((a,b)=>a.x-b.x).map(i=>i.str).join(' ').trim()).filter(Boolean);
-    pageTexts.push(lines);
+    const sortedYs=Object.keys(byY).map(Number).sort((a,b)=>b-a);
+    let prevY=null;
+    for(const y of sortedYs){
+      if(prevY!==null&&prevY-y>18) allLines.push(null);
+      const t=byY[y].sort((a,b)=>a.x-b.x).map(i=>i.str).join(' ').trim();
+      if(t) allLines.push(t);
+      prevY=y;
+    }
   }
-  return{coverImage, lines:pageTexts.flat(), fileName:file.name.replace(/\.pdf$/i,'')};
+  return{coverImage, lines:allLines, fileName:file.name.replace(/\.pdf$/i,'')};
 }
 
-function parseRecipe({lines, fileName}){
-  /* ── Title ── */
-  let name=fileName, titleEnd=0;
+function guessCategory(txt){
+  if(/kuchen|torte|muffin|gebäck|cookie|brot|brötchen|backen/.test(txt)) return'Backen';
+  if(/\bsalat\b/.test(txt)) return'Salat';
+  if(/suppe|eintopf|brühe/.test(txt)) return'Suppe';
+  if(/snack|dip|aufstrich|fingerfood/.test(txt)) return'Snack';
+  if(/frühstück|pancake|oatmeal|müsli|porridge/.test(txt)) return'Frühstück';
+  if(/dessert|nachspeise|pudding|eis|mousse|parfait/.test(txt)) return'Dessert';
+  if(/smoothie|shake|getränk|cocktail|drink/.test(txt)) return'Getränk';
+  if(/dressing|marinade|sauce|soße/.test(txt)) return'Dressing';
+  return'Hauptgericht';
+}
+
+/* ── Chefkoch-specific parser ── */
+function parseChefkochRecipe(lines, fileName){
+  const noiseRe=/^(arbeitszeit|gesamtzeit|kochzeit|backzeit|schwierigkeitsgrad|nährwerte|energie \d|eiweiß \d|fett \d|kohlenhydrate \d|rezept von:?|www\.chefkoch|tipp:|hinweis:)/i;
+  const fullIngRe=/^([\d½¼¾]+[\.,]?[\d]*)\s+(g|kg|ml|l|cl|EL|TL|Stk\.?|Stück|Prise|Pck\.?|Tasse|Zehe|Bund|Scheibe|Handvoll)\s+(\S.{0,60})/i;
+  const amtUnitRe=/^([\d½¼¾]+[\.,]?[\d]*)\s+(g|kg|ml|l|cl|EL|TL|Stk\.?|Stück|Prise|Pck\.?|Tasse|Zehe|Bund|Scheibe|Handvoll)\.?\s*$/i;
+  const amtOnlyRe=/^([\d½¼¾]+[\.,]?[\d]*)\s*$/;
+  const countIngRe=/^(\d+)\s+([A-Za-zäöüÄÖÜß(].{0,60})/;
+
+  // Find title (skip "Rezept online aufrufen")
+  let name=fileName, titleIdx=0;
   for(let i=0;i<Math.min(8,lines.length);i++){
     const l=lines[i];
+    if(!l||/^rezept online aufrufen$/i.test(l.trim())) continue;
+    name=l.trim(); titleIdx=i; break;
+  }
+
+  // Find key positions
+  const findIdx=pat=>lines.findIndex(l=>l&&pat.test(l.trim()));
+  const zutatenIdx=findIdx(/^zutaten für \d+/i);
+  const metaIdx=findIdx(/^(arbeitszeit\s+\d|gesamtzeit\s+\d)/i);
+
+  let servings=4;
+  if(zutatenIdx>=0){const m=lines[zutatenIdx].match(/(\d+)/);if(m)servings=parseInt(m[1]);}
+
+  // Steps = prose text between title and metadata (whichever comes first)
+  const stepEnd=Math.min(
+    metaIdx>=0?metaIdx:Infinity,
+    zutatenIdx>=0?zutatenIdx:Infinity,
+    lines.length
+  );
+  const steps=[];
+  let buf='';
+  for(let i=titleIdx+1;i<stepEnd;i++){
+    const l=lines[i];
+    if(l===null){if(buf.trim()){steps.push(buf.trim());buf='';} continue;}
+    const lt=l.trim();
+    if(!lt||noiseRe.test(lt)){if(buf.trim()){steps.push(buf.trim());buf='';}continue;}
+    buf+=(buf?' ':'')+lt;
+    if(buf.length>350&&/[.!?]$/.test(lt)){steps.push(buf.trim());buf='';}
+  }
+  if(buf.trim()) steps.push(buf.trim());
+
+  // Ingredients after "Zutaten für X Portionen"
+  const ingredients=[];
+  if(zutatenIdx>=0){
+    const ingEndIdx=lines.findIndex((l,i)=>i>zutatenIdx&&l&&/^(rezept von:?|www\.|chefkoch)/i.test(l.trim()));
+    const ingEnd=ingEndIdx>=0?ingEndIdx:lines.length;
+    let i=zutatenIdx+1;
+    const skipNulls=()=>{while(i<ingEnd&&lines[i]===null)i++;};
+    const peekQualifier=(ing)=>{
+      skipNulls();
+      if(i<ingEnd&&lines[i]){
+        const nx=(lines[i]||'').trim();
+        if(nx&&!/^[\d½¼¾]/.test(nx)&&nx.length<50&&!fullIngRe.test(nx)&&!amtUnitRe.test(nx)&&!amtOnlyRe.test(nx)&&!noiseRe.test(nx)){
+          ing.name+=', '+nx; i++;
+        }
+      }
+    };
+    while(i<ingEnd){
+      const l=lines[i]; i++;
+      if(l===null) continue;
+      const lt=l.trim();
+      if(!lt||noiseRe.test(lt)) continue;
+      let m=lt.match(fullIngRe);
+      if(m){const ing={name:m[3].trim(),emoji:'🍽️',amount:parseFrac(m[1]),unit:m[2].replace(/\.$/,''),custom:true};peekQualifier(ing);ingredients.push(ing);continue;}
+      m=lt.match(amtUnitRe);
+      if(m){
+        const amount=parseFrac(m[1]),unit=m[2].replace(/\.$/,'');
+        skipNulls();
+        if(i<ingEnd&&lines[i]){
+          const ing={name:(lines[i]||'').trim(),emoji:'🍽️',amount,unit,custom:true}; i++;
+          if(ing.name&&!noiseRe.test(ing.name)){peekQualifier(ing);ingredients.push(ing);}
+        }
+        continue;
+      }
+      m=lt.match(amtOnlyRe);
+      if(m){
+        const amount=parseFrac(m[1]);
+        skipNulls();
+        if(i<ingEnd&&lines[i]){
+          const ing={name:(lines[i]||'').trim(),emoji:'🍽️',amount,unit:'Stück',custom:true}; i++;
+          if(ing.name&&!noiseRe.test(ing.name)){peekQualifier(ing);ingredients.push(ing);}
+        }
+        continue;
+      }
+      m=lt.match(countIngRe);
+      if(m){ingredients.push({name:m[2].trim(),emoji:'🍽️',amount:parseInt(m[1]),unit:'Stück',custom:true});continue;}
+      if(lt.length<80) ingredients.push({name:lt,emoji:'🍽️',amount:0,unit:'',custom:true});
+    }
+  }
+
+  return{name,servings,ingredients,steps,category:guessCategory(lines.filter(Boolean).join(' ').toLowerCase())};
+}
+
+/* ── Generic recipe parser ── */
+function parseRecipe({lines, fileName}){
+  // Chefkoch detection
+  if(lines.some(l=>l&&/^zutaten für \d+/i.test(l.trim()))) return parseChefkochRecipe(lines,fileName);
+
+  const tl=lines.filter(Boolean); // strip null paragraph markers
+
+  /* ── Title ── */
+  let name=fileName, titleEnd=0;
+  for(let i=0;i<Math.min(8,tl.length);i++){
+    const l=tl[i];
     if(l.length>=3&&l.length<=100&&!/^(zutaten|ingredients|zubereitung|anleitung|preparation|steps|für|for)/i.test(l)){
       name=l.replace(/^\d+\.\s*/,'').trim(); titleEnd=i+1; break;
     }
   }
 
   /* ── Section indices ── */
-  const idxOf=pat=>lines.findIndex((l,i)=>i>=titleEnd&&pat.test(l.trim()));
+  const idxOf=pat=>tl.findIndex((l,i)=>i>=titleEnd&&pat.test(l.trim()));
   const zIdx=idxOf(/^(zutaten|ingredients?)\s*:?\s*$/i);
   const zIdx2=idxOf(/^(zubereitung|anleitung|zubereiten|preparation|steps|so geht|method)\s*:?\s*$/i);
 
   /* ── Servings ── */
   let servings=4;
-  const portLine=lines.find(l=>/(\d+)\s*(portion|personen|serves?|ergibt|für \d)/i.test(l));
+  const portLine=tl.find(l=>/(\d+)\s*(portion|personen|serves?|ergibt|für \d)/i.test(l));
   if(portLine){const m=portLine.match(/(\d+)/);if(m)servings=Math.max(1,parseInt(m[1]));}
 
   /* ── Ingredients ── */
   const ingredients=[];
   const ingStart=zIdx>=0?zIdx+1:titleEnd;
-  const ingEnd=zIdx2>=0?zIdx2:lines.length;
+  const ingEnd=zIdx2>=0?zIdx2:tl.length;
   const measureRe=/^([\d½¼¾]+[\.,]?[\d]*)\s*(g|kg|ml|l|cl|EL|TL|Pr\.|Stk\.?|Stück|Prise|Pck\.?|Tasse|Zehe|Bund|Scheibe|Handvoll|cup|tbsp|tsp|oz|lb)\.?\s+(.+)/i;
   const bulletRe=/^[-•*]\s+(.+)/;
   for(let i=ingStart;i<Math.min(ingEnd,ingStart+60);i++){
-    const l=lines[i].trim();
+    const l=tl[i].trim();
     if(!l||l.length>120) continue;
     if(/^(zubereitung|anleitung|preparation|steps|so geht)/i.test(l)) break;
     const m=l.match(measureRe);
     if(m){
-      ingredients.push({name:m[3].trim(),emoji:'🍽️',amount:parseFloat(m[1].replace(',','.').replace('½','0.5').replace('¼','0.25').replace('¾','0.75')),unit:m[2].replace(/\.$/,''),custom:true});
+      ingredients.push({name:m[3].trim(),emoji:'🍽️',amount:parseFrac(m[1]),unit:m[2].replace(/\.$/,''),custom:true});
     } else {
       const b=l.match(bulletRe);
       if(b) ingredients.push({name:b[1].trim(),emoji:'🍽️',amount:1,unit:'Stück',custom:true});
@@ -220,32 +339,20 @@ function parseRecipe({lines, fileName}){
   const steps=[];
   const stepStart=zIdx2>=0?zIdx2+1:Math.max(ingEnd,titleEnd);
   let buf='';
-  for(let i=stepStart;i<lines.length;i++){
-    const l=lines[i].trim();
+  for(let i=stepStart;i<tl.length;i++){
+    const l=tl[i].trim();
     if(!l) continue;
     if(/^\d+[\.\)]\s/.test(l)){
       if(buf) steps.push(buf.trim());
       buf=l.replace(/^\d+[\.\)]\s+/,'');
     } else if(l.length>20){
-      buf+=( buf?( buf.endsWith('.')||buf.endsWith('!')||buf.endsWith('?')?' ':' ') :'' )+l;
+      buf+=(buf?' ':'')+l;
       if(buf.length>300){steps.push(buf.trim());buf='';}
     }
   }
   if(buf) steps.push(buf.trim());
 
-  /* ── Category heuristic ── */
-  const txt=lines.join(' ').toLowerCase();
-  let category='Hauptgericht';
-  if(/kuchen|torte|muffin|gebäck|cookie|brot|brötchen|backen/.test(txt)) category='Backen';
-  else if(/\bsalat\b/.test(txt)) category='Salat';
-  else if(/suppe|eintopf|brühe/.test(txt)) category='Suppe';
-  else if(/snack|dip|aufstrich|fingerfood/.test(txt)) category='Snack';
-  else if(/frühstück|pancake|oatmeal|müsli|porridge/.test(txt)) category='Frühstück';
-  else if(/dessert|nachspeise|pudding|eis|mousse|parfait/.test(txt)) category='Dessert';
-  else if(/smoothie|shake|getränk|cocktail|drink/.test(txt)) category='Getränk';
-  else if(/dressing|marinade|sauce|soße/.test(txt)) category='Dressing';
-
-  return{name,servings,ingredients,steps,category};
+  return{name,servings,ingredients,steps,category:guessCategory(tl.join(' ').toLowerCase())};
 }
 
 /* ── UI ── */
@@ -328,8 +435,9 @@ function renderCard(idx){
 }
 
 function ingLine(ing){
-  if(ing.amount&&ing.unit&&ing.unit!=='Stück') return `${ing.amount} ${ing.unit} ${ing.name}`;
-  if(ing.amount&&ing.amount!==1) return `${ing.amount} ${ing.name}`;
+  const hasUnit=ing.unit&&!['Stück','nach Bedarf',''].includes(ing.unit);
+  if(hasUnit&&ing.amount>0) return `${numToFrac(ing.amount)} ${ing.unit} ${ing.name}`;
+  if(ing.amount>0&&ing.amount!==1) return `${numToFrac(ing.amount)} ${ing.name}`;
   return ing.name;
 }
 
