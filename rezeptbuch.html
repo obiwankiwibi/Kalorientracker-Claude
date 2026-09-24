@@ -571,7 +571,10 @@ function _ing(name,emoji,qty,u){
     ];
     let changed=false;
     seeds.forEach(r=>{
-      if(!existing[r.id]){existing[r.id]={...r,createdAt:1753315200000};changed=true;}
+      const ex=existing[r.id];
+      // overwrite if missing OR if ingredients use old schema (has .amount instead of .amountG)
+      const needsUpdate=!ex||(ex.ingredients&&ex.ingredients[0]&&'amount' in ex.ingredients[0]&&!('amountG' in ex.ingredients[0]));
+      if(needsUpdate){existing[r.id]={...r,createdAt:(ex&&ex.createdAt)||1753315200000};changed=true;}
     });
     if(changed) localStorage.setItem(RECIPE_STORE,JSON.stringify(existing));
   } catch(e){}
