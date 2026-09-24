@@ -33,24 +33,43 @@ a.back{display:block;text-align:center;margin:18px auto 0;font-size:13px;color:#
 <a class="back" href="rezeptbuch.html" id="backLink">← Zum Rezeptbuch</a>
 
 <script>
+// Converts raw ingredient {name,emoji,qty,unitRaw} to the schema rezeptbuch.html uses
+function ingToSchema(name, emoji, qty, unitRaw) {
+  const u = (unitRaw||'').trim();
+  const ul = u.toLowerCase();
+  let unit = u, amountG = 0;
+  if (ul === 'g')                       { unit = qty + ' g';      amountG = qty; }
+  else if (ul === 'kg')                 { unit = qty + ' kg';     amountG = qty * 1000; }
+  else if (ul === 'ml')                 { unit = qty + ' ml';     amountG = qty; }
+  else if (ul === 'cl')                 { unit = qty + ' cl';     amountG = qty * 10; }
+  else if (ul === 'dl')                 { unit = qty + ' dl';     amountG = qty * 100; }
+  else if (ul === 'l')                  { unit = qty + ' L';      amountG = qty * 1000; }
+  else if (ul==='stück'||ul==='stk'||ul==='stk.') { unit = qty + ' Stück'; }
+  else if (u !== '')                    { unit = u; }  // TL, EL, Becher, Scheibe etc. — keep as-is
+  return {
+    name: name || '', emoji: emoji || '', unit, amountG, qty: qty || 0, custom: false,
+    kcalPer100: 0, proteinPer100: 0, carbsPer100: 0, fatPer100: 0, unitPrice: 0, unitG: 0
+  };
+}
+
 const RECIPES = [
 {
   id:'ck_blumenkohl_bratlinge',
   name:'Blumenkohl-Haferflocken-Bratlinge',
   emoji:'🥦', category:'Hauptgericht', servings:4, description:'',
   ingredients:[
-    {name:'Blumenkohl, grob geraspelt',emoji:'🥦',amount:250,unit:'g',custom:true},
-    {name:'Haferflocken',emoji:'🌾',amount:100,unit:'g',custom:true},
-    {name:'Ei',emoji:'🥚',amount:1,unit:'Stück',custom:true},
-    {name:'Sesam',emoji:'🌰',amount:25,unit:'g',custom:true},
-    {name:'Quark',emoji:'🧀',amount:50,unit:'g',custom:true},
-    {name:'Käse, gerieben',emoji:'🧀',amount:100,unit:'g',custom:true},
-    {name:'Zwiebel, klein geschnitten',emoji:'🧅',amount:1,unit:'Stück',custom:true},
-    {name:'Gemüsebrühepulver',emoji:'🫙',amount:0.5,unit:'TL',custom:true},
-    {name:'Salz und Pfeffer',emoji:'🧂',amount:0,unit:'',custom:true},
-    {name:'Muskat',emoji:'🌰',amount:0,unit:'',custom:true},
-    {name:'Semmelbrösel',emoji:'🍞',amount:0,unit:'',custom:true},
-    {name:'Öl zum Braten',emoji:'🫙',amount:0,unit:'',custom:true}
+    ingToSchema('Blumenkohl, grob geraspelt','🥦',250,'g'),
+    ingToSchema('Haferflocken','🌾',100,'g'),
+    ingToSchema('Ei','🥚',1,'Stück'),
+    ingToSchema('Sesam','🌰',25,'g'),
+    ingToSchema('Quark','🧀',50,'g'),
+    ingToSchema('Käse, gerieben','🧀',100,'g'),
+    ingToSchema('Zwiebel, klein geschnitten','🧅',1,'Stück'),
+    ingToSchema('Gemüsebrühepulver','🫙',0.5,'TL'),
+    ingToSchema('Salz und Pfeffer','🧂',0,''),
+    ingToSchema('Muskat','🌰',0,''),
+    ingToSchema('Semmelbrösel','🍞',0,''),
+    ingToSchema('Öl zum Braten','🫙',0,'')
   ],
   steps:[
     'Den geraspelten Blumenkohl mit den Haferflocken, dem Käse, Sesam und dem Ei verrühren. Danach die klein geschnittene Zwiebel und den Quark dazugeben. Die Masse kräftig würzen und noch einmal gut vermischen. Sollte die Masse noch zu feucht sein, kann man ruhig Semmelbrösel hinzugeben. Die Masse dann 20 Minuten ziehen lassen.',
@@ -62,14 +81,14 @@ const RECIPES = [
   name:'Blumenkohlgemüse',
   emoji:'🥦', category:'Beilage', servings:3, description:'',
   ingredients:[
-    {name:'Blumenkohl',emoji:'🥦',amount:750,unit:'g',custom:true},
-    {name:'Milch',emoji:'🥛',amount:400,unit:'ml',custom:true},
-    {name:'Butter',emoji:'🧈',amount:40,unit:'g',custom:true},
-    {name:'Mehl',emoji:'🌾',amount:2,unit:'TL',custom:true},
-    {name:'Wasser (Blumenkohlwasser)',emoji:'💧',amount:100,unit:'ml',custom:true},
-    {name:'Salz und Pfeffer',emoji:'🧂',amount:0,unit:'',custom:true},
-    {name:'Muskatnuss',emoji:'🌰',amount:0,unit:'',custom:true},
-    {name:'Schnittlauch',emoji:'🌿',amount:0,unit:'',custom:true}
+    ingToSchema('Blumenkohl','🥦',750,'g'),
+    ingToSchema('Milch','🥛',400,'ml'),
+    ingToSchema('Butter','🧈',40,'g'),
+    ingToSchema('Mehl','🌾',2,'TL'),
+    ingToSchema('Blumenkohlwasser','💧',100,'ml'),
+    ingToSchema('Salz und Pfeffer','🧂',0,''),
+    ingToSchema('Muskatnuss','🌰',0,''),
+    ingToSchema('Schnittlauch','🌿',0,'')
   ],
   steps:[
     'Den Blumenkohl in Salzwasser 10–12 Minuten, je nach gewünschter Bissfestigkeit, gar kochen.',
@@ -82,10 +101,10 @@ const RECIPES = [
   name:'Kohlrabigemüse in Butter',
   emoji:'🥬', category:'Beilage', servings:4, description:'',
   ingredients:[
-    {name:'Kohlrabi',emoji:'🥬',amount:3,unit:'Stück',custom:true},
-    {name:'Kohlrabi-Grün',emoji:'🌿',amount:0,unit:'',custom:true},
-    {name:'Salz',emoji:'🧂',amount:2,unit:'TL',custom:true},
-    {name:'Butter',emoji:'🧈',amount:3,unit:'EL',custom:true}
+    ingToSchema('Kohlrabi','🥬',3,'Stück'),
+    ingToSchema('Kohlrabi-Grün','🌿',0,''),
+    ingToSchema('Salz','🧂',2,'TL'),
+    ingToSchema('Butter','🧈',3,'EL')
   ],
   steps:[
     'Den Kohlrabi schälen und in Stifte schneiden. In einem Topf 1,5 Liter Wasser zum Kochen bringen, zwei gehäufte TL Salz zufügen.',
@@ -98,18 +117,18 @@ const RECIPES = [
   name:'Low Carb Kohlrabieintopf mit Hackbällchen',
   emoji:'🍲', category:'Suppe', servings:8, description:'',
   ingredients:[
-    {name:'Rinderbrühe',emoji:'🍜',amount:1,unit:'l',custom:true},
-    {name:'Kohlrabi',emoji:'🥬',amount:4,unit:'Stück',custom:true},
-    {name:'Möhren',emoji:'🥕',amount:3,unit:'Stück',custom:true},
-    {name:'Hackfleisch',emoji:'🥩',amount:500,unit:'g',custom:true},
-    {name:'Sahne',emoji:'🥛',amount:200,unit:'g',custom:true},
-    {name:'Doppelrahmfrischkäse',emoji:'🧀',amount:100,unit:'g',custom:true},
-    {name:'Ei',emoji:'🥚',amount:1,unit:'Stück',custom:true},
-    {name:'Zwiebel, klein',emoji:'🧅',amount:1,unit:'Stück',custom:true},
-    {name:'Frühlingszwiebeln',emoji:'🌱',amount:3,unit:'Stück',custom:true},
-    {name:'Kreuzkümmel',emoji:'🫙',amount:0,unit:'',custom:true},
-    {name:'Salz und Pfeffer',emoji:'🧂',amount:0,unit:'',custom:true},
-    {name:'Muskat',emoji:'🌰',amount:0,unit:'',custom:true}
+    ingToSchema('Rinderbrühe','🍜',1,'l'),
+    ingToSchema('Kohlrabi','🥬',4,'Stück'),
+    ingToSchema('Möhren','🥕',3,'Stück'),
+    ingToSchema('Hackfleisch','🥩',500,'g'),
+    ingToSchema('Sahne','🥛',200,'ml'),
+    ingToSchema('Doppelrahmfrischkäse','🧀',100,'g'),
+    ingToSchema('Ei','🥚',1,'Stück'),
+    ingToSchema('Zwiebel, klein','🧅',1,'Stück'),
+    ingToSchema('Frühlingszwiebeln','🌱',3,'Stück'),
+    ingToSchema('Kreuzkümmel','🫙',0,''),
+    ingToSchema('Salz und Pfeffer','🧂',0,''),
+    ingToSchema('Muskat','🌰',0,'')
   ],
   steps:[
     'Die Kohlrabi in Würfel und die Möhren in Scheiben schneiden. Zusammen mit der Rinderbrühe in einen Topf geben und zum Kochen bringen. Mit Salz, Pfeffer und Muskat nach Geschmack würzen. Kochen lassen, bis alles bissfest ist.',
@@ -123,17 +142,17 @@ const RECIPES = [
   name:'Kartoffel-Kohlrabi-Suppe mit Senf',
   emoji:'🍵', category:'Suppe', servings:4, description:'',
   ingredients:[
-    {name:'Kartoffeln, festkochend',emoji:'🥔',amount:800,unit:'g',custom:true},
-    {name:'Kohlrabi',emoji:'🥬',amount:1,unit:'Stück',custom:true},
-    {name:'Zwiebel',emoji:'🧅',amount:1,unit:'Stück',custom:true},
-    {name:'Olivenöl',emoji:'🫙',amount:2,unit:'EL',custom:true},
-    {name:'Senf',emoji:'🫙',amount:3,unit:'TL',custom:true},
-    {name:'Gemüsebrühe',emoji:'🍜',amount:800,unit:'ml',custom:true},
-    {name:'Sahne',emoji:'🥛',amount:200,unit:'g',custom:true},
-    {name:'Zitrone',emoji:'🍋',amount:1,unit:'Stück',custom:true},
-    {name:'Salz',emoji:'🧂',amount:1,unit:'TL',custom:true},
-    {name:'Pfeffer, schwarz',emoji:'🧂',amount:0.5,unit:'TL',custom:true},
-    {name:'Muskat',emoji:'🌰',amount:0,unit:'',custom:true}
+    ingToSchema('Kartoffeln, festkochend','🥔',800,'g'),
+    ingToSchema('Kohlrabi','🥬',1,'Stück'),
+    ingToSchema('Zwiebel','🧅',1,'Stück'),
+    ingToSchema('Olivenöl','🫙',2,'EL'),
+    ingToSchema('Senf','🫙',3,'TL'),
+    ingToSchema('Gemüsebrühe','🍜',800,'ml'),
+    ingToSchema('Sahne','🥛',200,'ml'),
+    ingToSchema('Zitrone','🍋',1,'Stück'),
+    ingToSchema('Salz','🧂',1,'TL'),
+    ingToSchema('Pfeffer, schwarz','🧂',0.5,'TL'),
+    ingToSchema('Muskat','🌰',0,'')
   ],
   steps:[
     'Kartoffeln und Kohlrabi schälen und fein würfeln. Zarte Kohlrabiblätter beiseitelegen. Zwiebel schälen und fein würfeln.',
@@ -147,18 +166,18 @@ const RECIPES = [
   name:'Möhren-Kohlrabi-Sahne-Gemüse',
   emoji:'🥕', category:'Hauptgericht', servings:2, description:'',
   ingredients:[
-    {name:'Möhren',emoji:'🥕',amount:500,unit:'g',custom:true},
-    {name:'Kohlrabi',emoji:'🥬',amount:2,unit:'Stück',custom:true},
-    {name:'Zwiebel, groß',emoji:'🧅',amount:1,unit:'Stück',custom:true},
-    {name:'Petersilie',emoji:'🌿',amount:1,unit:'Zweig',custom:true},
-    {name:'Liebstöckel',emoji:'🌿',amount:3,unit:'Blätter',custom:true},
-    {name:'Gemüsebrühe',emoji:'🍜',amount:1,unit:'l',custom:true},
-    {name:'Butter',emoji:'🧈',amount:3,unit:'EL',custom:true},
-    {name:'Mehl',emoji:'🌾',amount:2,unit:'EL',custom:true},
-    {name:'Sahne',emoji:'🥛',amount:200,unit:'g',custom:true},
-    {name:'Salz und Pfeffer',emoji:'🧂',amount:0,unit:'',custom:true},
-    {name:'Zucker',emoji:'🍬',amount:0,unit:'',custom:true},
-    {name:'Muskat',emoji:'🌰',amount:0,unit:'',custom:true}
+    ingToSchema('Möhren','🥕',500,'g'),
+    ingToSchema('Kohlrabi','🥬',2,'Stück'),
+    ingToSchema('Zwiebel, groß','🧅',1,'Stück'),
+    ingToSchema('Petersilie','🌿',1,'Zweig'),
+    ingToSchema('Liebstöckel','🌿',3,'Blätter'),
+    ingToSchema('Gemüsebrühe','🍜',1,'l'),
+    ingToSchema('Butter','🧈',3,'EL'),
+    ingToSchema('Mehl','🌾',2,'EL'),
+    ingToSchema('Sahne','🥛',200,'ml'),
+    ingToSchema('Salz und Pfeffer','🧂',0,''),
+    ingToSchema('Zucker','🍬',0,''),
+    ingToSchema('Muskat','🌰',0,'')
   ],
   steps:[
     'Die Möhren und die Kohlrabi schälen und in 1×1 cm große Würfel schneiden. 1 Liter Gemüsebrühe aufkochen und zuerst die Möhrenwürfel 10 min darin köcheln lassen, danach die Kohlrabi zugeben und noch einmal 10 min köcheln lassen.',
@@ -170,21 +189,21 @@ const RECIPES = [
 {
   id:'ck_kohlrabi_kartoffel_auflauf',
   name:'Kohlrabi-Kartoffel-Hack-Auflauf',
-  emoji:'🫕', category:'Hauptgericht', servings:6, description:'',
+  emoji:'🫕', category:'Auflauf', servings:6, description:'',
   ingredients:[
-    {name:'Hackfleisch',emoji:'🥩',amount:500,unit:'g',custom:true},
-    {name:'Kohlrabi',emoji:'🥬',amount:750,unit:'g',custom:true},
-    {name:'Kartoffeln',emoji:'🥔',amount:800,unit:'g',custom:true},
-    {name:'Gemüsebrühe',emoji:'🍜',amount:1,unit:'l',custom:true},
-    {name:'Öl',emoji:'🫙',amount:1,unit:'EL',custom:true},
-    {name:'Butter',emoji:'🧈',amount:40,unit:'g',custom:true},
-    {name:'Mehl',emoji:'🌾',amount:40,unit:'g',custom:true},
-    {name:'Sahne',emoji:'🥛',amount:200,unit:'g',custom:true},
-    {name:'Milch',emoji:'🥛',amount:400,unit:'ml',custom:true},
-    {name:'Käse, gerieben',emoji:'🧀',amount:100,unit:'g',custom:true},
-    {name:'Salz und Pfeffer',emoji:'🧂',amount:0,unit:'',custom:true},
-    {name:'Muskat',emoji:'🌰',amount:0,unit:'',custom:true},
-    {name:'Fett für die Form',emoji:'🧈',amount:0,unit:'',custom:true}
+    ingToSchema('Hackfleisch','🥩',500,'g'),
+    ingToSchema('Kohlrabi','🥬',750,'g'),
+    ingToSchema('Kartoffeln','🥔',800,'g'),
+    ingToSchema('Gemüsebrühe','🍜',1,'l'),
+    ingToSchema('Öl','🫙',1,'EL'),
+    ingToSchema('Butter','🧈',40,'g'),
+    ingToSchema('Mehl','🌾',40,'g'),
+    ingToSchema('Sahne','🥛',200,'ml'),
+    ingToSchema('Milch','🥛',400,'ml'),
+    ingToSchema('Käse, gerieben','🧀',100,'g'),
+    ingToSchema('Salz und Pfeffer','🧂',0,''),
+    ingToSchema('Muskat','🌰',0,''),
+    ingToSchema('Fett für die Form','🧈',0,'')
   ],
   steps:[
     'Gehacktes in Öl krümelig anbraten und mit 1 TL Salz und 0,5 TL Pfeffer würzen.',
@@ -199,16 +218,16 @@ const RECIPES = [
   name:'Kohlrabigemüse, klassisch',
   emoji:'🥬', category:'Beilage', servings:4, description:'',
   ingredients:[
-    {name:'Zwiebel (oder 2 Schalotten)',emoji:'🧅',amount:1,unit:'Stück',custom:true},
-    {name:'Kohlrabi mit Blättern (ca. 800 g)',emoji:'🥬',amount:2,unit:'Stück',custom:true},
-    {name:'Butter',emoji:'🧈',amount:1,unit:'EL',custom:true},
-    {name:'Salz',emoji:'🧂',amount:0,unit:'',custom:true},
-    {name:'Pfeffer',emoji:'🧂',amount:0,unit:'',custom:true},
-    {name:'Muskat, frisch gerieben',emoji:'🌰',amount:0,unit:'',custom:true},
-    {name:'Wasser',emoji:'💧',amount:100,unit:'ml',custom:true},
-    {name:'Sahne',emoji:'🥛',amount:100,unit:'ml',custom:true},
-    {name:'Brühe (optional)',emoji:'🍜',amount:0,unit:'',custom:true},
-    {name:'Mehl zum Binden (optional)',emoji:'🌾',amount:0,unit:'',custom:true}
+    ingToSchema('Zwiebel (oder 2 Schalotten)','🧅',1,'Stück'),
+    ingToSchema('Kohlrabi mit Blättern (ca. 800 g)','🥬',2,'Stück'),
+    ingToSchema('Butter','🧈',1,'EL'),
+    ingToSchema('Salz','🧂',0,''),
+    ingToSchema('Pfeffer','🧂',0,''),
+    ingToSchema('Muskat, frisch gerieben','🌰',0,''),
+    ingToSchema('Wasser','💧',100,'ml'),
+    ingToSchema('Sahne','🥛',100,'ml'),
+    ingToSchema('Brühe (optional)','🍜',0,''),
+    ingToSchema('Mehl zum Binden (optional)','🌾',0,'')
   ],
   steps:[
     'Zwiebel oder Schalotte schälen und fein würfeln. Kohlrabis schälen, waschen und in Würfel oder Stifte schneiden. Zwei bis drei der ganz kleinen feinen Kohlrabiblättchen waschen, klein hacken und zur Seite stellen.',
@@ -221,12 +240,12 @@ const RECIPES = [
   name:'Fladenbrot Elsässer Art',
   emoji:'🫓', category:'Snack', servings:4, description:'',
   ingredients:[
-    {name:'Fladenbrot, türkisch',emoji:'🫓',amount:1,unit:'Stück',custom:true},
-    {name:'Schmand (ca. 200 ml)',emoji:'🥛',amount:1,unit:'Becher',custom:true},
-    {name:'Zwiebel, groß',emoji:'🧅',amount:1,unit:'Stück',custom:true},
-    {name:'Bauchspeck, geräuchert',emoji:'🥓',amount:150,unit:'g',custom:true},
-    {name:'Salz und Pfeffer',emoji:'🧂',amount:0,unit:'',custom:true},
-    {name:'Käse, gerieben (optional)',emoji:'🧀',amount:0,unit:'',custom:true}
+    ingToSchema('Fladenbrot, türkisch','🫓',1,'Stück'),
+    ingToSchema('Schmand (ca. 200 ml)','🥛',1,'Becher'),
+    ingToSchema('Zwiebel, groß','🧅',1,'Stück'),
+    ingToSchema('Bauchspeck, geräuchert','🥓',150,'g'),
+    ingToSchema('Salz und Pfeffer','🧂',0,''),
+    ingToSchema('Käse, gerieben (optional)','🧀',0,'')
   ],
   steps:[
     'Den Backofen auf 180 °C Ober-/Unterhitze vorheizen.',
@@ -240,16 +259,16 @@ const RECIPES = [
   name:'Fladenbrotpizza mit Serranoschinken',
   emoji:'🍕', category:'Hauptgericht', servings:2, description:'',
   ingredients:[
-    {name:'Knoblauchzehe, gepresst',emoji:'🧄',amount:1,unit:'Stück',custom:true},
-    {name:'Oregano, getrocknet',emoji:'🌿',amount:1.5,unit:'TL',custom:true},
-    {name:'Olivenöl',emoji:'🫙',amount:5,unit:'EL',custom:true},
-    {name:'Tomaten',emoji:'🍅',amount:400,unit:'g',custom:true},
-    {name:'Mozzarella (125 g)',emoji:'🧀',amount:1,unit:'Kugel',custom:true},
-    {name:'Fladenbrot, klein rund',emoji:'🫓',amount:1,unit:'Stück',custom:true},
-    {name:'Rucola (40 g)',emoji:'🥬',amount:1,unit:'Bund',custom:true},
-    {name:'Hartkäse, italienisch',emoji:'🧀',amount:50,unit:'g',custom:true},
-    {name:'Serranoschinken',emoji:'🥩',amount:6,unit:'Scheibe',custom:true},
-    {name:'Salz und Pfeffer',emoji:'🧂',amount:0,unit:'',custom:true}
+    ingToSchema('Knoblauchzehe, gepresst','🧄',1,'Stück'),
+    ingToSchema('Oregano, getrocknet','🌿',1.5,'TL'),
+    ingToSchema('Olivenöl','🫙',5,'EL'),
+    ingToSchema('Tomaten','🍅',400,'g'),
+    ingToSchema('Mozzarella (125 g)','🧀',1,'Kugel'),
+    ingToSchema('Fladenbrot, klein rund','🫓',1,'Stück'),
+    ingToSchema('Rucola (40 g)','🥬',1,'Bund'),
+    ingToSchema('Hartkäse, italienisch','🧀',50,'g'),
+    ingToSchema('Serranoschinken','🥩',6,'Scheibe'),
+    ingToSchema('Salz und Pfeffer','🧂',0,'')
   ],
   steps:[
     '1 durchgepresste Knoblauchzehe mit 1½ TL getrocknetem Oregano und 5 EL Olivenöl verrühren. Von 400 g Tomaten den Stielansatz entfernen und in Scheiben schneiden. 1 Kugel Mozzarella halbieren und in dünne Scheiben schneiden.',
@@ -263,23 +282,24 @@ const RECIPES = [
 
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-// Render recipe list
 const cardsEl=document.getElementById('cards');
 RECIPES.forEach((r,i)=>{
   const d=document.createElement('div');
   d.className='card'; d.id='card-'+i;
-  d.innerHTML=`<div class="card-icon">${esc(r.emoji)}</div><div class="card-info"><div class="card-name">${esc(r.name)}</div><div class="card-meta">${r.category} · ${r.servings} Portionen · ${r.ingredients.filter(x=>x.name).length} Zutaten · ${r.steps.length} Schritte</div><div class="card-status" id="st-${i}"></div></div>`;
+  d.innerHTML=`<div class="card-icon">${esc(r.emoji)}</div><div class="card-info"><div class="card-name">${esc(r.name)}</div><div class="card-meta">${esc(r.category)} · ${r.servings} Portionen · ${r.ingredients.filter(x=>x.name).length} Zutaten · ${r.steps.length} Schritte</div><div class="card-status" id="st-${i}"></div></div>`;
   cardsEl.appendChild(d);
 });
 
-// Check which already exist
 function loadRecipes(){try{return JSON.parse(localStorage.getItem('rezepte_v2')||'{}');}catch{return {};}}
 function saveRecipes(r){localStorage.setItem('rezepte_v2',JSON.stringify(r));}
 
 (function checkExisting(){
   const existing=loadRecipes();
   RECIPES.forEach((r,i)=>{
-    if(existing[r.id]) document.getElementById('st-'+i).textContent='Bereits vorhanden';
+    if(existing[r.id]){
+      document.getElementById('card-'+i).classList.add('done');
+      document.getElementById('st-'+i).textContent='Bereits vorhanden';
+    }
   });
 })();
 
@@ -289,18 +309,25 @@ async function importAll(){
   const existing=loadRecipes();
   let count=0;
   for(let i=0;i<RECIPES.length;i++){
-    const r={...RECIPES[i], createdAt:Date.now()};
-    existing[r.id]=r;
+    const r=RECIPES[i];
+    existing[r.id]={
+      id:r.id, createdAt:Date.now(),
+      name:r.name, emoji:r.emoji,
+      category:r.category, servings:r.servings,
+      description:r.description||'',
+      steps:r.steps,
+      ingredients:r.ingredients
+    };
     count++;
     document.getElementById('card-'+i).classList.add('done');
     document.getElementById('st-'+i).textContent='✓ Importiert';
     saveRecipes(existing);
     await new Promise(res=>setTimeout(res,60));
   }
-  btn.textContent=`✓ ${count} Rezepte importiert`;
-  document.getElementById('backLink').textContent='→ Jetzt zum Rezeptbuch';
-  document.getElementById('backLink').style.fontWeight='700';
-  document.getElementById('backLink').style.fontSize='15px';
+  btn.textContent='✓ '+count+' Rezepte importiert';
+  const bl=document.getElementById('backLink');
+  bl.textContent='→ Jetzt zum Rezeptbuch';
+  bl.style.fontWeight='700'; bl.style.fontSize='15px';
 }
 </script>
 </body>
