@@ -53,7 +53,7 @@
     /* ── List view ── */
     #bookListView {
       position: absolute; inset: 0; background: #FDF8EE;
-      overflow-y: auto; overflow-x: hidden; display: none;
+      overflow-y: auto; overflow-x: hidden; display: none; z-index: 2;
     }
     #bookListView.visible { display: block; }
     .blv-inner { padding: 12px 20px 100px; max-width: 440px; margin: 0 auto; }
@@ -292,7 +292,7 @@
       <button class="book-view-toggle" id="bookViewToggle" onclick="toggleBookView()" title="Ansicht wechseln">☰</button>
     </div>
   </div>
-  <div class="book-pages" id="bookPages" style="position:relative;">
+  <div class="book-pages" id="bookPages">
     <div id="bookListView"></div>
   </div>
   <div class="book-nav">
