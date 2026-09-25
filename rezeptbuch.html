@@ -281,6 +281,28 @@
     .empty-title { font-size: 22px; font-weight: 700; color: #4A2E0A; margin-bottom: 12px; }
     .empty-text { font-size: 15px; color: #8B6A3A; line-height: 1.6; font-style: italic; }
 
+    /* ── List filter / sort toolbar ── */
+    .blv-toolbar { display: flex; align-items: center; gap: 8px; margin: 10px 0 4px; }
+    .blv-cats-scroll {
+      display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch; flex: 1;
+    }
+    .blv-cats-scroll::-webkit-scrollbar { display: none; }
+    .blv-cat-chip {
+      flex-shrink: 0; border: 1.5px solid #C4A46A; background: #F5EDD8;
+      color: #8B6A3A; font-family: Georgia,serif; font-size: 12px; font-weight: 600;
+      padding: 6px 12px; border-radius: 20px; cursor: pointer; white-space: nowrap;
+      transition: background .15s, color .15s;
+    }
+    .blv-cat-chip.active { background: #8B5C14; color: #FDF8EE; border-color: #8B5C14; }
+    .blv-sort-btn {
+      flex-shrink: 0; border: 1.5px solid #C4A46A; background: #F5EDD8;
+      color: #8B6A3A; font-family: Georgia,serif; font-size: 12px; font-weight: 700;
+      padding: 6px 12px; border-radius: 20px; cursor: pointer; white-space: nowrap;
+    }
+    .blv-sort-btn.sorted { background: #EDD9B0; border-color: #8B5C14; color: #8B5C14; }
+    .blv-count { font-family: Georgia,serif; font-size: 11px; color: #A8875A; padding: 2px 0 10px; }
+
     /* ── Share / PDF export ── */
     .book-share-btn { background: none; border: none; color: #D4A96A; font-size: 20px; cursor: pointer; padding: 6px 4px; line-height: 1; }
     .blv-row.sm-row { cursor: default; -webkit-tap-highlight-color: transparent; }
@@ -863,8 +885,21 @@ function toggleBookView() {
 }
 
 let listViewSearch='';
+let listViewSort='name-asc';   // 'name-asc' | 'name-desc' | 'newest'
+let listViewCatFilter=null;    // null | category string
 let shareMode=false;
 const shareSelected=new Set();
+
+function cycleListSort() {
+  const opts=['name-asc','name-desc','newest'];
+  listViewSort=opts[(opts.indexOf(listViewSort)+1)%opts.length];
+  renderListView();
+}
+
+function setListCatFilter(cat) {
+  listViewCatFilter=(listViewCatFilter===cat)?null:cat;
+  renderListView();
+}
 
 function toggleShareMode() {
   shareMode=!shareMode;
@@ -967,52 +1002,83 @@ function renderListView(q) {
   if(!listEl) return;
   if(q!==undefined) listViewSearch=q;
   const filter=listViewSearch.trim().toLowerCase();
-  const grouped={}, cats=[];
-  Object.values(recipes).forEach(r=>{
-    if(filter){
-      const hit=r.name.toLowerCase().includes(filter)
-        ||(r.description||'').toLowerCase().includes(filter)
-        ||(r.category||'').toLowerCase().includes(filter)
-        ||(r.ingredients||[]).some(i=>i.name.toLowerCase().includes(filter));
-      if(!hit) return;
-    }
-    const cat=r.category||'Sonstiges';
-    if(!grouped[cat]){grouped[cat]=[];cats.push(cat);}
-    grouped[cat].push(r);
+
+  // Collect all categories present in recipes (for chips)
+  const allCats=new Set();
+  Object.values(recipes).forEach(r=>allCats.add(r.category||'Sonstiges'));
+  const sortedAllCats=[...allCats].sort();
+
+  // Filter recipes
+  let visible=Object.values(recipes).filter(r=>{
+    if(listViewCatFilter && (r.category||'Sonstiges')!==listViewCatFilter) return false;
+    if(!filter) return true;
+    return r.name.toLowerCase().includes(filter)
+      ||(r.description||'').toLowerCase().includes(filter)
+      ||(r.category||'').toLowerCase().includes(filter)
+      ||(r.ingredients||[]).some(i=>i.name.toLowerCase().includes(filter));
   });
-  cats.sort();
-  cats.forEach(c=>grouped[c].sort((a,b)=>a.name.localeCompare(b.name)));
-  const total=Object.values(recipes).length;
+
+  // Sort
+  if(listViewSort==='name-desc')  visible.sort((a,b)=>b.name.localeCompare(a.name));
+  else if(listViewSort==='newest') visible.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  else                             visible.sort((a,b)=>a.name.localeCompare(b.name));
+
+  // Group by category (skip header when single-cat filter active or newest sort)
+  const flatMode = listViewSort==='newest' || !!listViewCatFilter;
   let body;
+  const total=Object.values(recipes).length;
   if(!total){
     body='<div style="padding-top:40px;text-align:center;color:#8B6A3A;font-style:italic;font-size:14px;">Noch keine Rezepte vorhanden.</div>';
-  } else if(!cats.length){
-    body=`<div style="padding-top:20px;text-align:center;color:#8B6A3A;font-style:italic;font-size:14px;">Keine Ergebnisse für „${esc(listViewSearch)}"</div>`;
+  } else if(!visible.length){
+    body='<div style="padding-top:20px;text-align:center;color:#8B6A3A;font-style:italic;font-size:14px;">Keine Ergebnisse.</div>';
+  } else if(flatMode){
+    body=visible.map(r=>_blvRow(r)).join('');
   } else {
-    body=cats.map(cat=>`
-      <div class="blv-chapter">${esc(cat)}</div>
-      ${grouped[cat].map(r=>{
-        if(shareMode){
-          const sel=shareSelected.has(r.id);
-          return `<label class="blv-row sm-row${sel?' sm-sel':''}" data-rid="${esc(r.id)}">
-            <input type="checkbox" class="blv-check"${sel?' checked':''} onchange="toggleRecipeSelect('${esc(r.id)}',this.checked)">
-            <div class="blv-emoji">${r.emoji||'🍽️'}</div>
-            <div class="blv-name">${esc(r.name)}</div>
-          </label>`;
-        }
-        return `<div class="blv-row" onclick="listOpenRecipe('${esc(r.id)}')">
-          <div class="blv-emoji">${r.emoji||'🍽️'}</div>
-          <div class="blv-name">${esc(r.name)}</div>
-          <div class="blv-arrow">›</div>
-        </div>`;
-      }).join('')}
-    `).join('');
+    const grouped={}, cats=[];
+    visible.forEach(r=>{
+      const cat=r.category||'Sonstiges';
+      if(!grouped[cat]){grouped[cat]=[];cats.push(cat);}
+      grouped[cat].push(r);
+    });
+    cats.sort();
+    body=cats.map(cat=>`<div class="blv-chapter">${esc(cat)}</div>${grouped[cat].map(r=>_blvRow(r)).join('')}`).join('');
   }
+
+  const sortLabels={'name-asc':'A – Z','name-desc':'Z – A','newest':'Neueste'};
+  const sortLabel=sortLabels[listViewSort]||'A – Z';
+  const isSorted=listViewSort!=='name-asc';
+  const chips=sortedAllCats.map(cat=>`<button class="blv-cat-chip${listViewCatFilter===cat?' active':''}" onclick="setListCatFilter('${esc(cat)}')">${esc(cat)}</button>`).join('');
+  const countHint=`<div class="blv-count">${visible.length} von ${total} Rezept${total!==1?'en':''}</div>`;
+
   const searchVal=esc(listViewSearch);
   listEl.innerHTML=`<div class="blv-inner">
-    ${shareMode?`<div style="font-family:Georgia,serif;font-size:13px;color:#8B5C14;font-weight:700;padding:10px 0 14px;text-align:center;letter-spacing:.04em;">REZEPTE AUSWÄHLEN</div>`:`<input class="blv-search" type="search" placeholder="Rezept suchen …" value="${searchVal}"
-      oninput="renderListView(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">`}
+    ${shareMode
+      ?`<div style="font-family:Georgia,serif;font-size:13px;color:#8B5C14;font-weight:700;padding:10px 0 14px;text-align:center;letter-spacing:.04em;">REZEPTE AUSWÄHLEN</div>`
+      :`<input class="blv-search" type="search" placeholder="Rezept suchen …" value="${searchVal}"
+          oninput="renderListView(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+        <div class="blv-toolbar">
+          <div class="blv-cats-scroll">${chips}</div>
+          <button class="blv-sort-btn${isSorted?' sorted':''}" onclick="cycleListSort()">${esc(sortLabel)}</button>
+        </div>
+        ${countHint}`
+    }
     ${body}
+  </div>`;
+}
+
+function _blvRow(r) {
+  if(shareMode){
+    const sel=shareSelected.has(r.id);
+    return `<label class="blv-row sm-row${sel?' sm-sel':''}" data-rid="${esc(r.id)}">
+      <input type="checkbox" class="blv-check"${sel?' checked':''} onchange="toggleRecipeSelect('${esc(r.id)}',this.checked)">
+      <div class="blv-emoji">${r.emoji||'🍽️'}</div>
+      <div class="blv-name">${esc(r.name)}</div>
+    </label>`;
+  }
+  return `<div class="blv-row" onclick="listOpenRecipe('${esc(r.id)}')">
+    <div class="blv-emoji">${r.emoji||'🍽️'}</div>
+    <div class="blv-name">${esc(r.name)}</div>
+    <div class="blv-arrow">›</div>
   </div>`;
 }
 
