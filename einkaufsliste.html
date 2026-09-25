@@ -5876,31 +5876,21 @@ function _addRecipeIngredientsToList(recipeId, servingsScale) {
   if (!r) return;
   const scale = typeof servingsScale === 'number' ? servingsScale : 1;
   (r.ingredients || []).filter(i => !i.custom).forEach(ing => {
-    const name = ing.name;
-    const qty = (ing.qty || 1) * scale;
-    const unit = ing.unit || ing.catalogUnit || 'g';
-    const q = qty === Math.floor(qty) ? qty : parseFloat(qty.toFixed(1));
-    const amtStr = `${q} ${unit}`;
-
-    const existingEntry = Object.entries(items).find(([,v]) => v.name.toLowerCase() === name.toLowerCase());
-    if (existingEntry) {
-      const [key, val] = existingEntry;
-      // Parse existing amount string and add if same unit
-      const existAmt = val.amount || '';
-      const m = existAmt.match(/^([\d,.]+)\s+(.+)$/);
-      if (m) {
-        const existNum = parseFloat(m[1].replace(',', '.')) || 0;
-        const existUnit = m[2].trim();
-        if (existUnit.toLowerCase() === unit.toLowerCase()) {
-          const newNum = existNum + qty;
-          const nq = newNum === Math.floor(newNum) ? newNum : parseFloat(newNum.toFixed(1));
-          items[key].amount = `${nq} ${unit}`;
-        }
-        // Different units → leave existing unchanged (can't safely merge)
+    const amtStr = rtlFormatAmt(ing, scale);
+    const existEntry = Object.entries(items).find(([, v]) =>
+      !v.checked && v.name.toLowerCase() === ing.name.toLowerCase()
+    );
+    if (existEntry) {
+      const [key, val] = existEntry;
+      const ep = _parseAmtToBase(val.amount);
+      const np = _parseAmtToBase(amtStr);
+      if (ep && np && ep.base === np.base) {
+        items[key].amount = _formatBase(ep.val + np.val, ep.base);
+        return;
       }
     } else {
-      const newKey = 'i_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
-      items[newKey] = { name, emoji: ing.emoji || '🛒', amount: amtStr, store: '', checked: false, addedAt: Date.now() };
+      const newKey = 'i_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+      items[newKey] = { name: ing.name, emoji: ing.emoji || '🛒', amount: amtStr, store: '', checked: false, addedAt: Date.now() };
     }
   });
   try { localStorage.setItem('list_' + listId, JSON.stringify(items)); } catch(e) {}
@@ -7073,13 +7063,57 @@ function rtlRenderIngredients(portions, baseServings) {
 
 function rtlFormatAmt(ing, scale) {
   const s = scale || 1;
-  if (ing.qty != null && ing.unit) {
+  const unitStr = (ing.unit || '').trim();
+  // unit stored as composite "500 g" / "3 Stück" — extract bare unit
+  const numUnitM = unitStr.match(/^[\d.,]+\s+(.+)$/);
+  const bareUnit = (numUnitM ? numUnitM[1] : unitStr).trim().toLowerCase();
+  if (bareUnit === 'g' || bareUnit === 'kg') {
+    const scaledG = Math.round((ing.amountG || 0) * s);
+    if (scaledG >= 1000) return `${parseFloat((scaledG/1000).toFixed(scaledG%100===0?1:2))} kg`;
+    return `${scaledG} g`;
+  }
+  if (bareUnit === 'ml' || bareUnit === 'cl' || bareUnit === 'dl' || bareUnit === 'l') {
+    const scaledG = Math.round((ing.amountG || 0) * s);
+    if (scaledG >= 1000) return `${parseFloat((scaledG/1000).toFixed(scaledG%100===0?1:2))} L`;
+    if (scaledG >= 100)  return `${parseFloat((scaledG/100).toFixed(1))} dl`;
+    return `${scaledG} ml`;
+  }
+  // pieces / custom unit: scale qty
+  if (ing.qty != null) {
     const raw = ing.qty * s;
     const q = raw === Math.floor(raw) ? raw : parseFloat(raw.toFixed(1));
-    return `${q} ${ing.unit}`;
+    const displayUnit = numUnitM ? numUnitM[1].trim() : unitStr;
+    return displayUnit ? `${q} ${displayUnit}` : `${q}`;
   }
-  const g = Math.round((ing.amountG || 0) * s);
-  return g >= 1000 ? `${parseFloat((g/1000).toFixed(2))} kg` : `${g} g`;
+  return unitStr;
+}
+
+function _parseAmtToBase(str) {
+  const m = (str || '').trim().match(/^([\d.,]+)\s*(.*)$/);
+  if (!m) return null;
+  const val = parseFloat(m[1].replace(',', '.'));
+  const u = m[2].trim().toLowerCase();
+  if (u === 'g')  return {val, base: 'g'};
+  if (u === 'kg') return {val: val * 1000, base: 'g'};
+  if (u === 'ml') return {val, base: 'ml'};
+  if (u === 'cl') return {val: val * 10, base: 'ml'};
+  if (u === 'dl') return {val: val * 100, base: 'ml'};
+  if (u === 'l')  return {val: val * 1000, base: 'ml'};
+  return {val, base: u};
+}
+
+function _formatBase(val, base) {
+  if (base === 'g') {
+    if (val >= 1000) return `${parseFloat((val/1000).toFixed(val % 100 === 0 ? 1 : 2))} kg`;
+    return `${Math.round(val)} g`;
+  }
+  if (base === 'ml') {
+    if (val >= 1000) return `${parseFloat((val/1000).toFixed(val % 100 === 0 ? 1 : 2))} L`;
+    if (val >= 100)  return `${parseFloat((val/100).toFixed(1))} dl`;
+    return `${Math.round(val)} ml`;
+  }
+  const q = val === Math.floor(val) ? val : parseFloat(val.toFixed(1));
+  return base ? `${q} ${base}` : `${q}`;
 }
 
 document.getElementById('rtlPortionsIn').addEventListener('input', function() {
@@ -7093,11 +7127,26 @@ function confirmRecipeToList() {
   if (!r) return;
   const portions = parseFloat(document.getElementById('rtlPortionsIn').value) || 1;
   const scale = portions / (r.servings || 1);
-  let added = 0;
+  let added = 0, merged = 0;
   r.ingredients.forEach(ing => {
     if (ing.custom) return;
     const amtStr = rtlFormatAmt(ing, scale);
-    const id = 'i_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    // Merge into existing unchecked item with same name
+    const existEntry = Object.entries(items).find(([, v]) =>
+      !v.checked && v.name.toLowerCase() === ing.name.toLowerCase()
+    );
+    if (existEntry) {
+      const [key, val] = existEntry;
+      const ep = _parseAmtToBase(val.amount);
+      const np = _parseAmtToBase(amtStr);
+      if (ep && np && ep.base === np.base) {
+        items[key].amount = _formatBase(ep.val + np.val, ep.base);
+        persist(key, items[key]);
+        merged++;
+        return;
+      }
+    }
+    const id = 'i_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
     const sug = getSug(ing.name);
     persist(id, {
       name: ing.name, emoji: ing.emoji || '', amount: amtStr, store: '', checked: false, addedAt: Date.now(),
@@ -7109,7 +7158,10 @@ function confirmRecipeToList() {
   });
   closeRecipeToList();
   showTab('liste');
-  showToast(`${added} Zutat${added !== 1 ? 'en' : ''} hinzugefügt`);
+  const msg = (added && merged) ? `${added} neu, ${merged} summiert`
+            : merged ? `${merged} Zutat${merged !== 1 ? 'en' : ''} summiert`
+            : `${added} Zutat${added !== 1 ? 'en' : ''} hinzugefügt`;
+  showToast(msg);
 }
 
 function openChefkochSheet() {
