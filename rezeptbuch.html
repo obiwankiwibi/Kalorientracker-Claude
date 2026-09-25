@@ -280,6 +280,22 @@
     .empty-ornament { font-size: 48px; margin-bottom: 20px; }
     .empty-title { font-size: 22px; font-weight: 700; color: #4A2E0A; margin-bottom: 12px; }
     .empty-text { font-size: 15px; color: #8B6A3A; line-height: 1.6; font-style: italic; }
+
+    /* ── Share / PDF export ── */
+    .book-share-btn { background: none; border: none; color: #D4A96A; font-size: 20px; cursor: pointer; padding: 6px 4px; line-height: 1; }
+    .blv-row.sm-row { cursor: default; -webkit-tap-highlight-color: transparent; }
+    .blv-row.sm-row.sm-sel { background: #F5EDD8; }
+    .blv-check { width: 22px; height: 22px; flex-shrink: 0; accent-color: #8B5C14; cursor: pointer; margin-right: 2px; }
+    #shareBar {
+      position: fixed; bottom: 74px; left: 50%; transform: translateX(-50%);
+      background: #8B5C14; color: #FDF8EE;
+      border: none; border-radius: 24px; padding: 13px 28px;
+      font-family: Georgia,serif; font-size: 15px; font-weight: 700;
+      cursor: pointer; box-shadow: 0 4px 18px rgba(44,24,8,.4);
+      z-index: 150; white-space: nowrap; display: none;
+    }
+    #shareBar:disabled { opacity: .45; cursor: default; }
+    #shareBar:not(:disabled):active { background: #6B4210; }
   </style>
 </head>
 <body>
@@ -288,6 +304,7 @@
     <button class="book-back" id="bookBackBtn" onclick="bookBackAction()">← Zurück</button>
     <div class="book-header-title">Rezeptbuch</div>
     <div class="book-header-right">
+      <button class="book-share-btn" id="bookShareBtn" onclick="toggleShareMode()" title="Rezepte teilen">📤</button>
       <button class="book-add-btn" id="bookAddBtn" onclick="openBuilder(null)" title="Rezept hinzufügen">+</button>
       <button class="book-view-toggle" id="bookViewToggle" onclick="toggleBookView()" title="Ansicht wechseln">☰</button>
     </div>
@@ -357,6 +374,7 @@
 </div>
 
 <div id="toast"></div>
+<button id="shareBar" disabled onclick="exportToPdf()">📄 Rezepte als PDF</button>
 
 <script src="catalog.js"></script>
 <script>
@@ -794,6 +812,7 @@ function bookFlip(dir) {
 }
 
 function bookBackAction() {
+  if(shareMode){toggleShareMode();return;}
   if(bookViewMode==='list') { history.back(); return; }
   bookCurrentPage===0?history.back():bookGoToIndex();
 }
@@ -803,8 +822,10 @@ function updateBookNav() {
   const navPg=document.getElementById('bookNavPg'), navName=document.getElementById('bookNavName');
   const backBtn=document.getElementById('bookBackBtn'), addBtn=document.getElementById('bookAddBtn');
   const toggle=document.getElementById('bookViewToggle');
+  const shareBtn=document.getElementById('bookShareBtn');
   if(!prevBtn) return;
   if(toggle) toggle.textContent = bookViewMode==='list' ? '📖' : '☰';
+  if(shareBtn) shareBtn.style.display = bookViewMode==='list' ? '' : 'none';
   if(bookViewMode==='list'){
     prevBtn.disabled=true; nextBtn.disabled=true;
     navPg.textContent='Liste'; navName.textContent='';
@@ -827,6 +848,7 @@ function updateBookNav() {
 }
 
 function toggleBookView() {
+  if(shareMode) toggleShareMode();
   bookViewMode = bookViewMode==='list' ? 'book' : 'list';
   try { localStorage.setItem('rezeptbuch_view', bookViewMode); } catch {}
   const listEl=document.getElementById('bookListView');
@@ -840,6 +862,104 @@ function toggleBookView() {
 }
 
 let listViewSearch='';
+let shareMode=false;
+const shareSelected=new Set();
+
+function toggleShareMode() {
+  shareMode=!shareMode;
+  shareSelected.clear();
+  const bar=document.getElementById('shareBar');
+  const backBtn=document.getElementById('bookBackBtn');
+  const addBtn=document.getElementById('bookAddBtn');
+  const shareBtn=document.getElementById('bookShareBtn');
+  if(shareMode){
+    if(bar){bar.style.display='block';}
+    if(backBtn) backBtn.textContent='✕ Abbrechen';
+    if(addBtn) addBtn.classList.add('hidden');
+    if(shareBtn) shareBtn.style.color='#E8D0A0';
+  } else {
+    if(bar){bar.style.display='none';}
+    if(shareBtn) shareBtn.style.color='';
+    updateBookNav();
+  }
+  updateShareBar();
+  if(bookViewMode==='list') renderListView();
+}
+
+function updateShareBar() {
+  const bar=document.getElementById('shareBar');
+  if(!bar) return;
+  const n=shareSelected.size;
+  bar.textContent=n===0?'📄 Rezepte auswählen':`📄 ${n} Rezept${n!==1?'e':''} als PDF`;
+  bar.disabled=n===0;
+}
+
+function toggleRecipeSelect(id,checked) {
+  if(checked) shareSelected.add(id); else shareSelected.delete(id);
+  updateShareBar();
+  const row=document.querySelector(`.blv-row[data-rid="${CSS.escape(id)}"]`);
+  if(row) row.classList.toggle('sm-sel',checked);
+}
+
+function exportToPdf() {
+  if(!shareSelected.size) return;
+  const html=generatePrintHtml([...shareSelected]);
+  const win=window.open('','_blank');
+  if(!win){showToast('Bitte Pop-ups erlauben');return;}
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>win.print(),700);
+}
+
+function generatePrintHtml(ids) {
+  const sel=ids.map(id=>recipes[id]).filter(Boolean);
+  const cards=sel.map((r,idx)=>{
+    const ings=(r.ingredients||[]).filter(i=>!i.custom);
+    const ingRows=ings.map(ing=>`<tr><td>${esc(ing.emoji||'')} ${esc(ing.name)}</td><td>${esc(cookFmtAmt(ing,1))}</td></tr>`).join('');
+    const stepItems=(r.steps||[]).map((s,i)=>{
+      const txt=typeof s==='string'?s:(s.text||'');
+      return `<div class="stp"><div class="sn">${i+1}</div><p>${esc(txt)}</p></div>`;
+    }).join('');
+    const pb=idx<sel.length-1?' pb':'';
+    return `<div class="rc${pb}">
+      <div class="rh"><span class="re">${r.emoji||'🍽️'}</span><div>
+        <div class="rcat">${esc(r.category||'')}</div>
+        <h1>${esc(r.name)}</h1>
+        <div class="rmeta">${r.servings||4} Portionen</div>
+      </div></div>
+      ${r.description?`<p class="rdesc">${esc(r.description)}</p>`:''}
+      ${ingRows?`<h2>Zutaten</h2><table class="it">${ingRows}</table>`:''}
+      ${stepItems?`<h2>Zubereitung</h2>${stepItems}`:''}
+    </div>`;
+  }).join('');
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8">
+  <title>${sel.length===1?esc(sel[0].name):'Rezepte'}</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400&display=swap">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Lora',Georgia,serif;color:#3A2008;background:#fff;padding:0}
+    .rc{padding:32px 36px 40px;max-width:640px;margin:0 auto}
+    .pb{border-bottom:1.5px dashed #D4B896;margin-bottom:36px;padding-bottom:36px}
+    .rh{display:flex;gap:16px;align-items:flex-start;margin-bottom:18px}
+    .re{font-size:48px;line-height:1;flex-shrink:0}
+    .rcat{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#8B5C14;margin-bottom:4px}
+    h1{font-size:26px;font-weight:700;color:#2C1808;line-height:1.2;margin-bottom:4px}
+    .rmeta{font-size:13px;color:#8B6A3A;font-style:italic}
+    .rdesc{font-size:14px;color:#5C3317;line-height:1.65;margin-bottom:18px;font-style:italic}
+    h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#8B5C14;border-bottom:1.5px solid #D4B896;padding-bottom:5px;margin:18px 0 10px}
+    .it{width:100%;border-collapse:collapse;margin-bottom:18px}
+    .it td{padding:7px 0;border-bottom:1px solid #EDD9C0;font-size:14px;vertical-align:middle}
+    .it td:last-child{text-align:right;font-weight:700;color:#8B5C14;white-space:nowrap;padding-left:16px}
+    .stp{display:flex;gap:12px;margin-bottom:14px}
+    .sn{width:26px;height:26px;background:#EDD9B0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#8B5C14;flex-shrink:0;margin-top:2px}
+    .stp p{font-size:14px;line-height:1.65;flex:1}
+    @media print{
+      body{-webkit-print-color-adjust:exact;color-adjust:exact}
+      .pb{border-bottom:none;margin-bottom:0;padding-bottom:0;page-break-after:always}
+    }
+  </style></head><body>${cards}</body></html>`;
+}
 
 function renderListView(q) {
   const listEl=document.getElementById('bookListView');
@@ -870,17 +990,27 @@ function renderListView(q) {
   } else {
     body=cats.map(cat=>`
       <div class="blv-chapter">${esc(cat)}</div>
-      ${grouped[cat].map(r=>`<div class="blv-row" onclick="listOpenRecipe('${esc(r.id)}')">
-        <div class="blv-emoji">${r.emoji||'🍽️'}</div>
-        <div class="blv-name">${esc(r.name)}</div>
-        <div class="blv-arrow">›</div>
-      </div>`).join('')}
+      ${grouped[cat].map(r=>{
+        if(shareMode){
+          const sel=shareSelected.has(r.id);
+          return `<label class="blv-row sm-row${sel?' sm-sel':''}" data-rid="${esc(r.id)}">
+            <input type="checkbox" class="blv-check"${sel?' checked':''} onchange="toggleRecipeSelect('${esc(r.id)}',this.checked)">
+            <div class="blv-emoji">${r.emoji||'🍽️'}</div>
+            <div class="blv-name">${esc(r.name)}</div>
+          </label>`;
+        }
+        return `<div class="blv-row" onclick="listOpenRecipe('${esc(r.id)}')">
+          <div class="blv-emoji">${r.emoji||'🍽️'}</div>
+          <div class="blv-name">${esc(r.name)}</div>
+          <div class="blv-arrow">›</div>
+        </div>`;
+      }).join('')}
     `).join('');
   }
   const searchVal=esc(listViewSearch);
   listEl.innerHTML=`<div class="blv-inner">
-    <input class="blv-search" type="search" placeholder="Rezept suchen …" value="${searchVal}"
-      oninput="renderListView(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+    ${shareMode?`<div style="font-family:Georgia,serif;font-size:13px;color:#8B5C14;font-weight:700;padding:10px 0 14px;text-align:center;letter-spacing:.04em;">REZEPTE AUSWÄHLEN</div>`:`<input class="blv-search" type="search" placeholder="Rezept suchen …" value="${searchVal}"
+      oninput="renderListView(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">`}
     ${body}
   </div>`;
 }
