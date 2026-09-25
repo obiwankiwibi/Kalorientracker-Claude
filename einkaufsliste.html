@@ -2478,6 +2478,7 @@ function initApp() {
     listRef.on('value', snap => {
       items = snap.val() || {};
       autoClearOldDone(items);
+      dedupeItems();
       renderAll();
       processPendingItems();
     });
@@ -2519,6 +2520,7 @@ function startOffline() {
   try { customRestaurants  = JSON.parse(localStorage.getItem('restaurants')        || '{}'); } catch { customRestaurants = {}; }
   try { scannedSuggestions = JSON.parse(localStorage.getItem('scannedSuggestions') || '{}'); } catch { scannedSuggestions = {}; }
   autoClearOldDone(items);
+  dedupeItems();
   renderAll();
   processPendingItems();
 }
@@ -5868,6 +5870,51 @@ function importSuggestedRecipes() {
   showToast(`✅ ${count} Rezept${count!==1?'e':''} importiert`);
   closeKiImport();
   showTab('rezepte');
+}
+
+// Merge duplicate unchecked items by name; returns number of merges
+function dedupeItems() {
+  const groups = {};
+  Object.entries(items).forEach(([k, v]) => {
+    if (v.checked) return;
+    const key = (v.name || '').toLowerCase().trim();
+    if (!key) return;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(k);
+  });
+  let merged = 0;
+  const toUpdate = [], toDelete = [];
+  Object.values(groups).forEach(keys => {
+    if (keys.length < 2) return;
+    // Keep the oldest item as base
+    keys.sort((a, b) => (items[a].addedAt || 0) - (items[b].addedAt || 0));
+    const [keepKey, ...rest] = keys;
+    let changed = false;
+    rest.forEach(k => {
+      const ep = _parseAmtToBase(items[keepKey].amount);
+      const np = _parseAmtToBase(items[k].amount);
+      if (ep && np && ep.base === np.base) {
+        items[keepKey].amount = _formatBase(ep.val + np.val, ep.base);
+        changed = true;
+      }
+      delete items[k];
+      toDelete.push(k);
+      merged++;
+    });
+    if (changed) toUpdate.push(keepKey);
+  });
+  if (merged > 0) {
+    if (listRef) {
+      // Firebase: single batch write to avoid re-triggering the listener repeatedly
+      const updates = {};
+      toDelete.forEach(k => { updates[k] = null; });
+      toUpdate.forEach(k => { updates[k] = items[k]; });
+      try { listRef.update(updates); } catch(e) {}
+    } else {
+      try { localStorage.setItem('list_' + listId, JSON.stringify(items)); } catch(e) {}
+    }
+  }
+  return merged;
 }
 
 // Adds recipe ingredients to the active shopping list without UI navigation
