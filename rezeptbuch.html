@@ -813,8 +813,9 @@ function bookFlip(dir) {
 
 function bookBackAction() {
   if(shareMode){toggleShareMode();return;}
-  if(bookViewMode==='list') { history.back(); return; }
-  bookCurrentPage===0?history.back():bookGoToIndex();
+  if(bookViewMode==='list') { history.go(-2); return; } // skip guard + leave app
+  if(bookCurrentPage===0){ history.go(-2); return; }    // cover → leave app
+  bookGoToIndex();
 }
 
 function updateBookNav() {
@@ -1361,6 +1362,36 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') refreshBook(true);
 });
 
+// ── Hardware-Back (Android / Gesten-Navigation) ──
+// Push a guard entry so the hardware back button fires popstate instead of closing the app.
+function _pushBackGuard() {
+  history.pushState({rb: true}, '');
+}
+
+window.addEventListener('popstate', function(e) {
+  // Only intercept our own entries
+  if (!e.state || !e.state.rb) return;
+
+  if (shareMode) {
+    toggleShareMode();
+    _pushBackGuard();
+    return;
+  }
+  if (bookViewMode === 'book' && bookCurrentPage > 0) {
+    // On a recipe page → go to index
+    bookGoToIndex();
+    _pushBackGuard();
+    return;
+  }
+  if (bookViewMode === 'list') {
+    // Switch to book view instead of closing
+    toggleBookView();
+    _pushBackGuard();
+    return;
+  }
+  // On cover page → don't re-push: next back closes the app (standard behaviour)
+});
+
 // ── Init ──
 (async()=>{
   loadRecipes();
@@ -1381,6 +1412,9 @@ document.addEventListener('visibilitychange', () => {
       }
     } catch {}
   }
+  // Push guard after initial render so back button is intercepted
+  history.replaceState({rb: false}, ''); // base entry (leaving here closes app)
+  _pushBackGuard();                       // guard entry (intercepted by popstate)
 })();
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
