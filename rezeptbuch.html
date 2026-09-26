@@ -837,6 +837,7 @@ function bookBackAction() {
   if(shareMode){toggleShareMode();return;}
   if(bookViewMode==='list') { history.go(-2); return; } // skip guard + leave app
   if(bookCurrentPage===0){ history.go(-2); return; }    // cover → leave app
+  if(openedFromList){ _backToList(); return; }
   bookGoToIndex();
 }
 
@@ -865,7 +866,7 @@ function updateBookNav() {
     const pg=bookPages[bookCurrentPage];
     navPg.textContent=`${bookCurrentPage} / ${bookPages.length-1}`;
     navName.textContent=pg.r?.name||'';
-    if(backBtn) backBtn.textContent='≡ Inhalt';
+    if(backBtn) backBtn.textContent=openedFromList?'← Liste':'≡ Inhalt';
     if(addBtn) addBtn.classList.add('hidden');
   }
 }
@@ -889,6 +890,7 @@ let listViewSort='name-asc';   // 'name-asc' | 'name-desc' | 'newest'
 let listViewCatFilter=null;    // null | category string
 let shareMode=false;
 const shareSelected=new Set();
+let openedFromList=false;      // true when a recipe was opened via listOpenRecipe
 
 function cycleListSort() {
   const opts=['name-asc','name-desc','newest'];
@@ -1048,9 +1050,26 @@ function renderListView(q) {
   const sortLabel=sortLabels[listViewSort]||'A – Z';
   const isSorted=listViewSort!=='name-asc';
   const chips=sortedAllCats.map(cat=>`<button class="blv-cat-chip${listViewCatFilter===cat?' active':''}" onclick="setListCatFilter('${esc(cat)}')">${esc(cat)}</button>`).join('');
-  const countHint=`<div class="blv-count">${visible.length} von ${total} Rezept${total!==1?'en':''}</div>`;
 
   const searchVal=esc(listViewSearch);
+
+  // If the structure already exists and we're not toggling share mode, update
+  // only the dynamic parts so the <input> is never replaced (prevents keyboard
+  // dismiss on Android on every keystroke).
+  const existingInner = listEl.querySelector('.blv-inner');
+  const existingInput = listEl.querySelector('.blv-search');
+  if (!shareMode && existingInner && existingInput) {
+    const catsEl = existingInner.querySelector('.blv-cats-scroll');
+    const sortEl = existingInner.querySelector('.blv-sort-btn');
+    const countEl = existingInner.querySelector('.blv-count');
+    const bodyEl = existingInner.querySelector('.blv-body');
+    if (catsEl) catsEl.innerHTML = chips;
+    if (sortEl) { sortEl.className = `blv-sort-btn${isSorted?' sorted':''}`; sortEl.textContent = sortLabel; }
+    if (countEl) countEl.textContent = `${visible.length} von ${total} Rezept${total!==1?'en':''}`;
+    if (bodyEl) bodyEl.innerHTML = body;
+    return;
+  }
+
   listEl.innerHTML=`<div class="blv-inner">
     ${shareMode
       ?`<div style="font-family:Georgia,serif;font-size:13px;color:#8B5C14;font-weight:700;padding:10px 0 14px;text-align:center;letter-spacing:.04em;">REZEPTE AUSWÄHLEN</div>`
@@ -1060,9 +1079,9 @@ function renderListView(q) {
           <div class="blv-cats-scroll">${chips}</div>
           <button class="blv-sort-btn${isSorted?' sorted':''}" onclick="cycleListSort()">${esc(sortLabel)}</button>
         </div>
-        ${countHint}`
+        <div class="blv-count">${visible.length} von ${total} Rezept${total!==1?'en':''}</div>`
     }
-    ${body}
+    <div class="blv-body">${body}</div>
   </div>`;
 }
 
@@ -1083,6 +1102,7 @@ function _blvRow(r) {
 }
 
 function listOpenRecipe(id) {
+  openedFromList=true;
   bookViewMode='book';
   try { localStorage.setItem('rezeptbuch_view','book'); } catch {}
   document.getElementById('bookListView').classList.remove('visible');
@@ -1090,7 +1110,17 @@ function listOpenRecipe(id) {
   if(idx>0) bookJumpToPage(idx); else updateBookNav();
 }
 
-function bookGoToIndex() { bookJumpToPage(0); }
+function _backToList() {
+  openedFromList=false;
+  bookViewMode='list';
+  try { localStorage.setItem('rezeptbuch_view','list'); } catch {}
+  const listEl=document.getElementById('bookListView');
+  renderListView();
+  listEl.classList.add('visible');
+  updateBookNav();
+}
+
+function bookGoToIndex() { openedFromList=false; bookJumpToPage(0); }
 function bookGoToFirstInCat(cat) { const idx=bookPages.findIndex(pg=>pg.type==='recipe'&&pg.cat===cat); if(idx>=0) bookJumpToPage(idx); }
 function bookGoToRecipe(id)      { const idx=bookPages.findIndex(pg=>pg.type==='recipe'&&pg.id===id);  if(idx>=0) bookJumpToPage(idx); }
 
@@ -1444,7 +1474,7 @@ window.addEventListener('popstate', function(e) {
     return;
   }
   if (bookViewMode === 'book' && bookCurrentPage > 0) {
-    // On a recipe page → go to index
+    if (openedFromList) { _backToList(); _pushBackGuard(); return; }
     bookGoToIndex();
     _pushBackGuard();
     return;
