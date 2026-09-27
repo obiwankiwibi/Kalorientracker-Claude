@@ -1047,7 +1047,7 @@ function renderBookAllPages() {
 function buildCoverHTML(pg) {
   const {grouped,usedCats}=pg, totalRecs=bookPages.length-1;
   const catRows=usedCats.map(cat=>{
-    const emoji=grouped[cat][0]?.emoji||'🍽️';
+    const emoji=esc(grouped[cat][0]?.emoji||'🍽️');
     return `<div class="bc-cat-row" onclick="bookGoToFirstInCat('${esc(cat)}')">
       <div class="bc-cat-left"><span style="font-size:20px">${emoji}</span><span class="bc-cat-name">${esc(cat)}</span></div>
       <div style="display:flex;align-items:center;gap:8px;"><span class="bc-cat-count">${grouped[cat].length} Rezept${grouped[cat].length!==1?'e':''}</span><span class="bc-cat-arrow">›</span></div>
@@ -1078,7 +1078,7 @@ function buildRecipePageHTML(pg, pageIdx) {
   const ingsForPage=(r.ingredients||[]).filter(i=>!i.custom);
   const ingrs=ingsForPage.map(i=>
     `<div class="brp-ingr-item">
-      <div class="brp-ingr-left"><span>${i.emoji||''}</span><span>${esc(i.name)}</span></div>
+      <div class="brp-ingr-left"><span>${esc(i.emoji)||''}</span><span>${esc(i.name)}</span></div>
       <div class="brp-ingr-amt">${cookFmtAmt(i,scale)}</div>
     </div>`
   ).join('');
@@ -1108,7 +1108,7 @@ function buildRecipePageHTML(pg, pageIdx) {
   return `<div class="brp-inner">
     <div class="brp-content">
       <div class="brp-cat">${esc(cat)}</div>
-      <div class="brp-emoji">${r.emoji||'🍽️'}</div>
+      <div class="brp-emoji">${esc(r.emoji)||'🍽️'}</div>
       <div class="brp-name">${esc(r.name)}</div>
       <div class="brp-portions-row">
         <span class="brp-portions-label">Portionen</span>
@@ -1166,6 +1166,7 @@ function bookFlip(dir) {
   requestAnimationFrame(()=>{
     if(dir>0){curEl.classList.remove('bp-on');curEl.classList.add('bp-left');nextEl.classList.add('bp-on');}
     else{curEl.classList.remove('bp-on','bp-left');nextEl.classList.remove('bp-left');nextEl.classList.add('bp-on');}
+    nextEl.scrollTop=0;
     bookCurrentPage=nextIdx; updateBookNav();
     try { localStorage.setItem('rezeptbuch_page', String(bookPages[nextIdx]?.id || nextIdx)); } catch {}
   });
@@ -1307,7 +1308,7 @@ function generatePrintHtml(ids) {
     }).join('');
     const pb=idx<sel.length-1?' pb':'';
     return `<div class="rc${pb}">
-      <div class="rh"><span class="re">${r.emoji||'🍽️'}</span><div>
+      <div class="rh"><span class="re">${esc(r.emoji)||'🍽️'}</span><div>
         <div class="rcat">${esc(r.category||'')}</div>
         <h1>${esc(r.name)}</h1>
         <div class="rmeta">${r.servings||4} Portionen</div>
@@ -1438,13 +1439,13 @@ function _blvRow(r) {
     const sel=shareSelected.has(r.id);
     return `<label class="blv-row sm-row${sel?' sm-sel':''}" data-rid="${esc(r.id)}">
       <input type="checkbox" class="blv-check"${sel?' checked':''} onchange="toggleRecipeSelect('${esc(r.id)}',this.checked)">
-      <div class="blv-emoji">${r.emoji||'🍽️'}</div>
+      <div class="blv-emoji">${esc(r.emoji)||'🍽️'}</div>
       <div class="blv-name">${esc(r.name)}</div>
     </label>`;
   }
   const bmActive = bookmarks.has(r.id);
   return `<div class="blv-row" onclick="listOpenRecipe('${esc(r.id)}')">
-    <div class="blv-emoji">${r.emoji||'🍽️'}</div>
+    <div class="blv-emoji">${esc(r.emoji)||'🍽️'}</div>
     <div class="blv-name">${esc(r.name)}</div>
     <div class="blv-bookmark${bmActive?' bm-active':''}" data-rid="${esc(r.id)}" onclick="event.stopPropagation();toggleBookmark('${esc(r.id)}')">${bmActive?BM_SVG_FILL:BM_SVG_OUT}</div>
     <div class="blv-arrow">›</div>
@@ -1490,7 +1491,7 @@ function bookOnSearch(val) {
     const pg=bookPages[0]; if(!pg) return;
     const {grouped,usedCats}=pg;
     const catRows=usedCats.map(cat=>{
-      const emoji=grouped[cat][0]?.emoji||'🍽️';
+      const emoji=esc(grouped[cat][0]?.emoji||'🍽️');
       return `<div class="bc-cat-row" onclick="bookGoToFirstInCat('${esc(cat)}')">
         <div class="bc-cat-left"><span style="font-size:20px">${emoji}</span><span class="bc-cat-name">${esc(cat)}</span></div>
         <div style="display:flex;align-items:center;gap:8px;"><span class="bc-cat-count">${grouped[cat].length} Rezept${grouped[cat].length!==1?'e':''}</span><span class="bc-cat-arrow">›</span></div>
@@ -1506,7 +1507,7 @@ function bookOnSearch(val) {
     return (r.ingredients||[]).some(i=>i.name.toLowerCase().includes(bookSearch));
   });
   if(!matches.length){coverContent.innerHTML='<div style="font-family:Georgia,serif;color:#8B6A3A;text-align:center;padding:24px 0;font-size:14px;font-style:italic;">Keine Rezepte gefunden.</div>';return;}
-  const rows=matches.map(pg=>`<div class="bc-result-row" onclick="bookGoToRecipe('${esc(pg.r.id)}')"><span class="bc-result-emoji">${pg.r.emoji||'🍽️'}</span><div><div class="bc-result-name">${esc(pg.r.name)}</div><div class="bc-result-meta">${esc(pg.cat)} · ${pg.r.servings} Portionen</div></div></div>`).join('');
+  const rows=matches.map(pg=>`<div class="bc-result-row" onclick="bookGoToRecipe('${esc(pg.r.id)}')"><span class="bc-result-emoji">${esc(pg.r.emoji)||'🍽️'}</span><div><div class="bc-result-name">${esc(pg.r.name)}</div><div class="bc-result-meta">${esc(pg.cat)} · ${pg.r.servings} Portionen</div></div></div>`).join('');
   coverContent.innerHTML=`<div class="bc-cats-label">${matches.length} Ergebnis${matches.length!==1?'se':''}</div><div>${rows}</div>`;
 }
 
@@ -1585,6 +1586,9 @@ function parseIngForBuilder(ing) {
   if(gm){qty=parseFloat(gm[1].replace(',','.'));unitRaw=gm[2];return{...ing,qty,unitRaw};}
   const pc=unitFull.match(/^([\d.,]+)\s*(stück|stk\.?)$/i);
   if(pc){qty=parseFloat(pc[1].replace(',','.'));unitRaw='Stück';return{...ing,qty,unitRaw};}
+  // Handle all other named piece units: "3 EL", "2 Zehe", "1 Bund", "0.5 TL", etc.
+  const any=unitFull.match(/^([\d.,]+)\s+(.+)$/);
+  if(any){qty=parseFloat(any[1].replace(',','.'));unitRaw=any[2].trim();return{...ing,qty,unitRaw};}
   return{...ing,qty,unitRaw};
 }
 
@@ -1652,7 +1656,7 @@ function bldHandleFiles(input) {
     compressImage(file).then(dataUrl => {
       builderPendingImgs.push({dataUrl});
       renderBuilderPhotoThumbs();
-    });
+    }).catch(() => showToast('Foto konnte nicht geladen werden'));
   });
   input.value='';
 }
