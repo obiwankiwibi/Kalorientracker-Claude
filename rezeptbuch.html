@@ -737,6 +737,34 @@ function updateBookmarkBtn() {
 }
 
 // ── Nutrition helpers ──
+const UNIT_G = {
+  'el':15,'essl':15,'esslöffel':15,'esslöffel':15,
+  'tl':5,'teelöffel':5,
+  'zehe':5,'zehen':5,
+  'prise':1,'prisen':1,
+  'msp':1,'messerspitze':1,
+  'zweig':5,'zweige':5,'zweigen':5,
+  'blatt':2,'blätter':2,
+  'dose':420,
+  'becher':200,
+  'bund':50,'bünde':50,
+  'paar':100,
+  'knolle':50,'knollen':50,
+  'päckchen':10,
+  'scheibe':30,'scheiben':30,
+  'kugel':125,
+  'stück':80,
+  'tasse':200,
+  'glas':200,
+  'flasche':750,
+  'handvoll':30,
+  'pkg':200,'paket':200,'pkt':200,
+};
+function _unitToG(unitStr, qty) {
+  const suffix = (unitStr||'').replace(/^[\d.,\s]+/,'').trim().toLowerCase();
+  const g = UNIT_G[suffix];
+  return g ? qty * g : 0;
+}
 let _catalogMap = null;
 function getCatalogMap() {
   if (!_catalogMap) {
@@ -751,14 +779,14 @@ function calcNutrition(ingredients, scale) {
   const map = getCatalogMap();
   let kcal=0, protein=0, carbs=0, fat=0, hasData=false;
   for (const ing of ingredients) {
-    if (!ing.amountG) continue;
+    const g = (ing.amountG || _unitToG(ing.unit, ing.qty||0)) * scale;
+    if (!g) continue;
     let k=ing.kcalPer100||0, p=ing.proteinPer100||0, c=ing.carbsPer100||0, f=ing.fatPer100||0;
     if (!k && !p && !c && !f) {
       const entry = map.get(ing.name.toLowerCase().trim());
       if (entry) { k=entry.kcal||0; p=entry.protein||0; c=entry.carbs||0; f=entry.fat||0; }
     }
     if (k || p || c || f) {
-      const g = ing.amountG * scale;
       kcal += (g/100)*k; protein += (g/100)*p; carbs += (g/100)*c; fat += (g/100)*f;
       hasData = true;
     }
