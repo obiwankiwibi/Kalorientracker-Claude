@@ -765,6 +765,41 @@ function _unitToG(unitStr, qty) {
   const g = UNIT_G[suffix];
   return g ? qty * g : 0;
 }
+// German food name normalization tables
+const FOOD_ALIASES = {
+  'paprikaschote':'paprika','paprikaschoten':'paprika',
+  'rinderhackfleisch':'rinderhack',
+  'hackfleisch':'hackfleisch gemischt',
+  'sahneschmelzkäse':'schmelzkäse',
+  'doppelrahmfrischkäse':'frischkäse',
+  'kochschinken':'schinken gekocht','schinkenwürfel':'schinken gekocht',
+  'bauchspeck':'speck','räucherbauch':'speck','speckwürfel':'speck',
+  'ei':'eier',
+  'möhre':'möhren','karotte':'karotten',
+  'lauch':'porree','staudensellerie':'sellerie',
+};
+const COLOR_NORM = {
+  'rote':'rot','roten':'rot','roter':'rot','rotes':'rot',
+  'gelbe':'gelb','gelben':'gelb','gelber':'gelb',
+  'grüne':'grün','grünen':'grün','grüner':'grün',
+  'weiße':'weiß','weißen':'weiß','braune':'braun','braunen':'braun',
+};
+const SKIP_WORDS = new Set([
+  'frische','frischen','frischer','frisch',
+  'getrocknete','getrockneten','getrocknet',
+  'geräucherte','geräuchert','geräuchertem',
+  'kleine','kleinen','kleiner','klein',
+  'große','großen','großer','groß',
+  'weiche','weichen','weich',
+  'geriebener','geriebene','gerieben',
+  'gehackt','gehackte','gehackten',
+  'gepresst','gepresste','gepressten',
+  'festkochend','mehlig','mehligkochend',
+  'nativ','extra','gewürfelt','gewürfelte',
+  'stückige','stückigen','süße','süßen',
+  'gehäuft','gestrichen',
+]);
+
 let _catalogMap = null, _catalogFWMap = null;
 function getCatalogMap() {
   if (!_catalogMap) {
@@ -780,10 +815,10 @@ function getCatalogMap() {
   }
   return _catalogMap;
 }
-function _catalogLookup(ingName) {
-  const map = getCatalogMap();
-  const n = ingName.toLowerCase().trim();
-  if (map.has(n)) return map.get(n);
+function _tryMatch(n) {
+  if (!n) return null;
+  getCatalogMap();
+  if (_catalogMap.has(n)) return _catalogMap.get(n);
   const fw = n.split(/[\s,()\/\-]+/)[0];
   const candidates = _catalogFWMap.get(fw) || [];
   let best = null, bestScore = 0;
@@ -795,6 +830,32 @@ function _catalogLookup(ingName) {
     if (score > bestScore) { bestScore = score; best = s; }
   }
   return best;
+}
+function _normalizeName(n) {
+  // apply alias on full name
+  if (FOOD_ALIASES[n]) return FOOD_ALIASES[n];
+  // strip after comma, remove parens
+  let s = n.split(',')[0].trim().replace(/\s*\([^)]*\)/g,'').trim();
+  // word-level: normalize colors, drop filler words
+  const words = s.split(/\s+/).map(w => COLOR_NORM[w]||w).filter(w => !SKIP_WORDS.has(w));
+  return words.join(' ');
+}
+function _catalogLookup(ingName) {
+  getCatalogMap();
+  const n = ingName.toLowerCase().trim();
+  // Tier 1+2: original
+  let r = _tryMatch(n); if (r) return r;
+  // Tier 3: normalized (comma strip + color norm + skip words)
+  const norm = _normalizeName(n);
+  if (norm !== n) { r = _tryMatch(norm); if (r) return r; }
+  // Tier 4: alias on first word of normalized
+  const normFW = norm.split(/[\s,()\/\-]+/)[0];
+  if (FOOD_ALIASES[normFW]) { r = _tryMatch(FOOD_ALIASES[normFW]); if (r) return r; }
+  // Tier 5: suffix check for German compound words (e.g. "Sahneschmelzkäse" ends with "schmelzkäse")
+  for (const [key, entry] of _catalogMap) {
+    if (key.length >= 6 && n.endsWith(key)) return entry;
+  }
+  return null;
 }
 function calcNutrition(ingredients, scale) {
   getCatalogMap();
