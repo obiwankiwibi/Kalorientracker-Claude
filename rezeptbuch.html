@@ -359,6 +359,11 @@
       font-family: Georgia,serif; font-size: 16px; font-weight: 700; cursor: pointer;
     }
     .tbsh-confirm:active { background: #4A2E0A; }
+    .tbsh-close {
+      position: absolute; top: 14px; right: 16px;
+      background: none; border: none; color: #A8875A;
+      font-size: 22px; cursor: pointer; padding: 4px 6px; line-height: 1;
+    }
 
     /* ── Timer overlay ── */
     #timerOverlay {
@@ -716,7 +721,8 @@
 </div>
 
 <div id="tagebuchSheet" hidden onclick="if(event.target===this)this.hidden=true">
-  <div class="tbsh-card">
+  <div class="tbsh-card" style="position:relative">
+    <button class="tbsh-close" onclick="document.getElementById('tagebuchSheet').hidden=true">✕</button>
     <div class="tbsh-handle"></div>
     <div class="tbsh-title" id="tbshTitle"></div>
     <div class="tbsh-sub" id="tbshSub"></div>
@@ -1811,7 +1817,7 @@ function _blvRow(r) {
 function listOpenRecipe(id) {
   openedFromList=true;
   bookViewMode='book';
-  try { localStorage.setItem('rezeptbuch_view','book'); } catch {}
+  // Don't save to localStorage — view preference stays 'list', book is temporary
   document.getElementById('bookListView').classList.remove('visible');
   const idx=bookPages.findIndex(pg=>pg.id===id);
   if(idx>0) bookJumpToPage(idx); else updateBookNav();
@@ -2155,7 +2161,7 @@ function addRecipeToKalorien(recipeId) {
   const scale=portions/(r.servings||4);
   const ings=(r.ingredients||[]).filter(i=>!i.custom);
   const nutr=calcNutrition(ings,scale);
-  if(!nutr||!nutr.kcal){showToast('Keine Nährwerte vorhanden');return;}
+  if(!nutr){showToast('Keine Nährwerte vorhanden');return;}
   _tbshRecipeId=recipeId;
   _tbshBaseKcal=nutr.kcal;
   _tbshNutrBase=nutr;
