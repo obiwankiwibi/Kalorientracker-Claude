@@ -284,6 +284,57 @@
     #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #2C1808; color: #E8D0A0; font-family: Georgia,serif; font-size: 14px; padding: 10px 20px; border-radius: 20px; z-index: 500; opacity: 0; pointer-events: none; transition: opacity .25s; white-space: nowrap; }
     #toast.show { opacity: 1; }
 
+    /* ── Step timer button ── */
+    .step-time-btn {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: #EDD9B0; border: 1px solid #C4A46A; border-radius: 10px;
+      padding: 1px 7px; font-family: Georgia,serif; font-size: 12.5px;
+      color: #5C3317; cursor: pointer; margin: 1px 0; vertical-align: middle; line-height: 1.6;
+    }
+    .step-time-btn:active { background: #D4B896; }
+    .brp-step-tm5-chip.tm5-time-btn { cursor: pointer; border: none; }
+    .brp-step-tm5-chip.tm5-time-btn:active { background: #D4B896; }
+
+    /* ── Timer overlay ── */
+    #timerOverlay {
+      position: fixed; inset: 0; z-index: 800;
+      background: rgba(0,0,0,.72); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .timer-card {
+      background: #FDF8EE; border-radius: 24px;
+      padding: 40px 28px 28px; text-align: center;
+      width: min(300px,88vw); position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    }
+    .timer-ring-wrap { position: absolute; inset: 16px; pointer-events: none; }
+    .timer-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .timer-ring-bg { fill: none; stroke: #E8D5B0; stroke-width: 4; }
+    .timer-ring-fg { fill: none; stroke: #8B5C14; stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset .9s linear; }
+    .timer-ring-fg.done { stroke: #2D6A4F; }
+    .timer-display {
+      font-family: Georgia,serif; font-size: 54px; font-weight: 700;
+      color: #2C1808; line-height: 1; letter-spacing: 2px; margin-bottom: 4px;
+      position: relative; z-index: 1;
+    }
+    .timer-display.done { color: #2D6A4F; font-size: 30px; }
+    .timer-btns { display: flex; gap: 10px; justify-content: center; margin-top: 20px; position: relative; z-index: 1; }
+    .timer-btn { border: none; border-radius: 50%; width: 52px; height: 52px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .timer-btn-pause { background: #EDD9B0; color: #5C3317; }
+    .timer-btn-close { background: #F5EDD8; color: #8B6A3A; }
+    .timer-btn:active { opacity: .7; }
+    #timerOverlay.timer-flash { animation: timerFlash .5s ease; }
+    @keyframes timerFlash { 0%,100%{background:rgba(0,0,0,.72)} 50%{background:rgba(45,106,79,.55)} }
+
+    /* ── Recently viewed (cover) ── */
+    .bc-recent-label { font-family: Georgia,serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #A8875A; padding-bottom: 8px; }
+    .bc-recent-row { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid #E8D5B0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .bc-recent-row:last-of-type { border-bottom: none; }
+    .bc-recent-row:active { background: #F5EDD8; margin: 0 -4px; padding: 9px 8px; }
+    .bc-recent-emoji { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+    .bc-recent-name { font-family: Georgia,serif; font-size: 14px; color: #4A2E0A; flex: 1; }
+    .bc-recent-arrow { color: #C4A46A; font-size: 18px; }
+
     /* ── Empty state ── */
     .empty-state { padding: 80px 32px; text-align: center; font-family: Georgia,serif; }
     .empty-ornament { font-size: 48px; margin-bottom: 20px; }
@@ -408,12 +459,29 @@
 <div id="toast"></div>
 <button id="shareBar" disabled onclick="exportToPdf()">📄 Rezepte als PDF</button>
 
+<div id="timerOverlay" hidden>
+  <div class="timer-card">
+    <div class="timer-ring-wrap" aria-hidden="true">
+      <svg class="timer-ring" viewBox="0 0 100 100">
+        <circle class="timer-ring-bg" cx="50" cy="50" r="44"/>
+        <circle class="timer-ring-fg" id="timerRingFg" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/>
+      </svg>
+    </div>
+    <div class="timer-display" id="timerDisplay">00:00</div>
+    <div class="timer-btns">
+      <button class="timer-btn timer-btn-pause" id="timerPauseBtn" onclick="timerToggle()" title="Pause/Weiter">⏸</button>
+      <button class="timer-btn timer-btn-close" onclick="timerClose()" title="Schließen">✕</button>
+    </div>
+  </div>
+</div>
+
 <script src="catalog.js"></script>
 <script>
 'use strict';
 
 const RECIPE_STORE = 'rezepte_v2';
-const RECIPE_CATEGORIES = ['Frühstück','Nudelgericht','Salat','Suppe','Auflauf','Pfannengericht','Curry','Fisch','Dessert','Snack','Sonstiges'];
+const RECENT_STORE = 'rezeptbuch_recent';
+const RECIPE_CATEGORIES = ['Hauptgericht','Beilage','Nudelgericht','Suppe','Auflauf','Snack','Dessert','Aufstrich','Frühstück','Salat','Sonstiges'];
 
 function esc(s) {
   return String(s == null ? '' : s)
@@ -569,6 +637,10 @@ function loadRecipes() {
   try { recipes=JSON.parse(localStorage.getItem(RECIPE_STORE)||'{}'); } catch(e) { recipes={}; }
 }
 function saveRecipes() { localStorage.setItem(RECIPE_STORE, JSON.stringify(recipes)); }
+
+let recentIds = [];
+function loadRecent() { try { recentIds=JSON.parse(localStorage.getItem(RECENT_STORE)||'[]'); } catch { recentIds=[]; } }
+function _addToRecent(id) { recentIds=[id,...recentIds.filter(x=>x!==id)].slice(0,5); try { localStorage.setItem(RECENT_STORE,JSON.stringify(recentIds)); } catch {} }
 
 // ── Seed: Chefkoch-Rezepte ──
 function _ing(name,emoji,qty,u){
@@ -1053,13 +1125,15 @@ function buildCoverHTML(pg) {
       <div style="display:flex;align-items:center;gap:8px;"><span class="bc-cat-count">${grouped[cat].length} Rezept${grouped[cat].length!==1?'e':''}</span><span class="bc-cat-arrow">›</span></div>
     </div>`;
   }).join('');
+  const recentRecs=recentIds.map(id=>recipes[id]).filter(Boolean).slice(0,5);
+  const recentHTML=recentRecs.length?`<div class="bc-recent-label">Zuletzt angesehen</div>${recentRecs.map(r=>`<div class="bc-recent-row" onclick="bookGoToRecipe('${esc(r.id)}')"><span class="bc-recent-emoji">${esc(r.emoji)||'🍽️'}</span><span class="bc-recent-name">${esc(r.name)}</span><span class="bc-recent-arrow">›</span></div>`).join('')}<hr class="bc-divider" style="margin:12px 0">`:'' ;
   return `<div class="bc-inner">
     <div class="bc-ornament">— ✦ —</div>
     <div class="bc-title">Mein Rezeptbuch</div>
     <div class="bc-subtitle">${totalRecs} Rezept${totalRecs!==1?'e':''}</div>
     <input class="bc-search" id="bookSearchInput" type="search" placeholder="Rezept suchen …" oninput="bookOnSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
     <hr class="bc-divider">
-    <div id="bookCoverContent"><div class="bc-cats-label">Kategorien</div>${catRows}</div>
+    <div id="bookCoverContent">${recentHTML}<div class="bc-cats-label">Kategorien</div>${catRows}</div>
   </div>`;
 }
 
@@ -1099,10 +1173,10 @@ function buildRecipePageHTML(pg, pageIdx) {
       const t=tm5.temp?(isNaN(tm5.temp)?tm5.temp:tm5.temp+'°C'):null;
       const sp=tm5.speed?('Stufe '+tm5.speed):null;
       const ti=tm5.time||null;
-      const chipsInner=[t&&`<span class="brp-step-tm5-chip">🌡️ ${esc(t)}</span>`,sp&&`<span class="brp-step-tm5-chip">⚙️ ${esc(sp)}</span>`,ti&&`<span class="brp-step-tm5-chip">⏱️ ${esc(ti)}</span>`].filter(Boolean).join('');
+      const chipsInner=[t&&`<span class="brp-step-tm5-chip">🌡️ ${esc(t)}</span>`,sp&&`<span class="brp-step-tm5-chip">⚙️ ${esc(sp)}</span>`,ti&&`<button class="brp-step-tm5-chip tm5-time-btn" onclick="startTimer(${_parseTm5Time(ti)})">⏱️ ${esc(ti)}</button>`].filter(Boolean).join('');
       if(chipsInner) chips=`<div class="brp-step-tm5"><div class="brp-step-tm5-title">Thermomix</div><div class="brp-step-tm5-chips">${chipsInner}</div></div>`;
     }
-    return `<div class="brp-step"><div class="brp-step-num">${i+1}</div><div class="brp-step-text">${esc(text)}${chips}</div></div>`;
+    return `<div class="brp-step"><div class="brp-step-num">${i+1}</div><div class="brp-step-text">${_markTimers(esc(text))}${chips}</div></div>`;
   }).join('');
 
   return `<div class="brp-inner">
@@ -1122,8 +1196,9 @@ function buildRecipePageHTML(pg, pageIdx) {
       ${steps?`<div class="brp-section"><div class="brp-section-title">Zubereitung</div>${steps}</div>`:''}
       ${photoHTML}
     </div>
-    <div class="brp-actions" style="padding-bottom:6px">
-      <button class="brp-list-btn" onclick="addRecipeToList('${safeId}',${pageIdx})">🛒 Zur Einkaufsliste</button>
+    <div class="brp-actions" style="padding-bottom:6px;display:flex;gap:8px;">
+      <button class="brp-list-btn" style="flex:1" onclick="addRecipeToList('${safeId}',${pageIdx})">🛒 Einkaufsliste</button>
+      <button class="brp-list-btn" style="flex:1" onclick="addRecipeToKalorien('${safeId}')">📊 Tagebuch</button>
     </div>
     <div class="brp-actions">
       <button class="brp-edit-btn" onclick="openBuilder('${safeId}')">✏️ Bearbeiten</button>
@@ -1481,6 +1556,7 @@ function bookJumpToPage(targetIdx) {
   if(curEl){curEl.classList.add('bp-no-t');curEl.classList.remove('bp-on','bp-left');void curEl.offsetWidth;curEl.classList.remove('bp-no-t');}
   if(nextEl){nextEl.classList.add('bp-no-t');nextEl.classList.remove('bp-left');nextEl.classList.add('bp-on');void nextEl.offsetWidth;nextEl.classList.remove('bp-no-t');nextEl.scrollTop=0;}
   bookCurrentPage=targetIdx; updateBookNav();
+  if(targetIdx>0 && bookPages[targetIdx]?.type==='recipe') _addToRecent(bookPages[targetIdx].id);
   try { localStorage.setItem('rezeptbuch_page', String(bookPages[targetIdx]?.id || targetIdx)); } catch {}
 }
 
@@ -1789,6 +1865,89 @@ function renderBuilderSteps() {
 }
 function autoResize(el) { el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 
+// ── Ins Tagebuch ──
+function addRecipeToKalorien(recipeId) {
+  const r=recipes[recipeId]; if(!r) return;
+  const portions=bookPortions[recipeId]||r.servings||4;
+  const scale=portions/(r.servings||4);
+  const ings=(r.ingredients||[]).filter(i=>!i.custom);
+  const nutr=calcNutrition(ings,scale);
+  if(!nutr||!nutr.kcal){showToast('Keine Nährwerte vorhanden');return;}
+  let pending=[];
+  try{pending=JSON.parse(localStorage.getItem('pending_kalorien_items')||'[]');}catch{}
+  pending.push({
+    name:r.name+(portions!==(r.servings||4)?' ('+portions+' Port.)':''),
+    emoji:r.emoji||'🍽️', kcal:nutr.kcal,
+    protein:parseFloat(nutr.protein), carbs:parseFloat(nutr.carbs), fat:parseFloat(nutr.fat),
+    addedAt:Date.now()
+  });
+  try{localStorage.setItem('pending_kalorien_items',JSON.stringify(pending));}catch(e){}
+  showToast(nutr.kcal+' kcal ins Tagebuch');
+}
+
+// ── Step Timer ──
+const _CIRC=2*Math.PI*44;
+let _timerSecs=0,_timerTotal=0,_timerRunning=false,_timerIv=null;
+
+function _parseTm5Time(s){
+  if(!s) return 0;
+  const p=String(s).trim().split(':').map(n=>parseInt(n)||0);
+  if(p.length===3) return p[0]*3600+p[1]*60+p[2];
+  if(p.length===2) return p[0]*60+p[1];
+  return p[0]*60;
+}
+
+function _markTimers(html){
+  return html.replace(/(?:ca\.\s*)?(\d+)(?:\s*[-–]\s*\d+)?\s*(Stunden?|Std\.?|Minuten?|Min\.?)/gi,(m,n,u)=>{
+    const isH=/stund|std/i.test(u), secs=(parseInt(n)||1)*(isH?3600:60);
+    if(secs<60||secs>10800) return m;
+    return `<button class="step-time-btn" onclick="startTimer(${secs})" title="Timer starten">⏱ ${m}</button>`;
+  });
+}
+
+function startTimer(secs){
+  _timerSecs=_timerTotal=Math.max(1,secs);
+  _timerRunning=true;
+  clearInterval(_timerIv);
+  _timerIv=setInterval(_timerTick,1000);
+  _updateTimerUI(false);
+  document.getElementById('timerOverlay').hidden=false;
+  document.getElementById('timerPauseBtn').textContent='⏸';
+}
+function _timerTick(){
+  if(!_timerRunning) return;
+  _timerSecs--;
+  _updateTimerUI(false);
+  if(_timerSecs<=0){clearInterval(_timerIv);_timerIv=null;_timerRunning=false;_timerDone();}
+}
+function _updateTimerUI(done){
+  const d=document.getElementById('timerDisplay'), fg=document.getElementById('timerRingFg');
+  if(!d||!fg) return;
+  if(done){d.className='timer-display done';d.textContent='Fertig! 🎉';fg.classList.add('done');return;}
+  const s=Math.max(0,_timerSecs),m=Math.floor(s/60),ss=s%60;
+  d.className='timer-display';
+  d.textContent=(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;
+  fg.classList.remove('done');
+  fg.style.strokeDashoffset=_CIRC*(1-(_timerTotal>0?s/_timerTotal:0));
+}
+function timerToggle(){
+  _timerRunning=!_timerRunning;
+  document.getElementById('timerPauseBtn').textContent=_timerRunning?'⏸':'▶';
+  if(_timerRunning){_timerIv=setInterval(_timerTick,1000);}
+  else{clearInterval(_timerIv);_timerIv=null;}
+}
+function timerClose(){
+  clearInterval(_timerIv);_timerIv=null;_timerRunning=false;
+  document.getElementById('timerOverlay').hidden=true;
+}
+function _timerDone(){
+  _updateTimerUI(true);
+  try{navigator.vibrate([300,100,300,100,600]);}catch{}
+  const o=document.getElementById('timerOverlay');
+  o.classList.add('timer-flash');
+  setTimeout(()=>o.classList.remove('timer-flash'),800);
+}
+
 // ── Toast ──
 let _toastTimer=null;
 function showToast(msg) {
@@ -1846,6 +2005,7 @@ window.addEventListener('popstate', function(e) {
 (async()=>{
   loadRecipes();
   loadBookmarks();
+  loadRecent();
   await loadAllRecipeImages();
   buildBookPages();
   renderBookAllPages();
