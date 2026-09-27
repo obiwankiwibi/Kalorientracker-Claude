@@ -765,29 +765,51 @@ function _unitToG(unitStr, qty) {
   const g = UNIT_G[suffix];
   return g ? qty * g : 0;
 }
-let _catalogMap = null;
+let _catalogMap = null, _catalogFWMap = null;
 function getCatalogMap() {
   if (!_catalogMap) {
     _catalogMap = new Map();
+    _catalogFWMap = new Map();
     (typeof SUGGESTIONS !== 'undefined' ? SUGGESTIONS : []).forEach(s => {
-      _catalogMap.set(s.name.toLowerCase().trim(), s);
+      const key = s.name.toLowerCase().trim();
+      _catalogMap.set(key, s);
+      const fw = key.split(/[\s,()\/\-]+/)[0];
+      if (!_catalogFWMap.has(fw)) _catalogFWMap.set(fw, []);
+      _catalogFWMap.get(fw).push({key, s});
     });
   }
   return _catalogMap;
 }
-function calcNutrition(ingredients, scale) {
+function _catalogLookup(ingName) {
   const map = getCatalogMap();
+  const n = ingName.toLowerCase().trim();
+  if (map.has(n)) return map.get(n);
+  const fw = n.split(/[\s,()\/\-]+/)[0];
+  const candidates = _catalogFWMap.get(fw) || [];
+  let best = null, bestScore = 0;
+  for (const {key, s} of candidates) {
+    let score = 0;
+    if (n.startsWith(key)) score = key.length + 100;
+    else if (key.startsWith(n)) score = n.length + 50;
+    else score = fw.length;
+    if (score > bestScore) { bestScore = score; best = s; }
+  }
+  return best;
+}
+function calcNutrition(ingredients, scale) {
+  getCatalogMap();
   let kcal=0, protein=0, carbs=0, fat=0, price=0, hasData=false, hasPrice=false;
   for (const ing of ingredients) {
     const g = (ing.amountG || _unitToG(ing.unit, ing.qty||0)) * scale;
     if (!g) continue;
     let k=ing.kcalPer100||0, p=ing.proteinPer100||0, c=ing.carbsPer100||0, f=ing.fatPer100||0;
     let unitPrice=ing.unitPrice||0, unitG=ing.unitG||0;
-    const entry = (!k && !p && !c && !f) || !unitPrice
-      ? map.get(ing.name.toLowerCase().trim()) : null;
-    if (entry) {
-      if (!k && !p && !c && !f) { k=entry.kcal||0; p=entry.protein||0; c=entry.carbs||0; f=entry.fat||0; }
-      if (!unitPrice) { unitPrice=entry.price||0; unitG=parseFloat(entry.unit)||100; }
+    if (!k && !p && !c && !f || !unitPrice) {
+      const entry = _catalogLookup(ing.name);
+      if (entry) {
+        if (!k && !p && !c && !f) { k=entry.kcal||0; p=entry.protein||0; c=entry.carbs||0; f=entry.fat||0; }
+        if (!unitPrice) { unitPrice=entry.price||0; unitG=parseFloat(entry.unit)||100; }
+      }
     }
     if (k || p || c || f) {
       kcal += (g/100)*k; protein += (g/100)*p; carbs += (g/100)*c; fat += (g/100)*f;
