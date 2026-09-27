@@ -132,6 +132,10 @@
     .brp-portions-label { font-family: Georgia,serif; font-size: 13px; color: #5C3317; font-weight: 600; }
     .brp-portions-btn { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid #C4A46A; background: #FDF8EE; color: #8B5C14; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .brp-portions-val { font-family: Georgia,serif; font-size: 18px; font-weight: 700; color: #4A2E0A; min-width: 32px; text-align: center; }
+    .brp-nutr-row { display: flex; justify-content: center; gap: 16px; background: #F5EFE0; border-radius: 12px; padding: 9px 14px; margin: -10px 0 20px; flex-wrap: wrap; }
+    .brp-nutr-item { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+    .brp-nutr-val { font-family: Georgia,serif; font-weight: 700; font-size: 14px; color: #4A2E0A; font-variant-numeric: tabular-nums; }
+    .brp-nutr-lbl { font-family: Georgia,serif; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #8B5C14; }
     .brp-section { margin-bottom: 24px; }
     .brp-section-title { font-family: Georgia,serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8B5C14; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #D4B896; }
     .brp-ingr-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #EDD9C0; font-family: Georgia,serif; }
@@ -732,6 +736,36 @@ function updateBookmarkBtn() {
   }
 }
 
+// ── Nutrition helpers ──
+let _catalogMap = null;
+function getCatalogMap() {
+  if (!_catalogMap) {
+    _catalogMap = new Map();
+    (typeof SUGGESTIONS !== 'undefined' ? SUGGESTIONS : []).forEach(s => {
+      _catalogMap.set(s.name.toLowerCase().trim(), s);
+    });
+  }
+  return _catalogMap;
+}
+function calcNutrition(ingredients, scale) {
+  const map = getCatalogMap();
+  let kcal=0, protein=0, carbs=0, fat=0, hasData=false;
+  for (const ing of ingredients) {
+    if (!ing.amountG) continue;
+    let k=ing.kcalPer100||0, p=ing.proteinPer100||0, c=ing.carbsPer100||0, f=ing.fatPer100||0;
+    if (!k && !p && !c && !f) {
+      const entry = map.get(ing.name.toLowerCase().trim());
+      if (entry) { k=entry.kcal||0; p=entry.protein||0; c=entry.carbs||0; f=entry.fat||0; }
+    }
+    if (k || p || c || f) {
+      const g = ing.amountG * scale;
+      kcal += (g/100)*k; protein += (g/100)*p; carbs += (g/100)*c; fat += (g/100)*f;
+      hasData = true;
+    }
+  }
+  return hasData ? {kcal:Math.round(kcal), protein:Math.round(protein), carbs:Math.round(carbs), fat:Math.round(fat)} : null;
+}
+
 // ── Book state ──
 let bookCurrentPage=0, bookPages=[], bookPortions={}, bookSearch='', bookTX=0, bookTY=0;
 let bookViewMode = (()=>{ try { return localStorage.getItem('rezeptbuch_view')||'book'; } catch { return 'book'; } })();
@@ -827,12 +861,20 @@ function buildRecipePageHTML(pg, pageIdx) {
     photoHTML=`<div class="brp-section"><div class="brp-section-title">Fotos</div><div class="brp-photo-gallery">${imgs}</div></div>`;
   }
 
-  const ingrs=(r.ingredients||[]).filter(i=>!i.custom).map(i=>
+  const ingsForPage=(r.ingredients||[]).filter(i=>!i.custom);
+  const ingrs=ingsForPage.map(i=>
     `<div class="brp-ingr-item">
       <div class="brp-ingr-left"><span>${i.emoji||''}</span><span>${esc(i.name)}</span></div>
       <div class="brp-ingr-amt">${cookFmtAmt(i,scale)}</div>
     </div>`
   ).join('');
+  const nutr=calcNutrition(ingsForPage,scale);
+  const nutrHTML=nutr?`<div class="brp-nutr-row" id="brp-nutr-${pageIdx}">
+    <div class="brp-nutr-item"><span class="brp-nutr-val">${nutr.kcal}</span><span class="brp-nutr-lbl">kcal</span></div>
+    <div class="brp-nutr-item"><span class="brp-nutr-val">${nutr.protein} g</span><span class="brp-nutr-lbl">Eiweiß</span></div>
+    <div class="brp-nutr-item"><span class="brp-nutr-val">${nutr.carbs} g</span><span class="brp-nutr-lbl">Kohlenhydrate</span></div>
+    <div class="brp-nutr-item"><span class="brp-nutr-val">${nutr.fat} g</span><span class="brp-nutr-lbl">Fett</span></div>
+  </div>`:'';
   const steps=(r.steps||[]).filter(s=>(typeof s==='string'?s:(s.text||'')).trim()).map((s,i)=>{
     const text=typeof s==='string'?s:(s.text||'');
     const tm5=typeof s==='object'?s.tm5:null;
@@ -858,6 +900,7 @@ function buildRecipePageHTML(pg, pageIdx) {
         <span class="brp-portions-val" id="brp-pval-${pageIdx}">${portions}</span>
         <button class="brp-portions-btn" onclick="bookAdjPortions('${safeId}',${pageIdx},1)">+</button>
       </div>
+      ${nutrHTML}
       ${ingrs?`<div class="brp-section"><div class="brp-section-title">Zutaten</div>${ingrs}</div>`:''}
       ${r.description?`<div class="brp-section"><div class="brp-section-title">Beschreibung</div><div class="brp-desc">${esc(r.description)}</div></div>`:''}
       ${steps?`<div class="brp-section"><div class="brp-section-title">Zubereitung</div>${steps}</div>`:''}
@@ -882,6 +925,17 @@ function bookAdjPortions(id, pageIdx, delta) {
   const pg=bookPages[pageIdx]; if(!pg?.r) return;
   const scale=val/(pg.r.servings||4), ings=(pg.r.ingredients||[]).filter(i=>!i.custom);
   el.querySelectorAll('.brp-ingr-amt').forEach((amtEl,i)=>{ if(ings[i]) amtEl.textContent=cookFmtAmt(ings[i],scale); });
+  const nutrEl=el.querySelector('#brp-nutr-'+pageIdx);
+  if(nutrEl) {
+    const nutr=calcNutrition(ings,scale);
+    if(nutr) {
+      const vals=nutrEl.querySelectorAll('.brp-nutr-val');
+      if(vals[0]) vals[0].textContent=nutr.kcal;
+      if(vals[1]) vals[1].textContent=nutr.protein+' g';
+      if(vals[2]) vals[2].textContent=nutr.carbs+' g';
+      if(vals[3]) vals[3].textContent=nutr.fat+' g';
+    }
+  }
 }
 
 function bookFlip(dir) {
