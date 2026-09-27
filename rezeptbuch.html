@@ -378,6 +378,166 @@
     }
     #shareBar:disabled { opacity: .45; cursor: default; }
     #shareBar:not(:disabled):active { background: #6B4210; }
+
+    /* ── Cook mode overlay ── */
+    #cookView {
+      position: fixed; inset: 0; z-index: 600;
+      background: #100803;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    #cookView.hidden { display: none; }
+
+    .ck-header {
+      display: flex; align-items: center;
+      padding: 10px 14px 10px;
+      padding-top: max(10px, env(safe-area-inset-top));
+      background: #2C1808; flex-shrink: 0;
+      border-bottom: 1px solid #3A2010;
+    }
+    .ck-close-btn {
+      background: none; border: none; color: #C4A46A;
+      font-size: 14px; font-weight: 600; font-family: Georgia,serif;
+      cursor: pointer; padding: 6px 4px; min-width: 70px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ck-header-center { flex: 1; text-align: center; padding: 0 6px; min-width: 0; }
+    .ck-header-name {
+      font-family: Georgia,serif; font-size: 12px; font-weight: 700;
+      color: #E8D0A0; text-transform: uppercase; letter-spacing: .1em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ck-stopwatch {
+      font-family: Georgia,serif; font-size: 12px; color: #4A2E10;
+      font-variant-numeric: tabular-nums; margin-top: 2px; letter-spacing: .05em;
+      transition: color .4s;
+    }
+    .ck-stopwatch.running { color: #A87840; }
+
+    .ck-progress-row {
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      padding: 12px 20px 2px; flex-shrink: 0; min-height: 30px;
+    }
+    .ck-progress-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #221008; border: 1.5px solid #3A2010;
+      transition: background .3s, transform .3s, border-color .3s;
+      flex-shrink: 0;
+    }
+    .ck-progress-dot.done { background: #3D6A50; border-color: #3D6A50; }
+    .ck-progress-dot.current { background: #D4A96A; border-color: #D4A96A; transform: scale(1.55); }
+
+    .ck-body { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+    .ck-body-inner { padding: 18px 18px 28px; max-width: 440px; margin: 0 auto; }
+
+    .ck-step-label {
+      font-family: Georgia,serif; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .12em; color: #5A3A1A;
+      margin-bottom: 10px;
+    }
+    .ck-step-card {
+      background: #1C0E06; border: 1px solid #2A1808; border-radius: 18px;
+      padding: 22px 18px; margin-bottom: 16px;
+    }
+    .ck-step-text {
+      font-family: Georgia,serif; font-size: 18px; color: #F0E4CC;
+      line-height: 1.75;
+    }
+    .ck-step-timer-wrap {
+      margin-top: 18px; padding-top: 16px; border-top: 1px solid #2A1808;
+    }
+    .ck-step-timer-label {
+      font-family: Georgia,serif; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .12em; color: #5A3A1A;
+      margin-bottom: 12px;
+    }
+    .ck-countdown-display {
+      font-family: Georgia,serif; font-size: 54px; font-weight: 700;
+      color: #C4A46A; text-align: center; font-variant-numeric: tabular-nums;
+      margin-bottom: 14px; letter-spacing: 3px; line-height: 1.1;
+      transition: color .3s;
+    }
+    .ck-countdown-display.running { color: #E8D0A0; }
+    .ck-countdown-display.done { color: #3D6A50; font-size: 26px; padding: 14px 0 6px; letter-spacing: 0; }
+    .ck-countdown-btns { display: flex; gap: 8px; justify-content: center; }
+    .ck-cd-btn {
+      border: none; border-radius: 24px; padding: 10px 22px;
+      font-family: Georgia,serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .ck-cd-btn:active { opacity: .75; }
+    .ck-cd-start { background: #8B5C14; color: #FDF8EE; }
+    .ck-cd-reset { background: #2A1808; color: #8B6A3A; border: 1.5px solid #3A2010; }
+
+    .ck-ings-label {
+      font-family: Georgia,serif; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .1em; color: #5A3A1A;
+      margin-bottom: 8px;
+    }
+    .ck-ings-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 8px; }
+    .ck-ing-chip {
+      display: flex; align-items: center; gap: 5px;
+      background: #1C0E06; border: 1px solid #2A1808; border-radius: 20px;
+      padding: 6px 12px; font-family: Georgia,serif; font-size: 13px; color: #C4A46A;
+    }
+    .ck-ing-chip-amt { color: #6A4A28; font-size: 12px; }
+
+    .ck-nav-row {
+      background: #100803; padding: 12px 18px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      display: flex; gap: 10px; flex-shrink: 0; border-top: 1px solid #1E1008;
+    }
+    .ck-nav-back {
+      flex: 0 0 auto; padding: 15px 18px;
+      border: 1.5px solid #2A1808; background: none; color: #5A3A1A;
+      font-family: Georgia,serif; font-size: 15px; font-weight: 600;
+      border-radius: 14px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .ck-nav-back:not(:disabled):active { color: #C4A46A; border-color: #5A3A1A; }
+    .ck-nav-back:disabled { opacity: .25; cursor: default; }
+    .ck-nav-done {
+      flex: 1; padding: 15px;
+      background: #7A4E10; border: none; color: #FDF8EE;
+      font-family: Georgia,serif; font-size: 16px; font-weight: 700;
+      border-radius: 14px; cursor: pointer; transition: background .2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ck-nav-done.last-step { background: #2D6A4F; }
+    .ck-nav-done:active { opacity: .85; }
+
+    /* Summary */
+    .ck-summary-wrap { padding: 40px 20px 40px; max-width: 440px; margin: 0 auto; text-align: center; }
+    .ck-summary-trophy { font-size: 64px; margin-bottom: 16px; line-height: 1; }
+    .ck-summary-title { font-family: Georgia,serif; font-size: 28px; font-weight: 700; color: #E8D0A0; margin-bottom: 6px; }
+    .ck-summary-subtitle { font-family: Georgia,serif; font-size: 15px; color: #5A3A1A; margin-bottom: 28px; font-style: italic; }
+    .ck-summary-time-box { background: #1C0E06; border: 1px solid #2A1808; border-radius: 18px; padding: 24px; margin-bottom: 16px; }
+    .ck-summary-time-val { font-family: Georgia,serif; font-size: 48px; font-weight: 700; color: #D4A96A; font-variant-numeric: tabular-nums; letter-spacing: 2px; }
+    .ck-summary-time-lbl { font-family: Georgia,serif; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: #5A3A1A; margin-top: 6px; }
+    .ck-summary-avg { font-family: Georgia,serif; font-size: 13px; color: #5A3A1A; font-style: italic; margin-bottom: 32px; }
+    .ck-summary-save-btn {
+      width: 100%; padding: 16px; background: #8B5C14; border: none; color: #FDF8EE;
+      font-family: Georgia,serif; font-size: 16px; font-weight: 700; border-radius: 14px;
+      cursor: pointer; margin-bottom: 10px; -webkit-tap-highlight-color: transparent;
+    }
+    .ck-summary-save-btn:disabled { opacity: .5; cursor: default; }
+    .ck-summary-save-btn:not(:disabled):active { opacity: .85; }
+    .ck-summary-close-btn {
+      width: 100%; padding: 14px; background: none; border: 1.5px solid #2A1808; color: #5A3A1A;
+      font-family: Georgia,serif; font-size: 14px; font-weight: 600; border-radius: 14px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ck-summary-close-btn:active { color: #C4A46A; border-color: #5A3A1A; }
+
+    /* Avg time badge on recipe page */
+    .brp-cook-avg { text-align: center; font-family: Georgia,serif; font-size: 12px; color: #8B5C14; padding: 0 0 14px; font-weight: 600; }
+
+    /* Kochen button */
+    .brp-cook-btn {
+      width: 100%; padding: 13px;
+      background: #2C1808; border: 1.5px solid #3A2010; color: #D4A96A;
+      font-family: Georgia,serif; font-size: 16px; font-weight: 700;
+      border-radius: 10px; cursor: pointer; letter-spacing: .02em;
+    }
+    .brp-cook-btn:active { background: #1A0C04; }
   </style>
 </head>
 <body>
@@ -472,6 +632,23 @@
       <button class="timer-btn timer-btn-pause" id="timerPauseBtn" onclick="timerToggle()" title="Pause/Weiter">⏸</button>
       <button class="timer-btn timer-btn-close" onclick="timerClose()" title="Schließen">✕</button>
     </div>
+  </div>
+</div>
+
+<div id="cookView" class="hidden">
+  <div class="ck-header">
+    <button class="ck-close-btn" onclick="closeCookMode()">✕ Schließen</button>
+    <div class="ck-header-center">
+      <div class="ck-header-name" id="ckHeaderName"></div>
+      <div class="ck-stopwatch" id="ckStopwatch">00:00</div>
+    </div>
+    <div style="min-width:70px;text-align:right"><span style="font-family:Georgia,serif;font-size:11px;color:#5A3A1A;text-transform:uppercase;letter-spacing:.08em">Kochzeit</span></div>
+  </div>
+  <div class="ck-progress-row" id="ckProgressRow"></div>
+  <div class="ck-body" id="ckBody"></div>
+  <div class="ck-nav-row">
+    <button class="ck-nav-back" id="ckBackBtn" onclick="cookPrevStep()" disabled>← Zurück</button>
+    <button class="ck-nav-done" id="ckDoneBtn" onclick="cookNextStep()">✓ Erledigt</button>
   </div>
 </div>
 
@@ -1157,6 +1334,8 @@ function buildRecipePageHTML(pg, pageIdx) {
     </div>`
   ).join('');
   const nutr=calcNutrition(ingsForPage,scale);
+  const avgSecs=_ckGetAvgTime(r.id);
+  const avgBadgeHTML=avgSecs!=null?`<div class="brp-cook-avg" id="brp-cook-avg-${pageIdx}">⏱ Ø ${Math.round(avgSecs/60)} Min.</div>`:`<div class="brp-cook-avg" id="brp-cook-avg-${pageIdx}" style="display:none"></div>`;
   const fmtPrice = v => v != null ? '~'+v.toFixed(2).replace('.',',')+' €' : null;
   const nutrHTML=nutr?`<div class="brp-nutr-row" id="brp-nutr-${pageIdx}">
     <div class="brp-nutr-item"><span class="brp-nutr-val">${nutr.kcal}</span><span class="brp-nutr-lbl">kcal</span></div>
@@ -1191,6 +1370,8 @@ function buildRecipePageHTML(pg, pageIdx) {
         <button class="brp-portions-btn" onclick="bookAdjPortions('${safeId}',${pageIdx},1)">+</button>
       </div>
       ${nutrHTML}
+      ${avgBadgeHTML}
+      ${(r.steps||[]).filter(s=>(typeof s==='string'?s:(s.text||'')).trim()).length?`<div class="brp-actions" style="padding-bottom:0;margin-bottom:6px;"><button class="brp-cook-btn" onclick="openCookMode('${safeId}',${pageIdx})">🍳 Kochen starten</button></div>`:''}
       ${ingrs?`<div class="brp-section"><div class="brp-section-title">Zutaten</div>${ingrs}</div>`:''}
       ${r.description?`<div class="brp-section"><div class="brp-section-title">Beschreibung</div><div class="brp-desc">${esc(r.description)}</div></div>`:''}
       ${steps?`<div class="brp-section"><div class="brp-section-title">Zubereitung</div>${steps}</div>`:''}
@@ -1948,6 +2129,228 @@ function _timerDone(){
   setTimeout(()=>o.classList.remove('timer-flash'),800);
 }
 
+// ── Cook Mode ──
+const COOKTIMES_STORE = 'rezeptbuch_cooktimes';
+
+function _ckLoadTimes() {
+  try { return JSON.parse(localStorage.getItem(COOKTIMES_STORE) || '{}'); } catch { return {}; }
+}
+function _ckSaveTime(recipeId, secs) {
+  const all = _ckLoadTimes();
+  if (!all[recipeId]) all[recipeId] = [];
+  all[recipeId].push(secs);
+  if (all[recipeId].length > 20) all[recipeId] = all[recipeId].slice(-20);
+  try { localStorage.setItem(COOKTIMES_STORE, JSON.stringify(all)); } catch {}
+}
+function _ckGetAvgTime(recipeId) {
+  const all = _ckLoadTimes();
+  const arr = all[recipeId];
+  if (!arr || !arr.length) return null;
+  return Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
+}
+function _fmtSecs(s) {
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+  if (h) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+  return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+function _ckExtractSecs(step) {
+  const text = typeof step === 'string' ? step : (step.text || '');
+  const tm5 = typeof step === 'object' ? step.tm5 : null;
+  if (tm5 && tm5.time) { const s=_parseTm5Time(tm5.time); if(s>=60) return s; }
+  const m = text.match(/(?:ca\.\s*)?(\d+)(?:\s*[-–]\s*(\d+))?\s*(Stunden?|Std\.?|Minuten?|Min\.?)/i);
+  if (m) {
+    const isH = /stund|std/i.test(m[3]);
+    const n = m[2] ? Math.round((parseInt(m[1])+parseInt(m[2]))/2) : parseInt(m[1]);
+    const s = n * (isH ? 3600 : 60);
+    if (s >= 60 && s <= 10800) return s;
+  }
+  return 0;
+}
+function _ckStepIngredients(r, stepIdx) {
+  const ings = (r.ingredients || []).filter(i => !i.custom && i.qty > 0);
+  if (!ings.length) return [];
+  const steps = (r.steps || []).filter(s => (typeof s === 'string' ? s : (s.text || '')).trim());
+  if (steps.length <= 1) return ings;
+  const text = (typeof steps[stepIdx] === 'string' ? steps[stepIdx] : (steps[stepIdx]?.text || '')).toLowerCase();
+  const matched = ings.filter(ing => {
+    const words = ing.name.toLowerCase().split(/\s+/);
+    return words.some(w => w.length >= 3 && text.includes(w));
+  });
+  return matched.length ? matched : (stepIdx === 0 ? ings : []);
+}
+
+let _ckRecipeId = null, _ckStepIdx = 0, _ckSteps = [];
+let _ckSwSecs = 0, _ckSwIv = null;
+let _ckCdSecs = 0, _ckCdTotal = 0, _ckCdRunning = false, _ckCdIv = null;
+let _ckPageIdx = 0;
+
+function openCookMode(recipeId, pageIdx) {
+  const r = recipes[recipeId]; if (!r) return;
+  const steps = (r.steps || []).filter(s => (typeof s === 'string' ? s : (s.text || '')).trim());
+  if (!steps.length) { showToast('Keine Zubereitungsschritte vorhanden'); return; }
+  _ckRecipeId = recipeId; _ckPageIdx = pageIdx; _ckSteps = steps; _ckStepIdx = 0;
+  _ckSwSecs = 0; clearInterval(_ckSwIv);
+  _ckSwIv = setInterval(_ckSwTick, 1000);
+  clearInterval(_ckCdIv); _ckCdIv = null; _ckCdRunning = false; _ckCdSecs = _ckCdTotal = 0;
+  document.getElementById('ckHeaderName').textContent = r.name;
+  document.getElementById('ckStopwatch').textContent = '00:00';
+  const ckNavRow = document.querySelector('.ck-nav-row');
+  if (ckNavRow) ckNavRow.style.display = '';
+  _ckRenderProgress();
+  _ckRenderStep();
+  const cv = document.getElementById('cookView');
+  cv.classList.remove('hidden');
+  cv.scrollTop = 0;
+  _pushBackGuard();
+  try { navigator.vibrate && navigator.vibrate(30); } catch {}
+}
+function closeCookMode() {
+  clearInterval(_ckSwIv); _ckSwIv = null;
+  clearInterval(_ckCdIv); _ckCdIv = null;
+  document.getElementById('cookView').classList.add('hidden');
+}
+function _ckSwTick() {
+  _ckSwSecs++;
+  document.getElementById('ckStopwatch').textContent = _fmtSecs(_ckSwSecs);
+}
+function _ckRenderProgress() {
+  const row = document.getElementById('ckProgressRow');
+  row.innerHTML = _ckSteps.map((_,i) =>
+    `<div class="ck-progress-dot${i<_ckStepIdx?' done':i===_ckStepIdx?' active':''}"></div>`
+  ).join('');
+}
+function _ckRenderStep() {
+  const r = recipes[_ckRecipeId]; if (!r) return;
+  const step = _ckSteps[_ckStepIdx];
+  const text = typeof step === 'string' ? step : (step.text || '');
+  const isLast = _ckStepIdx === _ckSteps.length - 1;
+  const portions = bookPortions[_ckRecipeId] || r.servings || 4;
+  const scale = portions / (r.servings || 4);
+  const ings = _ckStepIngredients(r, _ckStepIdx);
+  const ingChips = ings.map(i =>
+    `<div class="ck-ing-chip"><span>${esc(i.emoji||'')}</span><span>${esc(i.name)}</span><span class="ck-ing-chip-amt">${esc(cookFmtAmt(i, scale))}</span></div>`
+  ).join('');
+  const secs = _ckExtractSecs(step);
+  let timerHTML = '';
+  if (secs) {
+    _ckCdTotal = _ckCdSecs = secs;
+    timerHTML = `<div class="ck-step-timer-wrap">
+      <div class="ck-step-timer-label">Countdown</div>
+      <div class="ck-countdown-display" id="ckCdDisplay">${_fmtSecs(secs)}</div>
+      <div class="ck-countdown-btns">
+        <button class="ck-cd-btn ck-cd-start" id="ckCdToggleBtn" onclick="ckCdToggle()">▶ Start</button>
+        <button class="ck-cd-btn ck-cd-reset" onclick="ckCdReset()">↺ Reset</button>
+      </div>
+    </div>`;
+  } else {
+    _ckCdSecs = _ckCdTotal = 0; _ckCdRunning = false;
+    clearInterval(_ckCdIv); _ckCdIv = null;
+  }
+  const doneBtn = document.getElementById('ckDoneBtn');
+  if (doneBtn) {
+    doneBtn.textContent = isLast ? '🏁 Fertig!' : '✓ Erledigt';
+    doneBtn.classList.toggle('last-step', isLast);
+  }
+  const backBtn = document.getElementById('ckBackBtn');
+  if (backBtn) backBtn.disabled = _ckStepIdx === 0;
+  document.getElementById('ckBody').innerHTML = `<div class="ck-body-inner">
+    <div class="ck-step-label">Schritt ${_ckStepIdx + 1} von ${_ckSteps.length}</div>
+    <div class="ck-step-card"><div class="ck-step-text">${_markTimers(esc(text))}</div></div>
+    ${timerHTML}
+    ${ings.length ? `<div class="ck-ings-label">Zutaten für diesen Schritt</div><div class="ck-ings-chips">${ingChips}</div>` : ''}
+  </div>`;
+  document.getElementById('ckBody').scrollTop = 0;
+  _ckRenderProgress();
+}
+function cookNextStep() {
+  if (_ckStepIdx < _ckSteps.length - 1) {
+    clearInterval(_ckCdIv); _ckCdIv = null; _ckCdRunning = false;
+    _ckStepIdx++;
+    _ckRenderStep();
+    try { navigator.vibrate && navigator.vibrate([20,10,20]); } catch {}
+  } else {
+    _ckShowSummary();
+  }
+}
+function cookPrevStep() {
+  if (_ckStepIdx > 0) {
+    clearInterval(_ckCdIv); _ckCdIv = null; _ckCdRunning = false;
+    _ckStepIdx--;
+    _ckRenderStep();
+  }
+}
+function _ckShowSummary() {
+  clearInterval(_ckSwIv); _ckSwIv = null;
+  clearInterval(_ckCdIv); _ckCdIv = null;
+  const secs = _ckSwSecs;
+  const avgSecs = _ckGetAvgTime(_ckRecipeId);
+  const avgLine = avgSecs ? `<div class="ck-summary-avg">Dein Durchschnitt: ${Math.round(avgSecs/60)} Min.</div>` : '';
+  document.getElementById('ckBody').innerHTML = `<div class="ck-summary-wrap">
+    <div class="ck-summary-trophy">🏆</div>
+    <div class="ck-summary-title">Geschafft!</div>
+    <div class="ck-summary-subtitle">Das Essen ist fertig. Guten Appetit!</div>
+    <div class="ck-summary-time-box">
+      <div class="ck-summary-time-val">${_fmtSecs(secs)}</div>
+      <div class="ck-summary-time-lbl">Gesamte Kochzeit</div>
+    </div>
+    ${avgLine}
+    <button class="ck-summary-save-btn" id="ckSaveBtn" onclick="cookSaveTime(${secs})">⏱ Zeit speichern</button>
+    <button class="ck-summary-close-btn" onclick="closeCookMode()">Schließen</button>
+  </div>`;
+  document.getElementById('ckProgressRow').innerHTML = _ckSteps.map(() =>
+    `<div class="ck-progress-dot done"></div>`).join('');
+  const nav = document.querySelector('.ck-nav-row');
+  if (nav) nav.style.display = 'none';
+  try { navigator.vibrate && navigator.vibrate([100,50,100,50,300]); } catch {}
+}
+function cookSaveTime(secs) {
+  _ckSaveTime(_ckRecipeId, secs);
+  const btn = document.getElementById('ckSaveBtn');
+  if (btn) { btn.textContent = '✓ Gespeichert'; btn.disabled = true; }
+  const avgSecs = _ckGetAvgTime(_ckRecipeId);
+  if (avgSecs !== null && _ckPageIdx !== null) {
+    const el = document.getElementById('brp-cook-avg-' + _ckPageIdx);
+    if (el) el.textContent = '⏱ Ø ' + Math.round(avgSecs / 60) + ' Min.';
+  }
+  showToast('Kochzeit gespeichert');
+}
+function ckCdToggle() {
+  if (_ckCdSecs <= 0) { ckCdReset(); return; }
+  _ckCdRunning = !_ckCdRunning;
+  const btn = document.getElementById('ckCdToggleBtn');
+  if (_ckCdRunning) {
+    if (btn) btn.textContent = '⏸ Pause';
+    clearInterval(_ckCdIv);
+    _ckCdIv = setInterval(_ckCdTick, 1000);
+  } else {
+    if (btn) btn.textContent = '▶ Weiter';
+    clearInterval(_ckCdIv); _ckCdIv = null;
+  }
+}
+function ckCdReset() {
+  clearInterval(_ckCdIv); _ckCdIv = null; _ckCdRunning = false;
+  _ckCdSecs = _ckCdTotal;
+  const disp = document.getElementById('ckCdDisplay');
+  if (disp) { disp.textContent = _fmtSecs(_ckCdSecs); disp.classList.remove('done'); }
+  const btn = document.getElementById('ckCdToggleBtn');
+  if (btn) btn.textContent = '▶ Start';
+}
+function _ckCdTick() {
+  if (_ckCdSecs <= 0) {
+    clearInterval(_ckCdIv); _ckCdIv = null; _ckCdRunning = false;
+    const disp = document.getElementById('ckCdDisplay');
+    if (disp) { disp.textContent = '00:00'; disp.classList.add('done'); }
+    const btn = document.getElementById('ckCdToggleBtn');
+    if (btn) btn.textContent = '▶ Neu';
+    try { navigator.vibrate && navigator.vibrate([300,100,300]); } catch {}
+    showToast('⏱ Zeit abgelaufen!');
+    return;
+  }
+  _ckCdSecs--;
+  const disp = document.getElementById('ckCdDisplay');
+  if (disp) disp.textContent = _fmtSecs(_ckCdSecs);
+}
+
 // ── Toast ──
 let _toastTimer=null;
 function showToast(msg) {
@@ -1980,6 +2383,13 @@ function _pushBackGuard() {
 window.addEventListener('popstate', function(e) {
   // Only intercept our own entries
   if (!e.state || !e.state.rb) return;
+
+  const cookView = document.getElementById('cookView');
+  if (cookView && !cookView.classList.contains('hidden')) {
+    closeCookMode();
+    _pushBackGuard();
+    return;
+  }
 
   if (shareMode) {
     toggleShareMode();
