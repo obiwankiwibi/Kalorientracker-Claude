@@ -298,6 +298,68 @@
     /* Ensure [hidden] attribute always wins over display:flex/grid rules */
     [hidden] { display: none !important; }
 
+    /* ── Tagebuch sheet ── */
+    #tagebuchSheet {
+      position: fixed; inset: 0; z-index: 900;
+      background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    .tbsh-card {
+      width: 100%; max-width: 480px;
+      background: #FDF8EE; border-radius: 24px 24px 0 0;
+      padding: 22px 20px 32px;
+      padding-bottom: max(32px, env(safe-area-inset-bottom));
+    }
+    .tbsh-handle {
+      width: 40px; height: 4px; border-radius: 2px;
+      background: #C4A46A; margin: 0 auto 18px;
+    }
+    .tbsh-title {
+      font-family: Georgia,serif; font-size: 17px; font-weight: 700;
+      color: #4A2E0A; text-align: center; margin-bottom: 4px;
+    }
+    .tbsh-sub {
+      font-family: Georgia,serif; font-size: 13px; color: #8B6A3A;
+      text-align: center; margin-bottom: 18px;
+    }
+    .tbsh-pct-row {
+      display: flex; gap: 8px; margin-bottom: 14px;
+    }
+    .tbsh-pct-btn {
+      flex: 1; padding: 11px 4px; border-radius: 12px;
+      border: 1.5px solid #D4B896; background: #F5EDD8;
+      color: #4A2E0A; font-family: Georgia,serif; font-size: 15px;
+      font-weight: 700; cursor: pointer;
+      transition: background .12s, border-color .12s;
+    }
+    .tbsh-pct-btn.active {
+      background: #8B5C14; border-color: #8B5C14; color: #FDF8EE;
+    }
+    .tbsh-pct-btn:active { opacity: .75; }
+    .tbsh-custom-row {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+    }
+    .tbsh-custom-label {
+      font-family: Georgia,serif; font-size: 13px; color: #8B6A3A; white-space: nowrap;
+    }
+    .tbsh-custom-in {
+      flex: 1; padding: 10px 14px; border-radius: 12px;
+      border: 1.5px solid #D4B896; background: #F5EDD8;
+      color: #4A2E0A; font-family: Georgia,serif; font-size: 15px; outline: none;
+    }
+    .tbsh-custom-in:focus { border-color: #8B5C14; }
+    .tbsh-kcal-preview {
+      text-align: center; font-family: Georgia,serif; font-size: 14px;
+      color: #8B6A3A; margin-bottom: 14px; min-height: 20px;
+    }
+    .tbsh-kcal-preview strong { color: #4A2E0A; }
+    .tbsh-confirm {
+      width: 100%; padding: 14px; border-radius: 14px;
+      background: #6B3F0E; border: none; color: #FDF8EE;
+      font-family: Georgia,serif; font-size: 16px; font-weight: 700; cursor: pointer;
+    }
+    .tbsh-confirm:active { background: #4A2E0A; }
+
     /* ── Timer overlay ── */
     #timerOverlay {
       position: fixed; inset: 0; z-index: 800;
@@ -650,6 +712,26 @@
       <button class="timer-btn timer-btn-pause" id="timerPauseBtn" onclick="timerToggle()" title="Pause/Weiter">⏸</button>
       <button class="timer-btn timer-btn-close" onclick="timerClose()" title="Schließen">✕</button>
     </div>
+  </div>
+</div>
+
+<div id="tagebuchSheet" hidden onclick="if(event.target===this)this.hidden=true">
+  <div class="tbsh-card">
+    <div class="tbsh-handle"></div>
+    <div class="tbsh-title" id="tbshTitle"></div>
+    <div class="tbsh-sub" id="tbshSub"></div>
+    <div class="tbsh-pct-row">
+      <button class="tbsh-pct-btn" onclick="_tbshSetPct(25)">25%</button>
+      <button class="tbsh-pct-btn" onclick="_tbshSetPct(50)">50%</button>
+      <button class="tbsh-pct-btn" onclick="_tbshSetPct(75)">75%</button>
+      <button class="tbsh-pct-btn active" onclick="_tbshSetPct(100)">100%</button>
+    </div>
+    <div class="tbsh-custom-row">
+      <span class="tbsh-custom-label">Eigene %:</span>
+      <input class="tbsh-custom-in" id="tbshCustomIn" type="number" min="1" max="500" placeholder="z.B. 130" oninput="_tbshCustomInput(this.value)">
+    </div>
+    <div class="tbsh-kcal-preview" id="tbshPreview"></div>
+    <button class="tbsh-confirm" onclick="_tbshConfirm()">📊 Ins Tagebuch eintragen</button>
   </div>
 </div>
 
@@ -2065,6 +2147,8 @@ function renderBuilderSteps() {
 function autoResize(el) { el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 
 // ── Ins Tagebuch ──
+let _tbshRecipeId=null, _tbshPct=100, _tbshBaseKcal=0, _tbshNutrBase=null;
+
 function addRecipeToKalorien(recipeId) {
   const r=recipes[recipeId]; if(!r) return;
   const portions=bookPortions[recipeId]||r.servings||4;
@@ -2072,26 +2156,65 @@ function addRecipeToKalorien(recipeId) {
   const ings=(r.ingredients||[]).filter(i=>!i.custom);
   const nutr=calcNutrition(ings,scale);
   if(!nutr||!nutr.kcal){showToast('Keine Nährwerte vorhanden');return;}
-  // Schreibe direkt in kalorientracker_v1 (selbes Format wie addEntry in kalorien.html)
+  _tbshRecipeId=recipeId;
+  _tbshBaseKcal=nutr.kcal;
+  _tbshNutrBase=nutr;
+  _tbshPct=100;
+  document.getElementById('tbshTitle').textContent=(r.emoji||'🍽️')+' '+r.name;
+  document.getElementById('tbshSub').textContent=portions+' Portion'+(portions!==1?'en':'');
+  document.getElementById('tbshCustomIn').value='';
+  document.querySelectorAll('.tbsh-pct-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tbsh-pct-btn')[3].classList.add('active');
+  _tbshUpdatePreview();
+  document.getElementById('tagebuchSheet').hidden=false;
+}
+function _tbshSetPct(pct) {
+  _tbshPct=pct;
+  document.querySelectorAll('.tbsh-pct-btn').forEach(b=>b.classList.remove('active'));
+  const idx={25:0,50:1,75:2,100:3}[pct];
+  if(idx!=null) document.querySelectorAll('.tbsh-pct-btn')[idx].classList.add('active');
+  document.getElementById('tbshCustomIn').value='';
+  _tbshUpdatePreview();
+}
+function _tbshCustomInput(val) {
+  const v=parseFloat(val);
+  if(!isNaN(v)&&v>0){
+    _tbshPct=v;
+    document.querySelectorAll('.tbsh-pct-btn').forEach(b=>b.classList.remove('active'));
+    _tbshUpdatePreview();
+  }
+}
+function _tbshUpdatePreview() {
+  const kcal=Math.round(_tbshBaseKcal*_tbshPct/100);
+  const el=document.getElementById('tbshPreview');
+  el.innerHTML='<strong>'+kcal+' kcal</strong> ('+((_tbshPct===Math.floor(_tbshPct)?_tbshPct:_tbshPct.toFixed(1)))+'%)';
+}
+function _tbshConfirm() {
+  document.getElementById('tagebuchSheet').hidden=true;
+  const r=recipes[_tbshRecipeId]; if(!r) return;
+  const f=_tbshPct/100;
+  const kcal=Math.round(_tbshBaseKcal*f);
+  const nutr=_tbshNutrBase;
   const now=new Date();
   const key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
   let store={};
   try{store=JSON.parse(localStorage.getItem('kalorientracker_v1')||'{}');}catch{}
   if(!store[key]) store[key]={entries:[],water:0};
+  const portions=bookPortions[_tbshRecipeId]||r.servings||4;
   store[key].entries.push({
     id:Date.now()+'-'+Math.random().toString(36).slice(2,7),
-    name:(r.emoji||'🍽️')+' '+r.name+(portions!==(r.servings||4)?' ('+portions+' Port.)':''),
-    kcal:nutr.kcal,
+    name:(r.emoji||'🍽️')+' '+r.name+(_tbshPct!==100?' ('+(_tbshPct===Math.floor(_tbshPct)?_tbshPct:_tbshPct.toFixed(0))+'%)':''),
+    kcal,
     meta:'',
-    nutrients:{protein:parseFloat(nutr.protein),carbs:parseFloat(nutr.carbs),fat:parseFloat(nutr.fat)},
+    nutrients:{protein:parseFloat((nutr.protein*f).toFixed(1)),carbs:parseFloat((nutr.carbs*f).toFixed(1)),fat:parseFloat((nutr.fat*f).toFixed(1))},
     kcalPer100:null,
     unit:'Portion',
-    amount:portions,
+    amount:portions*f,
     meal:null,
     time:now.toISOString()
   });
   try{localStorage.setItem('kalorientracker_v1',JSON.stringify(store));}catch(e){}
-  showToast((r.emoji||'🍽️')+' '+nutr.kcal+' kcal ins Tagebuch eingetragen');
+  showToast((r.emoji||'🍽️')+' '+kcal+' kcal ins Tagebuch eingetragen');
 }
 
 // ── Step Timer ──
