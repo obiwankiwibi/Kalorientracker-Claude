@@ -777,21 +777,27 @@ function getCatalogMap() {
 }
 function calcNutrition(ingredients, scale) {
   const map = getCatalogMap();
-  let kcal=0, protein=0, carbs=0, fat=0, hasData=false;
+  let kcal=0, protein=0, carbs=0, fat=0, price=0, hasData=false, hasPrice=false;
   for (const ing of ingredients) {
     const g = (ing.amountG || _unitToG(ing.unit, ing.qty||0)) * scale;
     if (!g) continue;
     let k=ing.kcalPer100||0, p=ing.proteinPer100||0, c=ing.carbsPer100||0, f=ing.fatPer100||0;
-    if (!k && !p && !c && !f) {
-      const entry = map.get(ing.name.toLowerCase().trim());
-      if (entry) { k=entry.kcal||0; p=entry.protein||0; c=entry.carbs||0; f=entry.fat||0; }
+    let unitPrice=ing.unitPrice||0, unitG=ing.unitG||0;
+    const entry = (!k && !p && !c && !f) || !unitPrice
+      ? map.get(ing.name.toLowerCase().trim()) : null;
+    if (entry) {
+      if (!k && !p && !c && !f) { k=entry.kcal||0; p=entry.protein||0; c=entry.carbs||0; f=entry.fat||0; }
+      if (!unitPrice) { unitPrice=entry.price||0; unitG=parseFloat(entry.unit)||100; }
     }
     if (k || p || c || f) {
       kcal += (g/100)*k; protein += (g/100)*p; carbs += (g/100)*c; fat += (g/100)*f;
       hasData = true;
     }
+    if (unitPrice && unitG) { price += (g/unitG)*unitPrice; hasPrice=true; }
   }
-  return hasData ? {kcal:Math.round(kcal), protein:Math.round(protein), carbs:Math.round(carbs), fat:Math.round(fat)} : null;
+  if (!hasData) return null;
+  return {kcal:Math.round(kcal), protein:Math.round(protein), carbs:Math.round(carbs), fat:Math.round(fat),
+    price: hasPrice ? price : null};
 }
 
 // ── Book state ──
@@ -897,11 +903,13 @@ function buildRecipePageHTML(pg, pageIdx) {
     </div>`
   ).join('');
   const nutr=calcNutrition(ingsForPage,scale);
+  const fmtPrice = v => v != null ? '~'+v.toFixed(2).replace('.',',')+' €' : null;
   const nutrHTML=nutr?`<div class="brp-nutr-row" id="brp-nutr-${pageIdx}">
     <div class="brp-nutr-item"><span class="brp-nutr-val">${nutr.kcal}</span><span class="brp-nutr-lbl">kcal</span></div>
     <div class="brp-nutr-item"><span class="brp-nutr-val">${nutr.protein} g</span><span class="brp-nutr-lbl">Eiweiß</span></div>
     <div class="brp-nutr-item"><span class="brp-nutr-val">${nutr.carbs} g</span><span class="brp-nutr-lbl">Kohlenhydrate</span></div>
     <div class="brp-nutr-item"><span class="brp-nutr-val">${nutr.fat} g</span><span class="brp-nutr-lbl">Fett</span></div>
+    ${nutr.price!=null?`<div class="brp-nutr-item"><span class="brp-nutr-val">${fmtPrice(nutr.price)}</span><span class="brp-nutr-lbl">Kosten</span></div>`:''}
   </div>`:'';
   const steps=(r.steps||[]).filter(s=>(typeof s==='string'?s:(s.text||'')).trim()).map((s,i)=>{
     const text=typeof s==='string'?s:(s.text||'');
@@ -962,6 +970,7 @@ function bookAdjPortions(id, pageIdx, delta) {
       if(vals[1]) vals[1].textContent=nutr.protein+' g';
       if(vals[2]) vals[2].textContent=nutr.carbs+' g';
       if(vals[3]) vals[3].textContent=nutr.fat+' g';
+      if(vals[4]&&nutr.price!=null) vals[4].textContent='~'+nutr.price.toFixed(2).replace('.',',')+' €';
     }
   }
 }
