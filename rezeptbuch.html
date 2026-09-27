@@ -759,11 +759,55 @@ const UNIT_G = {
   'flasche':750,
   'handvoll':30,
   'pkg':200,'paket':200,'pkt':200,
+  'packung':200,'pack':200,
+  'kopf':400,'köpfe':400,
+  'topf':200,'töpfe':200,
+  'rolle':30,'rollen':30,
+  'riegel':40,
+  'st':80,'st.':80,
 };
 function _unitToG(unitStr, qty) {
   const suffix = (unitStr||'').replace(/^[\d.,\s]+/,'').trim().toLowerCase();
   const g = UNIT_G[suffix];
   return g ? qty * g : 0;
+}
+// Convert catalog unit string to grams (e.g. '1kg'→1000, '500g'→500, 'Stück'→80)
+function _parseUnitG(unitStr) {
+  if (!unitStr) return 100;
+  const s = unitStr.trim();
+  const sl = s.toLowerCase().replace(/,/g, '.');
+  // NxY.Yunit — multi-pack (e.g. '6x1.5L', '3×15g', '12x0.7L')
+  const mMulti = sl.match(/^(\d+)[x×](\d+\.?\d*)\s*(g|kg|ml|cl|dl|l)$/);
+  if (mMulti) {
+    const base = _scaleUnit(parseFloat(mMulti[2]), mMulti[3]);
+    return parseInt(mMulti[1]) * base;
+  }
+  // N unit — multiple pieces (e.g. '4 Stück', '10 St.', '3er Pack', '6er Pack', '12 Bl.')
+  const mNPiece = sl.match(/^(\d+)\s*(stück|st\.?|er\s*pack\.?|bl\.?|btl\.?|rollen?)$/);
+  if (mNPiece) {
+    const count = parseInt(mNPiece[1]);
+    const u = mNPiece[2].replace(/\.$/, '');
+    if (u === 'bl') return count * 2;
+    if (u === 'btl') return count * 2;
+    const ug = UNIT_G[u] || UNIT_G['stück'] || 80;
+    return count * ug;
+  }
+  // Standard weight/volume: '500g', '1kg', '1.5L', '250ml'
+  const mWeight = sl.match(/^(\d+\.?\d*)\s*(g|kg|ml|cl|dl|l)$/);
+  if (mWeight) return _scaleUnit(parseFloat(mWeight[1]), mWeight[2]);
+  // 'kg' alone
+  if (sl === 'kg') return 1000;
+  // Non-weight piece units via UNIT_G
+  const clean = sl.replace(/\.$/, ''); // strip trailing dot (Pack. → pack)
+  return UNIT_G[clean] || 100;
+}
+function _scaleUnit(val, u) {
+  const ul = u.toLowerCase();
+  if (ul === 'kg') return val * 1000;
+  if (ul === 'l') return val * 1000;
+  if (ul === 'dl') return val * 100;
+  if (ul === 'cl') return val * 10;
+  return val; // g or ml
 }
 // German food name normalization tables
 const FOOD_ALIASES = {
@@ -893,7 +937,7 @@ function calcNutrition(ingredients, scale) {
       const entry = _catalogLookup(ing.name);
       if (entry) {
         if (!k && !p && !c && !f) { k=entry.kcal||0; p=entry.protein||0; c=entry.carbs||0; f=entry.fat||0; }
-        if (!unitPrice) { unitPrice=entry.price||0; unitG=parseFloat(entry.unit)||100; }
+        if (!unitPrice) { unitPrice=entry.price||0; unitG=_parseUnitG(entry.unit); }
       }
     }
     if (k || p || c || f) {
@@ -1648,7 +1692,7 @@ function ingAcFilter(i, val) {
 }
 function ingAcSelect(i, si) {
   const s = SUGGESTIONS[si]; if (!s) return;
-  const unitG = parseFloat(s.unit) || 100;
+  const unitG = _parseUnitG(s.unit);
   builderIngredients[i] = {
     ...builderIngredients[i],
     name: s.name, emoji: s.emoji,
