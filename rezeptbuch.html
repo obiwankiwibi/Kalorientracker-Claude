@@ -49,6 +49,11 @@
     .book-add-btn { background: none; border: none; color: #D4A96A; font-size: 26px; font-weight: 700; cursor: pointer; padding: 4px 6px; line-height: 1; }
     .book-add-btn.hidden { visibility: hidden; }
     .book-view-toggle { background: none; border: none; color: #D4A96A; font-size: 17px; cursor: pointer; padding: 6px 4px; line-height: 1; }
+    .book-bookmark-btn { background: none; border: none; color: #C4A46A; cursor: pointer; padding: 6px 5px; line-height: 1; display: none; align-items: center; }
+    .book-bookmark-btn.visible { display: inline-flex; }
+    .book-bookmark-btn.bm-active { color: #8B5C14; }
+    .blv-bookmark { flex-shrink: 0; color: #C4A46A; display: flex; align-items: center; padding: 6px 4px; margin-right: -4px; -webkit-tap-highlight-color: rgba(139,92,20,.12); }
+    .blv-bookmark.bm-active { color: #8B5C14; }
 
     /* ── List view ── */
     #bookListView {
@@ -326,6 +331,7 @@
     <button class="book-back" id="bookBackBtn" onclick="bookBackAction()">← Zurück</button>
     <div class="book-header-title">Rezeptbuch</div>
     <div class="book-header-right">
+      <button class="book-bookmark-btn" id="bookBookmarkBtn" onclick="toggleBookmark()" title="Lesezeichen"></button>
       <button class="book-share-btn" id="bookShareBtn" onclick="toggleShareMode()" title="Rezepte teilen">📤</button>
       <button class="book-add-btn" id="bookAddBtn" onclick="openBuilder(null)" title="Rezept hinzufügen">+</button>
       <button class="book-view-toggle" id="bookViewToggle" onclick="toggleBookView()" title="Ansicht wechseln">☰</button>
@@ -686,6 +692,46 @@ function _ing(name,emoji,qty,u){
   } catch(e){}
 })();
 
+// ── Bookmarks ──
+const BOOKMARK_STORE = 'rezeptbuch_bookmarks';
+let bookmarks = new Set();
+const BM_SVG_OUT  = `<svg width="15" height="19" viewBox="0 0 15 19" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2h10a1 1 0 0 1 1 1v14l-6-4-6 4V3a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>`;
+const BM_SVG_FILL = `<svg width="15" height="19" viewBox="0 0 15 19" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2h10a1 1 0 0 1 1 1v14l-6-4-6 4V3a1 1 0 0 1 1-1z"/></svg>`;
+function loadBookmarks() {
+  try { bookmarks = new Set(JSON.parse(localStorage.getItem(BOOKMARK_STORE)||'[]')); } catch { bookmarks = new Set(); }
+}
+function saveBookmarks() {
+  try { localStorage.setItem(BOOKMARK_STORE, JSON.stringify([...bookmarks])); } catch {}
+}
+function toggleBookmark(id) {
+  const pg = bookPages[bookCurrentPage];
+  const rid = id || pg?.r?.id;
+  if (!rid) return;
+  if (bookmarks.has(rid)) bookmarks.delete(rid); else bookmarks.add(rid);
+  saveBookmarks();
+  updateBookmarkBtn();
+  // Update list row if visible without full re-render
+  const listBm = document.querySelector(`.blv-bookmark[data-rid="${CSS.escape(rid)}"]`);
+  if (listBm) {
+    const active = bookmarks.has(rid);
+    listBm.innerHTML = active ? BM_SVG_FILL : BM_SVG_OUT;
+    listBm.classList.toggle('bm-active', active);
+  }
+}
+function updateBookmarkBtn() {
+  const btn = document.getElementById('bookBookmarkBtn');
+  if (!btn) return;
+  const pg = bookPages[bookCurrentPage];
+  const isRecipePage = bookViewMode === 'book' && pg?.type === 'recipe';
+  btn.classList.toggle('visible', isRecipePage);
+  if (isRecipePage) {
+    const active = bookmarks.has(pg.r.id);
+    btn.innerHTML = active ? BM_SVG_FILL : BM_SVG_OUT;
+    btn.classList.toggle('bm-active', active);
+    btn.title = active ? 'Lesezeichen entfernen' : 'Lesezeichen setzen';
+  }
+}
+
 // ── Book state ──
 let bookCurrentPage=0, bookPages=[], bookPortions={}, bookSearch='', bookTX=0, bookTY=0;
 let bookViewMode = (()=>{ try { return localStorage.getItem('rezeptbuch_view')||'book'; } catch { return 'book'; } })();
@@ -890,6 +936,7 @@ function updateBookNav() {
     if(backBtn) backBtn.textContent=openedFromList?'← Liste':'≡ Inhalt';
     if(addBtn) addBtn.classList.add('hidden');
   }
+  updateBookmarkBtn();
 }
 
 function toggleBookView() {
@@ -909,9 +956,16 @@ function toggleBookView() {
 let listViewSearch='';
 let listViewSort='name-asc';   // 'name-asc' | 'name-desc' | 'newest'
 let listViewCatFilter=null;    // null | category string
+let listViewBookmarksOnly=false;
 let shareMode=false;
 const shareSelected=new Set();
 let openedFromList=false;      // true when a recipe was opened via listOpenRecipe
+
+function toggleListBookmarks() {
+  listViewBookmarksOnly = !listViewBookmarksOnly;
+  if (listViewBookmarksOnly) listViewCatFilter = null;
+  renderListView();
+}
 
 function cycleListSort() {
   const opts=['name-asc','name-desc','newest'];
@@ -1033,6 +1087,7 @@ function renderListView(q) {
 
   // Filter recipes
   let visible=Object.values(recipes).filter(r=>{
+    if(listViewBookmarksOnly && !bookmarks.has(r.id)) return false;
     if(listViewCatFilter && (r.category||'Sonstiges')!==listViewCatFilter) return false;
     if(!filter) return true;
     return r.name.toLowerCase().includes(filter)
@@ -1070,7 +1125,8 @@ function renderListView(q) {
   const sortLabels={'name-asc':'A – Z','name-desc':'Z – A','newest':'Neueste'};
   const sortLabel=sortLabels[listViewSort]||'A – Z';
   const isSorted=listViewSort!=='name-asc';
-  const chips=sortedAllCats.map(cat=>`<button class="blv-cat-chip${listViewCatFilter===cat?' active':''}" onclick="setListCatFilter('${esc(cat)}')">${esc(cat)}</button>`).join('');
+  const favChip=`<button class="blv-cat-chip${listViewBookmarksOnly?' active':''}" onclick="toggleListBookmarks()"><svg width="11" height="14" viewBox="0 0 15 19" fill="${listViewBookmarksOnly?'currentColor':'none'}" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:3px"><path d="M2.5 2h10a1 1 0 0 1 1 1v14l-6-4-6 4V3a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>Favoriten</button>`;
+  const chips=favChip+sortedAllCats.map(cat=>`<button class="blv-cat-chip${listViewCatFilter===cat?' active':''}" onclick="setListCatFilter('${esc(cat)}')">${esc(cat)}</button>`).join('');
 
   const searchVal=esc(listViewSearch);
 
@@ -1115,9 +1171,11 @@ function _blvRow(r) {
       <div class="blv-name">${esc(r.name)}</div>
     </label>`;
   }
+  const bmActive = bookmarks.has(r.id);
   return `<div class="blv-row" onclick="listOpenRecipe('${esc(r.id)}')">
     <div class="blv-emoji">${r.emoji||'🍽️'}</div>
     <div class="blv-name">${esc(r.name)}</div>
+    <div class="blv-bookmark${bmActive?' bm-active':''}" data-rid="${esc(r.id)}" onclick="event.stopPropagation();toggleBookmark('${esc(r.id)}')">${bmActive?BM_SVG_FILL:BM_SVG_OUT}</div>
     <div class="blv-arrow">›</div>
   </div>`;
 }
@@ -1512,6 +1570,7 @@ window.addEventListener('popstate', function(e) {
 // ── Init ──
 (async()=>{
   loadRecipes();
+  loadBookmarks();
   await loadAllRecipeImages();
   buildBookPages();
   renderBookAllPages();
