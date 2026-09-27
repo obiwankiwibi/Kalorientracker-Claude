@@ -432,59 +432,72 @@
     .ck-progress-dot.current { background: #D4A96A; border-color: #D4A96A; transform: scale(1.55); }
 
     .ck-body { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
-    .ck-body-inner { padding: 18px 18px 28px; max-width: 440px; margin: 0 auto; }
+    .ck-body-inner {
+      padding: 20px 18px 36px; max-width: 480px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 14px;
+    }
 
     .ck-step-label {
       font-family: Georgia,serif; font-size: 11px; font-weight: 700;
       text-transform: uppercase; letter-spacing: .12em; color: #5A3A1A;
-      margin-bottom: 10px;
     }
     .ck-step-card {
-      background: #1C0E06; border: 1px solid #2A1808; border-radius: 18px;
-      padding: 22px 18px; margin-bottom: 16px;
+      background: #1C0E06; border: 1px solid #2A1808; border-radius: 20px;
+      padding: 24px 20px;
     }
     .ck-step-text {
-      font-family: Georgia,serif; font-size: 18px; color: #F0E4CC;
-      line-height: 1.75;
+      font-family: Georgia,serif; font-size: 19px; color: #F0E4CC;
+      line-height: 1.8;
     }
+    /* Hide inline timer buttons inside cook mode — the countdown handles timing */
+    #cookView .step-time-btn {
+      background: none; border: none; color: #8B6A3A; font-family: Georgia,serif;
+      font-size: 19px; cursor: default; padding: 0; text-decoration: underline dotted #3A2010;
+    }
+
     .ck-step-timer-wrap {
-      margin-top: 18px; padding-top: 16px; border-top: 1px solid #2A1808;
+      background: #0C0500; border: 1px solid #241206; border-radius: 20px;
+      padding: 20px 20px 22px; text-align: center;
     }
     .ck-step-timer-label {
       font-family: Georgia,serif; font-size: 10px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .12em; color: #5A3A1A;
-      margin-bottom: 12px;
+      text-transform: uppercase; letter-spacing: .14em; color: #4A2E10;
+      margin-bottom: 10px;
     }
     .ck-countdown-display {
-      font-family: Georgia,serif; font-size: 54px; font-weight: 700;
-      color: #C4A46A; text-align: center; font-variant-numeric: tabular-nums;
-      margin-bottom: 14px; letter-spacing: 3px; line-height: 1.1;
+      font-family: Georgia,serif; font-size: 62px; font-weight: 700;
+      color: #C4A46A; font-variant-numeric: tabular-nums;
+      margin-bottom: 18px; letter-spacing: 4px; line-height: 1.05;
       transition: color .3s;
     }
     .ck-countdown-display.running { color: #E8D0A0; }
-    .ck-countdown-display.done { color: #3D6A50; font-size: 26px; padding: 14px 0 6px; letter-spacing: 0; }
-    .ck-countdown-btns { display: flex; gap: 8px; justify-content: center; }
+    .ck-countdown-display.done { color: #3D6A50; font-size: 30px; letter-spacing: 0; margin-bottom: 10px; }
+    .ck-countdown-btns { display: flex; gap: 10px; justify-content: center; }
     .ck-cd-btn {
-      border: none; border-radius: 24px; padding: 10px 22px;
-      font-family: Georgia,serif; font-size: 14px; font-weight: 700;
+      border: none; border-radius: 28px; padding: 13px 28px;
+      font-family: Georgia,serif; font-size: 15px; font-weight: 700;
       cursor: pointer; -webkit-tap-highlight-color: transparent;
     }
     .ck-cd-btn:active { opacity: .75; }
     .ck-cd-start { background: #8B5C14; color: #FDF8EE; }
-    .ck-cd-reset { background: #2A1808; color: #8B6A3A; border: 1.5px solid #3A2010; }
+    .ck-cd-reset { background: #1C0E06; color: #6A4A28; border: 1.5px solid #2A1808; }
 
+    .ck-ings-wrap {
+      background: #0C0500; border: 1px solid #1E0E04; border-radius: 20px;
+      padding: 16px 18px 18px;
+    }
     .ck-ings-label {
-      font-family: Georgia,serif; font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .1em; color: #5A3A1A;
-      margin-bottom: 8px;
+      font-family: Georgia,serif; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .14em; color: #4A2E10;
+      margin-bottom: 12px;
     }
-    .ck-ings-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 8px; }
+    .ck-ings-chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .ck-ing-chip {
-      display: flex; align-items: center; gap: 5px;
-      background: #1C0E06; border: 1px solid #2A1808; border-radius: 20px;
-      padding: 6px 12px; font-family: Georgia,serif; font-size: 13px; color: #C4A46A;
+      display: flex; align-items: center; gap: 6px;
+      background: #1C0E06; border: 1px solid #2A1808; border-radius: 22px;
+      padding: 8px 14px; font-family: Georgia,serif; font-size: 14px; color: #C4A46A;
     }
-    .ck-ing-chip-amt { color: #6A4A28; font-size: 12px; }
+    .ck-ing-chip-amt { color: #5A3A1A; font-size: 13px; margin-left: 2px; }
 
     .ck-nav-row {
       background: #100803; padding: 12px 18px;
@@ -2262,7 +2275,7 @@ function _ckRenderStep() {
     <div class="ck-step-label">Schritt ${_ckStepIdx + 1} von ${_ckSteps.length}</div>
     <div class="ck-step-card"><div class="ck-step-text">${_markTimers(esc(text))}</div></div>
     ${timerHTML}
-    ${ings.length ? `<div class="ck-ings-label">Zutaten für diesen Schritt</div><div class="ck-ings-chips">${ingChips}</div>` : ''}
+    ${ings.length ? `<div class="ck-ings-wrap"><div class="ck-ings-label">Zutaten für diesen Schritt</div><div class="ck-ings-chips">${ingChips}</div></div>` : ''}
   </div>`;
   document.getElementById('ckBody').scrollTop = 0;
   _ckRenderProgress();
