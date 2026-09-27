@@ -306,23 +306,25 @@
     }
     .timer-card {
       background: #FDF8EE; border-radius: 24px;
-      padding: 40px 28px 28px; text-align: center;
-      width: min(300px,88vw); position: relative;
+      padding: 32px 32px 28px;
+      width: min(280px,88vw);
       box-shadow: 0 20px 60px rgba(0,0,0,.4);
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
     }
-    .timer-ring-wrap { position: absolute; inset: 16px; pointer-events: none; }
+    .timer-ring-wrap { position: relative; width: 164px; height: 164px; flex-shrink: 0; }
     .timer-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
-    .timer-ring-bg { fill: none; stroke: #E8D5B0; stroke-width: 4; }
-    .timer-ring-fg { fill: none; stroke: #8B5C14; stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset .9s linear; }
+    .timer-ring-bg { fill: none; stroke: #E8D5B0; stroke-width: 6; }
+    .timer-ring-fg { fill: none; stroke: #8B5C14; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset .9s linear; }
     .timer-ring-fg.done { stroke: #2D6A4F; }
     .timer-display {
-      font-family: Georgia,serif; font-size: 54px; font-weight: 700;
-      color: #2C1808; line-height: 1; letter-spacing: 2px; margin-bottom: 4px;
-      position: relative; z-index: 1;
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: Georgia,serif; font-size: 44px; font-weight: 700;
+      color: #2C1808; letter-spacing: 2px; font-variant-numeric: tabular-nums;
     }
     .timer-display.done { color: #2D6A4F; font-size: 30px; }
-    .timer-btns { display: flex; gap: 10px; justify-content: center; margin-top: 20px; position: relative; z-index: 1; }
-    .timer-btn { border: none; border-radius: 50%; width: 52px; height: 52px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .timer-btns { display: flex; gap: 10px; justify-content: center; }
+    .timer-btn { border: none; border-radius: 50%; width: 52px; height: 52px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
     .timer-btn-pause { background: #EDD9B0; color: #5C3317; }
     .timer-btn-close { background: #F5EDD8; color: #8B6A3A; }
     .timer-btn:active { opacity: .7; }
@@ -624,13 +626,13 @@
 
 <div id="timerOverlay" hidden>
   <div class="timer-card">
-    <div class="timer-ring-wrap" aria-hidden="true">
-      <svg class="timer-ring" viewBox="0 0 100 100">
+    <div class="timer-ring-wrap">
+      <svg class="timer-ring" viewBox="0 0 100 100" aria-hidden="true">
         <circle class="timer-ring-bg" cx="50" cy="50" r="44"/>
         <circle class="timer-ring-fg" id="timerRingFg" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/>
       </svg>
+      <div class="timer-display" id="timerDisplay">00:00</div>
     </div>
-    <div class="timer-display" id="timerDisplay">00:00</div>
     <div class="timer-btns">
       <button class="timer-btn timer-btn-pause" id="timerPauseBtn" onclick="timerToggle()" title="Pause/Weiter">⏸</button>
       <button class="timer-btn timer-btn-close" onclick="timerClose()" title="Schließen">✕</button>
