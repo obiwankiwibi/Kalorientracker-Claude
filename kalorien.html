@@ -2613,6 +2613,13 @@ migrateToScanDb();
 render();
 restoreKalorienFromFirebase();
 fetchWeather();
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') render();
+});
+window.addEventListener('storage', e => {
+  if (e.key === STORE_KEY) render();
+});
 if (sessionStorage.getItem('autoScan') === '1') {
   sessionStorage.removeItem('autoScan');
   setTimeout(openScan, 600);
