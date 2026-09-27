@@ -295,6 +295,9 @@
     .brp-step-tm5-chip.tm5-time-btn { cursor: pointer; border: none; }
     .brp-step-tm5-chip.tm5-time-btn:active { background: #D4B896; }
 
+    /* Ensure [hidden] attribute always wins over display:flex/grid rules */
+    [hidden] { display: none !important; }
+
     /* ── Timer overlay ── */
     #timerOverlay {
       position: fixed; inset: 0; z-index: 800;
