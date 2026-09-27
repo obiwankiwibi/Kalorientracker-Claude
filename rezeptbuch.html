@@ -2072,16 +2072,26 @@ function addRecipeToKalorien(recipeId) {
   const ings=(r.ingredients||[]).filter(i=>!i.custom);
   const nutr=calcNutrition(ings,scale);
   if(!nutr||!nutr.kcal){showToast('Keine Nährwerte vorhanden');return;}
-  let pending=[];
-  try{pending=JSON.parse(localStorage.getItem('pending_kalorien_items')||'[]');}catch{}
-  pending.push({
-    name:r.name+(portions!==(r.servings||4)?' ('+portions+' Port.)':''),
-    emoji:r.emoji||'🍽️', kcal:nutr.kcal,
-    protein:parseFloat(nutr.protein), carbs:parseFloat(nutr.carbs), fat:parseFloat(nutr.fat),
-    addedAt:Date.now()
+  // Schreibe direkt in kalorientracker_v1 (selbes Format wie addEntry in kalorien.html)
+  const now=new Date();
+  const key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  let store={};
+  try{store=JSON.parse(localStorage.getItem('kalorientracker_v1')||'{}');}catch{}
+  if(!store[key]) store[key]={entries:[],water:0};
+  store[key].entries.push({
+    id:Date.now()+'-'+Math.random().toString(36).slice(2,7),
+    name:(r.emoji||'🍽️')+' '+r.name+(portions!==(r.servings||4)?' ('+portions+' Port.)':''),
+    kcal:nutr.kcal,
+    meta:'',
+    nutrients:{protein:parseFloat(nutr.protein),carbs:parseFloat(nutr.carbs),fat:parseFloat(nutr.fat)},
+    kcalPer100:null,
+    unit:'Portion',
+    amount:portions,
+    meal:null,
+    time:now.toISOString()
   });
-  try{localStorage.setItem('pending_kalorien_items',JSON.stringify(pending));}catch(e){}
-  showToast(nutr.kcal+' kcal ins Tagebuch');
+  try{localStorage.setItem('kalorientracker_v1',JSON.stringify(store));}catch(e){}
+  showToast((r.emoji||'🍽️')+' '+nutr.kcal+' kcal ins Tagebuch eingetragen');
 }
 
 // ── Step Timer ──
