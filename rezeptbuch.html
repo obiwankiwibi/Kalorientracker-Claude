@@ -767,16 +767,29 @@ function _unitToG(unitStr, qty) {
 }
 // German food name normalization tables
 const FOOD_ALIASES = {
+  // Vegetables
   'paprikaschote':'paprika','paprikaschoten':'paprika',
-  'rinderhackfleisch':'rinderhack',
-  'hackfleisch':'hackfleisch gemischt',
-  'sahneschmelzkäse':'schmelzkäse',
-  'doppelrahmfrischkäse':'frischkäse',
-  'kochschinken':'schinken gekocht','schinkenwürfel':'schinken gekocht',
-  'bauchspeck':'speck','räucherbauch':'speck','speckwürfel':'speck',
-  'ei':'eier',
   'möhre':'möhren','karotte':'karotten',
   'lauch':'porree','staudensellerie':'sellerie',
+  'knoblauchzehe':'knoblauch','knoblauchzehen':'knoblauch',
+  'fleischtomate':'tomaten','fleischtomaten':'tomaten','rispentomaten':'tomaten',
+  // Meat
+  'rinderhackfleisch':'rinderhack',
+  'hackfleisch':'hackfleisch gemischt',
+  'kochschinken':'schinken gekocht','schinkenwürfel':'schinken gekocht',
+  'bauchspeck':'speck','räucherbauch':'speck','speckwürfel':'speck',
+  // Dairy / cheese
+  'sahneschmelzkäse':'schmelzkäse',
+  'doppelrahmfrischkäse':'frischkäse',
+  'ei':'eier',
+  // Pantry — generic names without catalog entry
+  'mehl':'weizenmehl 405',
+  'milch':'vollmilch 3,5%',
+  'öl':'rapsöl',
+  'rinderbrühe':'fleischbrühe','hühnerbrühe':'hühnerbrühe dose',
+  'brühe':'fleischbrühe','gemüsebrühe':'gemüsebrühe dose',
+  'gemüsebrühepulver':'brühepulver','gemüsebrühwürfel':'brühepulver',
+  'tellerlinsen':'braune linsen',
 };
 const COLOR_NORM = {
   'rote':'rot','roten':'rot','roter':'rot','rotes':'rot',
@@ -832,12 +845,17 @@ function _tryMatch(n) {
   return best;
 }
 function _normalizeName(n) {
-  // apply alias on full name
   if (FOOD_ALIASES[n]) return FOOD_ALIASES[n];
-  // strip after comma, remove parens
+  // Extract color words from the ENTIRE name (including after comma)
+  const allWords = n.replace(/[(),]/g,' ').split(/\s+/);
+  const colorHints = allWords.map(w => COLOR_NORM[w]).filter(Boolean);
+  // Strip after comma, remove parens
   let s = n.split(',')[0].trim().replace(/\s*\([^)]*\)/g,'').trim();
-  // word-level: normalize colors, drop filler words
-  const words = s.split(/\s+/).map(w => COLOR_NORM[w]||w).filter(w => !SKIP_WORDS.has(w));
+  // Word-level processing
+  let words = s.split(/\s+/).map(w => COLOR_NORM[w]||w).filter(w => !SKIP_WORDS.has(w));
+  // Append color hints not yet present in result
+  const existingColors = new Set(words.filter(w => Object.values(COLOR_NORM).includes(w)));
+  colorHints.forEach(c => { if (!existingColors.has(c)) words.push(c); });
   return words.join(' ');
 }
 function _catalogLookup(ingName) {
@@ -845,12 +863,18 @@ function _catalogLookup(ingName) {
   const n = ingName.toLowerCase().trim();
   // Tier 1+2: original
   let r = _tryMatch(n); if (r) return r;
-  // Tier 3: normalized (comma strip + color norm + skip words)
+  // Tier 3: normalized (preserve colors, comma strip, skip words)
   const norm = _normalizeName(n);
   if (norm !== n) { r = _tryMatch(norm); if (r) return r; }
-  // Tier 4: alias on first word of normalized
-  const normFW = norm.split(/[\s,()\/\-]+/)[0];
-  if (FOOD_ALIASES[normFW]) { r = _tryMatch(FOOD_ALIASES[normFW]); if (r) return r; }
+  // Tier 4: alias on first word of normalized + pass remaining words (colors)
+  const normParts = norm.split(/\s+/);
+  const normFW = normParts[0];
+  if (FOOD_ALIASES[normFW]) {
+    const aliasBase = FOOD_ALIASES[normFW];
+    const rest = normParts.slice(1).join(' ');
+    if (rest) { r = _tryMatch(aliasBase + ' ' + rest); if (r) return r; }
+    r = _tryMatch(aliasBase); if (r) return r;
+  }
   // Tier 5: suffix check for German compound words (e.g. "Sahneschmelzkäse" ends with "schmelzkäse")
   for (const [key, entry] of _catalogMap) {
     if (key.length >= 6 && n.endsWith(key)) return entry;
