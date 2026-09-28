@@ -281,8 +281,9 @@
     .bld-empty-hint { font-family: Georgia,serif; font-size: 13px; color: #A8875A; font-style: italic; padding: 4px 0 14px; }
 
     /* ── Toast ── */
-    #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #2C1808; color: #E8D0A0; font-family: Georgia,serif; font-size: 14px; padding: 10px 20px; border-radius: 20px; z-index: 500; opacity: 0; pointer-events: none; transition: opacity .25s; white-space: nowrap; }
-    #toast.show { opacity: 1; }
+    #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #2C1808; color: #E8D0A0; font-family: Georgia,serif; font-size: 14px; padding: 10px 20px; border-radius: 20px; z-index: 500; opacity: 0; pointer-events: none; transition: opacity .25s; white-space: nowrap; display: flex; align-items: center; gap: 10px; }
+    #toast.show { opacity: 1; pointer-events: auto; }
+    #toast a.toast-action { color: #F5C97A; font-weight: bold; text-decoration: none; border-left: 1px solid #6B4226; padding-left: 10px; white-space: nowrap; }
 
     /* ── Step timer button ── */
     .step-time-btn {
@@ -701,7 +702,7 @@
   </div>
 </div>
 
-<div id="toast"></div>
+<div id="toast"><span id="toastMsg"></span><a id="toastAction" class="toast-action" href="#" hidden></a></div>
 <button id="shareBar" disabled onclick="exportToPdf()">📄 Rezepte als PDF</button>
 
 <div id="timerOverlay" hidden>
@@ -2119,7 +2120,7 @@ function addRecipeToList(recipeId, pageIdx) {
     added++;
   }
   try { localStorage.setItem('pending_einkauf_items', JSON.stringify(pending)); } catch(e) {}
-  showToast(`${added} Zutat${added !== 1 ? 'en' : ''} zur Einkaufsliste`);
+  showToast(`${added} Zutat${added !== 1 ? 'en' : ''} zur Einkaufsliste`, {label: 'Öffnen →', url: './einkaufsliste.html'});
 }
 
 // ── Builder steps ──
@@ -2510,9 +2511,21 @@ function _ckCdTick() {
 
 // ── Toast ──
 let _toastTimer=null;
-function showToast(msg) {
-  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
-  clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+function showToast(msg, action) {
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  const a=document.getElementById('toastAction');
+  if(action){
+    a.textContent=action.label;
+    a.href=action.url;
+    a.hidden=false;
+  } else {
+    a.hidden=true;
+  }
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  const dur = action ? 4000 : 2200;
+  _toastTimer=setTimeout(()=>t.classList.remove('show'), dur);
 }
 
 // ── Refresh ──
