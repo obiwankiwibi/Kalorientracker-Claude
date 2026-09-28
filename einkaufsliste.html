@@ -2292,6 +2292,8 @@ function calcMultiplier(amount, unit) {
   if (aL !== null && uL !== null && uL > 0) return aL / uL;
   const aP = parsePieces(amount), uP = parsePieces(unit);
   if (aP !== null && uP !== null && uP > 0) return aP / uP;
+  // If amount is a weight/volume but unit is non-metric (e.g. "Stück"), assume 1 package
+  if (parseGrams(amount) !== null || parseLiters(amount) !== null) return 1;
   // Non-metric units (Bund, Knolle, …): parse leading number
   const m = amount.trim().match(/^([\d.,]+)\s+.+$/);
   if (m) return _n(m[1]) || 1;
