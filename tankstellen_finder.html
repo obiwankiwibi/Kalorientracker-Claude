@@ -36,7 +36,8 @@ header{display:flex;}.logo{font:700 19px/1.2 system-ui}.logo small{display:block
 .stations{display:grid;gap:6px}.station{padding:9px 11px;display:grid;grid-template-columns:1fr auto;gap:7px}.name{font-weight:750;font-size:14px}.address{font-size:11px;color:var(--muted);margin-top:1px}.badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.badge{font-size:10px;border-radius:99px;padding:2px 7px;background:var(--bg);color:var(--muted)}.open{background:var(--soft);color:var(--brand)}.closed{color:var(--warn)}
 .price{text-align:right;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}.price small{font-size:10px;color:var(--muted);display:block;font-weight:500}.route{font-size:10px;color:var(--brand);text-decoration:none}
 .star{border:0;background:none;color:var(--line);cursor:pointer;font-size:16px;padding:0 2px;line-height:1;display:block;margin-top:4px;transition:color .15s}.star.active{color:#f6c000}
-.chart-card{padding:15px;position:sticky;top:12px}.chart-wrap{height:220px;margin-top:12px}canvas{width:100%;height:100%;display:block}.legend{display:flex;gap:12px;font-size:11px;color:var(--muted);margin-top:8px}.dot{width:8px;height:8px;border-radius:50%;background:var(--brand);display:inline-block;margin-right:4px}
+.chart-card{padding:15px;position:sticky;top:12px}.chart-wrap{height:280px;margin-top:12px}canvas{width:100%;height:100%;display:block}.legend{display:flex;gap:12px;font-size:11px;color:var(--muted);margin-top:8px}.dot{width:8px;height:8px;border-radius:50%;background:var(--brand);display:inline-block;margin-right:4px}
+.cst-wrap{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.cst-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px}.cst-bars{display:flex;align-items:flex-end;gap:2px;height:52px;padding:0 2px}.cst-bar{flex:1;border-radius:2px 2px 0 0;min-height:4px;transition:opacity .15s}.cst-nodata{background:var(--line)!important;opacity:.35}.cst-hlabels{display:flex;font-size:9px;color:var(--muted);margin-top:3px;padding:0 2px}.cst-hlabels span{flex:1;text-align:center}.cst-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.cst-chip{font-size:11px;border-radius:99px;padding:3px 10px;background:var(--soft);color:var(--muted)}.cst-chip.good{background:color-mix(in srgb,var(--brand) 15%,var(--card));color:var(--brand)}.cst-chip.next{background:color-mix(in srgb,#f6c000 15%,var(--card));color:#b8900a}
 .empty{padding:38px 22px;text-align:center;color:var(--muted)}.empty strong{display:block;color:var(--ink);font-size:16px;margin-bottom:5px}
 .fav-section{margin-top:22px}.fav-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:10px}.fav-card{padding:14px}.fav-name{font-weight:750}.fav-price-big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;margin:5px 0 2px}.fav-chart{height:75px;margin-top:10px}.fav-actions{display:flex;gap:8px;align-items:center;margin-top:8px}.fav-remove{font-size:11px;border:0;background:none;color:var(--muted);cursor:pointer;padding:0}
 .overlay{position:fixed;inset:0;background:rgba(9,15,18,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}.overlay.open{display:flex}.modal{width:min(460px,100%);background:var(--card);border:1px solid var(--line);border-radius:15px;padding:22px}.modal h2{margin:0 0 8px;font-size:20px}.notice{font-size:12px;color:var(--muted);background:var(--bg);padding:10px;border-radius:9px;margin:0 0 16px}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.ghost{border:1px solid var(--line);background:none;color:var(--ink);border-radius:9px;padding:9px 14px;cursor:pointer}
@@ -164,7 +165,7 @@ header { border-bottom: 2px solid var(--brand); }
   <div class="view-toggle"><button class="view-tab active" data-view="list">☰ Liste</button><button class="view-tab" data-view="map">🗺 Karte</button></div>
 </div>
 <div id="mapContainer"></div>
-<div class="layout"><main><div id="staleWarn" class="stale-warn" style="display:none"></div><div class="section-head"><div class="section-title">Tankstellen</div><span class="count" id="count">0</span></div><div class="stations" id="stations"><div class="card empty"><strong>Bereit für die erste Suche</strong>API-Key hinterlegen und Tankstellen in der Umgebung abrufen.</div></div></main><aside><div class="card chart-card"><div class="section-head"><div class="section-title">Lokale Preisentwicklung</div><button class="text-btn" id="clearHistory">Löschen</button></div><div class="hint">Der Durchschnitt wird bei jeder Suche lokal gespeichert.</div><div class="chart-wrap"><canvas id="chart"></canvas></div><div class="legend"><span><i class="dot"></i><span id="legendFuel">Super 95 (E5)</span></span></div></div></aside></div>
+<div class="layout"><main><div id="staleWarn" class="stale-warn" style="display:none"></div><div class="section-head"><div class="section-title">Tankstellen</div><span class="count" id="count">0</span></div><div class="stations" id="stations"><div class="card empty"><strong>Bereit für die erste Suche</strong>API-Key hinterlegen und Tankstellen in der Umgebung abrufen.</div></div></main><aside><div class="card chart-card"><div class="section-head"><div class="section-title">Lokale Preisentwicklung</div><button class="text-btn" id="clearHistory">Löschen</button></div><div class="hint">Der Durchschnitt wird bei jeder Suche lokal gespeichert.</div><div class="chart-wrap"><canvas id="chart"></canvas></div><div id="chartStats"></div><div class="legend"><span><i class="dot"></i><span id="legendFuel">Super 95 (E5)</span></span></div></div></aside></div>
 <div class="topstats" id="topstats" style="display:none">
   <div class="card stat"><div class="eyebrow">Günstigster Preis</div><div class="big" id="minPrice">—</div><div class="hint" id="minName">—</div></div>
   <div class="card stat"><div class="eyebrow">Durchschnitt</div><div class="big" id="avgPrice">—</div><div class="hint">der gefundenen Preise</div></div>
@@ -292,7 +293,7 @@ function recordHistory(){
  const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
  if(!state.history[state.fuel])state.history[state.fuel]=[];
  state.history[state.fuel].push({t:Date.now(),v:avg});
- state.history[state.fuel]=state.history[state.fuel].slice(-60);
+ state.history[state.fuel]=state.history[state.fuel].slice(-500);
 }
 
 function recordFavPrices(){
@@ -381,16 +382,124 @@ function renderFavs(){
 }
 
 function drawChart(){
- const c=$('chart'),box=c.parentElement,dpr=devicePixelRatio||1,w=box.clientWidth,h=box.clientHeight;
- c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);x.clearRect(0,0,w,h);
- const data=state.history[state.fuel]||[];
- const css=getComputedStyle(document.documentElement),muted=css.getPropertyValue('--muted'),line=css.getPropertyValue('--line'),brand=css.getPropertyValue('--brand');
- x.font='10px system-ui';x.fillStyle=muted;
- if(data.length<2){x.textAlign='center';x.fillText('Nach mindestens zwei Suchen erscheint hier ein Verlauf.',w/2,h/2);return}
- const pad={l:45,r:10,t:12,b:27},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b,min=Math.min(...data.map(d=>d.v))-.01,max=Math.max(...data.map(d=>d.v))+.01;
- for(let i=0;i<4;i++){const yy=pad.t+ch*i/3;x.strokeStyle=line;x.beginPath();x.moveTo(pad.l,yy);x.lineTo(w-pad.r,yy);x.stroke();x.fillStyle=muted;x.textAlign='right';x.fillText((max-(max-min)*i/3).toFixed(2),pad.l-5,yy+3)}
- x.strokeStyle=brand;x.lineWidth=2;x.beginPath();data.forEach((d,i)=>{const xx=pad.l+(cw*i/Math.max(1,data.length-1)),yy=pad.t+(max-d.v)/(max-min)*ch;i?x.lineTo(xx,yy):x.moveTo(xx,yy)});x.stroke();
- x.fillStyle=muted;x.textAlign='left';x.fillText(new Date(data[0].t).toLocaleDateString('de-DE'),pad.l,h-5);x.textAlign='right';x.fillText(new Date(data.at(-1).t).toLocaleDateString('de-DE'),w-pad.r,h-5);
+  const c=$('chart'),box=c.parentElement,dpr=devicePixelRatio||1,w=box.clientWidth,h=box.clientHeight;
+  c.width=w*dpr;c.height=h*dpr;
+  const x=c.getContext('2d');x.scale(dpr,dpr);x.clearRect(0,0,w,h);
+  const data=state.history[state.fuel]||[];
+  const css=getComputedStyle(document.documentElement);
+  const muted=css.getPropertyValue('--muted').trim(),line=css.getPropertyValue('--line').trim(),brand=css.getPropertyValue('--brand').trim();
+  x.font='10px system-ui';x.fillStyle=muted;
+  if(data.length<2){x.textAlign='center';x.fillText('Nach mindestens zwei Suchen erscheint hier ein Verlauf.',w/2,h/2);renderChartStats();return;}
+  const pad={l:48,r:10,t:14,b:34},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  const vMin=Math.min(...data.map(d=>d.v))-.01,vMax=Math.max(...data.map(d=>d.v))+.01;
+  const tMin=data[0].t,tMax=data.at(-1).t,tRange=Math.max(tMax-tMin,1);
+  const HOUR=3600000,DAY=86400000;
+  // y-grid
+  for(let i=0;i<=4;i++){
+    const yy=pad.t+ch*i/4;
+    x.strokeStyle=line;x.lineWidth=0.5;x.beginPath();x.moveTo(pad.l,yy);x.lineTo(w-pad.r,yy);x.stroke();
+    x.fillStyle=muted;x.textAlign='right';x.font='10px system-ui';
+    x.fillText((vMax-(vMax-vMin)*i/4).toFixed(2),pad.l-4,yy+3);
+  }
+  // x-axis tick interval based on time range
+  const rangeMs=tMax-tMin;
+  let tickMs,tickFmt;
+  if(rangeMs<6*HOUR){tickMs=30*60000;tickFmt=d=>`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;}
+  else if(rangeMs<2*DAY){tickMs=3*HOUR;tickFmt=d=>`${d.getHours()}:00`;}
+  else if(rangeMs<5*DAY){tickMs=12*HOUR;tickFmt=d=>d.getHours()===0?`${d.getDate()}.${d.getMonth()+1}.`:`${d.getHours()}h`;}
+  else if(rangeMs<21*DAY){tickMs=DAY;tickFmt=d=>`${d.getDate()}.${d.getMonth()+1}.`;}
+  else{tickMs=7*DAY;tickFmt=d=>`${d.getDate()}.${d.getMonth()+1}.`;}
+  // day separator lines
+  const ds=new Date(tMin);ds.setHours(0,0,0,0);let dt=ds.getTime();
+  while(dt<=tMax){
+    const xx=pad.l+cw*(dt-tMin)/tRange;
+    if(dt>tMin&&xx>pad.l+2){
+      x.strokeStyle=line;x.lineWidth=0.5;x.setLineDash([2,4]);
+      x.beginPath();x.moveTo(xx,pad.t);x.lineTo(xx,pad.t+ch);x.stroke();
+      x.setLineDash([]);
+    }
+    dt+=DAY;
+  }
+  // x-tick labels
+  const ts=Math.ceil(tMin/tickMs)*tickMs;let lastX=-999;
+  for(let t=ts;t<=tMax;t+=tickMs){
+    const xx=pad.l+cw*(t-tMin)/tRange;
+    if(xx<pad.l+2||xx>w-pad.r-2)continue;
+    if(xx-lastX<32)continue;
+    x.strokeStyle=line;x.lineWidth=1;x.beginPath();x.moveTo(xx,pad.t+ch);x.lineTo(xx,pad.t+ch+3);x.stroke();
+    x.fillStyle=muted;x.textAlign='center';x.font='9px system-ui';
+    x.fillText(tickFmt(new Date(t)),xx,h-3);
+    lastX=xx;
+  }
+  // price line (time-scaled x positions)
+  x.strokeStyle=brand;x.lineWidth=2;x.beginPath();
+  data.forEach((d,i)=>{
+    const xx=pad.l+cw*(d.t-tMin)/tRange,yy=pad.t+(vMax-d.v)/(vMax-vMin)*ch;
+    i?x.lineTo(xx,yy):x.moveTo(xx,yy);
+  });
+  x.stroke();
+  // data point dots
+  data.forEach(d=>{
+    const xx=pad.l+cw*(d.t-tMin)/tRange,yy=pad.t+(vMax-d.v)/(vMax-vMin)*ch;
+    x.fillStyle=brand;x.beginPath();x.arc(xx,yy,2.5,0,Math.PI*2);x.fill();
+  });
+  renderChartStats();
+}
+
+function renderChartStats(){
+  const el=$('chartStats');if(!el)return;
+  const data=state.history[state.fuel]||[];
+  if(data.length<4){el.innerHTML='';return;}
+  const byH=Array.from({length:24},()=>({s:0,n:0}));
+  const byD=Array.from({length:7},()=>({s:0,n:0}));
+  for(const {t,v} of data){
+    const d=new Date(t);
+    byH[d.getHours()].s+=v;byH[d.getHours()].n++;
+    byD[d.getDay()].s+=v;byD[d.getDay()].n++;
+  }
+  const hA=byH.map((h,i)=>h.n?{h:i,avg:h.s/h.n}:null).filter(Boolean);
+  const dA=byD.map((d,i)=>d.n?{d:i,avg:d.s/d.n}:null).filter(Boolean);
+  if(!hA.length){el.innerHTML='';return;}
+  const cheapH=hA.reduce((a,b)=>a.avg<b.avg?a:b);
+  const expH=hA.reduce((a,b)=>a.avg>b.avg?a:b);
+  const cheapD=dA.length?dA.reduce((a,b)=>a.avg<b.avg?a:b):null;
+  const DAYS=['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const now=new Date();
+  // next occurrence of cheapest hour
+  const nxt=new Date(now);nxt.setMinutes(0,0,0);
+  if(nxt.getHours()>=cheapH.h)nxt.setDate(nxt.getDate()+1);
+  nxt.setHours(cheapH.h,0,0,0);
+  const diffH=Math.round((nxt-now)/3600000);
+  const nxtStr=diffH<=1?'Jetzt!':diffH<24?`in ${diffH} Std.`:`${DAYS[nxt.getDay()]} ${cheapH.h}:00 Uhr`;
+  // current hour vs global average
+  const globalAvg=data.reduce((a,b)=>a+b.v,0)/data.length;
+  const curH=now.getHours();
+  const curHavg=byH[curH].n?byH[curH].s/byH[curH].n:null;
+  const curDiff=curHavg!==null?curHavg-globalAvg:null;
+  const curStr=curDiff===null?'':(curDiff<-0.005?'🟢 Gerade günstig':curDiff>0.005?'🔴 Gerade teuer':'🟡 Durchschnitt');
+  // 24h bar chart
+  const mxA=Math.max(...hA.map(h=>h.avg)),mnA=Math.min(...hA.map(h=>h.avg)),rng=mxA-mnA||0.01;
+  const bars=Array.from({length:24},(_,i)=>{
+    const e=byH[i];
+    if(!e.n)return`<div class="cst-bar cst-nodata" title="${i}:00 – keine Daten"></div>`;
+    const avg=e.s/e.n,pct=(avg-mnA)/rng;
+    const color=i===cheapH.h?'var(--brand)':i===expH.h?'var(--warn)':'var(--line)';
+    const ht=Math.round(8+pct*38)+'px';
+    return`<div class="cst-bar" style="height:${ht};background:${color}" title="${i}:00 – Ø ${avg.toFixed(3)} €"></div>`;
+  }).join('');
+  const hlabels=Array.from({length:24},(_,i)=>i%6===0?`<span>${i}h</span>`:i%3===0?`<span style="opacity:.45">${i}h</span>`:`<span></span>`).join('');
+  el.innerHTML=`<div class="cst-wrap">
+    <div class="cst-title">Günstiger Zeitpunkt – historische Analyse</div>
+    <div class="cst-bars">${bars}</div>
+    <div class="cst-hlabels">${hlabels}</div>
+    <div class="cst-chips">
+      <span class="cst-chip good">🕓 ${cheapH.h}:00 Uhr günstig (Ø ${cheapH.avg.toFixed(3)} €)</span>
+      <span class="cst-chip" style="background:color-mix(in srgb,var(--warn) 12%,var(--card));color:var(--warn)">🕓 ${expH.h}:00 Uhr teuer (Ø ${expH.avg.toFixed(3)} €)</span>
+      ${cheapD?`<span class="cst-chip good">📅 ${DAYS[cheapD.d]} günstigster Tag</span>`:''}
+      <span class="cst-chip next">⏩ Nächstes Fenster: ${nxtStr}</span>
+      ${curStr?`<span class="cst-chip">${curStr}</span>`:''}
+    </div>
+  </div>`;
 }
 
 function drawMiniChart(c,data){
